@@ -15,7 +15,7 @@
     </modules>
 
     <name>HPG Big data project</name>
-    <description>CellBase projects integrates several biological databases into a NoSQL database plus many WS to query</description>
+    <description>HPG Big data project aims to manage biological data in a Big data enviroment</description>
     <url>https://github.com/opencb/hpg-bigdata</url>
 
     <properties>
@@ -23,7 +23,7 @@
         <ga4gh.version>0.5.1</ga4gh.version>
         <biodata.version>0.4-SNAPSHOT</biodata.version>
         <datastore.version>0.4-SNAPSHOT</datastore.version>
-        <compileSource>1.8</compileSource>
+        <compileSource>1.7</compileSource>
         <build.dir>build</build.dir>
     </properties>
 
