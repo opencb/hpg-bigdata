@@ -1,5 +1,10 @@
 package org.opencb.hpg.bigdata.core.cli;
 
+import htsjdk.samtools.SAMRecord;
+import htsjdk.samtools.SamReader;
+import htsjdk.samtools.SamReaderFactory;
+
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 
@@ -8,11 +13,11 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.ga4gh.models.ReadAlignment;
-import org.opencb.hpg.bigdata.core.converters.FastqRecord2ReadConverter;
+import org.opencb.ga4gh.utils.ReadAlignmentUtils;
+import org.opencb.hpg.bigdata.core.converters.SAMRecord2ReadAlignmentConverter;
 import org.opencb.hpg.bigdata.core.io.AvroWriter;
 
-
-public class BAM2Avro {
+public class Bam2Avro {
 
 	public static void main(String[] args) throws Exception {
 		// tmp check parameters
@@ -47,27 +52,32 @@ public class BAM2Avro {
 		} else {
 			os = new FileOutputStream(dest);
 		}
+
+//		final SAMFileWriter outputSam = new SAMFileWriterFactory().makeSAMOrBAMWriter(reader.getFileHeader(),
+//		        true, outputSamOrBamFile);
+//		outputSam.addAlignment(samRecord);
+//		outputSam.close();
+
+		// converter
+		SAMRecord2ReadAlignmentConverter converter = new SAMRecord2ReadAlignmentConverter();
 		
 		// writer
 		AvroWriter<ReadAlignment> writer = new AvroWriter<ReadAlignment>(ReadAlignment.getClassSchema(), CodecFactory.snappyCodec(), os);
 		
 		// reader
-		FastqRecord2ReadConverter converter = new FastqRecord2ReadConverter();
-/*		
-		BAMFileReader bamReader = new BAMFileReader(new File(src));  
+		SamReader reader = SamReaderFactory.makeDefault().open(new File(src)); 
 		
-		// read and write loop
-		while (fqReader.hasNext()) {
-			FastqRecord fqRecord = fqReader.next();
-			Read read = converter.forward(fqRecord);
-			writer.write(read);
-		}
+		for (final SAMRecord samRecord : reader) {
+			writer.write(converter.forward(samRecord));
+        }
 		
 		// close
-		fqReader.close();
+		reader.close();
 		writer.close();
 		os.close();
-*/		
+		
 		System.out.println("Done !");
 	}
 }
+
+

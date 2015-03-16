@@ -1,10 +1,10 @@
-package org.opencb.hpg.bigdata.core.utils;
+package org.opencb.ga4gh.utils;
 
 import org.opencb.ga4gh.models.Read;
 
-public class FastqUtils {
+public class ReadUtils {
 
-	public static String format(Read read) {
+	public static String getFastqString(Read read) {
 		return "@" + read.getId().toString() + "\n" + read.getSequence().toString() + "\n+\n" + read.getQuality().toString() + "\n";
 	}
 

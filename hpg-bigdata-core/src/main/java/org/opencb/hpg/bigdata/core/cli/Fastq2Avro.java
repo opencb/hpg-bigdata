@@ -65,9 +65,7 @@ public class Fastq2Avro {
 		
 		// read and write loop
 		while (fqReader.hasNext()) {
-			FastqRecord fqRecord = fqReader.next();
-			Read read = converter.forward(fqRecord);
-			writer.write(read);
+			writer.write(converter.forward(fqReader.next()));
 		}
 		
 		// close

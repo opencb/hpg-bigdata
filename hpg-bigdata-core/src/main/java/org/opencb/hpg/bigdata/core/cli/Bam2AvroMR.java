@@ -1,6 +1,9 @@
 package org.opencb.hpg.bigdata.core.cli;
 
 import htsjdk.samtools.SAMRecord;
+
+import java.io.IOException;
+
 import org.apache.avro.mapred.AvroKey;
 import org.apache.avro.mapreduce.AvroJob;
 import org.apache.hadoop.conf.Configuration;
@@ -19,9 +22,7 @@ import org.opencb.ga4gh.models.Read;
 import org.seqdoop.hadoop_bam.AnySAMInputFormat;
 import org.seqdoop.hadoop_bam.SAMRecordWritable;
 
-import java.io.IOException;
-
-public class BAM2AvroMR extends Configured implements Tool {
+public class Bam2AvroMR extends Configured implements Tool {
 
 	public static class HB2HAMapper extends Mapper<LongWritable, SAMRecordWritable, LongWritable, SAMRecordWritable> {
 		@Override
@@ -44,7 +45,7 @@ public class BAM2AvroMR extends Configured implements Tool {
 	public int run(String[] args) throws Exception {
 		Job job = new Job(getConf());
 		job.setJobName("bam-2-avro");
-		job.setJarByClass(BAM2AvroMR.class);
+		job.setJarByClass(Bam2AvroMR.class);
 
 		// We call setOutputSchema first so we can override the configuration
 		// parameters it sets
@@ -68,7 +69,7 @@ public class BAM2AvroMR extends Configured implements Tool {
 	}
 
 	public static void main(String[] args) throws Exception {
-		int res = ToolRunner.run(new Configuration(), new BAM2AvroMR(), args);
+		int res = ToolRunner.run(new Configuration(), new Bam2AvroMR(), args);
 		System.exit(res);
 	}
 }
