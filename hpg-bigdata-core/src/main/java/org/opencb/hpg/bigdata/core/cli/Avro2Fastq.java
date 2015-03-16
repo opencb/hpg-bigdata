@@ -1,31 +1,22 @@
-package org.opencb.hpgbigdata.core.cli;
+package org.opencb.hpg.bigdata.core.cli;
 
-import htsjdk.samtools.fastq.FastqReader;
-import htsjdk.samtools.fastq.FastqRecord;
-
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 
-import org.apache.avro.file.CodecFactory;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IOUtils;
-import org.ga4gh.models.Read;
-import org.opencb.hpgbigdata.core.converters.FastqRecord2ReadConverter;
-import org.opencb.hpgbigdata.core.io.AvroWriter;
-import org.opencb.hpgbigdata.core.utils.FastqUtils;
+import org.opencb.ga4gh.models.Read;
+import org.opencb.hpg.bigdata.core.utils.FastqUtils;
 
 // command lines:
 //
-// mvn install && java -classpath hpg-bigdata-core/target/hpg-bigdata-core-0.1.0-jar-with-dependencies.jar org.opencb.hpgbigdata.core.cli.Avro2Fastq /home/jtarraga/tests/hpg-bigdata/5.fq.avro /home/jtarraga/tests/hpg-bigdata/5.fq.avro.fq
-// mvn install && hadoop jar hpg-bigdata-core/target/hpg-bigdata-core-0.1.0-jar-with-dependencies.jar org.opencb.hpgbigdata.core.cli.Avro2Fastq 5.fq.avro /home/jtarraga/tests/hpg-bigdata/5.fq.avro.hadoop.fq --hadoop
+// mvn install && java -classpath hpg-bigdata-core/target/hpg-bigdata-core-0.1.0-jar-with-dependencies.jar Avro2Fastq /home/jtarraga/tests/hpg-bigdata/5.fq.avro /home/jtarraga/tests/hpg-bigdata/5.fq.avro.fq
+// mvn install && hadoop jar hpg-bigdata-core/target/hpg-bigdata-core-0.1.0-jar-with-dependencies.jar Avro2Fastq 5.fq.avro /home/jtarraga/tests/hpg-bigdata/5.fq.avro.hadoop.fq --hadoop
 
 public class Avro2Fastq {
 

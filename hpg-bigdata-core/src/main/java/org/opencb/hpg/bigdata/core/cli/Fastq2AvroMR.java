@@ -1,4 +1,4 @@
-package org.opencb.hpgbigdata.core.cli;
+package org.opencb.hpg.bigdata.core.cli;
 
 import java.io.IOException;
 
@@ -16,7 +16,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.ga4gh.models.Read;
+import org.opencb.ga4gh.models.Read;
 import org.seqdoop.hadoop_bam.FastqInputFormat;
 import org.seqdoop.hadoop_bam.SequencedFragment;
 

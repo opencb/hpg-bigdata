@@ -19,7 +19,7 @@
     <url>https://github.com/opencb/hpg-bigdata</url>
 
     <properties>
-        <hpg.version>3.1-SNAPSHOT</hpg.version>
+        <hpg.version>0.1.0</hpg.version>
         <ga4gh.version>0.5.1</ga4gh.version>
         <biodata.version>0.4-SNAPSHOT</biodata.version>
         <datastore.version>0.4-SNAPSHOT</datastore.version>
@@ -86,16 +86,16 @@
                 <artifactId>guava</artifactId>
                 <version>18.0</version>
             </dependency>
-            <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-api</artifactId>
-                <version>1.7.10</version>
-            </dependency>
-            <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-simple</artifactId>
-                <version>1.7.10</version>
-            </dependency>
+            <!--<dependency>-->
+                <!--<groupId>org.slf4j</groupId>-->
+                <!--<artifactId>slf4j-api</artifactId>-->
+                <!--<version>1.7.10</version>-->
+            <!--</dependency>-->
+            <!--<dependency>-->
+                <!--<groupId>org.slf4j</groupId>-->
+                <!--<artifactId>slf4j-simple</artifactId>-->
+                <!--<version>1.7.10</version>-->
+            <!--</dependency>-->
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>

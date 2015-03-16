@@ -1,8 +1,5 @@
-package org.opencb.hpgbigdata.core.cli;
+package org.opencb.hpg.bigdata.core.cli;
 
-import htsjdk.samtools.fastq.FastqRecord;
-
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 
@@ -10,10 +7,9 @@ import org.apache.avro.file.CodecFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.ga4gh.models.Read;
 import org.ga4gh.models.ReadAlignment;
-import org.opencb.hpgbigdata.core.converters.FastqRecord2ReadConverter;
-import org.opencb.hpgbigdata.core.io.AvroWriter;
+import org.opencb.hpg.bigdata.core.converters.FastqRecord2ReadConverter;
+import org.opencb.hpg.bigdata.core.io.AvroWriter;
 
 
 public class BAM2Avro {

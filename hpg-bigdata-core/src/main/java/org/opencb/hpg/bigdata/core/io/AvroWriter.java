@@ -1,4 +1,4 @@
-package org.opencb.hpgbigdata.core.io;
+package org.opencb.hpg.bigdata.core.io;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -16,7 +16,7 @@ public class AvroWriter<T> {
 		
 	public AvroWriter(Schema schema, CodecFactory codec, OutputStream os) throws IOException {
 		datumWriter = new SpecificDatumWriter<T>();
-		writer = new DataFileWriter<T>(datumWriter);
+		writer = new DataFileWriter<>(datumWriter);
 		writer.setCodec(codec);
 		writer.create(schema, os);
 	}

@@ -1,31 +1,24 @@
-package org.opencb.hpgbigdata.core.cli;
+package org.opencb.hpg.bigdata.core.cli;
 
 import htsjdk.samtools.fastq.FastqReader;
 import htsjdk.samtools.fastq.FastqRecord;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
 import java.io.OutputStream;
 
 import org.apache.avro.file.CodecFactory;
-import org.apache.avro.file.DataFileWriter;
-import org.apache.avro.io.DatumWriter;
-import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IOUtils;
-import org.ga4gh.models.Read;
-import org.opencb.hpgbigdata.core.converters.FastqRecord2ReadConverter;
-import org.opencb.hpgbigdata.core.io.AvroWriter;
+import org.opencb.ga4gh.models.Read;
+import org.opencb.hpg.bigdata.core.converters.FastqRecord2ReadConverter;
+import org.opencb.hpg.bigdata.core.io.AvroWriter;
 
 // command lines:
 //
-// mvn install && java -classpath hpg-bigdata-core/target/hpg-bigdata-core-0.1.0-jar-with-dependencies.jar org.opencb.hpgbigdata.core.cli.Fastq2Avro /home/jtarraga/tests/hpg-bigdata/5.fq /home/jtarraga/tests/hpg-bigdata/5.fq.avro
-// hadoop fs -rm -R 5.fq.avro ; mvn install && hadoop jar hpg-bigdata-core/target/hpg-bigdata-core-0.1.0-jar-with-dependencies.jar org.opencb.hpgbigdata.core.cli.Fastq2Avro /home/jtarraga/tests/hpg-bigdata/5.fq 5.fq.avro --hadoop
+// mvn install && java -classpath hpg-bigdata-core/target/hpg-bigdata-core-0.1.0-jar-with-dependencies.jar Fastq2Avro /home/jtarraga/tests/hpg-bigdata/5.fq /home/jtarraga/tests/hpg-bigdata/5.fq.avro
+// hadoop fs -rm -R 5.fq.avro ; mvn install && hadoop jar hpg-bigdata-core/target/hpg-bigdata-core-0.1.0-jar-with-dependencies.jar Fastq2Avro /home/jtarraga/tests/hpg-bigdata/5.fq 5.fq.avro --hadoop
 
 public class Fastq2Avro {
 
@@ -64,7 +57,7 @@ public class Fastq2Avro {
 		}
 		
 		// writer
-		AvroWriter<Read> writer = new AvroWriter<Read>(Read.getClassSchema(), CodecFactory.snappyCodec(), os);
+		AvroWriter<Read> writer = new AvroWriter<>(Read.getClassSchema(), CodecFactory.snappyCodec(), os);
 		
 		// reader
 		FastqRecord2ReadConverter converter = new FastqRecord2ReadConverter();
