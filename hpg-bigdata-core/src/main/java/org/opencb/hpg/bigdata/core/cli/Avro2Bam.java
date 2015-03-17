@@ -18,7 +18,7 @@ import org.opencb.ga4gh.utils.ReadAlignmentUtils;
 // mvn install && java -classpath hpg-bigdata-core/target/hpg-bigdata-core-0.1.0-jar-with-dependencies.jar org.opencb.hpgbigdata.core.cli.Avro2Fastq /home/jtarraga/tests/hpg-bigdata/5.fq.avro /home/jtarraga/tests/hpg-bigdata/5.fq.avro.fq
 // mvn install && hadoop jar hpg-bigdata-core/target/hpg-bigdata-core-0.1.0-jar-with-dependencies.jar org.opencb.hpgbigdata.core.cli.Avro2Fastq 5.fq.avro /home/jtarraga/tests/hpg-bigdata/5.fq.avro.hadoop.fq --hadoop
 
-public class Avro2Sam {
+public class Avro2Bam {
 
 	public static void main(String[] args) throws Exception {
 		// tmp check parameters
