@@ -18,7 +18,7 @@ public class FastqCommandExecutor extends CommandExecutor {
     /**
      * Parse specific 'fastq' command options
      */
-    public void parse() {
+    public void execute() {
         logger.info("Executing {} CLI options", "Fastq");
 
         logger.debug("Input file: {}", fastqCommandOptions.intput);

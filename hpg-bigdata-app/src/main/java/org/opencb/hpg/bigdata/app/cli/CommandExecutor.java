@@ -39,7 +39,7 @@ public abstract class CommandExecutor {
         }
     }
 
-    public abstract void parse();
+    public abstract void execute();
 
     public String getLogLevel() {
         return logLevel;

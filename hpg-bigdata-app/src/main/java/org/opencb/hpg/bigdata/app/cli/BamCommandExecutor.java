@@ -18,7 +18,7 @@ public class BamCommandExecutor extends CommandExecutor {
     /**
      * Parse specific 'bam' command options
      */
-    public void parse() {
+    public void execute() {
         logger.info("Executing {} CLI options", "bam");
 
         logger.debug("Input file: {}", bamCommandOptions.input);

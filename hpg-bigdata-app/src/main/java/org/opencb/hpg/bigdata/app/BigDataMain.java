@@ -55,7 +55,7 @@ public class BigDataMain {
             }
 
             if (commandExecutor != null) {
-                commandExecutor.parse();
+                commandExecutor.execute();
             }
         }
     }
