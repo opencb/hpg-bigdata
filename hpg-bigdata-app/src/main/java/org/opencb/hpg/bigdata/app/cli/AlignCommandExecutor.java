@@ -18,7 +18,7 @@ public class AlignCommandExecutor extends CommandExecutor {
     /**
      * Parse specific 'align' command options
      */
-    public void parse() {
+    public void execute() {
         logger.info("Executing {} CLI options", "align");
 
         logger.debug("Input file: {}", alignCommandOptions.input);

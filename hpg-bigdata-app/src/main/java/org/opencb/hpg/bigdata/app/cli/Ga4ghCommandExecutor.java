@@ -18,7 +18,7 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
     /**
      * Parse specific 'ga4gh' command options
      */
-    public void parse() {
+    public void execute() {
         logger.info("Executing {} CLI options", "ga4gh");
 
         logger.debug("Input file: {}", ga4ghCommandOptions.input);
