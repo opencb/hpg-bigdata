@@ -1,6 +1,13 @@
 package org.opencb.hpg.bigdata.app;
 
-import org.opencb.hpg.bigdata.app.cli.*;
+import org.opencb.hpg.bigdata.app.cli.AlignCommandExecutor;
+import org.opencb.hpg.bigdata.app.cli.BamCommandExecutor;
+import org.opencb.hpg.bigdata.app.cli.CliOptionsParser;
+import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
+import org.opencb.hpg.bigdata.app.cli.FastqCommandExecutor;
+import org.opencb.hpg.bigdata.app.cli.Ga4ghCommandExecutor;
+
+import com.beust.jcommander.ParameterException;
 
 /**
  * Created by imedina on 15/03/15.
@@ -9,12 +16,24 @@ public class BigDataMain {
 
     public static void main(String[] args) {
         CliOptionsParser cliOptionsParser = new CliOptionsParser();
-        cliOptionsParser.parse(args);
+        
+        if (args == null || args.length == 0) {
+        	cliOptionsParser.printUsage();
+        }
+
+        try {
+        	cliOptionsParser.parse(args);
+        } catch(ParameterException e) {
+        	System.out.println(e.getMessage());
+        	cliOptionsParser.printUsage();
+            System.exit(-1);
+        }
 
         String parsedCommand = cliOptionsParser.getCommand();
         if (parsedCommand == null || parsedCommand.isEmpty()) {
             if (cliOptionsParser.getGeneralOptions().help) {
                 cliOptionsParser.printUsage();
+                System.exit(-1);
             }
             if (cliOptionsParser.getGeneralOptions().version) {
                 System.out.println("version = 3.1.0");

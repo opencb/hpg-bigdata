@@ -1,69 +1,94 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <groupId>org.opencb.hpg</groupId>
-        <artifactId>hpg-bigdata</artifactId>
-        <version>0.1.0</version>
-        <relativePath>..</relativePath>
-    </parent>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.opencb.hpg</groupId>
+		<artifactId>hpg-bigdata</artifactId>
+		<version>0.1.0</version>
+		<relativePath>..</relativePath>
+	</parent>
 
-    <artifactId>hpg-bigdata-app</artifactId>
-    <version>${hpg.version}</version>
+	<artifactId>hpg-bigdata-app</artifactId>
+	<version>${hpg.version}</version>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.opencb.hpg</groupId>
-            <artifactId>hpg-bigdata-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.beust</groupId>
-            <artifactId>jcommander</artifactId>
-            <version>1.47</version>
-        </dependency>
-        <!--<dependency>-->
-            <!--<groupId>org.slf4j</groupId>-->
-            <!--<artifactId>slf4j-api</artifactId>-->
-        <!--</dependency>-->
-        <!--<dependency>-->
-            <!--<groupId>org.slf4j</groupId>-->
-            <!--<artifactId>slf4j-simple</artifactId>-->
-        <!--</dependency>-->
-    </dependencies>
+	<dependencies>
+		<dependency>
+			<groupId>org.opencb.hpg</groupId>
+			<artifactId>hpg-bigdata-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.beust</groupId>
+			<artifactId>jcommander</artifactId>
+			<version>1.47</version>
+		</dependency>
+		<!--<dependency> -->
+		<!--<groupId>org.slf4j</groupId> -->
+		<!--<artifactId>slf4j-api</artifactId> -->
+		<!--</dependency> -->
+		<!--<dependency> -->
+		<!--<groupId>org.slf4j</groupId> -->
+		<!--<artifactId>slf4j-simple</artifactId> -->
+		<!--</dependency> -->
+	</dependencies>
 
-    <build>
-        <sourceDirectory>src/main/java</sourceDirectory>
-        <testSourceDirectory>src/test/java</testSourceDirectory>
+	<build>
+		<sourceDirectory>src/main/java</sourceDirectory>
+		<testSourceDirectory>src/test/java</testSourceDirectory>
 
-        <plugins>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>appassembler-maven-plugin</artifactId>
-                <version>1.9</version>
-                <executions>
-                    <execution>
-                        <phase>install</phase>
-                        <goals>
-                            <goal>assemble</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <repositoryName>libs</repositoryName>
-                    <repositoryLayout>flat</repositoryLayout>
-                    <useWildcardClassPath>true</useWildcardClassPath>
-                    <extraJvmArguments>-Xms128m -Xmx4096m</extraJvmArguments>
-                    <programs>
-                        <program>
-                            <name>bigdata.sh</name>
-                            <mainClass>org.opencb.hpg.bigdata.app.BigDataMain</mainClass>
-                        </program>
-                    </programs>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
+		<plugins>
+		<!-- 
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<configuration>
+					<archive>
+						<manifest>
+							<mainClass></mainClass>
+						</manifest>
+					</archive>
+					<descriptorRefs>
+						<descriptorRef>
+							jar-with-dependencies
+						</descriptorRef>
+					</descriptorRefs>
+				</configuration>
+				<executions>
+					<execution>
+						<id>make-assembly</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			 -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>appassembler-maven-plugin</artifactId>
+				<version>1.9</version>
+				<executions>
+					<execution>
+						<phase>install</phase>
+						<goals>
+							<goal>assemble</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<repositoryName>libs</repositoryName>
+					<repositoryLayout>flat</repositoryLayout>
+					<useWildcardClassPath>true</useWildcardClassPath>
+					<extraJvmArguments>-Xms128m -Xmx4096m</extraJvmArguments>
+					<programs>
+						<program>
+							<name>bigdata.sh</name>
+							<mainClass>org.opencb.hpg.bigdata.app.BigDataMain</mainClass>
+						</program>
+					</programs>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 
 </project>
