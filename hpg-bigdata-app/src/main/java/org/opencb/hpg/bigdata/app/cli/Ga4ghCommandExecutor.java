@@ -1,9 +1,11 @@
 package org.opencb.hpg.bigdata.app.cli;
 
+import htsjdk.samtools.CRAMFileReader;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMFileWriter;
 import htsjdk.samtools.SAMFileWriterFactory;
 import htsjdk.samtools.SAMRecord;
+import htsjdk.samtools.SAMRecordIterator;
 import htsjdk.samtools.SAMTextHeaderCodec;
 import htsjdk.samtools.SamReader;
 import htsjdk.samtools.SamReaderFactory;
@@ -41,6 +43,8 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 	private final static String GA_2_SAM   = "ga2sam"; 
 	private final static String BAM_2_GA   = "bam2ga"; 
 	private final static String GA_2_BAM   = "ga2bam"; 
+	private final static String CRAM_2_GA  = "cram2ga"; 
+	private final static String GA_2_CRAM  = "ga2cram"; 
 
 	private final static String FASTQ_2_GA_DESC = "Save Fastq file as Global Alliance for Genomics and Health (ga4gh) in Avro format"; 
 	private final static String GA_2_FASTQ_DESC = "Save Global Alliance for Genomics and Health (ga4gh) in Avro format as Fastq file"; 
@@ -48,6 +52,8 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 	private final static String GA_2_SAM_DESC   = "Save Global Alliance for Genomics and Health (ga4gh) in Avro format as SAM file";
 	private final static String BAM_2_GA_DESC   = "Save BAM file as Global Alliance for Genomics and Health (ga4gh) in Avro format"; 
 	private final static String GA_2_BAM_DESC   = "Save Global Alliance for Genomics and Health (ga4gh) in Avro format as BAM file";
+	private final static String CRAM_2_GA_DESC  = "Save CRAM file as Global Alliance for Genomics and Health (ga4gh) in Avro format"; 
+	private final static String GA_2_CRAM_DESC  = "Save Global Alliance for Genomics and Health (ga4gh) in Avro format as CRAM file";
 
 	private final static String SAM_HEADER_SUFFIX = ".header";
 
@@ -115,6 +121,22 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 		case GA_2_BAM: {
 			try {
 				ga2sam(ga4ghCommandOptions.input, ga4ghCommandOptions.output, BAM_FLAG);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			break;
+		}
+		case CRAM_2_GA: {
+			try {
+				cram2ga(ga4ghCommandOptions.input, ga4ghCommandOptions.output);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			break;
+		}
+		case GA_2_CRAM: {
+			try {
+				ga2sam(ga4ghCommandOptions.input, ga4ghCommandOptions.output, CRAM_FLAG);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -225,6 +247,7 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 
 		// writer
 		SAMFileWriter writer = null;
+		OutputStream os = new FileOutputStream(new File(output));
 		switch (flag) {
 		case SAM_FLAG: {
 			writer = new SAMFileWriterFactory().makeSAMWriter(header, false, new File(output));
@@ -232,6 +255,10 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 		}
 		case BAM_FLAG: {
 			writer = new SAMFileWriterFactory().makeBAMWriter(header, false, new File(output));
+			break;
+		}
+		case CRAM_FLAG: {
+			writer = new SAMFileWriterFactory().makeCRAMWriter(header, os, null); //new File(output));
 			break;
 		}
 		}
@@ -248,7 +275,39 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 		// close
 		reader.close();
 		writer.close();
+		os.close();
 		is.close();
+	}
+
+	private void cram2ga(String input, String output) throws IOException {
+		// reader
+		File fi = new File(input);
+		FileInputStream fis = new FileInputStream(fi);
+		CRAMFileReader reader = new CRAMFileReader(fi, fis);
+
+		// header management: saved in a separate file
+		SAMFileHeader header = reader.getFileHeader();
+		PrintWriter pwriter = new PrintWriter(new FileWriter(output + SAM_HEADER_SUFFIX));
+		pwriter.write(header.getTextHeader());
+		pwriter.close();
+		
+		// writer
+		OutputStream os = new FileOutputStream(output);
+		AvroWriter<ReadAlignment> writer = new AvroWriter<ReadAlignment>(ReadAlignment.getClassSchema(), CodecFactory.snappyCodec(), os);
+
+		// main loop
+		SAMRecord2ReadAlignmentConverter converter = new SAMRecord2ReadAlignmentConverter();
+		SAMRecordIterator iterator = reader.iterator();
+		while (iterator.hasNext()) {
+			SAMRecord samRecord = iterator.next();
+			writer.write(converter.forward(samRecord));			
+		}
+	
+		// close
+		fis.close();
+		reader.close();
+		writer.close();
+		os.close();
 	}
 
 
@@ -260,6 +319,8 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 		res += "\t- " + GA_2_SAM + "\t" + GA_2_SAM_DESC + "\n";
 		res += "\t- " + BAM_2_GA + "\t" + BAM_2_GA_DESC + "\n";
 		res += "\t- " + GA_2_BAM + "\t" + GA_2_BAM_DESC + "\n";
+		res += "\t- " + CRAM_2_GA + "\t" + CRAM_2_GA_DESC + "\n";
+		res += "\t- " + GA_2_CRAM + "\t" + GA_2_CRAM_DESC + "\n";
 		return res;
 
 	}
