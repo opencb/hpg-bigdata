@@ -139,8 +139,6 @@ public class CliOptionsParser {
     @Parameters(commandNames = {"ga4gh"}, commandDescription = "Description")
     public class Ga4ghCommandOptions {
 
-    	// todo: add a compression parameter for Avro (bzip2, deflate, snappy, xz) ??
-    	
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
 
@@ -152,6 +150,9 @@ public class CliOptionsParser {
 
         @Parameter(names = {"-c", "--conversion"}, description = "Accepted values: fastq2ga, ga2fastq, sam2ga, ga2sam, bam2ga, ga2bam", required = true, arity = 1)
         public String conversion;
+
+        @Parameter(names = {"-x", "--compression"}, description = "Accepted values: snappy, deflate, bzip2, xz. Default: snappy", required = false, arity = 1)
+        public String compression;
 
         @Parameter(names = {"-p", "--parquet"}, description = "Save data in ga4gh using the parquet format (for Hadoop only)", required = false)
         public boolean toParquet = false;

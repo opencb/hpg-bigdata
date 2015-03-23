@@ -77,10 +77,36 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 	public void execute() {
 		logger.info("Executing {} CLI options", "ga4gh");
 
+		// compression factor
+		CodecFactory codec = null;
+		if (ga4ghCommandOptions.compression == null) {
+			// default value
+			codec = CodecFactory.snappyCodec();
+		} else {
+			switch (ga4ghCommandOptions.compression) {
+			case "snappy": {
+				codec = CodecFactory.snappyCodec();
+				break;
+			}
+			case "deflate": {
+				codec = CodecFactory.deflateCodec(CodecFactory.DEFAULT_DEFLATE_LEVEL);
+				break;
+			}
+			case "bzip2": {
+				codec = CodecFactory.bzip2Codec();
+				break;
+			}
+			default:{
+				logger.error("Invalid compression value '{}'", ga4ghCommandOptions.compression);
+				System.exit(-1);
+			}
+			}
+		}
+
 		switch (ga4ghCommandOptions.conversion) {
 		case FASTQ_2_GA: {
 			try {
-				fastq2ga(ga4ghCommandOptions.input, ga4ghCommandOptions.output);
+				fastq2ga(ga4ghCommandOptions.input, ga4ghCommandOptions.output, codec);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -96,7 +122,7 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 		}
 		case SAM_2_GA: {
 			try {
-				sam2ga(ga4ghCommandOptions.input, ga4ghCommandOptions.output);
+				sam2ga(ga4ghCommandOptions.input, ga4ghCommandOptions.output, codec);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -112,7 +138,7 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 		}
 		case BAM_2_GA: {
 			try {
-				sam2ga(ga4ghCommandOptions.input, ga4ghCommandOptions.output);
+				sam2ga(ga4ghCommandOptions.input, ga4ghCommandOptions.output, codec);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -128,20 +154,25 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 		}
 		case CRAM_2_GA: {
 			try {
-				cram2ga(ga4ghCommandOptions.input, ga4ghCommandOptions.output);
+				cram2ga(ga4ghCommandOptions.input, ga4ghCommandOptions.output, codec);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 			break;
 		}
+
 		case GA_2_CRAM: {
+			System.out.println("Conversion '" + ga4ghCommandOptions.conversion + "' not implemented yet.\nValid conversions are:\n" + getValidConversionString());
+			/*
 			try {
 				ga2sam(ga4ghCommandOptions.input, ga4ghCommandOptions.output, CRAM_FLAG);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
+			 */
 			break;
 		}
+
 		default: {
 			logger.error("Invalid conversion {}", ga4ghCommandOptions.conversion);
 			System.out.println("Invalid conversion (" + ga4ghCommandOptions.conversion + "). Valid conversions are:\n" + getValidConversionString());
@@ -152,7 +183,7 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 		logger.debug("Input file: {}", ga4ghCommandOptions.input);
 	}
 
-	private void fastq2ga(String input, String output) throws IOException {
+	private void fastq2ga(String input, String output, CodecFactory codec) throws IOException {
 		// for hadoop
 		// Configuration config = new Configuration();
 		// FileSystem hdfs = FileSystem.get(config);
@@ -163,7 +194,7 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 
 		// writer
 		OutputStream os = new FileOutputStream(output);
-		AvroWriter<Read> writer = new AvroWriter<>(Read.getClassSchema(), CodecFactory.snappyCodec(), os);
+		AvroWriter<Read> writer = new AvroWriter<>(Read.getClassSchema(), codec, os);
 
 		// main loop
 		FastqRecord2ReadConverter converter = new FastqRecord2ReadConverter();
@@ -201,7 +232,7 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 		is.close();
 	}
 
-	private void sam2ga(String input, String output) throws IOException {
+	private void sam2ga(String input, String output, CodecFactory codec) throws IOException {
 		// reader
 		SamReader reader = SamReaderFactory.makeDefault().open(new File(input));
 
@@ -213,12 +244,14 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 
 		// writer
 		OutputStream os = new FileOutputStream(output);
-		AvroWriter<ReadAlignment> writer = new AvroWriter<ReadAlignment>(ReadAlignment.getClassSchema(), CodecFactory.snappyCodec(), os);
+		AvroWriter<ReadAlignment> writer = new AvroWriter<ReadAlignment>(ReadAlignment.getClassSchema(), codec, os);
 
 		// main loop
 		SAMRecord2ReadAlignmentConverter converter = new SAMRecord2ReadAlignmentConverter();
 		for (final SAMRecord samRecord : reader) {
-			writer.write(converter.forward(samRecord));
+			final ReadAlignment ra = converter.forward(samRecord);
+			writer.write(ra);
+			//writer.write(converter.forward(samRecord));
 		}
 
 		// close
@@ -279,7 +312,7 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 		is.close();
 	}
 
-	private void cram2ga(String input, String output) throws IOException {
+	private void cram2ga(String input, String output, CodecFactory codec) throws IOException {
 		// reader
 		File fi = new File(input);
 		FileInputStream fis = new FileInputStream(fi);
@@ -290,10 +323,10 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 		PrintWriter pwriter = new PrintWriter(new FileWriter(output + SAM_HEADER_SUFFIX));
 		pwriter.write(header.getTextHeader());
 		pwriter.close();
-		
+
 		// writer
 		OutputStream os = new FileOutputStream(output);
-		AvroWriter<ReadAlignment> writer = new AvroWriter<ReadAlignment>(ReadAlignment.getClassSchema(), CodecFactory.snappyCodec(), os);
+		AvroWriter<ReadAlignment> writer = new AvroWriter<ReadAlignment>(ReadAlignment.getClassSchema(), codec, os);
 
 		// main loop
 		SAMRecord2ReadAlignmentConverter converter = new SAMRecord2ReadAlignmentConverter();
@@ -302,7 +335,7 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 			SAMRecord samRecord = iterator.next();
 			writer.write(converter.forward(samRecord));			
 		}
-	
+
 		// close
 		fis.close();
 		reader.close();
@@ -320,7 +353,7 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 		res += "\t- " + BAM_2_GA + "\t" + BAM_2_GA_DESC + "\n";
 		res += "\t- " + GA_2_BAM + "\t" + GA_2_BAM_DESC + "\n";
 		res += "\t- " + CRAM_2_GA + "\t" + CRAM_2_GA_DESC + "\n";
-		res += "\t- " + GA_2_CRAM + "\t" + GA_2_CRAM_DESC + "\n";
+		//res += "\t- " + GA_2_CRAM + "\t" + GA_2_CRAM_DESC + "\n";
 		return res;
 
 	}
