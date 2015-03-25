@@ -1,4 +1,4 @@
-package org.opencb.hpg.bigdata.core.utils.files;
+package org.opencb.hpg.bigdata.core.io;
 
 import java.io.IOException;
 
@@ -18,7 +18,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.opencb.ga4gh.models.Read;
 import org.opencb.hpg.bigdata.core.hadoopbam.FastqInputFormat;
 import org.opencb.hpg.bigdata.core.hadoopbam.SequencedFragment;
-import org.opencb.hpg.bigdata.core.io.Avro2ParquetMapper;
+import org.opencb.hpg.bigdata.core.utils.CompressionUtils;
 
 import parquet.avro.AvroParquetOutputFormat;
 import parquet.format.CompressionCodec;

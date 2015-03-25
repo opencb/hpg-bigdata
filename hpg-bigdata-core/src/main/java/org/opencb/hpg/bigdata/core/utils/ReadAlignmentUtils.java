@@ -1,4 +1,4 @@
-package org.opencb.hpg.bigdata.core.utils.ga4gh;
+package org.opencb.hpg.bigdata.core.utils;
 
 import org.ga4gh.models.CigarUnit;
 import org.ga4gh.models.LinearAlignment;

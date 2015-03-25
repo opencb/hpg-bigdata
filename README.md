@@ -4,6 +4,9 @@ This repository implements converters and tools for working with NGS data in HPC
 DOWNLOAD and BUILDING
 ---------------------
 
+    $ git clone https://github.com/opencb/hpg-bigdata.git
+    $ mvn install
+
 RUNING
 -------
 

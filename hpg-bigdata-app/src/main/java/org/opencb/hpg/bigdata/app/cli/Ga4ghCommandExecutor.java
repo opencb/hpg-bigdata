@@ -6,7 +6,6 @@ import htsjdk.samtools.SAMFileWriter;
 import htsjdk.samtools.SAMFileWriterFactory;
 import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SAMRecordIterator;
-import htsjdk.samtools.SAMTextHeaderCodec;
 import htsjdk.samtools.SamReader;
 import htsjdk.samtools.SamReaderFactory;
 import htsjdk.samtools.fastq.FastqReader;
@@ -27,24 +26,23 @@ import org.apache.avro.file.DataFileStream;
 import org.apache.avro.mapreduce.AvroKeyInputFormat;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.ga4gh.models.ReadAlignment;
+import org.opencb.ga4gh.models.Read;
+import org.opencb.hpg.bigdata.core.converters.FastqRecord2ReadConverter;
 import org.opencb.hpg.bigdata.core.converters.SAMRecord2ReadAlignmentConverter;
 import org.opencb.hpg.bigdata.core.io.Avro2ParquetMapper;
 import org.opencb.hpg.bigdata.core.io.AvroWriter;
-import org.opencb.hpg.bigdata.core.io.WordCount;
-import org.opencb.hpg.bigdata.core.io.WordCount.IntSumReducer;
-import org.opencb.hpg.bigdata.core.io.WordCount.TokenizerMapper;
-import org.opencb.hpg.bigdata.core.utils.files.CompressionUtils;
-import org.opencb.hpg.bigdata.core.utils.files.Fastq2Ga;
-import org.opencb.hpg.bigdata.core.utils.files.Ga2Fastq;
-import org.opencb.hpg.bigdata.core.utils.files.PathUtils;
+import org.opencb.hpg.bigdata.core.utils.CompressionUtils;
+import org.opencb.hpg.bigdata.core.utils.PathUtils;
+import org.opencb.hpg.bigdata.core.utils.ReadUtils;
+import org.opencb.hpg.bigdata.core.utils.SAMFileHeaderCodec;
 
 import parquet.avro.AvroParquetOutputFormat;
 import parquet.avro.AvroParquetWriter;
@@ -171,16 +169,14 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 		String out = PathUtils.clean(output);
 
 		if (PathUtils.isHdfs(input)) {
-			logger.error("Converion '{}' with HDFS as input '{}', not implemented yet !", FASTQ_2_GA, input);
+			logger.error("Conversion '{}' with HDFS as input '{}', not implemented yet !", ga4ghCommandOptions.conversion, input);
 			System.exit(-1);
 		}
-		
-		logger.info("Conversion {}: from {}", FASTQ_2_GA, input + " to " + output);
 
 		// reader
 		FastqReader reader = new FastqReader(new File(in));
 
-		// prepare output for writer
+		// writer
 		OutputStream os;
 		if (PathUtils.isHdfs(output)) {
 			Configuration config = new Configuration();
@@ -189,28 +185,31 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 		} else {
 			os = new FileOutputStream(out);
 		}
+		AvroWriter<Read> writer = new AvroWriter<>(Read.getClassSchema(), CompressionUtils.getAvroCodec(codecName), os);
 
-		// convert
-		Fastq2Ga.convert(reader, os, CompressionUtils.getAvroCodec(codecName));
+		// main loop
+		FastqRecord2ReadConverter converter = new FastqRecord2ReadConverter();
+		while (reader.hasNext()) {
+			writer.write(converter.forward(reader.next()));
+		}
 
 		// close
 		reader.close();
 		os.close();
+		writer.close();
 	}
 
 	private void ga2fastq(String input, String output) throws IOException {	
 		// clean paths
 		String in = PathUtils.clean(input);
 		String out = PathUtils.clean(output);
-		
+
 		if (PathUtils.isHdfs(output)) {
-			logger.error("Converion '{}' with HDFS as output '{}', not implemented yet !", GA_2_FASTQ, output);
+			logger.error("Conversion '{}' with HDFS as output '{}', not implemented yet !", ga4ghCommandOptions.conversion, output);
 			System.exit(-1);
 		}
 
-		logger.info("Conversion {}: from {}", GA_2_FASTQ, input + " to " + output);
-
-		// prepare input for reader
+		// reader
 		InputStream is;
 		if (PathUtils.isHdfs(input)) {
 			Configuration config = new Configuration();
@@ -219,38 +218,60 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 		} else {
 			is = new FileInputStream(in);
 		}
-		
+		DataFileStream<Read> reader = new DataFileStream<Read>(is, new SpecificDatumReader<Read>(Read.class));
+
 		// writer
 		PrintWriter writer = new PrintWriter(new FileWriter(out));
-		
-		// convert
-		Ga2Fastq.convert(is, writer);
-		
+
+		// main loop
+		for (Read read: reader) {
+			writer.write(ReadUtils.getFastqString(read));
+		}
+
 		// close
+		reader.close();
 		writer.close();
 		is.close();
 	}
 
 	private void sam2ga(String input, String output, String codecName) throws IOException {
-		// reader
-		SamReader reader = SamReaderFactory.makeDefault().open(new File(input));
+		// clean paths
+		String in = PathUtils.clean(input);
+		String out = PathUtils.clean(output);
 
-		// header management: saved in a separate file
+		if (PathUtils.isHdfs(input)) {
+			logger.error("Conversion '{}' with HDFS as input '{}', not implemented yet !", ga4ghCommandOptions.conversion, input);
+			System.exit(-1);
+		}
+
+		// reader (sam or bam)
+		SamReader reader = SamReaderFactory.makeDefault().open(new File(in));
+
+		// header management: saved it in a separate file
+		// and writer
+		OutputStream os;
 		SAMFileHeader header = reader.getFileHeader();
-		PrintWriter pwriter = new PrintWriter(new FileWriter(output + SAM_HEADER_SUFFIX));
-		pwriter.write(header.getTextHeader());
-		pwriter.close();
+		if (PathUtils.isHdfs(output)) {
+			Configuration config = new Configuration();
+			FileSystem hdfs = FileSystem.get(config);
+			FSDataOutputStream dos = hdfs.create(new Path(out + SAM_HEADER_SUFFIX));
+			dos.writeChars(header.getTextHeader());
+			dos.close();
 
-		// writer
-		OutputStream os = new FileOutputStream(output);
+			os = hdfs.create(new Path(out));		
+		} else {
+			PrintWriter pwriter = new PrintWriter(new FileWriter(output + SAM_HEADER_SUFFIX));
+			pwriter.write(header.getTextHeader());
+			pwriter.close();
+
+			os = new FileOutputStream(output);
+		}
 		AvroWriter<ReadAlignment> writer = new AvroWriter<ReadAlignment>(ReadAlignment.getClassSchema(), CompressionUtils.getAvroCodec(codecName), os);
 
 		// main loop
 		SAMRecord2ReadAlignmentConverter converter = new SAMRecord2ReadAlignmentConverter();
 		for (final SAMRecord samRecord : reader) {
-			final ReadAlignment ra = converter.forward(samRecord);
-			writer.write(ra);
-			//writer.write(converter.forward(samRecord));
+			writer.write(converter.forward(samRecord));
 		}
 
 		// close
@@ -260,37 +281,69 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 	}
 
 	private void ga2sam(String input, String output, int flag) throws IOException {
+		// clean paths
+		String in = PathUtils.clean(input);
+		String out = PathUtils.clean(output);
+
+		if (PathUtils.isHdfs(output)) {
+			logger.error("Conversion '{}' with HDFS as output '{}', not implemented yet !", ga4ghCommandOptions.conversion, output);
+			System.exit(-1);
+		}
+
 		// header management: read it from a separate file
-		File file = new File(input + SAM_HEADER_SUFFIX);
-		FileInputStream fis = new FileInputStream(file);
-		byte[] data = new byte[(int) file.length()];
-		fis.read(data);
-		fis.close();
+		byte[] data = null;
+		InputStream is = null;
+		if (PathUtils.isHdfs(input)) {
+			Path headerPath = new Path(in + SAM_HEADER_SUFFIX);
+			Configuration config = new Configuration();
+			FileSystem hdfs = FileSystem.get(config);
+			FSDataInputStream dis = hdfs.open(headerPath);
+			FileStatus status = hdfs.getFileStatus(headerPath);
+			data = new byte[(int) status.getLen()];
+			dis.read(data, 0, (int) status.getLen());
+			dis.close();
+
+			is = hdfs.open(new Path(in));
+		} else {
+			File file = new File(in + SAM_HEADER_SUFFIX);
+			FileInputStream fis = new FileInputStream(file);
+			data = new byte[(int) file.length()];
+			fis.read(data);
+			fis.close();
+
+			is = new FileInputStream(in);			
+		}
 
 		String textHeader = new String(data);
 
+		//System.out.println("textHeader = " + textHeader);
+
 		SAMFileHeader header = new SAMFileHeader();
 		LineReader lineReader = new StringLineReader(textHeader);
-		header = new SAMTextHeaderCodec().decode(lineReader, textHeader);
+		//header = new SAMTextHeaderCodec().decode(lineReader, textHeader);
+		header = new SAMFileHeaderCodec().decode(lineReader, textHeader);
 
+		System.out.println("header.getTextHeader() = " + header.getTextHeader());
+		
 		// reader
-		InputStream is = new FileInputStream(input);
 		DataFileStream<ReadAlignment> reader = new DataFileStream<ReadAlignment>(is, new SpecificDatumReader<ReadAlignment>(ReadAlignment.class));
 
 		// writer
 		SAMFileWriter writer = null;
-		OutputStream os = new FileOutputStream(new File(output));
+		OutputStream os = new FileOutputStream(new File(out));
 		switch (flag) {
 		case SAM_FLAG: {
-			writer = new SAMFileWriterFactory().makeSAMWriter(header, false, new File(output));
+			writer = new SAMFileWriterFactory().makeSAMWriter(header, false, new File(out));
 			break;
 		}
 		case BAM_FLAG: {
-			writer = new SAMFileWriterFactory().makeBAMWriter(header, false, new File(output));
+			writer = new SAMFileWriterFactory().makeBAMWriter(header, false, new File(out));
 			break;
 		}
 		case CRAM_FLAG: {
-			writer = new SAMFileWriterFactory().makeCRAMWriter(header, os, null); //new File(output));
+			logger.error("Conversion '{}' not implemented yet !", ga4ghCommandOptions.conversion);
+			System.exit(-1);
+			writer = new SAMFileWriterFactory().makeCRAMWriter(header, os, null);
 			break;
 		}
 		}
@@ -312,6 +365,9 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 	}
 
 	private void cram2ga(String input, String output, String codecName) throws IOException {
+		logger.error("Conversion '{}' not implemented yet !", ga4ghCommandOptions.conversion);
+		System.exit(-1);
+
 		// reader
 		File fi = new File(input);
 		FileInputStream fis = new FileInputStream(fi);
@@ -341,7 +397,7 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 		writer.close();
 		os.close();
 	}
-
+/*
 	private void avro2parquetOK(String input, String output) throws IOException, ClassNotFoundException, InterruptedException {		
 		Configuration conf = new Configuration();
 		Job job = Job.getInstance(conf, "word count");
@@ -356,7 +412,7 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 
 		System.exit(job.waitForCompletion(true) ? 0 : 1);
 	}
-
+*/
 	private void avro2parquet(String input, String output) throws IOException, ClassNotFoundException, InterruptedException {
 
 		// all paths in HDFS

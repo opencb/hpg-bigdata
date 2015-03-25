@@ -1,4 +1,4 @@
-package org.opencb.hpg.bigdata.core.utils.files;
+package org.opencb.hpg.bigdata.core.utils;
 
 
 import org.apache.avro.file.CodecFactory;

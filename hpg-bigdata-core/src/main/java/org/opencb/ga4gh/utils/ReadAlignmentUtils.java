@@ -70,16 +70,16 @@ public class ReadAlignmentUtils {
 			case "DELETE":
 				res += "D";
 				break;
-			case "CigarOperation.SKIP":
+			case "SKIP":
 				res += "N";
 				break;
-			case "CigarOperation.CLIP_SOFT":
+			case "CLIP_SOFT":
 				res += "S";
 				break;
-			case "CigarOperation.CLIP_HARD":
+			case "CLIP_HARD":
 				res += "H";
 				break;
-			case "CigarOperation.PAD":
+			case "PAD":
 				res += "P";
 				break;
 			case "SEQUENCE_MATCH":
