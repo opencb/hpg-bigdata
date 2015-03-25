@@ -6,12 +6,14 @@ import htsjdk.samtools.SAMFileWriter;
 import htsjdk.samtools.SAMFileWriterFactory;
 import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SAMRecordIterator;
+import htsjdk.samtools.SAMTextHeaderCodec;
 import htsjdk.samtools.SamReader;
 import htsjdk.samtools.SamReaderFactory;
 import htsjdk.samtools.fastq.FastqReader;
 import htsjdk.samtools.util.LineReader;
 import htsjdk.samtools.util.StringLineReader;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -19,6 +21,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 
 import org.apache.avro.Schema;
@@ -27,7 +30,6 @@ import org.apache.avro.mapreduce.AvroKeyInputFormat;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -42,7 +44,6 @@ import org.opencb.hpg.bigdata.core.io.AvroWriter;
 import org.opencb.hpg.bigdata.core.utils.CompressionUtils;
 import org.opencb.hpg.bigdata.core.utils.PathUtils;
 import org.opencb.hpg.bigdata.core.utils.ReadUtils;
-import org.opencb.hpg.bigdata.core.utils.SAMFileHeaderCodec;
 
 import parquet.avro.AvroParquetOutputFormat;
 import parquet.avro.AvroParquetWriter;
@@ -195,8 +196,8 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 
 		// close
 		reader.close();
-		os.close();
 		writer.close();
+		os.close();
 	}
 
 	private void ga2fastq(String input, String output) throws IOException {	
@@ -254,9 +255,11 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 		if (PathUtils.isHdfs(output)) {
 			Configuration config = new Configuration();
 			FileSystem hdfs = FileSystem.get(config);
-			FSDataOutputStream dos = hdfs.create(new Path(out + SAM_HEADER_SUFFIX));
-			dos.writeChars(header.getTextHeader());
-			dos.close();
+			os = hdfs.create(new Path(out + SAM_HEADER_SUFFIX));
+			BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os, "UTF-8"));
+			bw.write(header.getTextHeader());
+			bw.close();
+			os.close();
 
 			os = hdfs.create(new Path(out));		
 		} else {
@@ -316,14 +319,9 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 
 		String textHeader = new String(data);
 
-		//System.out.println("textHeader = " + textHeader);
-
 		SAMFileHeader header = new SAMFileHeader();
 		LineReader lineReader = new StringLineReader(textHeader);
-		//header = new SAMTextHeaderCodec().decode(lineReader, textHeader);
-		header = new SAMFileHeaderCodec().decode(lineReader, textHeader);
-
-		System.out.println("header.getTextHeader() = " + header.getTextHeader());
+		header = new SAMTextHeaderCodec().decode(lineReader, textHeader);
 		
 		// reader
 		DataFileStream<ReadAlignment> reader = new DataFileStream<ReadAlignment>(is, new SpecificDatumReader<ReadAlignment>(ReadAlignment.class));
@@ -392,9 +390,9 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 		}
 
 		// close
-		fis.close();
 		reader.close();
 		writer.close();
+		fis.close();
 		os.close();
 	}
 /*
