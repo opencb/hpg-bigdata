@@ -1,11 +1,14 @@
 package org.opencb.hpg.bigdata.app;
 
+import org.apache.avro.Schema;
 import org.opencb.hpg.bigdata.app.cli.AlignCommandExecutor;
 import org.opencb.hpg.bigdata.app.cli.BamCommandExecutor;
 import org.opencb.hpg.bigdata.app.cli.CliOptionsParser;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
 import org.opencb.hpg.bigdata.app.cli.FastqCommandExecutor;
 import org.opencb.hpg.bigdata.app.cli.Ga4ghCommandExecutor;
+
+import parquet.avro.AvroSchemaConverter;
 
 import com.beust.jcommander.ParameterException;
 
@@ -14,7 +17,7 @@ import com.beust.jcommander.ParameterException;
  */
 public class BigDataMain {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) {    	
         CliOptionsParser cliOptionsParser = new CliOptionsParser();
         
         if (args == null || args.length == 0) {

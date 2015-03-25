@@ -21,7 +21,7 @@ public class CliOptionsParser {
         generalOptions = new GeneralOptions();
 
         jcommander = new JCommander(generalOptions);
-        jcommander.setProgramName("bigdata.sh");
+        jcommander.setProgramName("hpg-bigdata.sh");
 
         commonCommandOptions = new CommonCommandOptions();
 
