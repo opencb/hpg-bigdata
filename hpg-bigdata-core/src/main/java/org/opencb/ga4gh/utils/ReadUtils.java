@@ -1,6 +1,6 @@
 package org.opencb.ga4gh.utils;
 
-import org.opencb.ga4gh.models.Read;
+import org.ga4gh.models.Read;
 
 public class ReadUtils {
 

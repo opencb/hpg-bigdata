@@ -1,8 +1,8 @@
 package org.opencb.hpg.bigdata.core.converters;
 
-import org.opencb.ga4gh.models.Read;
-
 import htsjdk.samtools.fastq.FastqRecord;
+
+import org.ga4gh.models.Read;
 
 public class FastqRecord2ReadConverter implements Converter<FastqRecord, Read> {
 

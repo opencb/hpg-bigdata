@@ -2,27 +2,21 @@ package org.opencb.hpg.bigdata.core.io;
 
 import java.io.IOException;
 
-import org.apache.avro.file.CodecFactory;
 import org.apache.avro.mapred.AvroKey;
 import org.apache.avro.mapreduce.AvroJob;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.compress.SnappyCodec;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.opencb.ga4gh.models.Read;
+import org.ga4gh.models.Read;
 import org.opencb.hpg.bigdata.core.hadoopbam.FastqInputFormat;
 import org.opencb.hpg.bigdata.core.hadoopbam.SequencedFragment;
 import org.opencb.hpg.bigdata.core.utils.CompressionUtils;
-
-import parquet.avro.AvroParquetOutputFormat;
-import parquet.format.CompressionCodec;
-import parquet.hadoop.metadata.CompressionCodecName;
 
 public class Fastq2GaMR {
 	

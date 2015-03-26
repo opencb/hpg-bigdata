@@ -88,7 +88,7 @@ public class CliOptionsParser {
 
 
         @Parameter(names = {"-i", "--input"}, description = "", required = true, arity = 1)
-        public String intput = null;
+        public String input = null;
 
         @Parameter(names = {"-o", "--output"}, description = "", required = false, arity = 1)
         public String output = null;
@@ -100,7 +100,7 @@ public class CliOptionsParser {
         public String filter = null;
 
         @Parameter(names = {"-k", "--kmers"}, description = "", required = false, arity = 1)
-        public Integer kmers = 7;
+        public Integer kmers = 0;
 
     }
 
