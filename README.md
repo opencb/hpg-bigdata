@@ -46,4 +46,17 @@ ga4gh command
     $ ./hpg-bigdata.sh ga4gh -c ga2bam -i data/test.bam.ga -o data/test.sam.ga.bam
     $ ./hpg-bigdata.sh ga4gh -c ga2bam -i hdfs://test.bam.hdfs.ga -o data/test.bam.hdfs.ga.bam
    
+
+fastq command
+-------------
+
+  The command **fastq** allows you to compute some statistical values for a given Fastq file that must be stored in the Haddop/HDFS environment, and according to the GA4GH Avro models (Check the command **ga4gh**)
+  
+  Some examples:
+   
+    $ ./hpg-bigdata.sh ga4gh --stats -i hdfs://test.fq.ga -o hdfs://stats-test.fq.ga
+    $ ./hpg-bigdata.sh ga4gh --kmers 7 -i hdfs://test.fq.ga -o hdfs://kmers-test.fq.ga
+    $ ./hpg-bigdata.sh ga4gh --stats --kmers 7 -i hdfs://test.fq.ga -o hdfs://full-stats-test.fq.ga
+    
+    
    
