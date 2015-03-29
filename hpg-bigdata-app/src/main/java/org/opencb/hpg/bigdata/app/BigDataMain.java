@@ -14,7 +14,7 @@ import com.beust.jcommander.ParameterException;
  */
 public class BigDataMain {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) {    	
         CliOptionsParser cliOptionsParser = new CliOptionsParser();
         
         if (args == null || args.length == 0) {

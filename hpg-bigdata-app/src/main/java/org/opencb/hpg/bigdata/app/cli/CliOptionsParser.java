@@ -21,7 +21,7 @@ public class CliOptionsParser {
         generalOptions = new GeneralOptions();
 
         jcommander = new JCommander(generalOptions);
-        jcommander.setProgramName("bigdata.sh");
+        jcommander.setProgramName("hpg-bigdata.sh");
 
         commonCommandOptions = new CommonCommandOptions();
 
@@ -88,7 +88,7 @@ public class CliOptionsParser {
 
 
         @Parameter(names = {"-i", "--input"}, description = "", required = true, arity = 1)
-        public String intput = null;
+        public String input = null;
 
         @Parameter(names = {"-o", "--output"}, description = "", required = false, arity = 1)
         public String output = null;
@@ -100,7 +100,7 @@ public class CliOptionsParser {
         public String filter = null;
 
         @Parameter(names = {"-k", "--kmers"}, description = "", required = false, arity = 1)
-        public Integer kmers = 7;
+        public Integer kmers = 0;
 
     }
 
@@ -139,8 +139,6 @@ public class CliOptionsParser {
     @Parameters(commandNames = {"ga4gh"}, commandDescription = "Description")
     public class Ga4ghCommandOptions {
 
-    	// todo: add a compression parameter for Avro (bzip2, deflate, snappy, xz) ??
-    	
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
 
@@ -152,6 +150,9 @@ public class CliOptionsParser {
 
         @Parameter(names = {"-c", "--conversion"}, description = "Accepted values: fastq2ga, ga2fastq, sam2ga, ga2sam, bam2ga, ga2bam", required = true, arity = 1)
         public String conversion;
+
+        @Parameter(names = {"-x", "--compression"}, description = "Accepted values: snappy, deflate, bzip2, xz. Default: snappy", required = false, arity = 1)
+        public String compression;
 
         @Parameter(names = {"-p", "--parquet"}, description = "Save data in ga4gh using the parquet format (for Hadoop only)", required = false)
         public boolean toParquet = false;

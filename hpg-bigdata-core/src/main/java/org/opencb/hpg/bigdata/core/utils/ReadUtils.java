@@ -1,4 +1,4 @@
-package org.opencb.ga4gh.utils;
+package org.opencb.hpg.bigdata.core.utils;
 
 import org.ga4gh.models.Read;
 

@@ -1,4 +1,4 @@
-package org.opencb.ga4gh.utils;
+package org.opencb.hpg.bigdata.core.utils;
 
 import org.ga4gh.models.CigarUnit;
 import org.ga4gh.models.LinearAlignment;
@@ -70,16 +70,16 @@ public class ReadAlignmentUtils {
 			case "DELETE":
 				res += "D";
 				break;
-			case "SKIP":
+			case "CigarOperation.SKIP":
 				res += "N";
 				break;
-			case "CLIP_SOFT":
+			case "CigarOperation.CLIP_SOFT":
 				res += "S";
 				break;
-			case "CLIP_HARD":
+			case "CigarOperation.CLIP_HARD":
 				res += "H";
 				break;
-			case "PAD":
+			case "CigarOperation.PAD":
 				res += "P";
 				break;
 			case "SEQUENCE_MATCH":

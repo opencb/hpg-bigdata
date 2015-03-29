@@ -3,7 +3,7 @@
  * 
  * DO NOT EDIT DIRECTLY
  */
-package org.opencb.ga4gh.models;
+package org.ga4gh.models;  
 @SuppressWarnings("all")
 @org.apache.avro.specific.AvroGenerated
 public class Read extends org.apache.avro.specific.SpecificRecordBase implements org.apache.avro.specific.SpecificRecord {
@@ -99,18 +99,18 @@ public class Read extends org.apache.avro.specific.SpecificRecordBase implements
   }
 
   /** Creates a new Read RecordBuilder */
-  public static Read.Builder newBuilder() {
-    return new Read.Builder();
+  public static org.ga4gh.models.Read.Builder newBuilder() {
+    return new org.ga4gh.models.Read.Builder();
   }
   
   /** Creates a new Read RecordBuilder by copying an existing Builder */
-  public static Read.Builder newBuilder(Read.Builder other) {
-    return new Read.Builder(other);
+  public static org.ga4gh.models.Read.Builder newBuilder(org.ga4gh.models.Read.Builder other) {
+    return new org.ga4gh.models.Read.Builder(other);
   }
   
   /** Creates a new Read RecordBuilder by copying an existing Read instance */
-  public static Read.Builder newBuilder(Read other) {
-    return new Read.Builder(other);
+  public static org.ga4gh.models.Read.Builder newBuilder(org.ga4gh.models.Read other) {
+    return new org.ga4gh.models.Read.Builder(other);
   }
   
   /**
@@ -125,11 +125,11 @@ public class Read extends org.apache.avro.specific.SpecificRecordBase implements
 
     /** Creates a new Builder */
     private Builder() {
-      super(Read.SCHEMA$);
+      super(org.ga4gh.models.Read.SCHEMA$);
     }
     
     /** Creates a Builder by copying an existing Builder */
-    private Builder(Read.Builder other) {
+    private Builder(org.ga4gh.models.Read.Builder other) {
       super(other);
       if (isValidValue(fields()[0], other.id)) {
         this.id = data().deepCopy(fields()[0].schema(), other.id);
@@ -146,8 +146,8 @@ public class Read extends org.apache.avro.specific.SpecificRecordBase implements
     }
     
     /** Creates a Builder by copying an existing Read instance */
-    private Builder(Read other) {
-            super(Read.SCHEMA$);
+    private Builder(org.ga4gh.models.Read other) {
+            super(org.ga4gh.models.Read.SCHEMA$);
       if (isValidValue(fields()[0], other.id)) {
         this.id = data().deepCopy(fields()[0].schema(), other.id);
         fieldSetFlags()[0] = true;
@@ -168,7 +168,7 @@ public class Read extends org.apache.avro.specific.SpecificRecordBase implements
     }
     
     /** Sets the value of the 'id' field */
-    public Read.Builder setId(java.lang.CharSequence value) {
+    public org.ga4gh.models.Read.Builder setId(java.lang.CharSequence value) {
       validate(fields()[0], value);
       this.id = value;
       fieldSetFlags()[0] = true;
@@ -181,7 +181,7 @@ public class Read extends org.apache.avro.specific.SpecificRecordBase implements
     }
     
     /** Clears the value of the 'id' field */
-    public Read.Builder clearId() {
+    public org.ga4gh.models.Read.Builder clearId() {
       id = null;
       fieldSetFlags()[0] = false;
       return this;
@@ -193,7 +193,7 @@ public class Read extends org.apache.avro.specific.SpecificRecordBase implements
     }
     
     /** Sets the value of the 'sequence' field */
-    public Read.Builder setSequence(java.lang.CharSequence value) {
+    public org.ga4gh.models.Read.Builder setSequence(java.lang.CharSequence value) {
       validate(fields()[1], value);
       this.sequence = value;
       fieldSetFlags()[1] = true;
@@ -206,7 +206,7 @@ public class Read extends org.apache.avro.specific.SpecificRecordBase implements
     }
     
     /** Clears the value of the 'sequence' field */
-    public Read.Builder clearSequence() {
+    public org.ga4gh.models.Read.Builder clearSequence() {
       sequence = null;
       fieldSetFlags()[1] = false;
       return this;
@@ -218,7 +218,7 @@ public class Read extends org.apache.avro.specific.SpecificRecordBase implements
     }
     
     /** Sets the value of the 'quality' field */
-    public Read.Builder setQuality(java.lang.CharSequence value) {
+    public org.ga4gh.models.Read.Builder setQuality(java.lang.CharSequence value) {
       validate(fields()[2], value);
       this.quality = value;
       fieldSetFlags()[2] = true;
@@ -231,12 +231,13 @@ public class Read extends org.apache.avro.specific.SpecificRecordBase implements
     }
     
     /** Clears the value of the 'quality' field */
-    public Read.Builder clearQuality() {
+    public org.ga4gh.models.Read.Builder clearQuality() {
       quality = null;
       fieldSetFlags()[2] = false;
       return this;
     }
 
+    @Override
     public Read build() {
       try {
         Read record = new Read();
