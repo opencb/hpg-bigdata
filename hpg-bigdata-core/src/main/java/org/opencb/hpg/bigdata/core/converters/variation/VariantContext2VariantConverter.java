@@ -1,68 +1,152 @@
 /**
  * 
  */
-package org.opencb.hpg.bigdata.core.converters;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import org.apache.commons.collections.map.HashedMap;
-import org.apache.commons.lang.StringUtils;
-import org.ga4gh.models.Call;
-import org.ga4gh.models.Variant;
-import org.junit.Assume;
-
-import com.google.common.collect.Lists;
+package org.opencb.hpg.bigdata.core.converters.variation;
 
 import htsjdk.tribble.AbstractFeatureReader;
 import htsjdk.tribble.FeatureReader;
 import htsjdk.tribble.TribbleException;
-import htsjdk.tribble.readers.LineIterator;
-import htsjdk.variant.bcf2.BCF2Codec;
 import htsjdk.variant.variantcontext.Allele;
 import htsjdk.variant.variantcontext.Genotype;
 import htsjdk.variant.variantcontext.GenotypeLikelihoods;
 import htsjdk.variant.variantcontext.GenotypesContext;
 import htsjdk.variant.variantcontext.VariantContext;
-import htsjdk.variant.vcf.VCFCodec;
 import htsjdk.variant.vcf.VCFConstants;
-import htsjdk.variant.vcf.VCFFileReader;
 import htsjdk.variant.vcf.VCFHeader;
+import htsjdk.variant.vcf.VCFHeaderLine;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicReference;
+
+import org.apache.commons.lang.NotImplementedException;
+import org.apache.commons.lang.StringUtils;
+import org.ga4gh.models.Call;
+import org.ga4gh.models.CallSet;
+import org.ga4gh.models.Variant;
+import org.ga4gh.models.VariantSet;
+import org.ga4gh.models.VariantSetMetadata;
+import org.opencb.hpg.bigdata.core.converters.Converter;
+import org.opencb.hpg.bigdata.core.converters.FullVCFCodec;
+import org.opencb.hpg.bigdata.core.io.AvroWriter;
+import org.opencb.hpg.bigdata.core.utils.CompressionUtils;
 
 /**
+ * Chr20 of 1000 genomes -> 855,196 rows  = 30 header, 855,166 rows
+ * 
  * @author mh719
  *
  */
 public class VariantContext2VariantConverter implements Converter<VariantContext, Variant> {
+	
+	private final AtomicReference<VariantConverterContext> ctx = new AtomicReference<VariantConverterContext>();
 
 	public static void main(String[] args) {
 		File file = new File(args[0]);
-		Converter<VariantContext,Variant> converter = new VariantContext2VariantConverter();
-		try(FeatureReader<VariantContext> freader = AbstractFeatureReader.getFeatureReader(
-				file.getAbsolutePath(),
-				new FullVCFCodec(),
-				true);){
 		
-//		try(VCFFileReader reader = new VCFFileReader(file);){
-//			VCFHeader header = reader.getFileHeader();
+		long cnt = 0;
+
+		File outFile = new File(args[1]);
+		try(
+				OutputStream os = new FileOutputStream(outFile );
+				OutputStream callOs = new FileOutputStream(new File(args[1]+".Call"));
+				OutputStream vsOs = new FileOutputStream(new File(args[1]+".variantSet")); ){
+			AvroWriter<Variant> writer = new AvroWriter<Variant>(Variant.getClassSchema(), CompressionUtils.getAvroCodec("snappy"), os);
+			AvroWriter<CallSet> callWriter = new AvroWriter<CallSet>(CallSet.getClassSchema(), CompressionUtils.getAvroCodec("snappy"), callOs);
+			AvroWriter<VariantSet> vsWriter = new AvroWriter<VariantSet>(VariantSet.getClassSchema(), CompressionUtils.getAvroCodec("snappy"), vsOs);
 			
-			for(VariantContext c : freader.iterator()){
-				Variant v = converter.forward(c);
-				print(v);
+			Converter<String,CallSet> gtConverter = new Genotype2CallSet();
+			Converter<VCFHeaderLine,VariantSetMetadata> infoConverter = new VCFHeaderLine2VariantSetMetadataConverter();
+			VariantContext2VariantConverter varConverter = new VariantContext2VariantConverter();
+			try(FeatureReader<VariantContext> freader = AbstractFeatureReader.getFeatureReader(
+					file.getAbsolutePath(),
+					new FullVCFCodec(),
+					true);){
+			
+				VCFHeader header = (VCFHeader) freader.getHeader();
+				
+				int gtSize = header.getGenotypeSamples().size();
+				VariantConverterContext ctx = new VariantConverterContext();
+				
+
+				VariantSet vs = new VariantSet();
+				vs.setId(file.getName());
+				vs.setDatasetId(file.getName());
+				vs.setReferenceSetId("test");
+
+				List<String> genotypeSamples = header.getGenotypeSamples();
+				for(int gtPos = 0; gtPos < gtSize; ++gtPos){
+					CallSet cs = gtConverter.forward(genotypeSamples.get(gtPos));
+					cs.getVariantSetIds().add(vs.getId());
+					ctx.getCallSetMap().put(cs.getName(), cs);
+					callWriter.write(cs);
+				}
+				
+				
+				vs.setMetadata(new LinkedList<VariantSetMetadata>());
+				convertHeaders(infoConverter, header, vs);
+				
+				vsWriter.write(vs);
+				varConverter.setContext(ctx);
+				for(VariantContext c : freader.iterator()){
+					if(cnt%1000 == 0)
+						System.err.println(String.format("Processing variant %s ...", cnt++));
+					cnt++;
+					Variant v = varConverter.forward(c);
+//					print(v);
+					writer.write(v);
+				}
+			} catch (TribbleException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
-		} catch (TribbleException e) {
+		} catch (FileNotFoundException e1) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
+			e1.printStackTrace();
+		} catch (IOException e1) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			e1.printStackTrace();
+		}
+	}
+
+	/**
+	 * Converts INFO, FORMAT, FILTER
+	 * @param headerConverter
+	 * @param header
+	 * @param vs
+	 */
+	private static void convertHeaders(
+			Converter<VCFHeaderLine, VariantSetMetadata> headerConverter,
+			VCFHeader header, VariantSet vs) {		
+		Collection[] coll = new Collection[]{
+				header.getInfoHeaderLines(),
+				header.getFilterLines(),
+				header.getFormatHeaderLines(),
+//				header.getContigLines(),
+				// TODO other formats
+		};
+		for(Collection<? extends VCFHeaderLine> c : coll){
+			if(null != c){
+				for(VCFHeaderLine hl : c){
+					vs.getMetadata().add(
+							headerConverter.forward(hl));
+				}
+			}
 		}
 	}
 	
@@ -70,6 +154,14 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
 		System.out.println(String.format("%s:%s-%s %s %s %s", 
 				v.getReferenceName(),v.getStart(),v.getEnd(),v.getId(),
 				v.getReferenceBases(),v.getAlternateBases()));
+	}
+	
+	public VariantConverterContext getContext() {
+		return ctx.get();
+	}
+	
+	public void setContext(VariantConverterContext ctx){
+		this.ctx.set(ctx);
 	}
 	
 	/*
@@ -97,10 +189,10 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
 	 *	*/
 	
 	@Override
-	public Variant forward(VariantContext c) {
-	
+	public Variant forward(VariantContext c) {	
 		Variant v = new Variant();
 		
+		v.setVariantSetId(""); // TODO
 		// Assumed to be related to the avro record 
 		long currTime = System.currentTimeMillis();
 		v.setCreated(currTime);
@@ -119,8 +211,16 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
 				c.getEnd() /* 1-based, inclusive end position [start,end] */
 				)); // TODO check if 0-based as well
 		
-		v.setId(c.getID());		
+		String rsId = StringUtils.EMPTY;
+		List<CharSequence> nameList = Collections.emptyList();
 		
+		if(StringUtils.isNotBlank(c.getID())){
+			rsId = c.getID();
+			nameList = Collections.singletonList((CharSequence)rsId);
+		}
+		
+		v.setId(rsId);		
+		v.setNames(nameList);
 		
 		/* Classic mode */
 		// Reference
@@ -187,9 +287,13 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
 		List<Call> callList = new ArrayList<Call>(size);
 		
 		for(Genotype gt : gtc){
+			String name = gt.getSampleName();
+			CallSet cs = getContext().getCallSetMap().get(name);
 			Call c = new Call();
-//			c.setCallSetId(value); // TODO
-//			c.setCallSetName(value); // TODO
+
+			c.setCallSetId(cs.getId());
+//			c.setCallSetName(cs.getName());  // TODO is this really needed 2x
+			c.setCallSetName(StringUtils.EMPTY);
 
 			List<Integer> cgt = new ArrayList<Integer>(gt.getPloidy());
 			for(Allele a : gt.getAlleles()){
@@ -197,8 +301,6 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
 			}
 			c.setGenotype(cgt);
 			c.setPhaseset(Boolean.valueOf(gt.isPhased()).toString()); // TODO decide what's the correct string
-
-			
 			
 			Map<CharSequence, List<CharSequence>> infoMap = new HashMap<CharSequence, List<CharSequence>>();
 			if(gt.hasAD()){
@@ -246,6 +348,7 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
 			c.setGenotypeLikelihood(lhList);
 			
 			c.setInfo(infoMap);
+			callList.add(c);
 		}
 		return callList;
 	}
@@ -294,8 +397,7 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
 
 	@Override
 	public VariantContext backward(Variant obj) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new NotImplementedException();
 	}
 
 }
