@@ -22,7 +22,8 @@
 		<ga4gh.version>0.5.1</ga4gh.version>
 		<biodata.version>0.4-SNAPSHOT</biodata.version>
 		<datastore.version>0.4-SNAPSHOT</datastore.version>
-		<compileSource>1.7</compileSource>
+        <commons-lib.version>3.0-SNAPSHOT</commons-lib.version>
+		<compileSource>1.8</compileSource>
 		<build.dir>build</build.dir>
 	</properties>
 
@@ -78,6 +79,11 @@
 				<artifactId>ga4gh</artifactId>
 				<version>${ga4gh.version}</version>
 			</dependency>
+            <dependency>
+                <groupId>org.opencb.commons</groupId>
+                <artifactId>commons-lib</artifactId>
+                <version>${commons-lib.version}</version>
+            </dependency>
 
 			<!-- General dependencies -->
 			<dependency>
