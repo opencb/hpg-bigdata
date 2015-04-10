@@ -3,18 +3,13 @@
  */
 package org.opencb.hpg.bigdata.core.utils;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.CharBuffer;
 import java.util.List;
 
-import junit.framework.Assert;
-
-import org.apache.commons.io.IOUtils;
 import org.junit.After;
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.opencb.hpg.bigdata.core.converters.FullVCFCodec;
@@ -33,7 +28,7 @@ public class VcfBlockIteratorTest {
 	 */
 	@Before
 	public void setUp() throws Exception {
-		this.inFile = "/"+this.getClass().getPackage().getName().replaceAll("\\.", "/")+"/test.vcf";
+		this.inFile = "/"+this.getClass().getName().replaceAll("\\.", "/")+".vcf";
 	}
 	
 	private InputStream getStream(){
@@ -49,17 +44,17 @@ public class VcfBlockIteratorTest {
 
 	/**
 	 * Test method for {@link org.opencb.hpg.bigdata.core.utils.VcfBlockIterator#hasNext()}.
-	 * @throws IOException 
+	 * @throws Exception 
 	 */
 	@Test
-	public void testIterator() throws IOException {
+	public void testIterator() throws Exception {
 		int cnt = 0;
-		try(InputStream in = getStream();){
-			VcfBlockIterator iter = new VcfBlockIterator(in, new FullVCFCodec());
+		try(
+			InputStream in = getStream();
+			VcfBlockIterator iter = new VcfBlockIterator(in, new FullVCFCodec());){
 			for(List<CharBuffer> s : iter){
 				cnt += s.size();
 			}
-			
 		}
 		assertEquals("Number of Variant row don't match!!!", VCF_VAR_LINE_COUNT, cnt);
 	}
