@@ -5,6 +5,7 @@ package org.opencb.hpg.bigdata.core.utils;
 
 import htsjdk.tribble.readers.LineIterator;
 import htsjdk.variant.vcf.VCFHeader;
+import htsjdk.variant.vcf.VCFHeaderVersion;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -36,6 +37,8 @@ public class VcfBlockIterator implements AutoCloseable,Iterator<List<CharBuffer>
 	private final AtomicLong charBlockSize = new AtomicLong(DEFAULT_64KB_BLOCK);
 
 	private final VCFHeader header;
+
+	private final VCFHeaderVersion version;
 	
 	public VcfBlockIterator(File vcfFile) throws IOException {
 		this(vcfFile,new FullVCFCodec());
@@ -46,6 +49,7 @@ public class VcfBlockIterator implements AutoCloseable,Iterator<List<CharBuffer>
 		this.in = buildInputStream(this.file);
 		this.iter = codec.makeSourceFromStream(this.in);
 		this.header = (VCFHeader) codec.readActualHeader(this.iter);
+		this.version = codec.getVCFHeaderVersion();
 	}
 	
 	public VcfBlockIterator(InputStream in, FullVCFCodec codec) throws IOException {
@@ -53,10 +57,15 @@ public class VcfBlockIterator implements AutoCloseable,Iterator<List<CharBuffer>
 		this.in = in;
 		this.iter = codec.makeSourceFromStream(this.in);
 		this.header = (VCFHeader) codec.readActualHeader(this.iter);
+		this.version = codec.getVCFHeaderVersion();
 	}
 	
 	public VCFHeader getHeader() {
 		return this.header;
+	}
+	
+	public VCFHeaderVersion getVersion() {
+		return version;
 	}
 	
 	@Override

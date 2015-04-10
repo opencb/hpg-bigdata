@@ -38,6 +38,10 @@ public class FullVCFCodec extends VCFCodec {
         }
         return values;
     }
+    
+    public VCFHeaderVersion getVCFHeaderVersion(){
+    	return this.version;
+    }
 	
 	@Override
 	public LazyData createGenotypeMap(String str, List<Allele> alleles,
