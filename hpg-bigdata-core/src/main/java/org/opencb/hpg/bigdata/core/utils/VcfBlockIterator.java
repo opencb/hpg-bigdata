@@ -70,9 +70,13 @@ public class VcfBlockIterator implements AutoCloseable,Iterator<List<CharBuffer>
 	
 	@Override
 	public List<CharBuffer> next() {
+        return next(this.charBlockSize.get());
+    }
+
+    public List<CharBuffer> next(long blockSize) {
 		long cnt = 0l;
 		List<CharBuffer> next = new LinkedList<CharBuffer>(); // linked list faster at creation time
-		while(iter.hasNext() && cnt < this.charBlockSize.get()){
+		while(iter.hasNext() && cnt < blockSize){
 			String line = iter.next();
 			CharBuffer buff = CharBuffer.wrap(line.toCharArray());
 			next.add(buff);
@@ -107,7 +111,7 @@ public class VcfBlockIterator implements AutoCloseable,Iterator<List<CharBuffer>
 	}
 
 	@Override
-	public void close() throws Exception {
+	public void close() throws IOException {
 		this.in.close();
 	}
 

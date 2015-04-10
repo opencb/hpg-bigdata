@@ -4,16 +4,13 @@ import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.specific.SpecificDatumWriter;
-import org.ga4gh.models.Variant;
 import org.opencb.commons.io.DataWriter;
 import org.opencb.hpg.bigdata.core.utils.CompressionUtils;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by hpccoll1 on 02/04/15.

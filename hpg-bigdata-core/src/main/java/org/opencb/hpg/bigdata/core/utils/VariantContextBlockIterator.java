@@ -3,10 +3,9 @@
  */
 package org.opencb.hpg.bigdata.core.utils;
 
+import htsjdk.variant.variantcontext.LazyGenotypesContext;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFCodec;
-import htsjdk.variant.vcf.VCFHeader;
-import htsjdk.variant.vcf.VCFHeaderVersion;
 
 import java.nio.CharBuffer;
 import java.util.ArrayList;
@@ -19,8 +18,9 @@ import java.util.List;
 public class VariantContextBlockIterator {
 
 	private final VCFCodec codec;
+    private boolean decodeGenotypes = true;
 
-	/**
+    /**
 	 * 
 	 * @param codec
 	 */
@@ -33,6 +33,11 @@ public class VariantContextBlockIterator {
 		List<VariantContext> varList = new ArrayList<VariantContext>(size);
 		for(CharBuffer buff : block){
 			VariantContext ctx = convert(buff);
+            if (decodeGenotypes) {
+                if (ctx.getGenotypes().isLazyWithData()) {
+                    ((LazyGenotypesContext) ctx.getGenotypes()).decode();
+                }
+            }
 			varList.add(ctx);
 		}		
 		return varList ;
@@ -46,4 +51,14 @@ public class VariantContextBlockIterator {
 	public VCFCodec getCodec() {
 		return codec;
 	}
+
+    public boolean isDecodeGenotypes() {
+        return decodeGenotypes;
+    }
+
+    public void setDecodeGenotypes(boolean decodeGenotypes) {
+        this.decodeGenotypes = decodeGenotypes;
+    }
+
+
 }

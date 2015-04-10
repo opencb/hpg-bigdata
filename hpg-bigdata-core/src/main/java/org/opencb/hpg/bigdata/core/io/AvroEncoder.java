@@ -37,7 +37,6 @@ public class AvroEncoder<T> {
                 encodeFails++;
                 System.err.println(e.getMessage());
                 encoder.flush();
-
                 byteArrayOutputStream.reset();
                 continue;
             }
