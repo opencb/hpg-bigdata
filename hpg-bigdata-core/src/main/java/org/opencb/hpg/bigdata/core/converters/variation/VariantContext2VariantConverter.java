@@ -31,8 +31,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.avro.file.CodecFactory;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.StopWatch;
 import org.ga4gh.models.Call;
 import org.ga4gh.models.CallSet;
 import org.ga4gh.models.Variant;
@@ -46,6 +48,10 @@ import org.opencb.hpg.bigdata.core.utils.CompressionUtils;
 /**
  * Chr20 of 1000 genomes -> 855,196 rows  = 30 header, 855,166 rows
  * 
+ * avro.snappy:  3GB ->  12.0 GB  (58 min)
+ * avro.deflate: 3GB ->   7.2 GB  (82 min)
+ * 
+ * 
  * @author mh719
  *
  */
@@ -54,6 +60,8 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
 	private final AtomicReference<VariantConverterContext> ctx = new AtomicReference<VariantConverterContext>();
 
 	public static void main(String[] args) {
+		StopWatch sw = new StopWatch();
+		sw.start();
 		File file = new File(args[0]);
 		
 		long cnt = 0;
@@ -63,9 +71,14 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
 				OutputStream os = new FileOutputStream(outFile );
 				OutputStream callOs = new FileOutputStream(new File(args[1]+".Call"));
 				OutputStream vsOs = new FileOutputStream(new File(args[1]+".variantSet")); ){
-			AvroWriter<Variant> writer = new AvroWriter<Variant>(Variant.getClassSchema(), CompressionUtils.getAvroCodec("snappy"), os);
-			AvroWriter<CallSet> callWriter = new AvroWriter<CallSet>(CallSet.getClassSchema(), CompressionUtils.getAvroCodec("snappy"), callOs);
-			AvroWriter<VariantSet> vsWriter = new AvroWriter<VariantSet>(VariantSet.getClassSchema(), CompressionUtils.getAvroCodec("snappy"), vsOs);
+			CodecFactory codec = 
+					CompressionUtils.getAvroCodec("deflate");
+//					CompressionUtils.getAvroCodec("snappy");
+			AvroWriter<Variant> writer = new AvroWriter<Variant>(Variant.getClassSchema(), codec, os);
+			AvroWriter<CallSet> callWriter = new AvroWriter<CallSet>(CallSet.getClassSchema(), codec, callOs);
+			AvroWriter<VariantSet> vsWriter = new AvroWriter<VariantSet>(VariantSet.getClassSchema(), codec, vsOs);
+			
+			
 			
 			Converter<String,CallSet> gtConverter = new Genotype2CallSet();
 			Converter<VCFHeaderLine,VariantSetMetadata> infoConverter = new VCFHeaderLine2VariantSetMetadataConverter();
@@ -74,7 +87,6 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
 					file.getAbsolutePath(),
 					new FullVCFCodec(),
 					true);){
-			
 				VCFHeader header = (VCFHeader) freader.getHeader();
 				
 				int gtSize = header.getGenotypeSamples().size();
@@ -114,7 +126,10 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			}
+			} 
+			writer.close();
+			vsWriter.close();
+			callWriter.close();
 		} catch (FileNotFoundException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
@@ -122,6 +137,8 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
+		sw.stop();
+		System.err.println(sw.toString());
 	}
 
 	/**
