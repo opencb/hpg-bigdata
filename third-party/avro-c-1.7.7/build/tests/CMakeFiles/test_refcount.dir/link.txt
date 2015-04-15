@@ -1,0 +1,1 @@
+/usr/bin/gcc  -O2 -g    CMakeFiles/test_refcount.dir/test_refcount.o  -o test_refcount -rdynamic ../src/libavro.a -lz -llzma 

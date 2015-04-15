@@ -54,8 +54,7 @@ struct avro_file_writer_t_ {
 	char schema_buf[64 * 1024];
 };
 
-//#define DEFAULT_BLOCK_SIZE 16 * 1024
-#define DEFAULT_BLOCK_SIZE 32 * 1024
+#define DEFAULT_BLOCK_SIZE 16 * 1024
 
 /* Note: We should not just read /dev/random here, because it may not
  * exist on all platforms e.g. Win32.

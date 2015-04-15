@@ -10,7 +10,7 @@ public class ReadAlignmentUtils {
 
 	public static String getSamString(ReadAlignment ra) {
 		String res = new String();
-
+		
 		LinearAlignment la = (LinearAlignment) ra.getAlignment();
 
 		// id

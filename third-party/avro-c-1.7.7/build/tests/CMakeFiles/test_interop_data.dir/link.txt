@@ -1,0 +1,1 @@
+/usr/bin/gcc  -O2 -g    CMakeFiles/test_interop_data.dir/test_interop_data.o  -o test_interop_data -rdynamic ../src/libavro.a -lz -llzma 

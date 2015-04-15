@@ -1,0 +1,1 @@
+/usr/bin/gcc  -O2 -g    CMakeFiles/avromod.dir/avromod.o  -o avromod -rdynamic libavro.a -lz -llzma 

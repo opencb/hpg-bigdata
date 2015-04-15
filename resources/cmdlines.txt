@@ -1,0 +1,3 @@
+export LD_LIBRARY_PATH=third-party/avro-c-1.7.7/build/src/:third-party/htslib/ && gcc -std=gnu99 test/bam2avro.c -o test/bam2avro -I third-party/avro-c-1.7.7/src/ -I third-party/ -I third-party/htslib/ -L third-party/avro-c-1.7.7/build/src/ -L third-party/htslib/ -lhts -lavro -lpthread && ./test/bam2avro data/test.bam data/test.bam.c.avro deflate
+mvn install && ./hpg-bigdata.sh ga4gh -c ga2bam -i data/test.bam.c.avro -o data/test.bam.c.avro.bam
+samtools view data/test.bam | head -2 ; samtools view data/test.bam.c.avro.bam | head -2

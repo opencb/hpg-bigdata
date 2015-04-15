@@ -43,6 +43,7 @@ import org.opencb.hpg.bigdata.core.io.Avro2ParquetMapper;
 import org.opencb.hpg.bigdata.core.io.AvroWriter;
 import org.opencb.hpg.bigdata.core.utils.CompressionUtils;
 import org.opencb.hpg.bigdata.core.utils.PathUtils;
+import org.opencb.hpg.bigdata.core.utils.ReadAlignmentUtils;
 import org.opencb.hpg.bigdata.core.utils.ReadUtils;
 
 import parquet.avro.AvroParquetOutputFormat;
@@ -349,7 +350,11 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 		// main loop
 		SAMRecord samRecord;
 		SAMRecord2ReadAlignmentConverter converter = new SAMRecord2ReadAlignmentConverter();
+		int i = 0;
 		for (ReadAlignment readAlignment: reader) {
+			System.out.println(readAlignment.toString());
+			System.out.println(ReadAlignmentUtils.getSamString(readAlignment));
+			
 			samRecord = converter.backward(readAlignment);
 			samRecord.setHeader(header);
 			writer.addAlignment(samRecord);

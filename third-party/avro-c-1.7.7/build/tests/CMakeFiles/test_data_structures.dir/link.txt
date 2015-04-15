@@ -1,0 +1,1 @@
+/usr/bin/gcc  -O2 -g    CMakeFiles/test_data_structures.dir/test_data_structures.o  -o test_data_structures -rdynamic ../src/libavro.a -lz -llzma 

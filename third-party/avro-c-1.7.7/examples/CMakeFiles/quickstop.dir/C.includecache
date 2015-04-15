@@ -1,0 +1,16 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/jtarraga/appl-jtarraga/hpg-bigdata/third-party/avro-c-1.7.7/examples/quickstop.c
+avro.h
+-
+stdio.h
+-
+stdlib.h
+-
+

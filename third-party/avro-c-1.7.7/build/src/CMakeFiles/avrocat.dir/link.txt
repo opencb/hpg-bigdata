@@ -1,0 +1,1 @@
+/usr/bin/gcc  -O2 -g    CMakeFiles/avrocat.dir/avrocat.o  -o avrocat -rdynamic libavro.a -lz -llzma 

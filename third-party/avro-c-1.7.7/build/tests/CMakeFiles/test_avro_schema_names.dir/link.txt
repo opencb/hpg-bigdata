@@ -1,0 +1,1 @@
+/usr/bin/gcc  -O2 -g    CMakeFiles/test_avro_schema_names.dir/test_avro_schema_names.o  -o test_avro_schema_names -rdynamic ../src/libavro.a -lz -llzma 
