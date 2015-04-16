@@ -23,6 +23,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.List;
 
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileStream;
@@ -37,14 +42,22 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.ga4gh.models.Read;
 import org.ga4gh.models.ReadAlignment;
+import org.ga4gh.models.Variant;
+import org.opencb.commons.io.DataReader;
+import org.opencb.commons.run.ParallelTaskRunner;
 import org.opencb.hpg.bigdata.core.converters.FastqRecord2ReadConverter;
+import org.opencb.hpg.bigdata.core.converters.FullVCFCodec;
 import org.opencb.hpg.bigdata.core.converters.SAMRecord2ReadAlignmentConverter;
+import org.opencb.hpg.bigdata.core.converters.variation.VariantAvroEncoderTask;
+import org.opencb.hpg.bigdata.core.converters.variation.VariantConverterContext;
 import org.opencb.hpg.bigdata.core.io.Avro2ParquetMapper;
+import org.opencb.hpg.bigdata.core.io.AvroFileWriter;
 import org.opencb.hpg.bigdata.core.io.AvroWriter;
 import org.opencb.hpg.bigdata.core.utils.CompressionUtils;
 import org.opencb.hpg.bigdata.core.utils.PathUtils;
 import org.opencb.hpg.bigdata.core.utils.ReadUtils;
 
+import org.opencb.hpg.bigdata.core.utils.VcfBlockIterator;
 import parquet.avro.AvroParquetOutputFormat;
 import parquet.avro.AvroParquetWriter;
 import parquet.avro.AvroSchemaConverter;
@@ -65,7 +78,8 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 	private final static String BAM_2_GA   = "bam2ga"; 
 	private final static String GA_2_BAM   = "ga2bam"; 
 	private final static String CRAM_2_GA  = "cram2ga"; 
-	private final static String GA_2_CRAM  = "ga2cram"; 
+	private final static String GA_2_CRAM  = "ga2cram";
+    private final static String VCF_2_GA   = "vcf2ga";
 
 	private final static String AVRO_2_PARQUET = "avro2parquet"; 
 
@@ -78,6 +92,7 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 	private final static String GA_2_BAM_DESC   = "Save Global Alliance for Genomics and Health (ga4gh) in Avro format as BAM file";
 	private final static String CRAM_2_GA_DESC  = "Save CRAM file as Global Alliance for Genomics and Health (ga4gh) in Avro format"; 
 	private final static String GA_2_CRAM_DESC  = "Save Global Alliance for Genomics and Health (ga4gh) in Avro format as CRAM file";
+    private final static String VCF_2_GA_DESC   = "Save VCF file as Global Alliance for Genomics and Health (ga4gh) in Avro format";
 
 	private final static String AVRO_2_PARQUET_DESC  = "Save Avro file in Parquet format";
 
@@ -146,6 +161,11 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 				break;
 			}
 
+            case VCF_2_GA: {
+                vcf2ga(ga4ghCommandOptions.input, ga4ghCommandOptions.output, ga4ghCommandOptions.compression);
+                break;
+            }
+
 			case AVRO_2_PARQUET: {
 				avro2parquet(ga4ghCommandOptions.input, ga4ghCommandOptions.output);
 				break;			
@@ -164,7 +184,7 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 		logger.debug("Input file: {}", ga4ghCommandOptions.input);
 	}
 
-	private void fastq2ga(String input, String output, String codecName) throws Exception {
+    private void fastq2ga(String input, String output, String codecName) throws Exception {
 		// clean paths
 		String in = PathUtils.clean(input);
 		String out = PathUtils.clean(output);
@@ -395,6 +415,71 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 		fis.close();
 		os.close();
 	}
+
+
+    private void vcf2ga(String input, String output, String compression) throws Exception {
+        if (output == null) {
+            output = input;
+        }
+
+        // clean paths
+        String in = PathUtils.clean(input);
+        String out = PathUtils.clean(output);
+
+        if (PathUtils.isHdfs(input)) {
+            logger.error("Conversion '{}' with HDFS as input '{}', not implemented yet !", ga4ghCommandOptions.conversion, input);
+            System.exit(-1);
+        }
+
+        // reader
+        VcfBlockIterator iterator = new VcfBlockIterator(Paths.get(in).toFile(), new FullVCFCodec());
+        DataReader<CharBuffer> reader = new DataReader<CharBuffer>() {
+            @Override public List<CharBuffer> read(int size) {
+                return (iterator.hasNext() ? iterator.next(size) : Collections.<CharBuffer>emptyList());
+            }
+            @Override public boolean close() {
+                try {
+                    iterator.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    return false;
+                }
+                return true;
+            }
+        };
+
+        // writer
+        OutputStream os;
+        if (PathUtils.isHdfs(output)) {
+            Configuration config = new Configuration();
+            FileSystem hdfs = FileSystem.get(config);
+            os = hdfs.create(new Path(out));
+        } else {
+            os = new FileOutputStream(out);
+        }
+        AvroFileWriter<Variant> writer = new AvroFileWriter<>(Variant.getClassSchema(), compression, os);
+
+        // main loop
+        int numTasks = 4;
+        int batchSize = 1024*1024;  //Batch size in bytes
+        int capacity = numTasks+1;
+        VariantConverterContext variantConverterContext = new VariantConverterContext();
+        ParallelTaskRunner.Config config = new ParallelTaskRunner.Config(numTasks, batchSize, capacity, false);
+        ParallelTaskRunner<CharBuffer, ByteBuffer> runner =
+                new ParallelTaskRunner<>(
+                        reader,
+                        () -> new VariantAvroEncoderTask(variantConverterContext, iterator.getHeader(), iterator.getVersion()),
+                        writer, config);
+        long start = System.currentTimeMillis();
+        runner.run();
+        System.out.println("Time " + (System.currentTimeMillis()-start)/1000.0+"s");
+
+        // close
+        iterator.close();
+        writer.close();
+        os.close();
+    }
+
 /*
 	private void avro2parquetOK(String input, String output) throws IOException, ClassNotFoundException, InterruptedException {		
 		Configuration conf = new Configuration();
@@ -487,6 +572,7 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 		res += "\t- " + BAM_2_GA + "\t" + BAM_2_GA_DESC + "\n";
 		res += "\t- " + GA_2_BAM + "\t" + GA_2_BAM_DESC + "\n";
 		res += "\t- " + CRAM_2_GA + "\t" + CRAM_2_GA_DESC + "\n";
+		res += "\t- " + VCF_2_GA + "\t" + VCF_2_GA_DESC+ "\n";
 		//res += "\t- " + GA_2_CRAM + "\t" + GA_2_CRAM_DESC + "\n";
 
 		res += "\n";

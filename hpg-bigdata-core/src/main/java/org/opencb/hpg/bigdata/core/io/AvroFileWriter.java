@@ -6,6 +6,8 @@ import org.apache.avro.io.DatumWriter;
 import org.apache.avro.specific.SpecificDatumWriter;
 import org.opencb.commons.io.DataWriter;
 import org.opencb.hpg.bigdata.core.utils.CompressionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -16,12 +18,14 @@ import java.util.List;
  * Created by hpccoll1 on 02/04/15.
  */
 public class AvroFileWriter <T> implements DataWriter<ByteBuffer> {
+    protected Logger logger = LoggerFactory.getLogger(this.getClass().toString());
 
     private final String codecName;
     private final Schema schema;
     private final OutputStream outputStream;
     private final DataFileWriter<T> writer;
     private final DatumWriter<T> datumWriter;
+    private int numWrites = 0;
 
     public AvroFileWriter(Schema schema, String codecName, OutputStream outputStream) {
         this.schema = schema;
@@ -44,15 +48,13 @@ public class AvroFileWriter <T> implements DataWriter<ByteBuffer> {
         return true;
     }
 
-    @Override
-    public boolean pre() {
-        return true;
-    }
 
     @Override
     public boolean write(List<ByteBuffer> batch) {
-        System.out.println("[" + Thread.currentThread().getName() + "] Writing " + batch.size());
         for (ByteBuffer byteBuffer : batch) {
+            if (numWrites++%1000 == 0) {
+                logger.info("Written {} elements", numWrites);
+            }
             try {
                 writer.appendEncoded(byteBuffer);
             } catch (IOException e) {
@@ -60,12 +62,7 @@ public class AvroFileWriter <T> implements DataWriter<ByteBuffer> {
                 return false;
             }
         }
-        System.out.println("[" + Thread.currentThread().getName() + "] Written " + batch.size());
-        return true;
-    }
-
-    @Override
-    public boolean post() {
+        logger.debug("[" + Thread.currentThread().getName() + "] Written " + batch.size());
         return true;
     }
 

@@ -12,6 +12,8 @@ import org.opencb.hpg.bigdata.core.io.AvroEncoder;
 import org.opencb.hpg.bigdata.core.io.AvroFileWriter;
 import org.opencb.hpg.bigdata.core.utils.VariantContextBlockIterator;
 import org.opencb.hpg.bigdata.core.utils.VcfBlockIterator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -28,6 +30,8 @@ import java.util.concurrent.atomic.AtomicLong;
  * Created by hpccoll1 on 10/04/15.
  */
 public class VariantAvroEncoderTask implements ParallelTaskRunner.Task<CharBuffer, ByteBuffer> {
+    protected Logger logger = LoggerFactory.getLogger(this.getClass().toString());
+
     private final VariantConverterContext variantConverterContext;
 
     private final VCFHeader header;
@@ -103,14 +107,14 @@ public class VariantAvroEncoderTask implements ParallelTaskRunner.Task<CharBuffe
             }
         }
         convertTime.addAndGet(System.nanoTime() - start);
-        System.out.println("[" + Thread.currentThread().getName() + "] Processed " + variantContexts.size() + " variants into " + convertedList.size() + " avro variants");
+        logger.debug("[" + Thread.currentThread().getName() + "] Processed " + variantContexts.size() + " variants into " + convertedList.size() + " avro variants");
 
         //Encode with Avro
         try {
             start = System.nanoTime();
             encoded = encoder.encode(convertedList);
             encodeTime.addAndGet(System.nanoTime() - start);
-            System.out.println("[" + Thread.currentThread().getName() + "] Processed " + convertedList.size() + " avro variants into " + encoded.size() + " encoded variants");
+            logger.debug("[" + Thread.currentThread().getName() + "] Processed " + convertedList.size() + " avro variants into " + encoded.size() + " encoded variants");
             return encoded;
         } catch (IOException e) {
             e.printStackTrace();
@@ -121,9 +125,9 @@ public class VariantAvroEncoderTask implements ParallelTaskRunner.Task<CharBuffe
     @Override
     public void post() {
         if (!postDone.getAndSet(true)) {
-            System.err.println("parseTime = " + parseTime.get() / 1000000000.0 + "s");
-            System.err.println("convertTime = " + convertTime.get() / 1000000000.0 + "s");
-            System.err.println("encodeTime = " + encodeTime.get() / 1000000000.0 + "s");
+            logger.debug("parseTime = " + parseTime.get() / 1000000000.0 + "s");
+            logger.debug("convertTime = " + convertTime.get() / 1000000000.0 + "s");
+            logger.debug("encodeTime = " + encodeTime.get() / 1000000000.0 + "s");
         }
     }
 
