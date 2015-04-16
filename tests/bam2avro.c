@@ -33,6 +33,11 @@ avro_schema_t read_alignment_schema;
 avro_schema_t position_schema;
 avro_schema_t linear_alignment_schema;
 avro_schema_t cigar_unit_schema;
+avro_schema_t union_schema_ns;
+avro_schema_t union_schema_bn;
+avro_schema_t union_schema_ni;
+avro_schema_t union_schema_na;
+avro_schema_t union_schema_np;
 
 int64_t id = 0;
 
@@ -78,6 +83,26 @@ void init_schema(void) {
     fprintf(stderr, "Error message: %s\n", avro_strerror());
     exit(EXIT_FAILURE);
   }
+
+  union_schema_ns = avro_schema_union();
+  avro_schema_union_append(union_schema_ns, avro_schema_null());
+  avro_schema_union_append(union_schema_ns, avro_schema_string());
+
+  union_schema_bn = avro_schema_union();
+  avro_schema_union_append(union_schema_bn, avro_schema_boolean());
+  avro_schema_union_append(union_schema_bn, avro_schema_null());
+
+  union_schema_ni = avro_schema_union();
+  avro_schema_union_append(union_schema_ni, avro_schema_null());
+  avro_schema_union_append(union_schema_ni, avro_schema_int());
+
+  union_schema_na = avro_schema_union();
+  avro_schema_union_append(union_schema_na, avro_schema_null());
+
+  union_schema_np = avro_schema_union();
+  avro_schema_union_append(union_schema_np, avro_schema_null());
+  avro_schema_union_append(union_schema_np, avro_schema_null());
+
 }
 
 // add read alignment
@@ -86,38 +111,23 @@ void add_read_alignment(avro_file_writer_t db, const bam1_t *bam1, const bam_hea
 
   avro_datum_t read_alignment = avro_record(read_alignment_schema);
 
-  avro_schema_t union_schema_ns = avro_schema_union();
-  avro_schema_union_append(union_schema_ns, avro_schema_null());
-  avro_schema_union_append(union_schema_ns, avro_schema_string());
-
-  avro_schema_t union_schema_bn = avro_schema_union();
-  avro_schema_union_append(union_schema_bn, avro_schema_boolean());
-  avro_schema_union_append(union_schema_bn, avro_schema_null());
-
-  avro_schema_t union_schema_ni = avro_schema_union();
-  avro_schema_union_append(union_schema_ni, avro_schema_null());
-  avro_schema_union_append(union_schema_ni, avro_schema_int());
-
-  avro_schema_t union_schema_na = avro_schema_union();
-  avro_schema_union_append(union_schema_na, avro_schema_null());
-
-  avro_schema_t union_schema_np = avro_schema_union();
-  avro_schema_union_append(union_schema_np, avro_schema_null());
-  avro_schema_union_append(union_schema_np, avro_schema_null());
-
   // id
-  avro_datum_t id_datum = avro_union(union_schema_ns, 1, avro_givestring(bam1_qname(bam1), NULL));
+  avro_datum_t id = avro_string(bam1_qname(bam1));
+  avro_datum_t id_datum = avro_union(union_schema_ns, 1, id);
   if (avro_record_set(read_alignment, "id", id_datum)) {
     fprintf(stderr, "Unable to set id.\nError message: %s\n", avro_strerror());
     exit(EXIT_FAILURE);
   }
+  avro_datum_decref(id);
+  avro_datum_decref(id_datum);
 
   // readGroupId
-  avro_datum_t read_group_id_datum = avro_string(strdup("read-group-id-value"));
+  avro_datum_t read_group_id_datum = avro_string("read-group-id-value");
   if (avro_record_set(read_alignment, "readGroupId", read_group_id_datum)) {
     fprintf(stderr, "Unable to set readGroupId.\nError message: %s\n", avro_strerror());
     exit(EXIT_FAILURE);
   }
+  avro_datum_decref(read_group_id_datum);
 
   // fragmentName
   avro_datum_t fragment_name_datum = avro_string(bam_header->target_name[bam1->core.tid]);
@@ -125,60 +135,85 @@ void add_read_alignment(avro_file_writer_t db, const bam1_t *bam1, const bam_hea
     fprintf(stderr, "Unable to set fragmentName.\nError message: %s\n", avro_strerror());
     exit(EXIT_FAILURE);
   }
+  avro_datum_decref(fragment_name_datum);
 
   // properPlacement
   aux = ((bam1->core.flag & BAM_FPROPER_PAIR) && (bam1->core.flag & BAM_FPAIRED));
-  avro_datum_t proper_placement_datum = avro_union(union_schema_bn, 0, avro_boolean(aux));
+  avro_datum_t proper_placement = avro_boolean(aux);
+  avro_datum_t proper_placement_datum = avro_union(union_schema_bn, 0, proper_placement);
   if (avro_record_set(read_alignment, "properPlacement", proper_placement_datum)) {
     fprintf(stderr, "Unable to set properPlacement.\nError message: %s\n", avro_strerror());
     exit(EXIT_FAILURE);
   }
+  avro_datum_decref(proper_placement);
+  avro_datum_decref(proper_placement_datum);
 
   // duplicateFragment
   aux = ((bam1->core.flag & BAM_FDUP) == BAM_FDUP);
-  avro_datum_t duplicate_fragment_datum = avro_union(union_schema_bn, 0, avro_boolean(aux));
+  avro_datum_t duplicate_fragment = avro_boolean(aux);
+  avro_datum_t duplicate_fragment_datum = avro_union(union_schema_bn, 0, duplicate_fragment);
   if (avro_record_set(read_alignment, "duplicateFragment", duplicate_fragment_datum)) {
     fprintf(stderr, "Unable to set duplicateFragment.\nError message: %s\n", avro_strerror());
     exit(EXIT_FAILURE);
   }
+  avro_datum_decref(duplicate_fragment);
+  avro_datum_decref(duplicate_fragment_datum);
 
   // numberReads
   int num_reads = (bam1->core.flag & BAM_FPROPER_PAIR) ? 2 : 1;
-  avro_datum_t number_reads_datum = avro_union(union_schema_ni, 1, avro_int32(num_reads));
+  avro_datum_t number_reads = avro_int32(num_reads);
+  avro_datum_t number_reads_datum = avro_union(union_schema_ni, 1, number_reads);
   if (avro_record_set(read_alignment, "numberReads", number_reads_datum)) {
     fprintf(stderr, "Unable to set numberReads.\nError message: %s\n", avro_strerror());
     exit(EXIT_FAILURE);
   }
+  avro_datum_decref(number_reads);
+  avro_datum_decref(number_reads_datum);
 
   // fragmentLength
   aux = (bam1->core.flag & BAM_FPAIRED) ? bam1->core.isize : 0;
-  avro_datum_t fragment_length_datum = avro_union(union_schema_ni, 1, avro_int32(aux));
+  avro_datum_t fragment_length = avro_int32(aux);
+  avro_datum_t fragment_length_datum = avro_union(union_schema_ni, 1, fragment_length);
   if (avro_record_set(read_alignment, "fragmentLength", fragment_length_datum)) {
     fprintf(stderr, "Unable to set fragmentLength.\nError message: %s\n", avro_strerror());
     exit(EXIT_FAILURE);
   }
+  avro_datum_decref(fragment_length);
+  avro_datum_decref(fragment_length_datum);
 
   // readNumber
   aux = ((bam1->core.flag & BAM_FPAIRED) && (bam1->core.flag & BAM_FREAD2)) ? num_reads - 1 : 0;
-  avro_datum_t read_number_datum = avro_union(union_schema_ni, 1, avro_int32(aux));
+  avro_datum_t read_number = avro_int32(aux);
+  avro_datum_t read_number_datum = avro_union(union_schema_ni, 1, read_number);
   if (avro_record_set(read_alignment, "readNumber", read_number_datum)) {
     fprintf(stderr, "Unable to set readNumber.\nError message: %s\n", avro_strerror());
     exit(EXIT_FAILURE);
   }
+  avro_datum_decref(read_number);
+  avro_datum_decref(read_number_datum);
 
   // failedVendorQualityChecks
   aux = ((bam1->core.flag & BAM_FQCFAIL) == BAM_FQCFAIL);
-  avro_datum_t failed_vendor_datum = avro_union(union_schema_bn, 0, avro_boolean(aux));
+  avro_datum_t failed_vendor = avro_boolean(aux);
+  avro_datum_t failed_vendor_datum = avro_union(union_schema_bn, 0, failed_vendor);
   if (avro_record_set(read_alignment, "failedVendorQualityChecks", failed_vendor_datum)) {
     fprintf(stderr, "Unable to set failedVendorQualityChecks.\nError message: %s\n", avro_strerror());
     exit(EXIT_FAILURE);
   }
+  avro_datum_decref(failed_vendor);
+  avro_datum_decref(failed_vendor_datum);
 
   // alignment
-  avro_datum_t alignment_datum;
   if (bam1->core.flag & BAM_FUNMAP) {
     // unmapped
-    alignment_datum = avro_union(union_schema_na, 0, avro_null());
+    avro_datum_t alignment = avro_null();
+    avro_datum_t alignment_datum  = avro_union(union_schema_na, 0, alignment);
+    if (avro_record_set(read_alignment, "alignment", alignment_datum)) {
+      fprintf(stderr, "Unable to set alignment (null).\nError message: %s\n", avro_strerror());
+      exit(EXIT_FAILURE);
+    }
+    avro_datum_decref(alignment);
+    avro_datum_decref(alignment_datum);
   } else {
     // linear alignment
     avro_datum_t linear_alignment_datum = avro_record(linear_alignment_schema);
@@ -186,23 +221,30 @@ void add_read_alignment(avro_file_writer_t db, const bam1_t *bam1, const bam_hea
     // position
     avro_datum_t position_datum = avro_record(position_schema);
 
-    avro_datum_t ref_name_pos_datum = avro_union(union_schema_ns, 1, avro_givestring(bam_header->target_name[bam1->core.tid], NULL));
+    avro_datum_t ref_name_pos = avro_string(bam_header->target_name[bam1->core.tid]);
+    avro_datum_t ref_name_pos_datum = avro_union(union_schema_ns, 1, ref_name_pos);
     if (avro_record_set(position_datum, "referenceName", ref_name_pos_datum)) {
       fprintf(stderr, "Unable to set referenceName in LinearAlignment.Position.\nError message: %s\n", avro_strerror());
       exit(EXIT_FAILURE);
     }
+    avro_datum_decref(ref_name_pos);
+    avro_datum_decref(ref_name_pos_datum);
 
-    avro_datum_t seq_id_pos_datum = avro_union(union_schema_ns, 0, avro_null());
+    avro_datum_t seq_id_pos = avro_null();
+    avro_datum_t seq_id_pos_datum = avro_union(union_schema_ns, 0, seq_id_pos);
     if (avro_record_set(position_datum, "sequenceId", seq_id_pos_datum)) {
       fprintf(stderr, "Unable to set sequenceId in LinearAlignment.Position.\nError message: %s\n", avro_strerror());
       exit(EXIT_FAILURE);
     }
+    avro_datum_decref(seq_id_pos);
+    avro_datum_decref(seq_id_pos_datum);
 
     avro_datum_t pos_datum = avro_int64(bam1->core.pos);
     if (avro_record_set(position_datum, "position", pos_datum)) {
       fprintf(stderr, "Unable to set position in LinearAlignment.Position.\nError message: %s\n", avro_strerror());
       exit(EXIT_FAILURE);
     }
+    avro_datum_decref(pos_datum);
 
     avro_datum_t strand_datum;
     avro_schema_t strand_enum = avro_schema_enum("Strand");
@@ -215,75 +257,131 @@ void add_read_alignment(avro_file_writer_t db, const bam1_t *bam1, const bam_hea
       fprintf(stderr, "Unable to set strand in LinearAlignment.Position.\nError message: %s\n", avro_strerror());
       exit(EXIT_FAILURE);
     }
+    avro_datum_decref(strand_datum);
+    avro_schema_decref(strand_enum);
 
     if (avro_record_set(linear_alignment_datum, "position", position_datum)) {
       fprintf(stderr, "Unable to set strand in LinearAlignment.Position.\nError message: %s\n", avro_strerror());
       exit(EXIT_FAILURE);
     }
+    avro_datum_decref(position_datum);
 
     // mapping quality
-    avro_datum_t mapping_quality_datum = avro_union(union_schema_ni, 1, avro_int32(bam1->core.qual));
+    avro_datum_t mapping_quality = avro_int32(bam1->core.qual);
+    avro_datum_t mapping_quality_datum = avro_union(union_schema_ni, 1, mapping_quality);
     if (avro_record_set(linear_alignment_datum, "mappingQuality", mapping_quality_datum)) {
       fprintf(stderr, "Unable to set mappingQuality in LinearAlignment.\nError message: %s\n", avro_strerror());
       exit(EXIT_FAILURE);
     }
+    avro_datum_decref(mapping_quality);
+    avro_datum_decref(mapping_quality_datum);
 
     // cigar
     avro_schema_t cigar_unit_array_schema = avro_schema_array(cigar_unit_schema);
     avro_datum_t cigar_datum = avro_array(cigar_unit_array_schema);
 
-    avro_datum_t cigar_unit_datum = avro_record(cigar_unit_schema);
+    uint32_t op, *cigar = bam1_cigar(bam1);
+    int num_ops = bam1->core.n_cigar;
+    for (int i = 0; i < num_ops; i++) {
+      avro_datum_t cigar_unit_datum = avro_record(cigar_unit_schema);
 
-    avro_schema_t cigar_operation_enum = avro_schema_enum("CigarOperation");
-    avro_datum_t cigar_operation_datum = avro_enum(cigar_operation_enum, 0); // ALIGNMENT_MATCH
-    if (avro_record_set(cigar_unit_datum, "operation", cigar_operation_datum)) {
-      fprintf(stderr, "Unable to set operation in CigarUnit.\nError message: %s\n", avro_strerror());
-      exit(EXIT_FAILURE);
+      avro_schema_t cigar_operation_enum = avro_schema_enum("CigarOperation");
+
+      avro_datum_t cigar_operation_datum;
+      op = cigar[i];
+      switch (op & BAM_CIGAR_MASK) {
+      case BAM_CMATCH:  // M: match or mismatch
+	cigar_operation_datum = avro_enum(cigar_operation_enum, 0); // ALIGNMENT_MATCH
+	break;
+      case BAM_CINS:  // I: insertion to the reference
+	cigar_operation_datum = avro_enum(cigar_operation_enum, 1); // INSERT
+	break;
+      case BAM_CDEL:  // D: deletion from the reference
+	cigar_operation_datum = avro_enum(cigar_operation_enum, 2); // DELETE
+	break;
+      case BAM_CREF_SKIP: //N: skip on the reference
+	cigar_operation_datum = avro_enum(cigar_operation_enum, 3); // SKIP
+	break;
+      case BAM_CSOFT_CLIP: //S: clip on the read with clipped sequence
+	cigar_operation_datum = avro_enum(cigar_operation_enum, 4); // CLIP_SOFT
+	break;
+      case BAM_CHARD_CLIP: //H: clip on the read with clipped sequence trimmed off
+	cigar_operation_datum = avro_enum(cigar_operation_enum, 5); // CLIP_HARD
+	break;
+      case BAM_CPAD:  //P: padding
+	cigar_operation_datum = avro_enum(cigar_operation_enum, 6); // PAD
+	break;
+      case BAM_CEQUAL:  //=: match
+	cigar_operation_datum = avro_enum(cigar_operation_enum, 7); // SEQUENCE_MATCH
+	break;
+      case BAM_CDIFF:  //X: mismatch
+	cigar_operation_datum = avro_enum(cigar_operation_enum, 8); // SEQUENCE_MISMATCH
+	break;
+      }
+      if (avro_record_set(cigar_unit_datum, "operation", cigar_operation_datum)) {
+	fprintf(stderr, "Unable to set operation in CigarUnit.\nError message: %s\n", avro_strerror());
+	exit(EXIT_FAILURE);
+      }
+      avro_datum_decref(cigar_operation_datum);
+      avro_schema_decref(cigar_operation_enum);
+
+      avro_datum_t op_length_datum = avro_int64(op >> BAM_CIGAR_SHIFT);
+      if (avro_record_set(cigar_unit_datum, "operationLength", op_length_datum)) {
+	fprintf(stderr, "Unable to set operationLength in CigarUnit.\nError message: %s\n", avro_strerror());
+	exit(EXIT_FAILURE);
+      }
+      avro_datum_decref(op_length_datum);
+      
+      avro_datum_t ref_seq = avro_null();
+      avro_datum_t ref_seq_datum = avro_union(union_schema_ns, 0, ref_seq);
+      if (avro_record_set(cigar_unit_datum, "referenceSequence", ref_seq_datum)) {
+	fprintf(stderr, "Unable to set referenceSequence in CigarUnit.\nError message: %s\n", avro_strerror());
+	exit(EXIT_FAILURE);
+      }
+      avro_datum_decref(ref_seq);
+      avro_datum_decref(ref_seq_datum);
+      
+      rval = avro_array_append_datum(cigar_datum, cigar_unit_datum);
+      avro_datum_decref(cigar_unit_datum);
     }
-
-    avro_datum_t op_length_datum = avro_int64(100);
-    if (avro_record_set(cigar_unit_datum, "operationLength", op_length_datum)) {
-      fprintf(stderr, "Unable to set operationLength in CigarUnit.\nError message: %s\n", avro_strerror());
-      exit(EXIT_FAILURE);
-    }
-
-    avro_datum_t ref_seq_datum = avro_union(union_schema_ns, 0, avro_null());
-    if (avro_record_set(cigar_unit_datum, "referenceSequence", ref_seq_datum)) {
-      fprintf(stderr, "Unable to set referenceSequence in CigarUnit.\nError message: %s\n", avro_strerror());
-      exit(EXIT_FAILURE);
-    }
-
-    rval = avro_array_append_datum(cigar_datum, cigar_unit_datum);
-    //    avro_datum_decref(cigar_unit_datum);
 
     if (avro_record_set(linear_alignment_datum, "cigar", cigar_datum)) {
       fprintf(stderr, "Unable to set cigar in LinearAlignment.\nError message: %s\n", avro_strerror());
       exit(EXIT_FAILURE);
     }
+    avro_datum_decref(cigar_datum);
+    avro_schema_decref(cigar_unit_array_schema);
 
-    alignment_datum = avro_union(union_schema_na, 1, linear_alignment_datum);
-  }
-
-  if (avro_record_set(read_alignment, "alignment", alignment_datum)) {
-    fprintf(stderr, "Unable to set alignment.\nError message: %s\n", avro_strerror());
-    exit(EXIT_FAILURE);
+    avro_datum_t alignment_datum = avro_union(union_schema_na, 1, linear_alignment_datum);
+    if (avro_record_set(read_alignment, "alignment", alignment_datum)) {
+      fprintf(stderr, "Unable to set alignment (null).\nError message: %s\n", avro_strerror());
+      exit(EXIT_FAILURE);
+    }
+    avro_datum_decref(linear_alignment_datum);
+    avro_datum_decref(alignment_datum);
   }
 
   // secondaryAlignment
   aux = ((bam1->core.flag & BAM_FSECONDARY) == BAM_FSECONDARY);
-  avro_datum_t secondary_alignment_datum = avro_union(union_schema_bn, 0, avro_boolean(aux));
+  avro_datum_t secondary_alignment = avro_boolean(aux);
+  avro_datum_t secondary_alignment_datum = avro_union(union_schema_bn, 0, secondary_alignment);
   if (avro_record_set(read_alignment, "secondaryAlignment", secondary_alignment_datum)) {
     fprintf(stderr, "Unable to set secondaryAlignment.\nError message: %s\n", avro_strerror());
     exit(EXIT_FAILURE);
   }
+  avro_datum_decref(secondary_alignment);
+  avro_datum_decref(secondary_alignment_datum);
 
   // supplementaryAlignment
   aux = ((bam1->core.flag & BAM_FSECONDARY) == BAM_FSECONDARY);
-  avro_datum_t supplementary_alignment_datum = avro_union(union_schema_bn, 0, avro_boolean(aux));
+  avro_datum_t supplementary_alignment = avro_boolean(aux);
+  avro_datum_t supplementary_alignment_datum = avro_union(union_schema_bn, 0, supplementary_alignment);
   if (avro_record_set(read_alignment, "supplementaryAlignment", supplementary_alignment_datum)) {
     fprintf(stderr, "Unable to set supplementaryAlignment.\nError message: %s\n", avro_strerror());
     exit(EXIT_FAILURE);
   }
+  avro_datum_decref(supplementary_alignment);
+  avro_datum_decref(supplementary_alignment_datum);
 
   // alignedSequence
   int qlen = bam1->core.l_qseq;
@@ -292,11 +390,14 @@ void add_read_alignment(avro_file_writer_t db, const bam1_t *bam1, const bam_hea
   buf[qlen] = 0;  for (int i = 0; i < qlen; i++) {
     buf[i] = bam_nt16_rev_table[bam1_seqi(seq, i)];
   }
-  avro_datum_t aligned_sequence_datum = avro_union(union_schema_ns, 1, avro_givestring(buf, NULL));
+  avro_datum_t aligned_sequence = avro_string(buf);
+  avro_datum_t aligned_sequence_datum = avro_union(union_schema_ns, 1, aligned_sequence);
   if (avro_record_set(read_alignment, "alignedSequence", aligned_sequence_datum)) {
     fprintf(stderr, "Unable to set alignedSequence.\nError message: %s\n", avro_strerror());
     exit(EXIT_FAILURE);
   }
+  avro_datum_decref(aligned_sequence);
+  avro_datum_decref(aligned_sequence_datum);
 
   // alignedQuality
   seq = bam1_qual(bam1);
@@ -315,29 +416,37 @@ void add_read_alignment(avro_file_writer_t db, const bam1_t *bam1, const bam_hea
     fprintf(stderr, "Unable to set alignedQuality.\nError message: %s\n", avro_strerror());
     exit(EXIT_FAILURE);
   }
+  avro_datum_decref(aligned_quality_datum);
+  avro_schema_decref(int_array_schema);
 
   // nextMatePosition
-  avro_datum_t next_mate_pos_datum;
   if (bam1->core.flag & BAM_FPAIRED) {
     avro_datum_t next_mate_position = avro_record(position_schema);
 
-    avro_datum_t ref_name_pos_datum = avro_union(union_schema_ns, 1, avro_givestring(bam_header->target_name[bam1->core.mtid], NULL));
+    avro_datum_t ref_name_pos = avro_string(bam_header->target_name[bam1->core.mtid]);
+    avro_datum_t ref_name_pos_datum = avro_union(union_schema_ns, 1, ref_name_pos);
     if (avro_record_set(next_mate_position, "referenceName", ref_name_pos_datum)) {
       fprintf(stderr, "Unable to set referenceName in nextMatePosition.\nError message: %s\n", avro_strerror());
       exit(EXIT_FAILURE);
     }
+    avro_datum_decref(ref_name_pos);
+    avro_datum_decref(ref_name_pos_datum);
 
-    avro_datum_t seq_id_pos_datum = avro_union(union_schema_ns, 0, avro_null());
+    avro_datum_t seq_id_pos = avro_null();
+    avro_datum_t seq_id_pos_datum = avro_union(union_schema_ns, 0, seq_id_pos);
     if (avro_record_set(next_mate_position, "sequenceId", seq_id_pos_datum)) {
       fprintf(stderr, "Unable to set sequenceId in nextMatePosition.\nError message: %s\n", avro_strerror());
       exit(EXIT_FAILURE);
     }
+    avro_datum_decref(seq_id_pos);
+    avro_datum_decref(seq_id_pos_datum);
 
     avro_datum_t pos_datum = avro_int64(bam1->core.mpos);
     if (avro_record_set(next_mate_position, "position", pos_datum)) {
       fprintf(stderr, "Unable to set position in nextMatePosition.\nError message: %s\n", avro_strerror());
       exit(EXIT_FAILURE);
     }
+    avro_datum_decref(pos_datum);
 
     avro_datum_t strand_datum;
     avro_schema_t strand_enum = avro_schema_enum("Strand");
@@ -350,25 +459,255 @@ void add_read_alignment(avro_file_writer_t db, const bam1_t *bam1, const bam_hea
       fprintf(stderr, "Unable to set strand in nextMatePosition.\nError message: %s\n", avro_strerror());
       exit(EXIT_FAILURE);
     }
+    avro_datum_decref(strand_datum);
+    avro_schema_decref(strand_enum);
 
-    next_mate_pos_datum = avro_union(union_schema_np, 1, next_mate_position);
+    avro_datum_t next_mate_pos_datum = avro_union(union_schema_np, 1, next_mate_position);
+    if (avro_record_set(read_alignment, "nextMatePosition", next_mate_pos_datum)) {
+      fprintf(stderr, "Unable to set nextMatePosition.\nError message: %s\n", avro_strerror());
+      exit(EXIT_FAILURE);
+    }
+    avro_datum_decref(next_mate_position);
+    avro_datum_decref(next_mate_pos_datum);
   } else {
-    next_mate_pos_datum = avro_union(union_schema_np, 0, avro_null());
-  }
-
-  if (avro_record_set(read_alignment, "nextMatePosition", next_mate_pos_datum)) {
-    fprintf(stderr, "Unable to set nextMatePosition.\nError message: %s\n", avro_strerror());
-    exit(EXIT_FAILURE);
+    avro_datum_t next_mate_position = avro_null();
+    avro_datum_t next_mate_pos_datum = avro_union(union_schema_np, 0, next_mate_position);
+    if (avro_record_set(read_alignment, "nextMatePosition", next_mate_pos_datum)) {
+      fprintf(stderr, "Unable to set nextMatePosition.\nError message: %s\n", avro_strerror());
+      exit(EXIT_FAILURE);
+    }
+    avro_datum_decref(next_mate_position);
+    avro_datum_decref(next_mate_pos_datum);
   }
 
   // info
-  avro_schema_t map_schema = avro_schema_map(avro_schema_array(avro_schema_string()));
+  avro_schema_t string_array_schema = avro_schema_array(avro_schema_string());
+  avro_schema_t map_schema = avro_schema_map(string_array_schema);
   avro_datum_t info_datum = avro_map(map_schema);
+
+  /*
+  avro_datum_t optional_datum = avro_array(string_array_schema);
+  avro_datum_t opt_type_datum = avro_string("i");
+  avro_datum_t opt_value_datum = avro_string("125");
+  */
+  /*
+  rval = avro_array_append_datum(optional_datum, opt_type_datum);
+  if (rval) {
+    fprintf(stderr, "Unable to append array datum.\nError message: %s\n", avro_strerror());
+    exit(EXIT_FAILURE);
+  }
+  rval = avro_array_append_datum(optional_datum, opt_value_datum);
+  if (rval) {
+    fprintf(stderr, "Unable to append array datum.\nError message: %s\n", avro_strerror());
+    exit(EXIT_FAILURE);
+  }
+*/
+  /*
+  avro_map_set(info_datum, "NM", optional_datum);
+  avro_datum_decref(optional_datum);
+  avro_datum_decref(opt_type_datum);
+  avro_datum_decref(opt_value_datum);
+  */
+  /*  
+  char value[1024];
+  uint8_t *s = bam_get_aux(bam1);
+  while (s + 4 < bam1->data + bam1->l_data) {
+    uint8_t type, key[3];
+    key[0] = s[0]; key[1] = s[1], key[2] = 0;
+    s += 2; type = *s++;
+    printf("\t%s:", key);
+    //kputc('\t', str); kputsn((char*)key, 2, str); kputc(':', str);
+
+    if (type == 'A') {
+      printf("A:"); //kputsn("A:", 2, str);
+      printf("%c", *s); //kputc(*s, str);
+      sprintf(value, "%c", *s);
+
+      avro_datum_t optional_datum = avro_array(string_array_schema);
+      rval = avro_array_append_datum(optional_datum, avro_string("A"));
+      rval = avro_array_append_datum(optional_datum, avro_string(value));
+      avro_map_set(info_datum, key, optional_datum);
+
+      ++s;
+    } else if (type == 'C') {
+      printf("i:"); //kputsn("i:", 2, str);
+      printf("%u", *s); //kputw(*s, str);
+      sprintf(value, "%u", *s);
+
+      avro_datum_t optional_datum = avro_array(string_array_schema);
+      rval = avro_array_append_datum(optional_datum, avro_string("i"));
+      rval = avro_array_append_datum(optional_datum, avro_string(value));
+      avro_map_set(info_datum, key, optional_datum);
+
+      ++s;
+    } else if (type == 'c') {
+      printf("i:"); //kputsn("i:", 2, str);
+      printf("%i", *s); //kputw(*(int8_t*)s, str);
+      sprintf(value, "%i", *s);
+
+      avro_datum_t optional_datum = avro_array(string_array_schema);
+      rval = avro_array_append_datum(optional_datum, avro_string("i"));
+      rval = avro_array_append_datum(optional_datum, avro_string(value));
+      avro_map_set(info_datum, key, optional_datum);
+
+      ++s;
+    } else if (type == 'S') {
+      if (s+2 <= bam1->data + bam1->l_data) {
+	printf("i:"); //kputsn("i:", 2, str);
+	printf("%u", *(uint16_t*)s); //kputw(*(uint16_t*)s, str);
+	sprintf(value, "%u", *(uint16_t*)s);
+
+	avro_datum_t optional_datum = avro_array(string_array_schema);
+	rval = avro_array_append_datum(optional_datum, avro_string("i"));
+	rval = avro_array_append_datum(optional_datum, avro_string(value));
+	avro_map_set(info_datum, key, optional_datum);
+
+	s += 2;
+      } else {
+	fprintf(stderr, "Unable to parse optional fields %s:%c.\n", key, type);
+	exit(EXIT_FAILURE);
+      }
+    } else if (type == 's') {
+      if (s+2 <= bam1->data + bam1->l_data) {
+	printf("i:"); //kputsn("i:", 2, str);
+	printf("%i", *(int16_t*)s); //kputw(*(int16_t*)s, str);
+	sprintf(value, "%i", *(int16_t*)s);
+
+	avro_datum_t optional_datum = avro_array(string_array_schema);
+	rval = avro_array_append_datum(optional_datum, avro_string("i"));
+	rval = avro_array_append_datum(optional_datum, avro_string(value));
+	avro_map_set(info_datum, key, optional_datum);
+
+	s += 2;
+      } else {
+	fprintf(stderr, "Unable to parse optional fields %s:%c.\n", key, type);
+	exit(EXIT_FAILURE);
+      }
+    } else if (type == 'I') {
+      if (s+4 <= bam1->data + bam1->l_data) {
+	printf("i:"); //kputsn("i:", 2, str);
+	printf("%u", *(uint32_t*)s); //kputuw(*(uint32_t*)s, str);
+	sprintf(value, "%u", *(uint32_t*)s);
+
+	avro_datum_t optional_datum = avro_array(string_array_schema);
+	rval = avro_array_append_datum(optional_datum, avro_string("i"));
+	rval = avro_array_append_datum(optional_datum, avro_string(value));
+	avro_map_set(info_datum, key, optional_datum);
+
+	s += 4;
+      } else {
+	fprintf(stderr, "Unable to parse optional fields %s:%c.\n", key, type);
+	exit(EXIT_FAILURE);
+      }
+    } else if (type == 'i') {
+      if (s+4 <= bam1->data + bam1->l_data) {
+	printf("i:"); //kputsn("i:", 2, str);
+	printf("%i", *(int32_t*)s); //kputw(*(int32_t*)s, str);
+	sprintf(value, "%i", *(int32_t*)s);
+
+	avro_datum_t optional_datum = avro_array(string_array_schema);
+	rval = avro_array_append_datum(optional_datum, avro_string("i"));
+	rval = avro_array_append_datum(optional_datum, avro_string(value));
+	avro_map_set(info_datum, key, optional_datum);
+
+	s += 4;
+      } else {
+	fprintf(stderr, "Unable to parse optional fields %s:%c.\n", key, type);
+	exit(EXIT_FAILURE);
+      }
+    } else if (type == 'f') {
+      if (s+4 <= bam1->data + bam1->l_data) {
+	printf("f:%g", *(float*)s); //ksprintf(str, "f:%g", *(float*)s);
+	sprintf(value, "%g", *(float*)s);
+
+	avro_datum_t optional_datum = avro_array(string_array_schema);
+	rval = avro_array_append_datum(optional_datum, avro_string("f"));
+	rval = avro_array_append_datum(optional_datum, avro_string(value));
+	avro_map_set(info_datum, key, optional_datum);
+
+	s += 4;
+      } else {
+	fprintf(stderr, "Unable to parse optional fields %s:%c.\n", key, type);
+	exit(EXIT_FAILURE);
+      }
+    } else if (type == 'd') {
+      if (s+8 <= bam1->data + bam1->l_data) {
+	printf("d:%g", *(double*)s); //ksprintf(str, "d:%g", *(double*)s);
+	sprintf(value, "%g", *(double*)s);
+
+	avro_datum_t optional_datum = avro_array(string_array_schema);
+	rval = avro_array_append_datum(optional_datum, avro_string("d"));
+	rval = avro_array_append_datum(optional_datum, avro_string(value));
+	avro_map_set(info_datum, key, optional_datum);
+
+	s += 8;
+      } else {
+	fprintf(stderr, "Unable to parse optional fields %s:%c.\n", key, type);
+	exit(EXIT_FAILURE);
+      }
+    } else if (type == 'Z' || type == 'H') {
+      fprintf(stderr, "Unable to parse optional fields %s:%c. Not implemented yet.\n", key, type);
+      exit(EXIT_FAILURE);
+
+      printf("%c", type); //kputc(type, str); 
+      printf(":"); //kputc(':', str);
+      while (s < bam1->data + bam1->l_data && *s) {
+	printf("%c", *s++); //kputc(*s++, str);
+      }
+      if (s >= bam1->data + bam1->l_data) {
+	fprintf(stderr, "Unable to parse optional fields %s:%c.\n", key, type);
+	exit(EXIT_FAILURE);
+      }
+      ++s;
+    } else if (type == 'B') {
+      fprintf(stderr, "Unable to parse optional fields %s:%c. Not implemented yet.\n", key, type);
+      exit(EXIT_FAILURE);
+
+      uint8_t sub_type = *(s++);
+      int32_t n;
+      memcpy(&n, s, 4);
+      s += 4; // no point to the start of the array
+      if (s + n >= bam1->data + bam1->l_data) {
+	fprintf(stderr, "Unable to parse optional fields %s:%c.\n", key, type);
+	exit(EXIT_FAILURE);
+      }
+      printf("B:"); //kputsn("B:", 2, str); 
+      printf("%c", sub_type); // kputc(sub_type, str); // write the typing
+      for (int i = 0; i < n; ++i) { // FIXME: for better performance, put the loop after "if"
+	printf(","); //kputc(',', str);
+	if ('c' == sub_type)      { 
+	  printf("%i", *(int8_t*)s); //kputw(*(int8_t*)s, str); 
+	  ++s; 
+	} else if ('C' == sub_type) { 
+	  printf("%u", *(uint8_t*)s); //kputw(*(uint8_t*)s, str); 
+	  ++s; 
+	} else if ('s' == sub_type) { 
+	  printf("%i", *(int16_t*)s); //kputw(*(int16_t*)s, str); 
+	  s += 2; 
+	} else if ('S' == sub_type) { 
+	  printf("%u", *(uint16_t*)s); //kputw(*(uint16_t*)s, str); 
+	  s += 2; 
+	} else if ('i' == sub_type) { 
+	  printf("%i", *(int32_t*)s); //kputw(*(int32_t*)s, str); 
+	  s += 4; 
+	} else if ('I' == sub_type) { 
+	  printf("%u", *(uint32_t*)s); //kputuw(*(uint32_t*)s, str); 
+	  s += 4; 
+	} else if ('f' == sub_type) { 
+	  printf("%g", *(float*)s); //ksprintf(str, "%g", *(float*)s); 
+	  s += 4; 
+	}
+      }
+    }
+  }
+  */
   if (avro_record_set(read_alignment, "info", info_datum)) {
     fprintf(stderr, "Unable to set info.\nError message: %s\n", avro_strerror());
     exit(EXIT_FAILURE);
   }
-
+  avro_datum_decref(info_datum);
+  avro_schema_decref(string_array_schema);
+  avro_schema_decref(map_schema);
 
   // write ReadAlignment
   if (avro_file_writer_append(db, read_alignment)) {
@@ -377,7 +716,7 @@ void add_read_alignment(avro_file_writer_t db, const bam1_t *bam1, const bam_hea
   }
   
   // decrement all our references to prevent memory from leaking
-  avro_datum_decref(id_datum);
+  avro_datum_decref(read_alignment);
 }
 
 /*
@@ -505,14 +844,27 @@ int main(int argc, char *argv[]) {
   // read BAM header
   bam_header_t *bam_header = bam_header_read(bam_fd);
 
+  i = 0;
   bam1_t *bam1 = bam_init1();
   while (bam_read1(bam_fd, bam1) > 0) {
     add_read_alignment(db, bam1, bam_header);
     //    fprintf(stdout, "id = %s\n", bam1_qname(bam1));
+    if (i % 100000 == 0) {
+    //if (i == 100) {
+      printf("%i\n", i);
+      //break;
+    }
+    i++;
   }
 
+  // free memory
+  free(bam_filename);
+  free(avro_filename);
+  free(codec);
 
-  // close BAM
+  // free and close BAM
+  bam_destroy1(bam1);
+  bam_header_destroy(bam_header);
   bam_close(bam_fd);
 
 	/*
@@ -579,9 +931,18 @@ int main(int argc, char *argv[]) {
 	avro_schema_decref(first_name_schema);
 	avro_schema_decref(phone_schema);
 	avro_schema_decref(projection_schema);
-
 	*/
+
 	// We don't need this schema anymore 
 	avro_schema_decref(read_alignment_schema);
+	avro_schema_decref(position_schema);
+	avro_schema_decref(linear_alignment_schema);
+	avro_schema_decref(cigar_unit_schema);
+	avro_schema_decref(union_schema_ns);
+	avro_schema_decref(union_schema_bn);
+	avro_schema_decref(union_schema_ni);
+	avro_schema_decref(union_schema_na);
+	avro_schema_decref(union_schema_np);
+
 	return 0;
 }
