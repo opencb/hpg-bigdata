@@ -7,6 +7,11 @@ DOWNLOAD and BUILDING
     $ git clone https://github.com/opencb/hpg-bigdata.git
     $ mvn install
 
+### Requirements
+
+  1. Java 1.8
+  2. opencb/java-common-libs v3.0-SNAPSHOT
+
 RUNING
 -------
 
@@ -19,7 +24,7 @@ RUNING
 ga4gh command
 -------------
 
-  The command **ga4gh** allows you to save Fastq, SAM, BAM,... files as Avro files according to the GA4GH models. You can specify a compression method, e.g., deflate, snappy, bzip2.
+  The command **ga4gh** al lows you to save Fastq, SAM, BAM, VCF,... files as Avro files according to the GA4GH models. You can specify a compression method, e.g., deflate, snappy, bzip2.
   The source files (Fastq, SAM, BAM...) have to be located in the local file system, on the other hand, destination files can be saved both in the local file system and in the Hadoop file system (HDFS), in the latter case, you must use the notation **hdfs://**
   
   Some examples using the test files in the folder data:
@@ -32,6 +37,9 @@ ga4gh command
     
     $ ./hpg-bigdata.sh ga4gh -c bam2ga -i data/test.bam -o data/test.bam.ga -x bzip2
     $ ./hpg-bigdata.sh ga4gh -c bam2ga -i data/test.bam -o hdfs://test.bam.hdfs.ga -x bzip2
+
+    $ ./hpg-bigdata.sh ga4gh -c vcf2ga -i data/test.vcf.gz -o test.vcf.ga.avro -x snappy
+    $ ./hpg-bigdata.sh ga4gh -c vcf2ga -i data/test.vcf.gz -o hdfs://test.vcf.gz.hdfs.ga.avro -x snappy
 
   In addition, by using the command **ga4gh**, you can save the Avro files as the original formats (Fastq, SAM, BAM...). In this case, the Avro files can be located both in the local file system and in the HDFS. 
   
@@ -59,4 +67,3 @@ fastq command
     $ ./hpg-bigdata.sh ga4gh --stats --kmers 7 -i hdfs://test.fq.ga -o hdfs://full-stats-test.fq.ga
     
     
-   
