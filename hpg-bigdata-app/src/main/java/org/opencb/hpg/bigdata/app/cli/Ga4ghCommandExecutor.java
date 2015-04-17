@@ -353,11 +353,11 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 		int i = 0;
 		for (ReadAlignment readAlignment: reader) {
 			System.out.println(readAlignment.toString());
-			System.out.println(ReadAlignmentUtils.getSamString(readAlignment));
+			//System.out.println(ReadAlignmentUtils.getSamString(readAlignment));
 			
-			samRecord = converter.backward(readAlignment);
-			samRecord.setHeader(header);
-			writer.addAlignment(samRecord);
+			//samRecord = converter.backward(readAlignment);
+			//samRecord.setHeader(header);
+			//writer.addAlignment(samRecord);
 		}
 
 		// close

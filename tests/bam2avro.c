@@ -21,25 +21,11 @@
 
 #include "samtools/bam.h"
 
-/*
-#ifdef DEFLATE_CODEC
-#define QUICKSTOP_CODEC  "deflate"
-#else
-#define QUICKSTOP_CODEC  "null"
-#endif
-*/
-
-avro_schema_t read_alignment_schema;
-avro_schema_t position_schema;
-avro_schema_t linear_alignment_schema;
-avro_schema_t cigar_unit_schema;
-avro_schema_t union_schema_ns;
-avro_schema_t union_schema_bn;
-avro_schema_t union_schema_ni;
-avro_schema_t union_schema_na;
-avro_schema_t union_schema_np;
-
-int64_t id = 0;
+//--------------------------------------------------------------------//
+// JSON schemas
+//
+// according to the ga4gh models (ga4gh.org)
+//--------------------------------------------------------------------//
 
 const char POSITION_SCHEMA[] = "{\"type\":\"record\",\"name\":\"Position\",\"namespace\":\"org.ga4gh.models\",\"doc\":\"A `Position` is a side of a base pair in some already known sequence. A\\n`Position` is represented by a sequence name or ID, a base number on that\\nsequence (0-based), and a `Strand` to indicate the left or right side.\\n\\nFor example, given the sequence \\\"GTGG\\\", the `Position` on that sequence at\\noffset 1 in the forward orientation would be the left side of the T/A base pair.\\nThe base at this `Position` is \\\"T\\\". Alternately, for offset 1 in the reverse\\norientation, the `Position` would be the right side of the T/A base pair, and\\nthe base at the `Position` is \\\"A\\\".\\n\\nOffsets added to a `Position` are interpreted as reading along its strand;\\nadding to a reverse strand position actually subtracts from its `position`\\nmember.\",\"fields\":[{\"name\":\"referenceName\",\"type\":[\"null\",\"string\"],\"doc\":\"The name of the reference sequence in whatever reference set is being used.\\n  Does not generally include a \\\"chr\\\" prefix, so for example \\\"X\\\" would be used\\n  for the X chromosome.\\n\\n  If `sequenceId` is null, this must not be null.\",\"default\":null},{\"name\":\"sequenceId\",\"type\":[\"null\",\"string\"],\"doc\":\"The ID of the sequence on which the `Position` is located. This may be a\\n  `Reference` sequence, or a novel piece of sequence associated with a\\n  `VariantSet`.\\n\\n  If `referenceName` is null, this must not be null.\\n\\n  If the server supports the \\\"graph\\\" mode, this must not be null.\",\"default\":null},{\"name\":\"position\",\"type\":\"long\",\"doc\":\"The 0-based offset from the start of the forward strand for that sequence.\\n  Genomic positions are non-negative integers less than sequence length.\"},{\"name\":\"strand\",\"type\":{\"type\":\"enum\",\"name\":\"Strand\",\"doc\":\"Indicates the DNA strand associate for some data item.\\n* `POS_STRAND`:  The postive (+) strand.\\n* `NEG_STRAND`: The negative (-) strand.\\n* `NO_STRAND`: Strand-independent data or data where the strand can not be determined.\",\"symbols\":[\"POS_STRAND\",\"NEG_STRAND\",\"NO_STRAND\"]},\"doc\":\"Strand the position is associated with. `POS_STRAND` represents the forward\\n  strand, or equivalently the left side of a base, and `NEG_STRAND` represents\\n  the reverse strand, or equivalently the right side of a base.\"}]}";
 
@@ -53,22 +39,61 @@ const char READ_ALIGNMENT_SCHEMA[] = "{\"type\":\"record\",\"name\":\"ReadAlignm
 
 const char CIGAR_UNIT_SCHEMA[] = "{\"type\":\"record\",\"name\":\"CigarUnit\",\"namespace\":\"org.ga4gh.models\",\"doc\":\"A structure for an instance of a CIGAR operation.\",\"fields\":[{\"name\":\"operation\",\"type\":{\"type\":\"enum\",\"name\":\"CigarOperation\",\"doc\":\"An enum for the different types of CIGAR alignment operations that exist.\\nUsed wherever CIGAR alignments are used. The different enumerated values\\nhave the following usage:\\n\\n* `ALIGNMENT_MATCH`: An alignment match indicates that a sequence can be\\n  aligned to the reference without evidence of an INDEL. Unlike the\\n  `SEQUENCE_MATCH` and `SEQUENCE_MISMATCH` operators, the `ALIGNMENT_MATCH`\\n  operator does not indicate whether the reference and read sequences are an\\n  exact match. This operator is equivalent to SAM's `M`.\\n* `INSERT`: The insert operator indicates that the read contains evidence of\\n  bases being inserted into the reference. This operator is equivalent to\\n  SAM's `I`.\\n* `DELETE`: The delete operator indicates that the read contains evidence of\\n  bases being deleted from the reference. This operator is equivalent to\\n  SAM's `D`.\\n* `SKIP`: The skip operator indicates that this read skips a long segment of\\n  the reference, but the bases have not been deleted. This operator is\\n  commonly used when working with RNA-seq data, where reads may skip long\\n  segments of the reference between exons. This operator is equivalent to\\n  SAM's 'N'.\\n* `CLIP_SOFT`: The soft clip operator indicates that bases at the start/end\\n  of a read have not been considered during alignment. This may occur if the\\n  majority of a read maps, except for low quality bases at the start/end of\\n  a read. This operator is equivalent to SAM's 'S'. Bases that are soft clipped\\n  will still be stored in the read.\\n* `CLIP_HARD`: The hard clip operator indicates that bases at the start/end of\\n  a read have been omitted from this alignment. This may occur if this linear\\n  alignment is part of a chimeric alignment, or if the read has been trimmed\\n  (e.g., during error correction, or to trim poly-A tails for RNA-seq). This\\n  operator is equivalent to SAM's 'H'.\\n* `PAD`: The pad operator indicates that there is padding in an alignment.\\n  This operator is equivalent to SAM's 'P'.\\n* `SEQUENCE_MATCH`: This operator indicates that this portion of the aligned\\n  sequence exactly matches the reference (e.g., all bases are equal to the\\n  reference bases). This operator is equivalent to SAM's '='.\\n* `SEQUENCE_MISMATCH`: This operator indicates that this portion of the\\n  aligned sequence is an alignment match to the reference, but a sequence\\n  mismatch (e.g., the bases are not equal to the reference). This can\\n  indicate a SNP or a read error. This operator is equivalent to SAM's 'X'.\",\"symbols\":[\"ALIGNMENT_MATCH\",\"INSERT\",\"DELETE\",\"SKIP\",\"CLIP_SOFT\",\"CLIP_HARD\",\"PAD\",\"SEQUENCE_MATCH\",\"SEQUENCE_MISMATCH\"]},\"doc\":\"The operation type.\"},{\"name\":\"operationLength\",\"type\":\"long\",\"doc\":\"The number of bases that the operation runs for.\"},{\"name\":\"referenceSequence\",\"type\":[\"null\",\"string\"],\"doc\":\"`referenceSequence` is only used at mismatches (`SEQUENCE_MISMATCH`)\\n  and deletions (`DELETE`). Filling this field replaces the MD tag.\\n  If the relevant information is not available, leave this field as `null`.\",\"default\":null}]}";
 
+//--------------------------------------------------------------------//
+// global variables
+//--------------------------------------------------------------------//
+
+avro_schema_t read_alignment_schema;
+avro_schema_t position_schema;
+avro_schema_t linear_alignment_schema;
+avro_schema_t cigar_unit_schema;
+
+
+avro_schema_t union_schema_ns;
+avro_value_iface_t *iface_union_schema_ns;
+avro_value_t union_schema_ns_value;
+
+avro_schema_t union_schema_bn;
+avro_schema_t union_schema_ni;
+avro_schema_t union_schema_na;
+avro_schema_t union_schema_np;
+
+// read alignment
+avro_value_iface_t *iface_read_alignment;
+avro_value_t read_alignment;
+
+// position
+avro_value_iface_t *iface_position;
+avro_value_t position;
+
+//--------------------------------------------------------------------//
+// init schemas
+//
 // parse schema into a schema data structure
-void init_schema(void) {
+//--------------------------------------------------------------------//
+
+void init_schemas() {
   int error;
+
+  // read alignment
   if (error = avro_schema_from_json_literal(READ_ALIGNMENT_SCHEMA, &read_alignment_schema)) {
     fprintf(stderr, "\n\n%s\n\n", READ_ALIGNMENT_SCHEMA);
     fprintf(stderr, "Unable to parse read alignment schema (error %i)\n", error);
     fprintf(stderr, "Error message: %s\n", avro_strerror());
     exit(EXIT_FAILURE);
   }
+  iface_read_alignment = avro_generic_class_from_schema(read_alignment_schema);
+  avro_generic_value_new(iface_read_alignment, &read_alignment);
 
+  // position
   if (error = avro_schema_from_json_literal(POSITION_SCHEMA, &position_schema)) {
     fprintf(stderr, "\n\n%s\n\n", POSITION_SCHEMA);
     fprintf(stderr, "Unable to parse position schema (error %i)\n", error);
     fprintf(stderr, "Error message: %s\n", avro_strerror());
     exit(EXIT_FAILURE);
   }
+  iface_position = avro_generic_class_from_schema(position_schema);
+  avro_generic_value_new(iface_position, &position);
 
   if (error = avro_schema_from_json_literal(LINEAR_ALIGNMENT_SCHEMA, &linear_alignment_schema)) {
     fprintf(stderr, "\n\n%s\n\n", LINEAR_ALIGNMENT_SCHEMA);
@@ -87,6 +112,9 @@ void init_schema(void) {
   union_schema_ns = avro_schema_union();
   avro_schema_union_append(union_schema_ns, avro_schema_null());
   avro_schema_union_append(union_schema_ns, avro_schema_string());
+  iface_union_schema_ns = avro_generic_class_from_schema(union_schema_ns);
+  avro_generic_value_new(iface_union_schema_ns, &union_schema_ns_value);
+  //  avro_generic_value_new(iface_read_alignment, &read_alignment);
 
   union_schema_bn = avro_schema_union();
   avro_schema_union_append(union_schema_bn, avro_schema_boolean());
@@ -102,8 +130,247 @@ void init_schema(void) {
   union_schema_np = avro_schema_union();
   avro_schema_union_append(union_schema_np, avro_schema_null());
   avro_schema_union_append(union_schema_np, avro_schema_null());
+}
+
+//--------------------------------------------------------------------//
+// free schemas
+//--------------------------------------------------------------------//
+
+void free_schemas() {
+  // read alignment
+  avro_schema_decref(read_alignment_schema);
+  avro_value_decref(&read_alignment);
+  avro_value_iface_decref(iface_read_alignment);
+
+  // position
+  avro_schema_decref(position_schema);
+  avro_value_decref(&position);
+  avro_value_iface_decref(iface_position);
+
+  avro_schema_decref(linear_alignment_schema);
+  avro_schema_decref(cigar_unit_schema);
+
+  // union [null, string]
+  avro_schema_decref(union_schema_ns);
+  avro_value_iface_decref(iface_union_schema_ns);
+  avro_value_decref(&union_schema_ns_value);
+
+  avro_schema_decref(union_schema_bn);
+  avro_schema_decref(union_schema_ni);
+  avro_schema_decref(union_schema_na);
+  avro_schema_decref(union_schema_np);
+}
+
+//--------------------------------------------------------------------//
+// add read alignment
+//
+// new Avro API (avro_value_xxx)
+//--------------------------------------------------------------------//
+
+void add_read_alignment2(avro_file_writer_t db, const bam1_t *bam1, const bam_header_t *bam_header) {
+  int aux;
+  avro_value_t field, subfield, subsubfield;
+  avro_value_t element, branch, subbranch;
+
+  // reset
+  avro_value_reset(&read_alignment);
+
+  // id
+  avro_value_get_by_name(&read_alignment, "id", &field, NULL); 
+  avro_value_set_branch(&field, 1, &branch);
+  avro_value_set_string(&branch, bam1_qname(bam1));
+
+  // readGroupId
+  avro_value_get_by_name(&read_alignment, "readGroupId", &field, NULL); 
+  avro_value_set_string(&field, "read-group-id-value");
+
+  // fragmentName
+  avro_value_get_by_name(&read_alignment, "fragmentName", &field, NULL); 
+  avro_value_set_string(&field, bam_header->target_name[bam1->core.tid]);
+
+  // properPlacement
+  aux = ((bam1->core.flag & BAM_FPROPER_PAIR) && (bam1->core.flag & BAM_FPAIRED));
+  avro_value_get_by_name(&read_alignment, "properPlacement", &field, NULL); 
+  avro_value_set_branch(&field, 0, &branch);
+  avro_value_set_boolean(&branch, aux);
+
+  // duplicateFragment
+  aux = ((bam1->core.flag & BAM_FDUP) == BAM_FDUP);
+  avro_value_get_by_name(&read_alignment, "duplicateFragment", &field, NULL); 
+  avro_value_set_branch(&field, 0, &branch);
+  avro_value_set_boolean(&branch, aux);
+
+  // numberReads
+  int num_reads = (bam1->core.flag & BAM_FPROPER_PAIR) ? 2 : 1;
+  avro_value_get_by_name(&read_alignment, "numberReads", &field, NULL); 
+  avro_value_set_branch(&field, 1, &branch);
+  avro_value_set_int(&branch, num_reads);
+
+  // fragmentLength
+  aux = (bam1->core.flag & BAM_FPAIRED) ? bam1->core.isize : 0;
+  avro_value_get_by_name(&read_alignment, "fragmentLength", &field, NULL); 
+  avro_value_set_branch(&field, 1, &branch);
+  avro_value_set_int(&branch, aux);
+
+  // readNumber
+  aux = ((bam1->core.flag & BAM_FPAIRED) && (bam1->core.flag & BAM_FREAD2)) ? num_reads - 1 : 0;
+  avro_value_get_by_name(&read_alignment, "readNumber", &field, NULL); 
+  avro_value_set_branch(&field, 1, &branch);
+  avro_value_set_int(&branch, aux);
+
+  // failedVendorQualityChecks
+  aux = ((bam1->core.flag & BAM_FQCFAIL) == BAM_FQCFAIL);
+  avro_value_get_by_name(&read_alignment, "failedVendorQualityChecks", &field, NULL); 
+  avro_value_set_branch(&field, 0, &branch);
+  avro_value_set_boolean(&branch, aux);
+
+  // alignment
+  avro_value_get_by_name(&read_alignment, "alignment", &field, NULL); 
+  if (bam1->core.flag & BAM_FUNMAP) {
+    // unmapped
+    avro_value_set_branch(&field, 0, &branch);
+    avro_value_set_null(&branch);
+  } else {
+    // linear alignment
+    avro_value_set_branch(&field, 1, &branch);
+
+    // alignment . position
+    avro_value_get_by_name(&branch, "position", &subfield, NULL); 
+
+    // alignment . position . referenceName
+    avro_value_get_by_name(&subfield, "referenceName", &subsubfield, NULL); 
+    avro_value_set_branch(&subsubfield, 1, &subbranch);
+    avro_value_set_string(&subbranch, bam_header->target_name[bam1->core.tid]);
+
+    // alignment . position . sequenceId
+    avro_value_get_by_name(&subfield, "sequenceId", &subsubfield, NULL); 
+    avro_value_set_branch(&subsubfield, 0, &subbranch);
+    avro_value_set_null(&subbranch);
+
+    // alignment . position . position
+    avro_value_get_by_name(&subfield, "position", &subsubfield, NULL); 
+    avro_value_set_long(&subsubfield, bam1->core.pos);
+
+    // alignment . position . strand
+    avro_value_get_by_name(&subfield, "strand", &subsubfield, NULL); 
+    if (bam1->core.flag & BAM_FREVERSE) {
+      avro_value_set_enum(&subsubfield, 1);
+    } else {
+      avro_value_set_enum(&subsubfield, 0);
+    }
+
+    // alignment . mappingQuaility
+    avro_value_get_by_name(&branch, "mappingQuality", &subfield, NULL); 
+    avro_value_set_long(&subfield, bam1->core.qual);
+
+    // alignment . cigar
+    avro_value_get_by_name(&branch, "cigar", &subfield, NULL); 
+    for(int i = 0; i < 1; i++) {
+      avro_value_append(&subfield, &element, NULL);
+
+      // alignment . cigar . operation
+      avro_value_get_by_name(&element, "operation", &subsubfield, NULL); 
+      avro_value_set_enum(&subsubfield, 0);
+
+      // alignment . cigar . operationLength
+      avro_value_get_by_name(&element, "operationLength", &subsubfield, NULL); 
+      avro_value_set_long(&subsubfield, 100);
+
+      avro_type_t type = avro_value_get_type(&subsubfield);
+      printf("type = %i\n", type);
+      exit(-1);
+
+      // alignment . cigar . referenceSequence
+      avro_value_get_by_name(&element, "referenceSequence", &subsubfield, NULL); 
+      avro_value_set_branch(&subsubfield, 0, &subbranch);
+      avro_value_set_null(&subbranch);
+
+      avro_type_t type = avro_value_get_type(&subsubfield);
+      printf("type = %i\n", type);
+      exit(-1);
+
+    }
+  }
+
+  // secondaryAlignment
+  aux = ((bam1->core.flag & BAM_FSECONDARY) == BAM_FSECONDARY);
+  avro_value_get_by_name(&read_alignment, "secondaryAlignment", &field, NULL); 
+  avro_value_set_branch(&field, 0, &branch);
+  avro_value_set_boolean(&branch, aux);
+
+  // supplementaryAlignment
+  aux = ((bam1->core.flag & BAM_FSECONDARY) == BAM_FSECONDARY);
+  avro_value_get_by_name(&read_alignment, "supplementaryAlignment", &field, NULL); 
+  avro_value_set_branch(&field, 0, &branch);
+  avro_value_set_boolean(&branch, aux);
+
+  // alignedSequence and alignedQuality
+  int qlen = bam1->core.l_qseq;
+  char buf[qlen + 1];
+  const uint8_t *seq = bam_get_seq(bam1);
+  const uint8_t *qual = bam1_qual(bam1);
+  buf[qlen] = 0;  
+
+  avro_value_get_by_name(&read_alignment, "alignedQuality", &field, NULL); 
+  for (int i = 0; i < qlen; i++) {
+    // sequence
+    buf[i] = bam_nt16_rev_table[bam1_seqi(seq, i)];
+
+    // quality
+    avro_value_append(&field, &element, NULL);
+    avro_value_set_int(&element, qual[i] + 33);
+  }
+  avro_value_get_by_name(&read_alignment, "alignedSequence", &field, NULL); 
+  avro_value_set_branch(&field, 1, &branch);
+  avro_value_set_string(&branch, buf);
+
+  // nextMatePosition
+  avro_value_get_by_name(&read_alignment, "nextMatePosition", &field, NULL); 
+  if (bam1->core.flag & BAM_FPAIRED) {
+    avro_value_set_branch(&field, 1, &branch);
+
+    // nextMatePosition . referenceName
+    avro_value_get_by_name(&branch, "referenceName", &subfield, NULL); 
+    avro_value_set_branch(&subfield, 1, &subbranch);
+    avro_value_set_string(&subbranch, bam_header->target_name[bam1->core.mtid]);
+
+    // nextMatePosition . sequenceId
+    avro_value_get_by_name(&branch, "sequenceId", &subfield, NULL); 
+    avro_value_set_branch(&subfield, 0, &subbranch);
+    avro_value_set_null(&subbranch);
+
+    // nextMatePosition . position
+    avro_value_get_by_name(&branch, "position", &subfield, NULL); 
+    avro_value_set_long(&subfield, bam1->core.mpos);
+
+    // nextMatePosition . strand
+    avro_value_get_by_name(&branch, "strand", &subfield, NULL); 
+    if (bam1->core.flag & BAM_FMREVERSE) {
+      avro_value_set_enum(&subfield, 1);
+    } else {
+      avro_value_set_enum(&subfield, 0);
+    }
+  } else {
+    avro_value_set_branch(&field, 0, &branch);
+    avro_value_set_null(&branch);
+  }
+
+  // info
+  avro_value_get_by_name(&read_alignment, "info", &field, NULL); 
+
+  // write ReadAlignment
+  if (avro_file_writer_append_value(db, &read_alignment)) {
+    fprintf(stderr, "Unable to write ReadAlignment datum to memory buffer.\nError message: %s\n", avro_strerror());
+    exit(EXIT_FAILURE);
+  }
 
 }
+
+//--------------------------------------------------------------------//
+// add read alignment
+//
+// old Avro API (avro_datum_xxx)
+//--------------------------------------------------------------------//
 
 // add read alignment
 void add_read_alignment(avro_file_writer_t db, const bam1_t *bam1, const bam_header_t *bam_header) {
@@ -714,7 +981,7 @@ void add_read_alignment(avro_file_writer_t db, const bam1_t *bam1, const bam_hea
     fprintf(stderr, "Unable to write ReadAlignment datum to memory buffer.\nError message: %s\n", avro_strerror());
     exit(EXIT_FAILURE);
   }
-  
+
   // decrement all our references to prevent memory from leaking
   avro_datum_decref(read_alignment);
 }
@@ -819,13 +1086,13 @@ int main(int argc, char *argv[]) {
   char *avro_filename = strdup(argv[2]);
   char *codec = strdup(argv[3]);
   
-  // Initialize the schema structure from JSON
-  init_schema();
+  // initialize the schemas structure from JSON
+  init_schemas();
   
-  // Delete the database if it exists
+  // delete the output filename if it exists
   remove(avro_filename);
 	
-  // Create a new database
+  // create a new output filename
   rval = avro_file_writer_create_with_codec
     (avro_filename, read_alignment_schema, &db, codec, 0);
   if (rval) {
@@ -847,7 +1114,7 @@ int main(int argc, char *argv[]) {
   i = 0;
   bam1_t *bam1 = bam_init1();
   while (bam_read1(bam_fd, bam1) > 0) {
-    add_read_alignment(db, bam1, bam_header);
+    add_read_alignment2(db, bam1, bam_header);
     //    fprintf(stdout, "id = %s\n", bam1_qname(bam1));
     if (i % 100000 == 0) {
     //if (i == 100) {
@@ -934,15 +1201,7 @@ int main(int argc, char *argv[]) {
 	*/
 
 	// We don't need this schema anymore 
-	avro_schema_decref(read_alignment_schema);
-	avro_schema_decref(position_schema);
-	avro_schema_decref(linear_alignment_schema);
-	avro_schema_decref(cigar_unit_schema);
-	avro_schema_decref(union_schema_ns);
-	avro_schema_decref(union_schema_bn);
-	avro_schema_decref(union_schema_ni);
-	avro_schema_decref(union_schema_na);
-	avro_schema_decref(union_schema_np);
+	free_schemas();
 
 	return 0;
 }
