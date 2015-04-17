@@ -43,6 +43,9 @@ const char CIGAR_UNIT_SCHEMA[] = "{\"type\":\"record\",\"name\":\"CigarUnit\",\"
 // global variables
 //--------------------------------------------------------------------//
 
+#define MAX_BUFFER_SIZE  4098
+char buffer[MAX_BUFFER_SIZE];
+
 avro_schema_t read_alignment_schema;
 avro_schema_t position_schema;
 avro_schema_t linear_alignment_schema;
@@ -169,9 +172,8 @@ void free_schemas() {
 
 void add_read_alignment2(avro_file_writer_t db, const bam1_t *bam1, const bam_header_t *bam_header) {
   int aux;
-  avro_type_t type;
   avro_value_t field, subfield, subsubfield;
-  avro_value_t element, branch, subbranch;
+  avro_value_t element, subelement, branch, subbranch;
 
   // reset
   avro_value_reset(&read_alignment);
@@ -411,90 +413,64 @@ void add_read_alignment2(avro_file_writer_t db, const bam1_t *bam1, const bam_he
   // 15 info
   //avro_value_get_by_name(&read_alignment, "info", &field, NULL); 
   avro_value_get_by_index(&read_alignment, 15, &field, NULL); 
-  /*
-  avro_schema_t array_string_schema = avro_schema_array(avro_schema_string());
-  avro_value_iface_t *iface_array_string = avro_generic_class_from_schema(array_string_schema);
-  avro_value_t array_string;
-  avro_generic_value_new(iface_array_string, &array_string);
-  {
-    //    avro_value_reset(&array_string);
 
-    //    type = avro_value_get_type(&array_string);
-    //    printf("type = %i\n", type);
-
-    avro_value_append(&array_string, &element, NULL);
-    avro_value_set_string(&element, "i");
-
-    avro_value_append(&array_string, &element, NULL);
-    avro_value_set_string(&element, "24");
-
-    size_t size;
-    avro_value_get_size(&array_string, &size);
-    printf("size = %u\n", size);
-    exit(-1);
-
-    avro_value_add(&field, "NM", &array_string, NULL, NULL);
-  }
-
-  avro_schema_decref(array_string_schema);
-  //  avro_value_decref(&value);
-  avro_value_iface_decref(iface_array_string);
-  */
-
-  /*
-  char value[1024];
+  uint8_t type, key[3];
   uint8_t *s = bam_get_aux(bam1);
   while (s + 4 < bam1->data + bam1->l_data) {
-    uint8_t type, key[3];
     key[0] = s[0]; key[1] = s[1], key[2] = 0;
     s += 2; type = *s++;
-    printf("\t%s:", key);
+    //    printf("\t%s:", key);
     //kputc('\t', str); kputsn((char*)key, 2, str); kputc(':', str);
+    avro_value_add(&field, key, &element, NULL, NULL);
 
     if (type == 'A') {
-      printf("A:"); //kputsn("A:", 2, str);
-      printf("%c", *s); //kputc(*s, str);
-      sprintf(value, "%c", *s);
+      //      printf("A:"); //kputsn("A:", 2, str);
+      //      printf("%c", *s); //kputc(*s, str);
+      sprintf(buffer, "%c", *s);
 
-      avro_datum_t optional_datum = avro_array(string_array_schema);
-      rval = avro_array_append_datum(optional_datum, avro_string("A"));
-      rval = avro_array_append_datum(optional_datum, avro_string(value));
-      avro_map_set(info_datum, key, optional_datum);
+      avro_value_append(&element, &subelement, NULL);
+      avro_value_set_string(&subelement, "A");
+
+      avro_value_append(&element, &subelement, NULL);
+      avro_value_set_string(&subelement, buffer);
 
       ++s;
     } else if (type == 'C') {
-      printf("i:"); //kputsn("i:", 2, str);
-      printf("%u", *s); //kputw(*s, str);
-      sprintf(value, "%u", *s);
+      //    printf("i:"); //kputsn("i:", 2, str);
+      //      printf("%u", *s); //kputw(*s, str);
+      sprintf(buffer, "%u", *s);
 
-      avro_datum_t optional_datum = avro_array(string_array_schema);
-      rval = avro_array_append_datum(optional_datum, avro_string("i"));
-      rval = avro_array_append_datum(optional_datum, avro_string(value));
-      avro_map_set(info_datum, key, optional_datum);
+      avro_value_append(&element, &subelement, NULL);
+      avro_value_set_string(&subelement, "i");
+
+      avro_value_append(&element, &subelement, NULL);
+      avro_value_set_string(&subelement, buffer);
 
       ++s;
     } else if (type == 'c') {
-      printf("i:"); //kputsn("i:", 2, str);
-      printf("%i", *s); //kputw(*(int8_t*)s, str);
-      sprintf(value, "%i", *s);
+      //      printf("i:"); //kputsn("i:", 2, str);
+      //      printf("%i", *s); //kputw(*(int8_t*)s, str);
+      sprintf(buffer, "%i", *s);
 
-      avro_datum_t optional_datum = avro_array(string_array_schema);
-      rval = avro_array_append_datum(optional_datum, avro_string("i"));
-      rval = avro_array_append_datum(optional_datum, avro_string(value));
-      avro_map_set(info_datum, key, optional_datum);
+      avro_value_append(&element, &subelement, NULL);
+      avro_value_set_string(&subelement, "i");
+
+      avro_value_append(&element, &subelement, NULL);
+      avro_value_set_string(&subelement, buffer);
 
       ++s;
     } else if (type == 'S') {
       if (s+2 <= bam1->data + bam1->l_data) {
-	printf("i:"); //kputsn("i:", 2, str);
-	printf("%u", *(uint16_t*)s); //kputw(*(uint16_t*)s, str);
-	sprintf(value, "%u", *(uint16_t*)s);
+	//	printf("i:"); //kputsn("i:", 2, str);
+	//	printf("%u", *(uint16_t*)s); //kputw(*(uint16_t*)s, str);
+	sprintf(buffer, "%u", *(uint16_t*)s);
 
-	avro_datum_t optional_datum = avro_array(string_array_schema);
-	rval = avro_array_append_datum(optional_datum, avro_string("i"));
-	rval = avro_array_append_datum(optional_datum, avro_string(value));
-	avro_map_set(info_datum, key, optional_datum);
-
+	avro_value_append(&element, &subelement, NULL);
+	avro_value_set_string(&subelement, "i");
+	
+	avro_value_append(&element, &subelement, NULL);
+	avro_value_set_string(&subelement, buffer);
+	
 	s += 2;
       } else {
 	fprintf(stderr, "Unable to parse optional fields %s:%c.\n", key, type);
@@ -502,14 +478,15 @@ void add_read_alignment2(avro_file_writer_t db, const bam1_t *bam1, const bam_he
       }
     } else if (type == 's') {
       if (s+2 <= bam1->data + bam1->l_data) {
-	printf("i:"); //kputsn("i:", 2, str);
-	printf("%i", *(int16_t*)s); //kputw(*(int16_t*)s, str);
-	sprintf(value, "%i", *(int16_t*)s);
+	//	printf("i:"); //kputsn("i:", 2, str);
+	//	printf("%i", *(int16_t*)s); //kputw(*(int16_t*)s, str);
+	sprintf(buffer, "%i", *(int16_t*)s);
 
-	avro_datum_t optional_datum = avro_array(string_array_schema);
-	rval = avro_array_append_datum(optional_datum, avro_string("i"));
-	rval = avro_array_append_datum(optional_datum, avro_string(value));
-	avro_map_set(info_datum, key, optional_datum);
+	avro_value_append(&element, &subelement, NULL);
+	avro_value_set_string(&subelement, "i");
+	
+	avro_value_append(&element, &subelement, NULL);
+	avro_value_set_string(&subelement, buffer);
 
 	s += 2;
       } else {
@@ -518,14 +495,15 @@ void add_read_alignment2(avro_file_writer_t db, const bam1_t *bam1, const bam_he
       }
     } else if (type == 'I') {
       if (s+4 <= bam1->data + bam1->l_data) {
-	printf("i:"); //kputsn("i:", 2, str);
-	printf("%u", *(uint32_t*)s); //kputuw(*(uint32_t*)s, str);
-	sprintf(value, "%u", *(uint32_t*)s);
+	//	printf("i:"); //kputsn("i:", 2, str);
+	//	printf("%u", *(uint32_t*)s); //kputuw(*(uint32_t*)s, str);
+	sprintf(buffer, "%u", *(uint32_t*)s);
 
-	avro_datum_t optional_datum = avro_array(string_array_schema);
-	rval = avro_array_append_datum(optional_datum, avro_string("i"));
-	rval = avro_array_append_datum(optional_datum, avro_string(value));
-	avro_map_set(info_datum, key, optional_datum);
+	avro_value_append(&element, &subelement, NULL);
+	avro_value_set_string(&subelement, "i");
+	
+	avro_value_append(&element, &subelement, NULL);
+	avro_value_set_string(&subelement, buffer);
 
 	s += 4;
       } else {
@@ -534,14 +512,15 @@ void add_read_alignment2(avro_file_writer_t db, const bam1_t *bam1, const bam_he
       }
     } else if (type == 'i') {
       if (s+4 <= bam1->data + bam1->l_data) {
-	printf("i:"); //kputsn("i:", 2, str);
-	printf("%i", *(int32_t*)s); //kputw(*(int32_t*)s, str);
-	sprintf(value, "%i", *(int32_t*)s);
+	//	printf("i:"); //kputsn("i:", 2, str);
+	//	printf("%i", *(int32_t*)s); //kputw(*(int32_t*)s, str);
+	sprintf(buffer, "%i", *(int32_t*)s);
 
-	avro_datum_t optional_datum = avro_array(string_array_schema);
-	rval = avro_array_append_datum(optional_datum, avro_string("i"));
-	rval = avro_array_append_datum(optional_datum, avro_string(value));
-	avro_map_set(info_datum, key, optional_datum);
+	avro_value_append(&element, &subelement, NULL);
+	avro_value_set_string(&subelement, "i");
+	
+	avro_value_append(&element, &subelement, NULL);
+	avro_value_set_string(&subelement, buffer);
 
 	s += 4;
       } else {
@@ -550,13 +529,14 @@ void add_read_alignment2(avro_file_writer_t db, const bam1_t *bam1, const bam_he
       }
     } else if (type == 'f') {
       if (s+4 <= bam1->data + bam1->l_data) {
-	printf("f:%g", *(float*)s); //ksprintf(str, "f:%g", *(float*)s);
-	sprintf(value, "%g", *(float*)s);
+	//	printf("f:%g", *(float*)s); //ksprintf(str, "f:%g", *(float*)s);
+	sprintf(buffer, "%g", *(float*)s);
 
-	avro_datum_t optional_datum = avro_array(string_array_schema);
-	rval = avro_array_append_datum(optional_datum, avro_string("f"));
-	rval = avro_array_append_datum(optional_datum, avro_string(value));
-	avro_map_set(info_datum, key, optional_datum);
+	avro_value_append(&element, &subelement, NULL);
+	avro_value_set_string(&subelement, "f");
+	
+	avro_value_append(&element, &subelement, NULL);
+	avro_value_set_string(&subelement, buffer);
 
 	s += 4;
       } else {
@@ -565,32 +545,71 @@ void add_read_alignment2(avro_file_writer_t db, const bam1_t *bam1, const bam_he
       }
     } else if (type == 'd') {
       if (s+8 <= bam1->data + bam1->l_data) {
-	printf("d:%g", *(double*)s); //ksprintf(str, "d:%g", *(double*)s);
-	sprintf(value, "%g", *(double*)s);
+	//	printf("d:%g", *(double*)s); //ksprintf(str, "d:%g", *(double*)s);
+	sprintf(buffer, "%g", *(double*)s);
 
-	avro_datum_t optional_datum = avro_array(string_array_schema);
-	rval = avro_array_append_datum(optional_datum, avro_string("d"));
-	rval = avro_array_append_datum(optional_datum, avro_string(value));
-	avro_map_set(info_datum, key, optional_datum);
+	avro_value_append(&element, &subelement, NULL);
+	avro_value_set_string(&subelement, "g");
+	
+	avro_value_append(&element, &subelement, NULL);
+	avro_value_set_string(&subelement, buffer);
 
 	s += 8;
       } else {
 	fprintf(stderr, "Unable to parse optional fields %s:%c.\n", key, type);
 	exit(EXIT_FAILURE);
       }
-    } else if (type == 'Z' || type == 'H') {
-      fprintf(stderr, "Unable to parse optional fields %s:%c. Not implemented yet.\n", key, type);
-      exit(EXIT_FAILURE);
-
-      printf("%c", type); //kputc(type, str); 
-      printf(":"); //kputc(':', str);
+    } else if (type == 'Z') {
+      //      printf("%c", type); //kputc(type, str); 
+      //      printf(":"); //kputc(':', str);
+      int count = 0;
       while (s < bam1->data + bam1->l_data && *s) {
-	printf("%c", *s++); //kputc(*s++, str);
+	buffer[count++] = *s++;
+	if (count >= MAX_BUFFER_SIZE) {
+	  fprintf(stderr, "Overflow parsing optional fields %s:%c (read %s).\n", key, type, bam1_qname(bam1));
+	  exit(EXIT_FAILURE);
+	}
+	//	printf("%c", *s++); //kputc(*s++, str);
+	
       }
+
       if (s >= bam1->data + bam1->l_data) {
 	fprintf(stderr, "Unable to parse optional fields %s:%c.\n", key, type);
 	exit(EXIT_FAILURE);
       }
+
+      avro_value_append(&element, &subelement, NULL);
+      avro_value_set_string(&subelement, "Z");
+      
+      avro_value_append(&element, &subelement, NULL);
+      avro_value_set_string(&subelement, buffer);
+
+      ++s;
+    } else if (type == 'H') {
+      //      printf("%c", type); //kputc(type, str); 
+      //      printf(":"); //kputc(':', str);
+      int count = 0;
+      while (s < bam1->data + bam1->l_data && *s) {
+	buffer[count++] = *s++;
+	if (count >= MAX_BUFFER_SIZE) {
+	  fprintf(stderr, "Overflow parsing optional fields %s:%c (read %s).\n", key, type, bam1_qname(bam1));
+	  exit(EXIT_FAILURE);
+	}
+	//	printf("%c", *s++); //kputc(*s++, str);
+	
+      }
+
+      if (s >= bam1->data + bam1->l_data) {
+	fprintf(stderr, "Unable to parse optional fields %s:%c.\n", key, type);
+	exit(EXIT_FAILURE);
+      }
+
+      avro_value_append(&element, &subelement, NULL);
+      avro_value_set_string(&subelement, "H");
+      
+      avro_value_append(&element, &subelement, NULL);
+      avro_value_set_string(&subelement, buffer);
+
       ++s;
     } else if (type == 'B') {
       fprintf(stderr, "Unable to parse optional fields %s:%c. Not implemented yet.\n", key, type);
@@ -604,36 +623,35 @@ void add_read_alignment2(avro_file_writer_t db, const bam1_t *bam1, const bam_he
 	fprintf(stderr, "Unable to parse optional fields %s:%c.\n", key, type);
 	exit(EXIT_FAILURE);
       }
-      printf("B:"); //kputsn("B:", 2, str); 
-      printf("%c", sub_type); // kputc(sub_type, str); // write the typing
+      //      printf("B:"); //kputsn("B:", 2, str); 
+      //      printf("%c", sub_type); // kputc(sub_type, str); // write the typing
       for (int i = 0; i < n; ++i) { // FIXME: for better performance, put the loop after "if"
-	printf(","); //kputc(',', str);
+	//	printf(","); //kputc(',', str);
 	if ('c' == sub_type)      { 
-	  printf("%i", *(int8_t*)s); //kputw(*(int8_t*)s, str); 
+	  //	  printf("%i", *(int8_t*)s); //kputw(*(int8_t*)s, str); 
 	  ++s; 
 	} else if ('C' == sub_type) { 
-	  printf("%u", *(uint8_t*)s); //kputw(*(uint8_t*)s, str); 
+	  //	  printf("%u", *(uint8_t*)s); //kputw(*(uint8_t*)s, str); 
 	  ++s; 
 	} else if ('s' == sub_type) { 
-	  printf("%i", *(int16_t*)s); //kputw(*(int16_t*)s, str); 
+	  //	  printf("%i", *(int16_t*)s); //kputw(*(int16_t*)s, str); 
 	  s += 2; 
 	} else if ('S' == sub_type) { 
-	  printf("%u", *(uint16_t*)s); //kputw(*(uint16_t*)s, str); 
+	  //	  printf("%u", *(uint16_t*)s); //kputw(*(uint16_t*)s, str); 
 	  s += 2; 
 	} else if ('i' == sub_type) { 
-	  printf("%i", *(int32_t*)s); //kputw(*(int32_t*)s, str); 
+	  //	  printf("%i", *(int32_t*)s); //kputw(*(int32_t*)s, str); 
 	  s += 4; 
 	} else if ('I' == sub_type) { 
-	  printf("%u", *(uint32_t*)s); //kputuw(*(uint32_t*)s, str); 
+	  //	  printf("%u", *(uint32_t*)s); //kputuw(*(uint32_t*)s, str); 
 	  s += 4; 
 	} else if ('f' == sub_type) { 
-	  printf("%g", *(float*)s); //ksprintf(str, "%g", *(float*)s); 
+	  //	  printf("%g", *(float*)s); //ksprintf(str, "%g", *(float*)s); 
 	  s += 4; 
 	}
       }
     }
   }
-  */
 
   // write ReadAlignment
   if (avro_file_writer_append_value(db, &read_alignment)) {
