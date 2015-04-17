@@ -169,63 +169,74 @@ void free_schemas() {
 
 void add_read_alignment2(avro_file_writer_t db, const bam1_t *bam1, const bam_header_t *bam_header) {
   int aux;
+  avro_type_t type;
   avro_value_t field, subfield, subsubfield;
   avro_value_t element, branch, subbranch;
 
   // reset
   avro_value_reset(&read_alignment);
 
-  // id
-  avro_value_get_by_name(&read_alignment, "id", &field, NULL); 
+  // 0 id
+  //avro_value_get_by_name(&read_alignment, "id", &field, NULL); 
+  avro_value_get_by_index(&read_alignment, 0, &field, NULL); 
   avro_value_set_branch(&field, 1, &branch);
   avro_value_set_string(&branch, bam1_qname(bam1));
 
-  // readGroupId
-  avro_value_get_by_name(&read_alignment, "readGroupId", &field, NULL); 
+  // 1 readGroupId
+  //avro_value_get_by_name(&read_alignment, "readGroupId", &field, NULL); 
+  avro_value_get_by_index(&read_alignment, 1, &field, NULL); 
   avro_value_set_string(&field, "read-group-id-value");
 
-  // fragmentName
-  avro_value_get_by_name(&read_alignment, "fragmentName", &field, NULL); 
+  // 2 fragmentName
+  //avro_value_get_by_name(&read_alignment, "fragmentName", &field, NULL); 
+  avro_value_get_by_index(&read_alignment, 2, &field, NULL); 
   avro_value_set_string(&field, bam_header->target_name[bam1->core.tid]);
 
-  // properPlacement
+  // 3 properPlacement
   aux = ((bam1->core.flag & BAM_FPROPER_PAIR) && (bam1->core.flag & BAM_FPAIRED));
-  avro_value_get_by_name(&read_alignment, "properPlacement", &field, NULL); 
+  //avro_value_get_by_name(&read_alignment, "properPlacement", &field, NULL); 
+  avro_value_get_by_index(&read_alignment, 3, &field, NULL); 
   avro_value_set_branch(&field, 0, &branch);
   avro_value_set_boolean(&branch, aux);
 
-  // duplicateFragment
+  // 4 duplicateFragment
   aux = ((bam1->core.flag & BAM_FDUP) == BAM_FDUP);
-  avro_value_get_by_name(&read_alignment, "duplicateFragment", &field, NULL); 
+  //avro_value_get_by_name(&read_alignment, "duplicateFragment", &field, NULL); 
+  avro_value_get_by_index(&read_alignment, 4, &field, NULL); 
   avro_value_set_branch(&field, 0, &branch);
   avro_value_set_boolean(&branch, aux);
 
-  // numberReads
+  // 5 numberReads
   int num_reads = (bam1->core.flag & BAM_FPROPER_PAIR) ? 2 : 1;
-  avro_value_get_by_name(&read_alignment, "numberReads", &field, NULL); 
+  //avro_value_get_by_name(&read_alignment, "numberReads", &field, NULL); 
+  avro_value_get_by_index(&read_alignment, 5, &field, NULL); 
   avro_value_set_branch(&field, 1, &branch);
   avro_value_set_int(&branch, num_reads);
 
-  // fragmentLength
+  // 6 fragmentLength
   aux = (bam1->core.flag & BAM_FPAIRED) ? bam1->core.isize : 0;
-  avro_value_get_by_name(&read_alignment, "fragmentLength", &field, NULL); 
+  //avro_value_get_by_name(&read_alignment, "fragmentLength", &field, NULL); 
+  avro_value_get_by_index(&read_alignment, 6, &field, NULL); 
   avro_value_set_branch(&field, 1, &branch);
   avro_value_set_int(&branch, aux);
 
-  // readNumber
+  // 7 readNumber
   aux = ((bam1->core.flag & BAM_FPAIRED) && (bam1->core.flag & BAM_FREAD2)) ? num_reads - 1 : 0;
-  avro_value_get_by_name(&read_alignment, "readNumber", &field, NULL); 
+  //avro_value_get_by_name(&read_alignment, "readNumber", &field, NULL); 
+  avro_value_get_by_index(&read_alignment, 7, &field, NULL); 
   avro_value_set_branch(&field, 1, &branch);
   avro_value_set_int(&branch, aux);
 
-  // failedVendorQualityChecks
+  // 8 failedVendorQualityChecks
   aux = ((bam1->core.flag & BAM_FQCFAIL) == BAM_FQCFAIL);
-  avro_value_get_by_name(&read_alignment, "failedVendorQualityChecks", &field, NULL); 
+  //avro_value_get_by_name(&read_alignment, "failedVendorQualityChecks", &field, NULL); 
+  avro_value_get_by_index(&read_alignment, 8, &field, NULL); 
   avro_value_set_branch(&field, 0, &branch);
   avro_value_set_boolean(&branch, aux);
 
-  // alignment
-  avro_value_get_by_name(&read_alignment, "alignment", &field, NULL); 
+  // 9 alignment
+  //avro_value_get_by_name(&read_alignment, "alignment", &field, NULL); 
+  avro_value_get_by_index(&read_alignment, 9, &field, NULL); 
   if (bam1->core.flag & BAM_FUNMAP) {
     // unmapped
     avro_value_set_branch(&field, 0, &branch);
@@ -234,84 +245,120 @@ void add_read_alignment2(avro_file_writer_t db, const bam1_t *bam1, const bam_he
     // linear alignment
     avro_value_set_branch(&field, 1, &branch);
 
-    // alignment . position
-    avro_value_get_by_name(&branch, "position", &subfield, NULL); 
+    // alignment . 0 position
+    //avro_value_get_by_name(&branch, "position", &subfield, NULL); 
+    avro_value_get_by_index(&branch, 0, &subfield, NULL); 
 
-    // alignment . position . referenceName
-    avro_value_get_by_name(&subfield, "referenceName", &subsubfield, NULL); 
+    // alignment . position . 0 referenceName
+    //avro_value_get_by_name(&subfield, "referenceName", &subsubfield, NULL); 
+    avro_value_get_by_index(&subfield, 0, &subsubfield, NULL); 
     avro_value_set_branch(&subsubfield, 1, &subbranch);
     avro_value_set_string(&subbranch, bam_header->target_name[bam1->core.tid]);
 
-    // alignment . position . sequenceId
-    avro_value_get_by_name(&subfield, "sequenceId", &subsubfield, NULL); 
+    // alignment . position . 1 sequenceId
+    //avro_value_get_by_name(&subfield, "sequenceId", &subsubfield, NULL); 
+    avro_value_get_by_index(&subfield, 1, &subsubfield, NULL); 
     avro_value_set_branch(&subsubfield, 0, &subbranch);
     avro_value_set_null(&subbranch);
 
-    // alignment . position . position
-    avro_value_get_by_name(&subfield, "position", &subsubfield, NULL); 
+    // alignment . position . 2 position
+    //avro_value_get_by_name(&subfield, "position", &subsubfield, NULL); 
+    avro_value_get_by_index(&subfield, 2, &subsubfield, NULL); 
     avro_value_set_long(&subsubfield, bam1->core.pos);
 
-    // alignment . position . strand
-    avro_value_get_by_name(&subfield, "strand", &subsubfield, NULL); 
+    // alignment . position . 3 strand
+    //avro_value_get_by_name(&subfield, "strand", &subsubfield, NULL); 
+    avro_value_get_by_index(&subfield, 3, &subsubfield, NULL); 
     if (bam1->core.flag & BAM_FREVERSE) {
       avro_value_set_enum(&subsubfield, 1);
     } else {
       avro_value_set_enum(&subsubfield, 0);
     }
 
-    // alignment . mappingQuaility
-    avro_value_get_by_name(&branch, "mappingQuality", &subfield, NULL); 
-    avro_value_set_long(&subfield, bam1->core.qual);
+    // alignment . 1 mappingQuaility
+    //avro_value_get_by_name(&branch, "mappingQuality", &subfield, NULL); 
+    avro_value_get_by_index(&branch, 1, &subfield, NULL); 
+    avro_value_set_branch(&subfield, 1, &subbranch);
+    avro_value_set_long(&subbranch, bam1->core.qual);
 
-    // alignment . cigar
-    avro_value_get_by_name(&branch, "cigar", &subfield, NULL); 
-    for(int i = 0; i < 1; i++) {
+    // alignment . 2 cigar
+    //avro_value_get_by_name(&branch, "cigar", &subfield, NULL); 
+    avro_value_get_by_index(&branch, 2, &subfield, NULL); 
+    uint32_t op, *cigar = bam1_cigar(bam1);
+    int num_ops = bam1->core.n_cigar;
+    for (int i = 0; i < num_ops; i++) {
       avro_value_append(&subfield, &element, NULL);
 
-      // alignment . cigar . operation
-      avro_value_get_by_name(&element, "operation", &subsubfield, NULL); 
-      avro_value_set_enum(&subsubfield, 0);
+      // alignment . cigar . 0 operation
+      //avro_value_get_by_name(&element, "operation", &subsubfield, NULL); 
+      avro_value_get_by_index(&element, 0, &subsubfield, NULL); 
+      op = cigar[i];
+      switch (op & BAM_CIGAR_MASK) {
+      case BAM_CMATCH:  // M: match or mismatch
+	avro_value_set_enum(&subsubfield, 0); // ALIGNMENT_MATCH
+	break;
+      case BAM_CINS:  // I: insertion to the reference
+	avro_value_set_enum(&subsubfield, 1); // INSERT
+	break;
+      case BAM_CDEL:  // D: deletion from the reference
+	avro_value_set_enum(&subsubfield, 2); // DELETE
+	break;
+      case BAM_CREF_SKIP: //N: skip on the reference
+	avro_value_set_enum(&subsubfield, 3); // SKIP
+	break;
+      case BAM_CSOFT_CLIP: //S: clip on the read with clipped sequence
+	avro_value_set_enum(&subsubfield, 4); // CLIP_SOFT
+	break;
+      case BAM_CHARD_CLIP: //H: clip on the read with clipped sequence trimmed off
+	avro_value_set_enum(&subsubfield, 5); // CLIP_HARD
+	break;
+      case BAM_CPAD:  //P: padding
+	avro_value_set_enum(&subsubfield, 6); // PAD
+	break;
+      case BAM_CEQUAL:  //=: match
+	avro_value_set_enum(&subsubfield, 7); // SEQUENCE_MATCH
+	break;
+      case BAM_CDIFF:  //X: mismatch
+	avro_value_set_enum(&subsubfield,  8); // SEQUENCE_MISMATCH
+	break;
+      }
 
-      // alignment . cigar . operationLength
-      avro_value_get_by_name(&element, "operationLength", &subsubfield, NULL); 
-      avro_value_set_long(&subsubfield, 100);
+      // alignment . cigar . 1 operationLength
+      //avro_value_get_by_name(&element, "operationLength", &subsubfield, NULL); 
+      avro_value_get_by_index(&element, 1, &subsubfield, NULL); 
+      avro_value_set_long(&subsubfield, op >> BAM_CIGAR_SHIFT);
 
-      avro_type_t type = avro_value_get_type(&subsubfield);
-      printf("type = %i\n", type);
-      exit(-1);
-
-      // alignment . cigar . referenceSequence
-      avro_value_get_by_name(&element, "referenceSequence", &subsubfield, NULL); 
+      // alignment . cigar . 2 referenceSequence
+      //avro_value_get_by_name(&element, "referenceSequence", &subsubfield, NULL); 
+      avro_value_get_by_index(&element, 2, &subsubfield, NULL); 
       avro_value_set_branch(&subsubfield, 0, &subbranch);
       avro_value_set_null(&subbranch);
-
-      avro_type_t type = avro_value_get_type(&subsubfield);
-      printf("type = %i\n", type);
-      exit(-1);
-
     }
   }
 
-  // secondaryAlignment
+  // 10 secondaryAlignment
   aux = ((bam1->core.flag & BAM_FSECONDARY) == BAM_FSECONDARY);
-  avro_value_get_by_name(&read_alignment, "secondaryAlignment", &field, NULL); 
+  //avro_value_get_by_name(&read_alignment, "secondaryAlignment", &field, NULL); 
+  avro_value_get_by_index(&read_alignment, 10, &field, NULL); 
   avro_value_set_branch(&field, 0, &branch);
   avro_value_set_boolean(&branch, aux);
 
-  // supplementaryAlignment
+  // 11 supplementaryAlignment
   aux = ((bam1->core.flag & BAM_FSECONDARY) == BAM_FSECONDARY);
-  avro_value_get_by_name(&read_alignment, "supplementaryAlignment", &field, NULL); 
+  //avro_value_get_by_name(&read_alignment, "supplementaryAlignment", &field, NULL); 
+  avro_value_get_by_index(&read_alignment, 11, &field, NULL); 
   avro_value_set_branch(&field, 0, &branch);
   avro_value_set_boolean(&branch, aux);
 
-  // alignedSequence and alignedQuality
+  // 12 alignedSequence and 13 alignedQuality
   int qlen = bam1->core.l_qseq;
   char buf[qlen + 1];
   const uint8_t *seq = bam_get_seq(bam1);
   const uint8_t *qual = bam1_qual(bam1);
   buf[qlen] = 0;  
 
-  avro_value_get_by_name(&read_alignment, "alignedQuality", &field, NULL); 
+  //avro_value_get_by_name(&read_alignment, "alignedQuality", &field, NULL); 
+  avro_value_get_by_index(&read_alignment, 13, &field, NULL); 
   for (int i = 0; i < qlen; i++) {
     // sequence
     buf[i] = bam_nt16_rev_table[bam1_seqi(seq, i)];
@@ -320,31 +367,37 @@ void add_read_alignment2(avro_file_writer_t db, const bam1_t *bam1, const bam_he
     avro_value_append(&field, &element, NULL);
     avro_value_set_int(&element, qual[i] + 33);
   }
-  avro_value_get_by_name(&read_alignment, "alignedSequence", &field, NULL); 
+  //avro_value_get_by_name(&read_alignment, "alignedSequence", &field, NULL); 
+  avro_value_get_by_index(&read_alignment, 12, &field, NULL); 
   avro_value_set_branch(&field, 1, &branch);
   avro_value_set_string(&branch, buf);
 
-  // nextMatePosition
-  avro_value_get_by_name(&read_alignment, "nextMatePosition", &field, NULL); 
+  // 14 nextMatePosition
+  //avro_value_get_by_name(&read_alignment, "nextMatePosition", &field, NULL); 
+  avro_value_get_by_index(&read_alignment, 14, &field, NULL); 
   if (bam1->core.flag & BAM_FPAIRED) {
     avro_value_set_branch(&field, 1, &branch);
 
-    // nextMatePosition . referenceName
-    avro_value_get_by_name(&branch, "referenceName", &subfield, NULL); 
+    // nextMatePosition . 0 referenceName
+    //avro_value_get_by_name(&branch, "referenceName", &subfield, NULL); 
+    avro_value_get_by_index(&branch, 0, &subfield, NULL); 
     avro_value_set_branch(&subfield, 1, &subbranch);
     avro_value_set_string(&subbranch, bam_header->target_name[bam1->core.mtid]);
 
-    // nextMatePosition . sequenceId
-    avro_value_get_by_name(&branch, "sequenceId", &subfield, NULL); 
+    // nextMatePosition . 1 sequenceId
+    //avro_value_get_by_name(&branch, "sequenceId", &subfield, NULL); 
+    avro_value_get_by_index(&branch, 1, &subfield, NULL); 
     avro_value_set_branch(&subfield, 0, &subbranch);
     avro_value_set_null(&subbranch);
 
-    // nextMatePosition . position
-    avro_value_get_by_name(&branch, "position", &subfield, NULL); 
+    // nextMatePosition . 2 position
+    //avro_value_get_by_name(&branch, "position", &subfield, NULL); 
+    avro_value_get_by_index(&branch, 2, &subfield, NULL); 
     avro_value_set_long(&subfield, bam1->core.mpos);
 
-    // nextMatePosition . strand
-    avro_value_get_by_name(&branch, "strand", &subfield, NULL); 
+    // nextMatePosition . 3 strand
+    //avro_value_get_by_name(&branch, "strand", &subfield, NULL); 
+    avro_value_get_by_index(&branch, 3, &subfield, NULL); 
     if (bam1->core.flag & BAM_FMREVERSE) {
       avro_value_set_enum(&subfield, 1);
     } else {
@@ -355,8 +408,232 @@ void add_read_alignment2(avro_file_writer_t db, const bam1_t *bam1, const bam_he
     avro_value_set_null(&branch);
   }
 
-  // info
-  avro_value_get_by_name(&read_alignment, "info", &field, NULL); 
+  // 15 info
+  //avro_value_get_by_name(&read_alignment, "info", &field, NULL); 
+  avro_value_get_by_index(&read_alignment, 15, &field, NULL); 
+  /*
+  avro_schema_t array_string_schema = avro_schema_array(avro_schema_string());
+  avro_value_iface_t *iface_array_string = avro_generic_class_from_schema(array_string_schema);
+  avro_value_t array_string;
+  avro_generic_value_new(iface_array_string, &array_string);
+  {
+    //    avro_value_reset(&array_string);
+
+    //    type = avro_value_get_type(&array_string);
+    //    printf("type = %i\n", type);
+
+    avro_value_append(&array_string, &element, NULL);
+    avro_value_set_string(&element, "i");
+
+    avro_value_append(&array_string, &element, NULL);
+    avro_value_set_string(&element, "24");
+
+    size_t size;
+    avro_value_get_size(&array_string, &size);
+    printf("size = %u\n", size);
+    exit(-1);
+
+    avro_value_add(&field, "NM", &array_string, NULL, NULL);
+  }
+
+  avro_schema_decref(array_string_schema);
+  //  avro_value_decref(&value);
+  avro_value_iface_decref(iface_array_string);
+  */
+
+  /*
+  char value[1024];
+  uint8_t *s = bam_get_aux(bam1);
+  while (s + 4 < bam1->data + bam1->l_data) {
+    uint8_t type, key[3];
+    key[0] = s[0]; key[1] = s[1], key[2] = 0;
+    s += 2; type = *s++;
+    printf("\t%s:", key);
+    //kputc('\t', str); kputsn((char*)key, 2, str); kputc(':', str);
+
+    if (type == 'A') {
+      printf("A:"); //kputsn("A:", 2, str);
+      printf("%c", *s); //kputc(*s, str);
+      sprintf(value, "%c", *s);
+
+      avro_datum_t optional_datum = avro_array(string_array_schema);
+      rval = avro_array_append_datum(optional_datum, avro_string("A"));
+      rval = avro_array_append_datum(optional_datum, avro_string(value));
+      avro_map_set(info_datum, key, optional_datum);
+
+      ++s;
+    } else if (type == 'C') {
+      printf("i:"); //kputsn("i:", 2, str);
+      printf("%u", *s); //kputw(*s, str);
+      sprintf(value, "%u", *s);
+
+      avro_datum_t optional_datum = avro_array(string_array_schema);
+      rval = avro_array_append_datum(optional_datum, avro_string("i"));
+      rval = avro_array_append_datum(optional_datum, avro_string(value));
+      avro_map_set(info_datum, key, optional_datum);
+
+      ++s;
+    } else if (type == 'c') {
+      printf("i:"); //kputsn("i:", 2, str);
+      printf("%i", *s); //kputw(*(int8_t*)s, str);
+      sprintf(value, "%i", *s);
+
+      avro_datum_t optional_datum = avro_array(string_array_schema);
+      rval = avro_array_append_datum(optional_datum, avro_string("i"));
+      rval = avro_array_append_datum(optional_datum, avro_string(value));
+      avro_map_set(info_datum, key, optional_datum);
+
+      ++s;
+    } else if (type == 'S') {
+      if (s+2 <= bam1->data + bam1->l_data) {
+	printf("i:"); //kputsn("i:", 2, str);
+	printf("%u", *(uint16_t*)s); //kputw(*(uint16_t*)s, str);
+	sprintf(value, "%u", *(uint16_t*)s);
+
+	avro_datum_t optional_datum = avro_array(string_array_schema);
+	rval = avro_array_append_datum(optional_datum, avro_string("i"));
+	rval = avro_array_append_datum(optional_datum, avro_string(value));
+	avro_map_set(info_datum, key, optional_datum);
+
+	s += 2;
+      } else {
+	fprintf(stderr, "Unable to parse optional fields %s:%c.\n", key, type);
+	exit(EXIT_FAILURE);
+      }
+    } else if (type == 's') {
+      if (s+2 <= bam1->data + bam1->l_data) {
+	printf("i:"); //kputsn("i:", 2, str);
+	printf("%i", *(int16_t*)s); //kputw(*(int16_t*)s, str);
+	sprintf(value, "%i", *(int16_t*)s);
+
+	avro_datum_t optional_datum = avro_array(string_array_schema);
+	rval = avro_array_append_datum(optional_datum, avro_string("i"));
+	rval = avro_array_append_datum(optional_datum, avro_string(value));
+	avro_map_set(info_datum, key, optional_datum);
+
+	s += 2;
+      } else {
+	fprintf(stderr, "Unable to parse optional fields %s:%c.\n", key, type);
+	exit(EXIT_FAILURE);
+      }
+    } else if (type == 'I') {
+      if (s+4 <= bam1->data + bam1->l_data) {
+	printf("i:"); //kputsn("i:", 2, str);
+	printf("%u", *(uint32_t*)s); //kputuw(*(uint32_t*)s, str);
+	sprintf(value, "%u", *(uint32_t*)s);
+
+	avro_datum_t optional_datum = avro_array(string_array_schema);
+	rval = avro_array_append_datum(optional_datum, avro_string("i"));
+	rval = avro_array_append_datum(optional_datum, avro_string(value));
+	avro_map_set(info_datum, key, optional_datum);
+
+	s += 4;
+      } else {
+	fprintf(stderr, "Unable to parse optional fields %s:%c.\n", key, type);
+	exit(EXIT_FAILURE);
+      }
+    } else if (type == 'i') {
+      if (s+4 <= bam1->data + bam1->l_data) {
+	printf("i:"); //kputsn("i:", 2, str);
+	printf("%i", *(int32_t*)s); //kputw(*(int32_t*)s, str);
+	sprintf(value, "%i", *(int32_t*)s);
+
+	avro_datum_t optional_datum = avro_array(string_array_schema);
+	rval = avro_array_append_datum(optional_datum, avro_string("i"));
+	rval = avro_array_append_datum(optional_datum, avro_string(value));
+	avro_map_set(info_datum, key, optional_datum);
+
+	s += 4;
+      } else {
+	fprintf(stderr, "Unable to parse optional fields %s:%c.\n", key, type);
+	exit(EXIT_FAILURE);
+      }
+    } else if (type == 'f') {
+      if (s+4 <= bam1->data + bam1->l_data) {
+	printf("f:%g", *(float*)s); //ksprintf(str, "f:%g", *(float*)s);
+	sprintf(value, "%g", *(float*)s);
+
+	avro_datum_t optional_datum = avro_array(string_array_schema);
+	rval = avro_array_append_datum(optional_datum, avro_string("f"));
+	rval = avro_array_append_datum(optional_datum, avro_string(value));
+	avro_map_set(info_datum, key, optional_datum);
+
+	s += 4;
+      } else {
+	fprintf(stderr, "Unable to parse optional fields %s:%c.\n", key, type);
+	exit(EXIT_FAILURE);
+      }
+    } else if (type == 'd') {
+      if (s+8 <= bam1->data + bam1->l_data) {
+	printf("d:%g", *(double*)s); //ksprintf(str, "d:%g", *(double*)s);
+	sprintf(value, "%g", *(double*)s);
+
+	avro_datum_t optional_datum = avro_array(string_array_schema);
+	rval = avro_array_append_datum(optional_datum, avro_string("d"));
+	rval = avro_array_append_datum(optional_datum, avro_string(value));
+	avro_map_set(info_datum, key, optional_datum);
+
+	s += 8;
+      } else {
+	fprintf(stderr, "Unable to parse optional fields %s:%c.\n", key, type);
+	exit(EXIT_FAILURE);
+      }
+    } else if (type == 'Z' || type == 'H') {
+      fprintf(stderr, "Unable to parse optional fields %s:%c. Not implemented yet.\n", key, type);
+      exit(EXIT_FAILURE);
+
+      printf("%c", type); //kputc(type, str); 
+      printf(":"); //kputc(':', str);
+      while (s < bam1->data + bam1->l_data && *s) {
+	printf("%c", *s++); //kputc(*s++, str);
+      }
+      if (s >= bam1->data + bam1->l_data) {
+	fprintf(stderr, "Unable to parse optional fields %s:%c.\n", key, type);
+	exit(EXIT_FAILURE);
+      }
+      ++s;
+    } else if (type == 'B') {
+      fprintf(stderr, "Unable to parse optional fields %s:%c. Not implemented yet.\n", key, type);
+      exit(EXIT_FAILURE);
+
+      uint8_t sub_type = *(s++);
+      int32_t n;
+      memcpy(&n, s, 4);
+      s += 4; // no point to the start of the array
+      if (s + n >= bam1->data + bam1->l_data) {
+	fprintf(stderr, "Unable to parse optional fields %s:%c.\n", key, type);
+	exit(EXIT_FAILURE);
+      }
+      printf("B:"); //kputsn("B:", 2, str); 
+      printf("%c", sub_type); // kputc(sub_type, str); // write the typing
+      for (int i = 0; i < n; ++i) { // FIXME: for better performance, put the loop after "if"
+	printf(","); //kputc(',', str);
+	if ('c' == sub_type)      { 
+	  printf("%i", *(int8_t*)s); //kputw(*(int8_t*)s, str); 
+	  ++s; 
+	} else if ('C' == sub_type) { 
+	  printf("%u", *(uint8_t*)s); //kputw(*(uint8_t*)s, str); 
+	  ++s; 
+	} else if ('s' == sub_type) { 
+	  printf("%i", *(int16_t*)s); //kputw(*(int16_t*)s, str); 
+	  s += 2; 
+	} else if ('S' == sub_type) { 
+	  printf("%u", *(uint16_t*)s); //kputw(*(uint16_t*)s, str); 
+	  s += 2; 
+	} else if ('i' == sub_type) { 
+	  printf("%i", *(int32_t*)s); //kputw(*(int32_t*)s, str); 
+	  s += 4; 
+	} else if ('I' == sub_type) { 
+	  printf("%u", *(uint32_t*)s); //kputuw(*(uint32_t*)s, str); 
+	  s += 4; 
+	} else if ('f' == sub_type) { 
+	  printf("%g", *(float*)s); //ksprintf(str, "%g", *(float*)s); 
+	  s += 4; 
+	}
+      }
+    }
+  }
+  */
 
   // write ReadAlignment
   if (avro_file_writer_append_value(db, &read_alignment)) {
