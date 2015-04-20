@@ -5,7 +5,7 @@ DOWNLOAD and BUILDING
 ---------------------
 
     $ git clone https://github.com/opencb/hpg-bigdata.git
-    $ mvn install
+    $ ./build.sh
 
 RUNING
 -------
