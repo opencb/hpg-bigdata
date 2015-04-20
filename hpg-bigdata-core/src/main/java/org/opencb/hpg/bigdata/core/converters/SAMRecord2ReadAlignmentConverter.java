@@ -1,9 +1,7 @@
 package org.opencb.hpg.bigdata.core.converters;
 
 import htsjdk.samtools.CigarElement;
-import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMFormatException;
-import htsjdk.samtools.SAMLineParser;
 import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SAMRecord.SAMTagAndValue;
 import htsjdk.samtools.TagValueAndUnsignedArrayFlag;
@@ -21,7 +19,7 @@ import org.ga4gh.models.LinearAlignment;
 import org.ga4gh.models.Position;
 import org.ga4gh.models.ReadAlignment;
 import org.ga4gh.models.Strand;
-import org.opencb.ga4gh.utils.ReadAlignmentUtils;
+import org.opencb.hpg.bigdata.core.utils.ReadAlignmentUtils;
 
 public class SAMRecord2ReadAlignmentConverter implements Converter<SAMRecord, ReadAlignment> {
 
