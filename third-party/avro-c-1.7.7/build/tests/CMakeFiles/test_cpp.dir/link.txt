@@ -1,1 +1,0 @@
-/usr/bin/c++   -O2 -g    CMakeFiles/test_cpp.dir/test_cpp.o  -o test_cpp -rdynamic ../src/libavro.a -lz -llzma 

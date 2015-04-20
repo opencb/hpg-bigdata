@@ -658,7 +658,6 @@ void add_read_alignment2(avro_file_writer_t db, const bam1_t *bam1, const bam_he
     fprintf(stderr, "Unable to write ReadAlignment datum to memory buffer.\nError message: %s\n", avro_strerror());
     exit(EXIT_FAILURE);
   }
-
 }
 
 //--------------------------------------------------------------------//
@@ -1410,12 +1409,8 @@ int main(int argc, char *argv[]) {
   bam1_t *bam1 = bam_init1();
   while (bam_read1(bam_fd, bam1) > 0) {
     add_read_alignment2(db, bam1, bam_header);
-    //    fprintf(stdout, "id = %s\n", bam1_qname(bam1));
-    if (i % 100000 == 0) {
-    //if (i == 100) {
-      printf("%i\n", i);
-      //break;
-    }
+    //if (i > 100) break;
+    if (i % 100000 == 0) printf("%i\n", i);
     i++;
   }
 

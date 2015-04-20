@@ -37,13 +37,13 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.ga4gh.models.Read;
 import org.ga4gh.models.ReadAlignment;
+import org.opencb.hpg.bigdata.core.NativeSupport;
 import org.opencb.hpg.bigdata.core.converters.FastqRecord2ReadConverter;
 import org.opencb.hpg.bigdata.core.converters.SAMRecord2ReadAlignmentConverter;
 import org.opencb.hpg.bigdata.core.io.Avro2ParquetMapper;
 import org.opencb.hpg.bigdata.core.io.AvroWriter;
 import org.opencb.hpg.bigdata.core.utils.CompressionUtils;
 import org.opencb.hpg.bigdata.core.utils.PathUtils;
-import org.opencb.hpg.bigdata.core.utils.ReadAlignmentUtils;
 import org.opencb.hpg.bigdata.core.utils.ReadUtils;
 
 import parquet.avro.AvroParquetOutputFormat;
@@ -246,6 +246,12 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 			System.exit(-1);
 		}
 
+		if (!PathUtils.isHdfs(output) && ga4ghCommandOptions.conversion.equals(BAM_2_GA)) {
+			System.loadLibrary("hpgbigdata");
+			new NativeSupport().bam2ga(in, out, ga4ghCommandOptions.compression);
+			return;
+		}
+		
 		// reader (sam or bam)
 		SamReader reader = SamReaderFactory.makeDefault().open(new File(in));
 
@@ -270,6 +276,7 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 
 			os = new FileOutputStream(output);
 		}
+
 		AvroWriter<ReadAlignment> writer = new AvroWriter<ReadAlignment>(ReadAlignment.getClassSchema(), CompressionUtils.getAvroCodec(codecName), os);
 
 		// main loop

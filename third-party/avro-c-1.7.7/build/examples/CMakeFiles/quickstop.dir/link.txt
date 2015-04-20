@@ -1,1 +1,0 @@
-/usr/bin/gcc  -O2 -g    CMakeFiles/quickstop.dir/quickstop.o  -o quickstop -rdynamic ../src/libavro.a -lz -llzma 

@@ -1,1 +1,0 @@
-/usr/bin/gcc  -O2 -g    CMakeFiles/test_avro_values.dir/test_avro_values.o  -o test_avro_values -rdynamic ../src/libavro.a -lz -llzma 

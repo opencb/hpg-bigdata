@@ -1,1 +1,0 @@
-/usr/bin/gcc  -O2 -g    CMakeFiles/avroappend.dir/avroappend.o  -o avroappend -rdynamic libavro.a -lz -llzma 

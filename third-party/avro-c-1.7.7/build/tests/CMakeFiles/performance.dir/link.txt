@@ -1,1 +1,0 @@
-/usr/bin/gcc  -O2 -g    CMakeFiles/performance.dir/performance.o  -o performance -rdynamic ../src/libavro.a -lz -llzma 
