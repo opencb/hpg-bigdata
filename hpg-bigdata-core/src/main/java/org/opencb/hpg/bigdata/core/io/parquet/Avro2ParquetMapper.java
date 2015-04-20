@@ -1,4 +1,4 @@
-package org.opencb.hpg.bigdata.core.io;
+package org.opencb.hpg.bigdata.core.io.parquet;
 
 import java.io.IOException;
 

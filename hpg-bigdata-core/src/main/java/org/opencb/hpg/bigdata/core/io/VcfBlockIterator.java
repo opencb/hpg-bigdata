@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.opencb.hpg.bigdata.core.utils;
+package org.opencb.hpg.bigdata.core.io;
 
 import htsjdk.tribble.readers.LineIterator;
 import htsjdk.variant.vcf.VCFHeader;

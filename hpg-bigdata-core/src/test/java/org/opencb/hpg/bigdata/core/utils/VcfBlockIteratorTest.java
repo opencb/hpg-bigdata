@@ -13,6 +13,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.opencb.hpg.bigdata.core.converters.FullVCFCodec;
+import org.opencb.hpg.bigdata.core.io.VcfBlockIterator;
 
 /**
  * @author mh719
@@ -43,7 +44,7 @@ public class VcfBlockIteratorTest {
 	}
 
 	/**
-	 * Test method for {@link org.opencb.hpg.bigdata.core.utils.VcfBlockIterator#hasNext()}.
+	 * Test method for {@link org.opencb.hpg.bigdata.core.io.VcfBlockIterator#hasNext()}.
 	 * @throws Exception 
 	 */
 	@Test

@@ -50,14 +50,14 @@ import org.opencb.hpg.bigdata.core.converters.FullVCFCodec;
 import org.opencb.hpg.bigdata.core.converters.SAMRecord2ReadAlignmentConverter;
 import org.opencb.hpg.bigdata.core.converters.variation.VariantAvroEncoderTask;
 import org.opencb.hpg.bigdata.core.converters.variation.VariantConverterContext;
-import org.opencb.hpg.bigdata.core.io.Avro2ParquetMapper;
-import org.opencb.hpg.bigdata.core.io.AvroFileWriter;
-import org.opencb.hpg.bigdata.core.io.AvroWriter;
+import org.opencb.hpg.bigdata.core.io.parquet.Avro2ParquetMapper;
+import org.opencb.hpg.bigdata.core.io.avro.AvroFileWriter;
+import org.opencb.hpg.bigdata.core.io.avro.AvroWriter;
 import org.opencb.hpg.bigdata.core.utils.CompressionUtils;
 import org.opencb.hpg.bigdata.core.utils.PathUtils;
 import org.opencb.hpg.bigdata.core.utils.ReadUtils;
 
-import org.opencb.hpg.bigdata.core.utils.VcfBlockIterator;
+import org.opencb.hpg.bigdata.core.io.VcfBlockIterator;
 import parquet.avro.AvroParquetOutputFormat;
 import parquet.avro.AvroParquetWriter;
 import parquet.avro.AvroSchemaConverter;
@@ -81,7 +81,7 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 	private final static String GA_2_CRAM  = "ga2cram";
     private final static String VCF_2_GA   = "vcf2ga";
 
-	private final static String AVRO_2_PARQUET = "avro2parquet"; 
+	private final static String AVRO_2_PARQUET = "avro2parquet";
 
 
 	private final static String FASTQ_2_GA_DESC = "Save Fastq file as Global Alliance for Genomics and Health (ga4gh) in Avro format"; 
@@ -536,13 +536,13 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 	}
 
 	private void avro2parquetLocal(String input, String output) throws IOException {		
-		// generate the corresponding Parquet schema
+		// generate the corresponding parquet schema
 		MessageType parquetSchema = new AvroSchemaConverter().convert(ReadAlignment.getClassSchema());
 
 		// create a WriteSupport object to serialize your Avro objects
 		AvroWriteSupport writeSupport = new AvroWriteSupport(parquetSchema, ReadAlignment.getClassSchema());
 
-		// set Parquet file block size and page size values
+		// set parquet file block size and page size values
 		int blockSize = 256 * 1024 * 1024;
 		int pageSize = 64 * 1024;
 
