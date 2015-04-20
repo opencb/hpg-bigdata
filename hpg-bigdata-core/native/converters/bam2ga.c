@@ -1317,7 +1317,7 @@ void bam2ga(char *bam_filename, char *avro_filename, char *codec_name) {
 	while (bam_read1(bam_fd, bam1) > 0) {
 		add_read_alignment2(db, bam1, bam_header);
 		//if (i > 100) break;
-		if (i % 100000 == 0) printf("%i\n", i);
+		if (i > 0 && i % 100000 == 0) printf("%i reads\n", i);
 		i++;
 	}
 
