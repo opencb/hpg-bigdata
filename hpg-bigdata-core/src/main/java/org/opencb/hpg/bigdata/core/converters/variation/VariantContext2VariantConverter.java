@@ -42,7 +42,7 @@ import org.ga4gh.models.VariantSet;
 import org.ga4gh.models.VariantSetMetadata;
 import org.opencb.hpg.bigdata.core.converters.Converter;
 import org.opencb.hpg.bigdata.core.converters.FullVCFCodec;
-import org.opencb.hpg.bigdata.core.io.AvroWriter;
+import org.opencb.hpg.bigdata.core.io.avro.AvroWriter;
 import org.opencb.hpg.bigdata.core.utils.CompressionUtils;
 
 /**

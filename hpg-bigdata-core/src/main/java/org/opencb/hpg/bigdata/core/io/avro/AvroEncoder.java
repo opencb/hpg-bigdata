@@ -1,4 +1,4 @@
-package org.opencb.hpg.bigdata.core.io;
+package org.opencb.hpg.bigdata.core.io.avro;
 
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumWriter;

@@ -14,9 +14,9 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.ga4gh.models.Read;
-import org.opencb.hpg.bigdata.core.hadoopbam.FastqInputFormat;
-import org.opencb.hpg.bigdata.core.hadoopbam.SequencedFragment;
 import org.opencb.hpg.bigdata.core.utils.CompressionUtils;
+import org.seqdoop.hadoop_bam.FastqInputFormat;
+import org.seqdoop.hadoop_bam.SequencedFragment;
 
 public class Fastq2GaMR {
 	
