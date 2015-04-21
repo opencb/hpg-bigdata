@@ -11,6 +11,8 @@ DOWNLOAD and BUILDING
 
   1. Java 1.8
   2. opencb/java-common-libs v3.0-SNAPSHOT
+  3. cmake
+  4. Compression libraries: libz, libsnappy, liblzma
 
 RUNING
 -------
