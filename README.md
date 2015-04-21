@@ -64,8 +64,8 @@ fastq command
   
   Some examples:
    
-    $ ./hpg-bigdata.sh ga4gh --stats -i hdfs://test.fq.ga -o hdfs://stats-test.fq.ga
-    $ ./hpg-bigdata.sh ga4gh --kmers 7 -i hdfs://test.fq.ga -o hdfs://kmers-test.fq.ga
-    $ ./hpg-bigdata.sh ga4gh --stats --kmers 7 -i hdfs://test.fq.ga -o hdfs://full-stats-test.fq.ga
+    $ ./hpg-bigdata.sh fastq --stats -i hdfs://test.fq.ga -o /tmp/stats-test.fq
+    $ ./hpg-bigdata.sh fastq --kmers 7 -i hdfs://test.fq.ga -o /tmp/kmers-test.fq
+    $ ./hpg-bigdata.sh fastq --stats --kmers 7 -i hdfs://test.fq.ga -o /tmp/stats-kmers-test.fq
     
     
