@@ -40,8 +40,7 @@ public class FastqCommandExecutor extends CommandExecutor {
 			e.printStackTrace();
 		}
 		String outHdfsDirname = new String("" + new Date().getTime());
-		System.out.println("hdfs dir. name = "+ outHdfsDirname);
-
+	
 		if (fastqCommandOptions.stats) {
 			stats(fastqCommandOptions.input, outHdfsDirname, fastqCommandOptions.kmers);
 		} else if (fastqCommandOptions.kmers > 0) {
@@ -50,7 +49,6 @@ public class FastqCommandExecutor extends CommandExecutor {
 
 		// post-processing
 		Path outFile = new Path(outHdfsDirname + "/part-r-00000");
-		System.out.println("out file = " + outFile.getName());
 
 		try {
 			if (!fs.exists(outFile)) {
