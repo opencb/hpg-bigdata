@@ -45,6 +45,7 @@ import org.ga4gh.models.ReadAlignment;
 import org.ga4gh.models.Variant;
 import org.opencb.commons.io.DataReader;
 import org.opencb.commons.run.ParallelTaskRunner;
+import org.opencb.hpg.bigdata.core.NativeSupport;
 import org.opencb.hpg.bigdata.core.converters.FastqRecord2ReadConverter;
 import org.opencb.hpg.bigdata.core.converters.FullVCFCodec;
 import org.opencb.hpg.bigdata.core.converters.SAMRecord2ReadAlignmentConverter;
@@ -264,6 +265,12 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 			System.exit(-1);
 		}
 
+		if (!PathUtils.isHdfs(output) && ga4ghCommandOptions.conversion.equals(BAM_2_GA)) {
+			System.loadLibrary("hpgbigdata");
+			new NativeSupport().bam2ga(in, out, ga4ghCommandOptions.compression);
+			return;
+		}
+		
 		// reader (sam or bam)
 		SamReader reader = SamReaderFactory.makeDefault().open(new File(in));
 
@@ -288,6 +295,7 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 
 			os = new FileOutputStream(output);
 		}
+
 		AvroWriter<ReadAlignment> writer = new AvroWriter<ReadAlignment>(ReadAlignment.getClassSchema(), CompressionUtils.getAvroCodec(codecName), os);
 
 		// main loop
@@ -368,10 +376,14 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 		// main loop
 		SAMRecord samRecord;
 		SAMRecord2ReadAlignmentConverter converter = new SAMRecord2ReadAlignmentConverter();
+		int i = 0;
 		for (ReadAlignment readAlignment: reader) {
-			samRecord = converter.backward(readAlignment);
-			samRecord.setHeader(header);
-			writer.addAlignment(samRecord);
+			System.out.println(readAlignment.toString());
+			//System.out.println(ReadAlignmentUtils.getSamString(readAlignment));
+			
+			//samRecord = converter.backward(readAlignment);
+			//samRecord.setHeader(header);
+			//writer.addAlignment(samRecord);
 		}
 
 		// close

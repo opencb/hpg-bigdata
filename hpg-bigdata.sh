@@ -30,6 +30,8 @@ do
   fi
 done
 
+export LD_LIBRARY_PATH=hpg-bigdata-core/native/:hpg-bigdata-core/native/third-party/avro-c-1.7.7/build/src/:hpg-bigdata-core/native/third-party/htslib/ 
+
 if [ $hadoop -eq 1 ];
 then
 	echo "Executing in a Hadoop environment"
