@@ -1,5 +1,11 @@
 package org.opencb.hpg.bigdata.core.io;
 
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.util.List;
+
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.io.DatumWriter;
@@ -8,11 +14,6 @@ import org.opencb.commons.io.DataWriter;
 import org.opencb.hpg.bigdata.core.utils.CompressionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.ByteBuffer;
-import java.util.List;
 
 /**
  * Created by hpccoll1 on 02/04/15.

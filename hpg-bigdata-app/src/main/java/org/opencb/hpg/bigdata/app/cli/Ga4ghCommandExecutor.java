@@ -56,8 +56,8 @@ import org.opencb.hpg.bigdata.core.io.AvroWriter;
 import org.opencb.hpg.bigdata.core.utils.CompressionUtils;
 import org.opencb.hpg.bigdata.core.utils.PathUtils;
 import org.opencb.hpg.bigdata.core.utils.ReadUtils;
-
 import org.opencb.hpg.bigdata.core.utils.VcfBlockIterator;
+
 import parquet.avro.AvroParquetOutputFormat;
 import parquet.avro.AvroParquetWriter;
 import parquet.avro.AvroSchemaConverter;
