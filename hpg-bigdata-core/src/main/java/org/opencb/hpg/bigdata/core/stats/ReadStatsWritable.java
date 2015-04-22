@@ -27,8 +27,6 @@ public class ReadStatsWritable extends ReadStats implements Writable {
 		out.writeInt(numN);
 		out.writeInt(minSeqLength);
 		out.writeInt(maxSeqLength);
-		out.writeInt(minSeqQual);
-		out.writeInt(maxSeqQual);
 		out.writeInt(accSeqQual);
 		
 		out.writeInt(lengthMap.size());
@@ -74,8 +72,6 @@ public class ReadStatsWritable extends ReadStats implements Writable {
 		numN = in.readInt();
 		minSeqLength = in.readInt();
 		maxSeqLength = in.readInt();
-		minSeqQual = in.readInt();
-		maxSeqQual = in.readInt();
 		accSeqQual = in.readInt();
 		
 		size = in.readInt();

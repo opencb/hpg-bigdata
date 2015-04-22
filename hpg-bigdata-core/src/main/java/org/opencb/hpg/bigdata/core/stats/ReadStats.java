@@ -35,8 +35,6 @@ public class ReadStats {
 	public int numN;
 	public int minSeqLength;
 	public int maxSeqLength;
-	public int minSeqQual;
-	public int maxSeqQual;
 	public int accSeqQual;
 	public HashMap<Integer, Integer> lengthMap;
 	public HashMap<Integer, Info> infoMap;
@@ -52,8 +50,6 @@ public class ReadStats {
 		numN = 0;
 		minSeqLength = Integer.MAX_VALUE;
 		maxSeqLength = 0;
-		minSeqQual = Integer.MAX_VALUE;
-		maxSeqQual = 0;
 		accSeqQual = 0;
 		lengthMap = new HashMap<Integer, Integer>();
 		infoMap = new HashMap<Integer, Info>();
@@ -74,8 +70,6 @@ public class ReadStats {
 			numN = readStats.numN;
 			minSeqLength = readStats.minSeqLength;
 			maxSeqLength = readStats.maxSeqLength;
-			minSeqQual = readStats.minSeqQual;
-			maxSeqQual = readStats.maxSeqQual;
 			accSeqQual = readStats.accSeqQual;
 			lengthMap = readStats.lengthMap;
 			infoMap = readStats.infoMap;
@@ -98,12 +92,6 @@ public class ReadStats {
 			maxSeqLength = stats.maxSeqLength; 
 		}
 
-		if (stats.minSeqQual < minSeqQual) {
-			minSeqQual = stats.minSeqQual; 
-		}
-		if (stats.maxSeqQual > maxSeqQual) {
-			maxSeqQual = stats.maxSeqQual; 
-		}
 		accSeqQual += stats.accSeqQual;
 
 		int value;
@@ -213,12 +201,6 @@ public class ReadStats {
 
 		// read quality
 		accSeqQual += accQual;
-		if (accQual < minSeqQual) {
-			minSeqQual = accQual;
-		}
-		if (accQual > maxSeqQual) {
-			maxSeqQual = accQual;
-		}
 
 		// update kmers, if necessary
 		if (kmers.kvalue > 0) {
@@ -297,12 +279,6 @@ public class ReadStats {
 
 		// read quality
 		accSeqQual += accQual;
-		if (accQual < minSeqQual) {
-			minSeqQual = accQual;
-		}
-		if (accQual > maxSeqQual) {
-			maxSeqQual = accQual;
-		}
 
 		// update kmers, if necessary
 		if (kmers.kvalue > 0) {
@@ -320,13 +296,12 @@ public class ReadStats {
 		res.append(", \"num_C\": " + numC);
 		res.append(", \"num_N\": " + numN);
 		
+		int mean_len = (numA + numT + numG + numC + numN) / numSeqs;
 		res.append(", \"min_length\": " + minSeqLength);
-		res.append(", \"mean_length\": " + (numA + numT + numG + numC + numN) / numSeqs);
+		res.append(", \"mean_length\": " + mean_len);
 		res.append(", \"max_length\": " + maxSeqLength);
 		
-		res.append(", \"min_qual\": " + minSeqQual);
-		res.append(", \"mean_qual\": " + accSeqQual / numSeqs);
-		res.append(", \"max_qual\": " + minSeqQual);
+		res.append(", \"mean_qual\": " + accSeqQual / numSeqs / mean_len);
 		
 		int i, size = lengthMap.size();
 		res.append(", \"length_map_size\": " + size);
