@@ -174,7 +174,7 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 			default: {
 				logger.error("Invalid conversion {}", ga4ghCommandOptions.conversion);
 				System.out.println("Invalid conversion (" + ga4ghCommandOptions.conversion + "). Valid conversions are:\n" + getValidConversionString());
-				break;
+				System.exit(-1);
 			}
 			}
 		} catch (Exception e) {

@@ -7,7 +7,15 @@ import java.util.HashMap;
 
 import org.apache.hadoop.io.Writable;
 
-public class FastqStatsWritable extends FastqStats implements Writable {
+public class ReadStatsWritable extends ReadStats implements Writable {
+
+	public ReadStatsWritable() {
+		super();
+	}
+
+	public ReadStatsWritable(ReadStats readStats) {
+		super(readStats);
+	}
 
 	@Override
 	public void write(DataOutput out) throws IOException {

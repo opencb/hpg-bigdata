@@ -87,7 +87,7 @@ public class CliOptionsParser {
         public CommonCommandOptions commonOptions = commonCommandOptions;
 
 
-        @Parameter(names = {"-i", "--input"}, description = "HDFS input file (saved in GA4GH/Avro model)", required = true, arity = 1)
+        @Parameter(names = {"-i", "--input"}, description = "HDFS input file (the FastQ file must be stored in GA4GH/Avro model)", required = true, arity = 1)
         public String input = null;
 
         @Parameter(names = {"-o", "--output"}, description = "Local output directory to save results, summary, images...", required = false, arity = 1)
@@ -96,8 +96,8 @@ public class CliOptionsParser {
         @Parameter(names = {"-s", "--stats"}, description = "Run statistics", required = false)
         public boolean stats = false;
 
-        //@Parameter(names = {"-f", "--filter"}, description = "", required = false, arity = 1)
-        //public String filter = null;
+        @Parameter(names = {"-f", "--filter"}, description = "", required = false, arity = 1)
+        public String filter = null;
 
         @Parameter(names = {"-k", "--kmers"}, description = "Compute k-mers (according to the indicated length)", required = false, arity = 1)
         public Integer kmers = 0;
@@ -112,13 +112,13 @@ public class CliOptionsParser {
         public CommonCommandOptions commonOptions = commonCommandOptions;
 
 
-        @Parameter(names = {"-i", "--input"}, description = "", required = true, arity = 1)
+        @Parameter(names = {"-i", "--input"}, description = "HDFS input file (the BAM/SAM file must be stored in GA4GH/Avro model)", required = true, arity = 1)
         public String input = null;
 
-        @Parameter(names = {"-o", "--output"}, description = "", required = false, arity = 1)
+        @Parameter(names = {"-o", "--output"}, description = "Local output directory to save results, summary, images...", required = false, arity = 1)
         public String output = null;
 
-        @Parameter(names = {"--stats"}, description = "", required = false)
+        @Parameter(names = {"--stats"}, description = "Run statistics", required = false)
         public boolean stats = false;
 
         @Parameter(names = {"--filter"}, description = "", required = false, arity = 1)

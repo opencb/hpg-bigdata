@@ -1,5 +1,14 @@
 package org.opencb.hpg.bigdata.app.cli;
 
+import java.io.IOException;
+import java.util.Date;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.opencb.hpg.bigdata.core.io.ReadAlignmentStatsMR;
+import org.opencb.hpg.bigdata.core.utils.PathUtils;
+
 /**
  * Created by imedina on 15/03/15.
  */
@@ -21,8 +30,56 @@ public class BamCommandExecutor extends CommandExecutor {
     public void execute() {
         logger.info("Executing {} CLI options", "bam");
 
-        logger.debug("Input file: {}", bamCommandOptions.input);
+		// prepare the HDFS output folder
+		FileSystem fs = null;
+		Configuration conf = new Configuration();
+		try {
+			fs = FileSystem.get(conf);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		String outHdfsDirname = new String("" + new Date().getTime());
+	
+		if (bamCommandOptions.stats) {
+			stats(bamCommandOptions.input, outHdfsDirname);
+		} else {
+			logger.error("Error: BAM/SAM command not yet implemented");
+			System.exit(-1);
+		}
 
-    }
+		// post-processing
+		Path outFile = new Path(outHdfsDirname + "/part-r-00000");
 
+		try {
+			if (!fs.exists(outFile)) {
+				System.out.println("out file = " + outFile.getName() + " does not exist !!");
+			} else {
+				String outRawFileName =  bamCommandOptions.output + "/raw.json";
+				fs.copyToLocalFile(outFile, new Path(outRawFileName));
+
+				//Utils.parseStatsFile(outRawFileName, out);
+			}
+			fs.delete(new Path(outHdfsDirname), true);		
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+
+	private void stats(String input, String output) {
+		// clean paths
+		String in = PathUtils.clean(input);
+		String out = PathUtils.clean(output);
+
+		if (!PathUtils.isHdfs(input)) {
+			logger.error("To run BAM stats, input files '{}' must be stored in the HDFS/Haddop. Use the command 'ga4gh bam2sa' to import your file.", input);
+			System.exit(-1);
+		}
+
+		try {
+			ReadAlignmentStatsMR.run(in, out);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 }

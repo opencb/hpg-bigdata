@@ -13,14 +13,15 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.ga4gh.models.Read;
-import org.opencb.hpg.bigdata.core.stats.FastqKmersWritable;
+import org.opencb.hpg.bigdata.core.stats.ReadStatsWritable;
 
-public class FastqKmersMR {
-		
-	public static class FastqKmersMapper extends Mapper<AvroKey<Read>, NullWritable, LongWritable, FastqKmersWritable> {
+public class ReadStatsMR {
+	
+	public static class ReadStatsMapper extends Mapper<AvroKey<Read>, NullWritable, LongWritable, ReadStatsWritable> {
 		
 		private static int kvalue = 0;
 		
@@ -31,20 +32,29 @@ public class FastqKmersMR {
 		
 		@Override
 		public void map(AvroKey<Read> key, NullWritable value, Context context) throws IOException, InterruptedException {
-			FastqKmersWritable kmers = new FastqKmersWritable();
-			kmers.updateByRead(key.datum(), kvalue);
-			context.write(new LongWritable(1), kmers);
+			ReadStatsWritable stats = new ReadStatsWritable();
+			stats.kmers.kvalue = kvalue;
+			stats.updateByRead(key.datum());
+			context.write(new LongWritable(1), stats);
 		}
 	}
 
-	public static class FastqKmersReducer extends Reducer<LongWritable, FastqKmersWritable, Text, NullWritable> {
+	public static class ReadStatsReducer extends Reducer<LongWritable, ReadStatsWritable, Text, NullWritable> {
+
+		private static int kvalue = 0;
 		
-		public void reduce(LongWritable key, Iterable<FastqKmersWritable> values, Context context) throws IOException, InterruptedException {
-			FastqKmersWritable kmers = new FastqKmersWritable();
-			for (FastqKmersWritable value : values) {
-				kmers.update(value);
+		public  void setup(Context context) {
+			Configuration conf = context.getConfiguration();
+			kvalue = Integer.parseInt(conf.get("kvalue"));
+		}
+
+		public void reduce(LongWritable key, Iterable<ReadStatsWritable> values, Context context) throws IOException, InterruptedException {
+			ReadStatsWritable stats = new ReadStatsWritable();
+			stats.kmers.kvalue = kvalue;
+			for (ReadStatsWritable value : values) {
+				stats.update(value);
 			}
-			context.write(new Text(kmers.toFormat()), NullWritable.get());
+			context.write(new Text(stats.toJSON()), NullWritable.get());
 		}
 	}
 	
@@ -52,8 +62,8 @@ public class FastqKmersMR {
 		Configuration conf = new Configuration();
 		conf.set("kvalue", String.valueOf(kvalue));
 
-		Job job = Job.getInstance(conf, "FastqKmersMR");
-		job.setJarByClass(FastqKmersMR.class);
+		Job job = Job.getInstance(conf, "ReadStatsMR");		
+		job.setJarByClass(ReadStatsMR.class);
 
 		// input
 		AvroJob.setInputKeySchema(job, Read.getClassSchema());
@@ -62,16 +72,16 @@ public class FastqKmersMR {
 				
 		// output
 		FileOutputFormat.setOutputPath(job, new Path(output));
-		job.setOutputKeyClass(FastqKmersWritable.class);
+		job.setOutputKeyClass(ReadStatsWritable.class);
 		job.setOutputValueClass(NullWritable.class);
 		
 		// mapper
-		job.setMapperClass(FastqKmersMapper.class);
+		job.setMapperClass(ReadStatsMapper.class);
 		job.setMapOutputKeyClass(LongWritable.class);
-		job.setMapOutputValueClass(FastqKmersWritable.class);
+		job.setMapOutputValueClass(ReadStatsWritable.class);
 		
 		// reducer
-		job.setReducerClass(FastqKmersReducer.class);
+		job.setReducerClass(ReadStatsReducer.class);
 		job.setNumReduceTasks(1);
 
 		return (job.waitForCompletion(true) ? 0 : 1);

@@ -6,8 +6,8 @@ import java.util.Date;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.opencb.hpg.bigdata.core.io.FastqKmersMR;
-import org.opencb.hpg.bigdata.core.io.FastqStatsMR;
+import org.opencb.hpg.bigdata.core.io.ReadKmersMR;
+import org.opencb.hpg.bigdata.core.io.ReadStatsMR;
 import org.opencb.hpg.bigdata.core.utils.PathUtils;
 
 /**
@@ -45,6 +45,9 @@ public class FastqCommandExecutor extends CommandExecutor {
 			stats(fastqCommandOptions.input, outHdfsDirname, fastqCommandOptions.kmers);
 		} else if (fastqCommandOptions.kmers > 0) {
 			kmers(fastqCommandOptions.input, outHdfsDirname, fastqCommandOptions.kmers);
+		} else {
+			logger.error("Error: FastQ command not yet implemented");
+			System.exit(-1);
 		}
 
 		// post-processing
@@ -54,7 +57,7 @@ public class FastqCommandExecutor extends CommandExecutor {
 			if (!fs.exists(outFile)) {
 				System.out.println("out file = " + outFile.getName() + " does not exist !!");
 			} else {
-				String outRawFileName =  fastqCommandOptions.output + "/raw.txt";
+				String outRawFileName =  fastqCommandOptions.output + "/raw.json";
 				fs.copyToLocalFile(outFile, new Path(outRawFileName));
 
 				//Utils.parseStatsFile(outRawFileName, out);
@@ -77,7 +80,7 @@ public class FastqCommandExecutor extends CommandExecutor {
 		}
 
 		try {
-			FastqStatsMR.run(in, out, kvalue);
+			ReadStatsMR.run(in, out, kvalue);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -94,7 +97,7 @@ public class FastqCommandExecutor extends CommandExecutor {
 		}
 
 		try {
-			FastqKmersMR.run(in, out, kvalue);
+			ReadKmersMR.run(in, out, kvalue);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

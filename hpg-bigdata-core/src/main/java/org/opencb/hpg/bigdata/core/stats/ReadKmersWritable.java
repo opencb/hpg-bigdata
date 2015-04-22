@@ -8,13 +8,13 @@ import java.util.HashMap;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 
-public class FastqKmersWritable extends FastqKmers implements Writable {
+public class ReadKmersWritable extends ReadKmers implements Writable {
 	
-	public FastqKmersWritable() {
+	public ReadKmersWritable() {
 		super();
 	}
 	
-	public FastqKmersWritable(FastqKmers kmers) {
+	public ReadKmersWritable(ReadKmers kmers) {
 		kvalue = kmers.kvalue;
 		kmersMap = kmers.kmersMap;
 	}
