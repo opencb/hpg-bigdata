@@ -3,9 +3,12 @@ package org.opencb.hpg.bigdata.core.stats;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.apache.hadoop.io.Writable;
+import org.ga4gh.models.CigarOperation;
+import org.ga4gh.models.CigarUnit;
 
 public class ReadAlignmentStatsWritable extends ReadAlignmentStats implements Writable {
 	
@@ -43,7 +46,14 @@ public class ReadAlignmentStatsWritable extends ReadAlignmentStats implements Wr
 			out.writeInt(key);
 			out.writeInt(insertMap.get(key));		
 		}
-
+/*
+		out.writeLong(pos);
+		out.writeInt(cigar.size());
+		for(CigarUnit cu: cigar) {
+			out.writeInt(cu.getOperation().ordinal());
+			out.writeLong(cu.getOperationLength());
+		}
+*/		
 		ReadStatsWritable aux = new ReadStatsWritable(readStats);
 		aux.write(out);
 	}
@@ -80,7 +90,15 @@ public class ReadAlignmentStatsWritable extends ReadAlignmentStats implements Wr
 		for (int i = 0; i < size; i++) {
 			insertMap.put(in.readInt(), in.readInt());
 		}
-
+/*
+		pos = in.readLong();
+		size = in.readInt();
+		cigar = new ArrayList<CigarUnit>(size);
+		for(int i = 0; i < size; i++) {
+			CigarUnit cu = new CigarUnit(CigarOperation.values()[in.readInt()], in.readLong(), null);
+			cigar.add(cu);
+		}
+*/
 		ReadStatsWritable aux = new ReadStatsWritable();
 		aux.readFields(in);
 		readStats.set(aux);

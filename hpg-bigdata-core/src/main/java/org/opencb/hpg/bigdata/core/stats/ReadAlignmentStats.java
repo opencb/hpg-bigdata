@@ -3,7 +3,6 @@ package org.opencb.hpg.bigdata.core.stats;
 import java.util.HashMap;
 import java.util.List;
 
-import org.ga4gh.models.CigarOperation;
 import org.ga4gh.models.CigarUnit;
 import org.ga4gh.models.LinearAlignment;
 import org.ga4gh.models.ReadAlignment;
@@ -31,6 +30,9 @@ public class ReadAlignmentStats {
 	public int accInsert;
 	public HashMap<Integer, Integer> insertMap;
 
+//	public long pos;
+//	public List<CigarUnit> cigar;
+
 	public ReadStats readStats;
 
 
@@ -56,6 +58,9 @@ public class ReadAlignmentStats {
 		accInsert = 0;
 		insertMap = new HashMap<Integer, Integer> ();
 
+//		pos = 0;
+//		cigar = null;
+		
 		readStats = new ReadStats();
 	}
 
@@ -95,21 +100,32 @@ public class ReadAlignmentStats {
 			insertMap.put(key, value);
 		}
 
+		
 		readStats.update(stats.readStats);
 	}
 
 	public void updateByReadAlignment(ReadAlignment ra) {
 		if (ra.getAlignment() != null) {
+			// mapped
+			numMapped++;
+			
 			int value;
 			LinearAlignment la = (LinearAlignment) ra.getAlignment();
 
+			//System.out.println("chr " + la.getPosition().getReferenceName().toString() + " : " + la.getPosition().getPosition() + ", " + ra.getAlignedSequence().length());
+			
+			// num. mismatches
 			if (ra.getInfo() != null) {
 				List<CharSequence> values = ra.getInfo().get("NM");
 				if (values != null) {
 					NM = Integer.parseInt(values.get(1).toString());
-					System.out.println("NM = " + NM);
 				}
 			}
+			
+//			pos = la.getPosition().getPosition();
+//			cigar = la.getCigar();
+			
+			// clipping, indels...
 			List<CigarUnit> cigar = la.getCigar();
 			if (cigar != null) {
 				boolean hard = false, soft = false, in = false, del = false, pad = false, skip = false;
@@ -145,8 +161,7 @@ public class ReadAlignmentStats {
 				if (skip) numSkip++;
 			}
 					
-			// mapped, paired, first, second
-			numMapped++;
+			// paired, first, second
 			if (ra.getProperPlacement()) {
 				numPaired++;
 

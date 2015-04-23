@@ -20,12 +20,9 @@ import org.opencb.hpg.bigdata.core.stats.ReadAlignmentStatsWritable;
 import org.opencb.hpg.bigdata.core.stats.ReadStatsWritable;
 
 public class ReadAlignmentStatsMR {
-	
+
 	public static class ReadAlignmentStatsMapper extends Mapper<AvroKey<ReadAlignment>, NullWritable, LongWritable, ReadAlignmentStatsWritable> {
-			
-		public  void setup(Context context) {
-		}
-		
+
 		@Override
 		public void map(AvroKey<ReadAlignment> key, NullWritable value, Context context) throws IOException, InterruptedException {
 			ReadAlignmentStatsWritable stats = new ReadAlignmentStatsWritable();
@@ -36,9 +33,6 @@ public class ReadAlignmentStatsMR {
 
 	public static class ReadAlignmentStatsReducer extends Reducer<LongWritable, ReadAlignmentStatsWritable, Text, NullWritable> {
 
-		public  void setup(Context context) {
-		}
-
 		public void reduce(LongWritable key, Iterable<ReadAlignmentStatsWritable> values, Context context) throws IOException, InterruptedException {
 			ReadAlignmentStatsWritable stats = new ReadAlignmentStatsWritable();
 			for (ReadAlignmentStatsWritable value : values) {
@@ -47,7 +41,7 @@ public class ReadAlignmentStatsMR {
 			context.write(new Text(stats.toJSON()), NullWritable.get());
 		}
 	}
-	
+
 	public static int run(String input, String output) throws Exception {
 		Configuration conf = new Configuration();
 

@@ -1,11 +1,19 @@
 package org.opencb.hpg.bigdata.core.io;
 
+import htsjdk.samtools.SAMFileHeader;
+import htsjdk.samtools.SAMTextHeaderCodec;
+import htsjdk.samtools.util.LineReader;
+import htsjdk.samtools.util.StringLineReader;
+
 import java.io.IOException;
 
 import org.apache.avro.mapred.AvroKey;
 import org.apache.avro.mapreduce.AvroJob;
 import org.apache.avro.mapreduce.AvroKeyInputFormat;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
@@ -19,16 +27,16 @@ import org.ga4gh.models.Read;
 import org.opencb.hpg.bigdata.core.stats.ReadKmersWritable;
 
 public class ReadKmersMR {
-		
+
 	public static class ReadKmersMapper extends Mapper<AvroKey<Read>, NullWritable, LongWritable, ReadKmersWritable> {
-		
+
 		private static int kvalue = 0;
-		
+
 		public  void setup(Context context) {
 			Configuration conf = context.getConfiguration();
 			kvalue = Integer.parseInt(conf.get("kvalue"));
 		}
-		
+
 		@Override
 		public void map(AvroKey<Read> key, NullWritable value, Context context) throws IOException, InterruptedException {
 			ReadKmersWritable kmers = new ReadKmersWritable();
@@ -38,7 +46,7 @@ public class ReadKmersMR {
 	}
 
 	public static class ReadKmersReducer extends Reducer<LongWritable, ReadKmersWritable, Text, NullWritable> {
-		
+
 		public void reduce(LongWritable key, Iterable<ReadKmersWritable> values, Context context) throws IOException, InterruptedException {
 			ReadKmersWritable kmers = new ReadKmersWritable();
 			for (ReadKmersWritable value : values) {
@@ -47,7 +55,7 @@ public class ReadKmersMR {
 			context.write(new Text(kmers.toJSON()), NullWritable.get());
 		}
 	}
-	
+
 	public static int run(String input, String output, int kvalue) throws Exception {
 		Configuration conf = new Configuration();
 		conf.set("kvalue", String.valueOf(kvalue));
@@ -59,17 +67,17 @@ public class ReadKmersMR {
 		AvroJob.setInputKeySchema(job, Read.getClassSchema());
 		FileInputFormat.setInputPaths(job, new Path(input));
 		job.setInputFormatClass(AvroKeyInputFormat.class);
-				
+
 		// output
 		FileOutputFormat.setOutputPath(job, new Path(output));
 		job.setOutputKeyClass(ReadKmersWritable.class);
 		job.setOutputValueClass(NullWritable.class);
-		
+
 		// mapper
 		job.setMapperClass(ReadKmersMapper.class);
 		job.setMapOutputKeyClass(LongWritable.class);
 		job.setMapOutputValueClass(ReadKmersWritable.class);
-		
+
 		// reducer
 		job.setReducerClass(ReadKmersReducer.class);
 		job.setNumReduceTasks(1);
