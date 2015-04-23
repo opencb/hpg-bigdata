@@ -377,12 +377,9 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 		SAMRecord samRecord;
 		SAMRecord2ReadAlignmentConverter converter = new SAMRecord2ReadAlignmentConverter();
 		int i = 0;
-		for (ReadAlignment readAlignment: reader) {
-			//System.out.println(readAlignment.toString());
-			//System.out.println(ReadAlignmentUtils.getSamString(readAlignment));
-			
+		for (ReadAlignment readAlignment: reader) {			
 			samRecord = converter.backward(readAlignment);
-			samRecord.setHeader(header);
+			samRecord.setHeader(header);			
 			writer.addAlignment(samRecord);
 		}
 
