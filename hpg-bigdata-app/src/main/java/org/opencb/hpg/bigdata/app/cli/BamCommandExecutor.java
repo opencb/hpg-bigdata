@@ -6,6 +6,7 @@ import java.util.Date;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.opencb.hpg.bigdata.core.io.ReadAlignmentDepthMR;
 import org.opencb.hpg.bigdata.core.io.ReadAlignmentStatsMR;
 import org.opencb.hpg.bigdata.core.utils.PathUtils;
 
@@ -39,10 +40,19 @@ public class BamCommandExecutor extends CommandExecutor {
 			e.printStackTrace();
 		}
 		String outHdfsDirname = new String("" + new Date().getTime());
-	
+
+		String outName = null;
 		if (bamCommandOptions.stats) {
+			outName = "stats.json";
 			stats(bamCommandOptions.input, outHdfsDirname);
-		} else {
+		}
+		
+		if (bamCommandOptions.depth) {
+			outName = "depth.json";
+			depth(bamCommandOptions.input, outHdfsDirname);
+		}
+
+    	if (outName == null) {
 			logger.error("Error: BAM/SAM command not yet implemented");
 			System.exit(-1);
 		}
@@ -54,7 +64,7 @@ public class BamCommandExecutor extends CommandExecutor {
 			if (!fs.exists(outFile)) {
 				System.out.println("out file = " + outFile.getName() + " does not exist !!");
 			} else {
-				String outRawFileName =  bamCommandOptions.output + "/raw.json";
+				String outRawFileName =  bamCommandOptions.output + outName;
 				fs.copyToLocalFile(outFile, new Path(outRawFileName));
 
 				//Utils.parseStatsFile(outRawFileName, out);
@@ -78,6 +88,23 @@ public class BamCommandExecutor extends CommandExecutor {
 
 		try {
 			ReadAlignmentStatsMR.run(in, out);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void depth(String input, String output) {
+		// clean paths
+		String in = PathUtils.clean(input);
+		String out = PathUtils.clean(output);
+
+		if (!PathUtils.isHdfs(input)) {
+			logger.error("To run BAM stats, input files '{}' must be stored in the HDFS/Haddop. Use the command 'ga4gh bam2sa' to import your file.", input);
+			System.exit(-1);
+		}
+
+		try {
+			ReadAlignmentDepthMR.run(in, out);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

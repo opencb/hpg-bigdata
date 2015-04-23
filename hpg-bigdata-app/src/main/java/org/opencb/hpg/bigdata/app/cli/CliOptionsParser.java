@@ -121,6 +121,9 @@ public class CliOptionsParser {
         @Parameter(names = {"--stats"}, description = "Run statistics", required = false)
         public boolean stats = false;
 
+        @Parameter(names = {"--depth"}, description = "Compute depth or coverage", required = false)
+        public boolean depth = false;
+
         @Parameter(names = {"--filter"}, description = "", required = false, arity = 1)
         public String filter = null;
 
