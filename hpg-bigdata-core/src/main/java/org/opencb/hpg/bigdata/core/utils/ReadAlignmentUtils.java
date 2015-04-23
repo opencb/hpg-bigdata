@@ -60,32 +60,32 @@ public class ReadAlignmentUtils {
 		// cigar
 		for(CigarUnit e: la.getCigar()) {
 			res += ("" + e.getOperationLength());
-			switch (e.getOperation().name()) {
-			case "ALIGNMENT_MATCH":
+			switch (e.getOperation()) {
+			case ALIGNMENT_MATCH:
 				res += "M";
 				break;
-			case "INSERT":
+			case INSERT:
 				res += "I";
 				break;
-			case "DELETE":
+			case DELETE:
 				res += "D";
 				break;
-			case "CigarOperation.SKIP":
+			case SKIP:
 				res += "N";
 				break;
-			case "CigarOperation.CLIP_SOFT":
+			case CLIP_SOFT:
 				res += "S";
 				break;
-			case "CigarOperation.CLIP_HARD":
+			case CLIP_HARD:
 				res += "H";
 				break;
-			case "CigarOperation.PAD":
+			case PAD:
 				res += "P";
 				break;
-			case "SEQUENCE_MATCH":
+			case SEQUENCE_MATCH:
 				res += "=";
 				break;
-			case "SEQUENCE_MISMATCH":
+			case SEQUENCE_MISMATCH:
 				res += "X";
 				break;
 			}
