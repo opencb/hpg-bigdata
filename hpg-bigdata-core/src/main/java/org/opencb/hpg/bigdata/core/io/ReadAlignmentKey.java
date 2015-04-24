@@ -52,5 +52,21 @@ public class ReadAlignmentKey implements WritableComparable<ReadAlignmentKey> {
 		}
 		return result;
 	}
+	
+	public String getChrom() {
+		return chrom;
+	}
+
+	public void setChrom(String chrom) {
+		this.chrom = chrom;
+	}
+
+	public Long getPos() {
+		return pos;
+	}
+
+	public void setPos(Long pos) {
+		this.pos = pos;
+	}
 }
 

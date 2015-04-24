@@ -118,11 +118,8 @@ public class CliOptionsParser {
         @Parameter(names = {"-o", "--output"}, description = "Local output directory to save results, summary, images...", required = false, arity = 1)
         public String output = null;
 
-        @Parameter(names = {"--stats"}, description = "Run statistics", required = false)
-        public boolean stats = false;
-
-        @Parameter(names = {"--depth"}, description = "Compute depth or coverage", required = false)
-        public boolean depth = false;
+        @Parameter(names = {"--command"}, description = "Accepted values: stats, sort, depth", required = false, arity = 1)
+        public String command = null;
 
         @Parameter(names = {"--filter"}, description = "", required = false, arity = 1)
         public String filter = null;

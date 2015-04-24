@@ -8,6 +8,7 @@ import htsjdk.samtools.util.StringLineReader;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import org.apache.avro.mapred.AvroKey;
 import org.apache.avro.mapreduce.AvroJob;
@@ -29,95 +30,77 @@ import org.ga4gh.models.ReadAlignment;
 import org.opencb.hpg.bigdata.core.stats.ReadAlignmentStats;
 import org.opencb.hpg.bigdata.core.stats.ReadAlignmentStatsWritable;
 import org.opencb.hpg.bigdata.core.stats.ReadStatsWritable;
+import org.opencb.hpg.bigdata.core.stats.RegionDepthWritable;
 
 public class ReadAlignmentDepthMR {
 
-	//public static SAMFileHeader header;
+	public final static int CHUNK_SIZE = 4000;
 	
-	public static class ReadAlignmentStatsMapper extends Mapper<AvroKey<ReadAlignment>, NullWritable, ReadAlignmentKey, ReadAlignmentStatsWritable> {
-
-		public  void setup(Context context) {
-		}
+	public static class ReadAlignmentDepthMapper extends Mapper<AvroKey<ReadAlignment>, NullWritable, ReadAlignmentKey, RegionDepthWritable> {
 
 		@Override
 		public void map(AvroKey<ReadAlignment> key, NullWritable value, Context context) throws IOException, InterruptedException {
+			ReadAlignment ra = (ReadAlignment) key.datum();
+			LinearAlignment la = (LinearAlignment) ra.getAlignment();
+
 			ReadAlignmentKey newKey;
-			LinearAlignment la = (LinearAlignment) key.datum().getAlignment();
+			RegionDepthWritable newValue;
+			
 			if (la == null) {
 				newKey = new ReadAlignmentKey(new String("unmapped"), (long) 0);
+				newValue = new RegionDepthWritable("null", 0, 0, 0);
 			} else {
-				newKey = new ReadAlignmentKey(la.getPosition().getReferenceName().toString(), la.getPosition().getPosition()); 
-				//newKey = new Text(la.getPosition().getReferenceName().toString());
+				long start_chunk = la.getPosition().getPosition() / CHUNK_SIZE;
+				long end_chunk = (la.getPosition().getPosition() + ra.getAlignedSequence().length())  / CHUNK_SIZE;
+				if (start_chunk != end_chunk) {
+					System.out.println("-----------> chunks (start, end) = (" + start_chunk + ", " + end_chunk + ")");
+					//System.exit(-1);
+				}
+				newKey = new ReadAlignmentKey(la.getPosition().getReferenceName().toString(), start_chunk); 
+				
+				newValue = new RegionDepthWritable(newKey.getChrom(), la.getPosition().getPosition(), start_chunk, ra.getAlignedSequence().length());
+				newValue.update(la.getPosition().getPosition(), la.getCigar());
 			}
 
-			System.out.println("map : " + newKey.toString());
+			System.out.println("map : " + newKey.toString() + ", chrom. length = " + context.getConfiguration().get(newKey.getChrom()));
 
-			ReadAlignmentStatsWritable stats = new ReadAlignmentStatsWritable();
-			stats.updateByReadAlignment(key.datum());
-			context.write(newKey, stats);
+			context.write(newKey, newValue);
 		}
 	}
 
-	public static class ReadAlignmentStatsReducer extends Reducer<ReadAlignmentKey, ReadAlignmentStatsWritable, Text, Text> { //NullWritable> {
-
-		ReadAlignmentStatsWritable finalStats;
-		ArrayList<ReadAlignmentStats> pending = new ArrayList<ReadAlignmentStats>();
-		final int chunkSize = 4000;
-		long start = 0;
-		long end = start + chunkSize - 1;
-		byte tmpCov[] = new byte[chunkSize];
-		long accCov;
+	public static class ReadAlignmentDepthReducer extends Reducer<ReadAlignmentKey, RegionDepthWritable, Text, NullWritable> {
+	
+		RegionDepthWritable pendingDepth = null;
 		
 		public void setup(Context context) throws IOException, InterruptedException {
-			finalStats = new ReadAlignmentStatsWritable();
-			context.write(new Text("{"), new Text(""));			
 		}
 
 		public void cleanup(Context context) throws IOException, InterruptedException {
-			context.write(new Text("\"summary\": "), new Text(finalStats.toJSON() + " }"));
 		}
 
-		public void reduce(ReadAlignmentKey key, Iterable<ReadAlignmentStatsWritable> values, Context context) throws IOException, InterruptedException {
+		public void reduce(ReadAlignmentKey key, Iterable<RegionDepthWritable> values, Context context) throws IOException, InterruptedException {
 			System.out.println("reduce : " + key.toString());
-/*			
-			ReadAlignmentStatsWritable stats = new ReadAlignmentStatsWritable();
-			for (ReadAlignmentStatsWritable value : values) {
-				finalStats.update(value);
-				//stats.update(value);
-				//value.
-				if (value.pos > end) {
-					// processes pending and updates start/end
-				} else {
-					if (value.pos < start) {
-						long refPos = value.pos;
-						long tmpPos = refPos - start;
-						System.out.println("Error: 'start' at " + start + " and 'pos' at " + value.pos + ". 'pos' must be greater than 'start'");
-						for (CigarUnit cu: value.cigar) {
-							switch (cu.getOperation()) {
-							case ALIGNMENT_MATCH:
-								break;
-							case CLIP_HARD:
-							case CLIP_SOFT:
-							case PAD:
-							case SKIP:
-							case DELETE:
-							case INSERT:
-								break;
-							case SEQUENCE_MATCH:
-								break;
-							case SEQUENCE_MISMATCH:
-								break;
-							default:
-								break;
-							}
-						}
-					}
+			RegionDepthWritable currRegionDepth = new RegionDepthWritable(key.getChrom(), key.getPos() * CHUNK_SIZE, key.getPos(), CHUNK_SIZE);
+			for (RegionDepthWritable value: values) {
+				if (value.size > 0) {
+					currRegionDepth.merge(value);
 				}
 			}
-			context.write(new Text("\"name\": "), new Text("\"value\", "));
-			//context.write(new Text(stats.toJSON()), NullWritable.get());
-			 * 
-			 */
+			if (pendingDepth != null && 
+				pendingDepth.chrom == currRegionDepth.chrom && 
+				pendingDepth.chunk == currRegionDepth.chunk) {
+				// there is a pending RegionDepth to merge
+				currRegionDepth.merge(pendingDepth);
+				pendingDepth = null;
+			}
+			
+			if (currRegionDepth.size > CHUNK_SIZE) {
+				// we must split the current RegionDepth and create a pending RegionDepth
+				pendingDepth = new RegionDepthWritable(currRegionDepth.chrom, currRegionDepth.position + CHUNK_SIZE,
+													   currRegionDepth.chunk + 1, currRegionDepth.size - CHUNK_SIZE);
+				pendingDepth.array = Arrays.copyOfRange(currRegionDepth.array, CHUNK_SIZE, currRegionDepth.size - 1);
+			}
+			context.write(new Text(currRegionDepth.toString(CHUNK_SIZE)), NullWritable.get());
 		}
 	}
 
@@ -145,34 +128,33 @@ public class ReadAlignmentDepthMR {
 			}
 		}
 		
-		Job job = Job.getInstance(conf, "ReadAlignmentStatsMR");		
+		Job job = Job.getInstance(conf, "ReadAlignmentDepthMR");		
 		job.setJarByClass(ReadAlignmentDepthMR.class);
 
 		// input
-		AvroJob.setInputKeySchema(job, ReadAlignment.getClassSchema());
+		AvroJob.setInputKeySchema(job, ReadAlignment.SCHEMA$);
 		FileInputFormat.setInputPaths(job, new Path(input));
 		job.setInputFormatClass(AvroKeyInputFormat.class);
 
 		// output
 		FileOutputFormat.setOutputPath(job, new Path(output));
-		job.setOutputKeyClass(ReadStatsWritable.class);
-		//job.setOutputValueClass(NullWritable.class);
-		job.setOutputValueClass(Text.class);
+		job.setOutputKeyClass(RegionDepthWritable.class);
+		job.setOutputValueClass(NullWritable.class);
 
 		// mapper
-		job.setMapperClass(ReadAlignmentStatsMapper.class);
+		job.setMapperClass(ReadAlignmentDepthMapper.class);
 		job.setMapOutputKeyClass(ReadAlignmentKey.class);
-		job.setMapOutputValueClass(ReadAlignmentStatsWritable.class);
+		job.setMapOutputValueClass(RegionDepthWritable.class);
 
 		// reducer
-		job.setReducerClass(ReadAlignmentStatsReducer.class);
+		job.setReducerClass(ReadAlignmentDepthReducer.class);
 		job.setNumReduceTasks(1);
 
 		job.waitForCompletion(true);
 		//System.out.println("Output in " + output);
 		//System.exit(-1);
-		//return 0;
+		return 0;
 		 
-		return (job.waitForCompletion(true) ? 0 : 1);
+		//return (job.waitForCompletion(true) ? 0 : 1);
 	}
 }
