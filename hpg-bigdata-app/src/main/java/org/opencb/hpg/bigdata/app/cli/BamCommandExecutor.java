@@ -50,7 +50,7 @@ public class BamCommandExecutor extends CommandExecutor {
 			break;
 		}
 		case "depth": {
-			outName = "depth.json";
+			outName = "depth.txt";
 			depth(bamCommandOptions.input, outHdfsDirname);
 			break;
 		}
@@ -71,8 +71,14 @@ public class BamCommandExecutor extends CommandExecutor {
 			if (!fs.exists(outFile)) {
 				System.out.println("out file = " + outFile.getName() + " does not exist !!");
 			} else {
-				String outRawFileName =  bamCommandOptions.output + outName;
+				String outRawFileName =  bamCommandOptions.output + "/" + outName;
 				fs.copyToLocalFile(outFile, new Path(outRawFileName));
+				
+				if (bamCommandOptions.command.equalsIgnoreCase("depth")) {
+					Path outJson = new Path(outHdfsDirname + ".summary.depth.json");
+					fs.copyToLocalFile(outJson, new Path(bamCommandOptions.output + "/depth.summary.json"));
+					fs.delete(outJson, true);
+				}
 
 				//Utils.parseStatsFile(outRawFileName, out);
 			}

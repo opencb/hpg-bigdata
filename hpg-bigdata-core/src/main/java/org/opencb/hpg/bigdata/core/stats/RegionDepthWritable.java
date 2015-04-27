@@ -11,6 +11,9 @@ import org.ga4gh.models.CigarUnit;
 
 public class RegionDepthWritable  implements Writable {
 
+	public final static int CHUNK_SIZE = 4000;
+
+
 	public String chrom;
 	public long position;
 	public long chunk;
@@ -55,25 +58,23 @@ public class RegionDepthWritable  implements Writable {
 	}
 	
 	public void merge(RegionDepthWritable value) {
-		int offset = (int) (value.position - position);
-		for (int i = 0; i < value.size; i++) {
-			try {
-				array[i + offset] += value.array[i];
-			} catch (Exception e) {
-				System.out.println("out of bounds (offset = " + offset + ")");
-				System.out.println("\tdest: (chrom, pos, size) = (" + chrom + ", " + position + ", " + size + ")");
-				System.out.println("\tsrc : (chrom, pos, size) = (" + value.chrom + ", " + value.position + ", " + value.size + ")");
-				
-				size += value.size;
-				array = Arrays.copyOf(array, size);
-				array[i + offset] += value.array[i];
-				
-				System.out.println("\t\tresizing...: i = " + i + " of " + value.size + ", (i + offset) = " + (i + offset) + " of " + size);
-			}
-		}				
+		mergeChunk(value, value.chunk);
 	}
 	
-	public String toString(int size) {
+	public void mergeChunk(RegionDepthWritable value, long chunk) {
+		
+		int start = (int) Math.max(value.position, chunk * CHUNK_SIZE);
+		int end = (int) Math.min(value.position + value.size - 1, (chunk + 1) * CHUNK_SIZE - 1);
+		
+		int srcOffset = (int) value.position;
+		int destOffset = (int) (chunk * CHUNK_SIZE);
+		
+		for (int i = start ; i <= end; i++) {
+			array[i - destOffset] += value.array[i - srcOffset];
+		}
+	}
+	
+	public String toString() {
 		StringBuilder res = new StringBuilder();
 		for (int i = 0; i < size; i++) {
 			res.append(chrom + "\t" +  (position + i) + "\t" + array[i] + "\n");

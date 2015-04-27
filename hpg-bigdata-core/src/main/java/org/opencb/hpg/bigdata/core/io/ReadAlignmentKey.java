@@ -9,64 +9,64 @@ import org.apache.hadoop.io.WritableUtils;
 
 public class ReadAlignmentKey implements WritableComparable<ReadAlignmentKey> {
 
-	private String chrom;
-	private Long pos;
+	private String name;
+	private Long chunk;
 
 	/**
 	 * Constructor.
 	 */
 	public ReadAlignmentKey() { }
 
-	public ReadAlignmentKey(String chrom, Long pos) {
-		this.chrom = chrom;
-		this.pos = pos;
+	public ReadAlignmentKey(String name, Long chunk) {
+		this.name = name;
+		this.chunk = chunk;
 	}
 
 	@Override
 	public String toString() {
 		return (new StringBuilder())
 				.append('{')
-				.append(chrom)
+				.append(name)
 				.append(',')
-				.append(pos)
+				.append(chunk)
 				.append('}')
 				.toString();
 	}
 
 	@Override
 	public void readFields(DataInput in) throws IOException {
-		chrom = WritableUtils.readString(in);
-		pos = in.readLong();
+		name = WritableUtils.readString(in);
+		chunk = in.readLong();
 	}
 
 	@Override
 	public void write(DataOutput out) throws IOException {
-		WritableUtils.writeString(out, chrom);
-		out.writeLong(pos);
+		WritableUtils.writeString(out, name);
+		out.writeLong(chunk);
 	}@Override
 	
 	public int compareTo(ReadAlignmentKey o) {
-		int result = chrom.compareTo(o.chrom);
+		int result = name.compareTo(o.name);
 		if(0 == result) {
-			result = pos.compareTo(o.pos);
+			result = chunk.compareTo(o.chunk);
 		}
 		return result;
 	}
 	
-	public String getChrom() {
-		return chrom;
+	public String getName() {
+		return name;
 	}
 
-	public void setChrom(String chrom) {
-		this.chrom = chrom;
+	public void setName(String name) {
+		this.name = name;
 	}
 
-	public Long getPos() {
-		return pos;
+	public Long getChunk() {
+		return chunk;
 	}
 
-	public void setPos(Long pos) {
-		this.pos = pos;
+	public void setPos(Long chunk) {
+		this.chunk = chunk;
 	}
 }
 
