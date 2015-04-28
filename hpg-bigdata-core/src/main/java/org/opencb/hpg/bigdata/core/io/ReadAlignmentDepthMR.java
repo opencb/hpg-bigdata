@@ -79,14 +79,19 @@ public class ReadAlignmentDepthMR {
 			FileSystem fs = FileSystem.get(context.getConfiguration());
 			FSDataOutputStream out = fs.create(new Path(context.getConfiguration().get("summary.depth.json")));
 			out.writeChars("{ \"chroms\": [");
+			int size = accDepth.size();
+			int i = 0;
 			for(String name : accDepth.keySet()) {
-				out.writeChars("{\"name\": " + name + ", \"length\": " + context.getConfiguration().get(name) + ", \"acc\": " + accDepth.get(name) + ", \"depth\": " + (1.0f * accDepth.get(name) / Integer.parseInt(context.getConfiguration().get(name))) + "}, ");			
+				out.writeChars("{\"name\": \"" + name + "\", \"length\": " + context.getConfiguration().get(name) + ", \"acc\": " + accDepth.get(name) + ", \"depth\": " + (1.0f * accDepth.get(name) / Integer.parseInt(context.getConfiguration().get(name))) + "}");
+				if (++i < size ) {
+					out.writeChars(", ");
+				}
 				//out.writeChars(name + "\t" + context.getConfiguration().get(name) + "\t" + accDepth.get(name) + "\t" + (1.0f * accDepth.get(name) / Integer.parseInt(context.getConfiguration().get(name))) + "\n");
 				//System.out.println("name : " + name + ", length : " + context.getConfiguration().get(name) + ", accDepth = " + accDepth.get(name) + ", depth = " + (1.0f * accDepth.get(name) / Integer.parseInt(context.getConfiguration().get(name))));
 				accLen += Integer.parseInt(context.getConfiguration().get(name));
 				accDep += accDepth.get(name);
 			}
-			out.writeChars("{}], \"depth\": " + (accDep / accLen));
+			out.writeChars("], \"depth\": " + (accDep / accLen));
 			out.writeChars("}");
 			out.close();
 

@@ -192,7 +192,11 @@ void add_read_alignment2(avro_file_writer_t db, const bam1_t *bam1, const bam_he
 	// 2 fragmentName
 	//avro_value_get_by_name(&read_alignment, "fragmentName", &field, NULL);
 	avro_value_get_by_index(&read_alignment, 2, &field, NULL);
-	avro_value_set_string(&field, bam_header->target_name[bam1->core.tid]);
+	if (bam1->core.tid < 0) {
+		avro_value_set_string(&field, "*");
+	} else {
+		avro_value_set_string(&field, bam_header->target_name[bam1->core.tid]);
+	}
 
 	// 3 properPlacement
 	aux = ((bam1->core.flag & BAM_FPROPER_PAIR) && (bam1->core.flag & BAM_FPAIRED));
@@ -384,7 +388,11 @@ void add_read_alignment2(avro_file_writer_t db, const bam1_t *bam1, const bam_he
 		//avro_value_get_by_name(&branch, "referenceName", &subfield, NULL);
 		avro_value_get_by_index(&branch, 0, &subfield, NULL);
 		avro_value_set_branch(&subfield, 1, &subbranch);
-		avro_value_set_string(&subbranch, bam_header->target_name[bam1->core.mtid]);
+		if (bam1->core.mtid < 0) {
+			avro_value_set_string(&subbranch, "*");
+		} else {
+			avro_value_set_string(&subbranch, bam_header->target_name[bam1->core.mtid]);
+		}
 
 		// nextMatePosition . 1 sequenceId
 		//avro_value_get_by_name(&branch, "sequenceId", &subfield, NULL);

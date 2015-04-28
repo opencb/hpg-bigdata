@@ -49,6 +49,9 @@ public class RegionDepthWritable  implements Writable {
 			case PAD:
 				break;
 			case SKIP:
+				// resize
+				size += cu.getOperationLength();
+				array = Arrays.copyOf(array, size);
 				arrayPos += cu.getOperationLength();
 				break;
 			default:
