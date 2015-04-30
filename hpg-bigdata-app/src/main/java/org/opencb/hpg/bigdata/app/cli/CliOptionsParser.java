@@ -118,7 +118,7 @@ public class CliOptionsParser {
         @Parameter(names = {"-o", "--output"}, description = "Local output directory to save results, summary, images...", required = false, arity = 1)
         public String output = null;
 
-        @Parameter(names = {"--command"}, description = "Accepted values: stats, sort, depth", required = false, arity = 1)
+        @Parameter(names = {"--command"}, description = "Accepted values: stats, sort, depth, to-parquet", required = false, arity = 1)
         public String command = null;
 
         @Parameter(names = {"--filter"}, description = "", required = false, arity = 1)
@@ -133,6 +133,9 @@ public class CliOptionsParser {
         @Parameter(names = {"--to-fastq"}, description = "", required = false)
         public boolean toFastq = false;
 
+        @Parameter(names = {"-x", "--compression"}, description = "For the command: 'to-parquet'. Accepted values: snappy, deflate, bzip2, xz. Default: snappy", required = false, arity = 1)
+        public String compression = "snappy";
+        
     }
 
 

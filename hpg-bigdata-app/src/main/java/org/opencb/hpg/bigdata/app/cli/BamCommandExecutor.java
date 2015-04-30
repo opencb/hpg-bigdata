@@ -6,6 +6,7 @@ import java.util.Date;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.opencb.hpg.bigdata.core.io.ReadAlignment2ParquetMR;
 import org.opencb.hpg.bigdata.core.io.ReadAlignmentDepthMR;
 import org.opencb.hpg.bigdata.core.io.ReadAlignmentSortMR;
 import org.opencb.hpg.bigdata.core.io.ReadAlignmentStatsMR;
@@ -58,6 +59,10 @@ public class BamCommandExecutor extends CommandExecutor {
 			sort(bamCommandOptions.input, bamCommandOptions.output);
 			return;
 		}
+		case "to-parquet": {
+			toParquet(bamCommandOptions.input, bamCommandOptions.output, bamCommandOptions.compression);
+			return;
+		}
 		default: {
 			logger.error("Error: BAM/SAM command not yet implemented");
 			System.exit(-1);
@@ -106,6 +111,23 @@ public class BamCommandExecutor extends CommandExecutor {
 		}
 	}
 
+	private void depth(String input, String output) {
+		// clean paths
+		String in = PathUtils.clean(input);
+		String out = PathUtils.clean(output);
+
+		if (!PathUtils.isHdfs(input)) {
+			logger.error("To run BAM stats, input files '{}' must be stored in the HDFS/Hadoop. Use the command 'ga4gh bam2sa' to import your file.", input);
+			System.exit(-1);
+		}
+
+		try {
+			ReadAlignmentDepthMR.run(in, out);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
 	private void sort(String input, String output) {
 		// clean paths
 		String in = PathUtils.clean(input);
@@ -128,18 +150,23 @@ public class BamCommandExecutor extends CommandExecutor {
 		}
 	}
 	
-	private void depth(String input, String output) {
+	private void toParquet(String input, String output, String codecName) {
 		// clean paths
 		String in = PathUtils.clean(input);
 		String out = PathUtils.clean(output);
 
 		if (!PathUtils.isHdfs(input)) {
-			logger.error("To run BAM stats, input files '{}' must be stored in the HDFS/Hadoop. Use the command 'ga4gh bam2sa' to import your file.", input);
+			logger.error("To run BAM stats, input files '{}' must be stored in the HDFS/Haddop. Use the command 'ga4gh bam2sa' to import your file.", input);
+			System.exit(-1);
+		}
+
+		if (!PathUtils.isHdfs(output)) {
+			logger.error("To run BAM stats, output directory '{}' must be a HDFS/Hadoop.", output);
 			System.exit(-1);
 		}
 
 		try {
-			ReadAlignmentDepthMR.run(in, out);
+			ReadAlignment2ParquetMR.run(in, out, codecName);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

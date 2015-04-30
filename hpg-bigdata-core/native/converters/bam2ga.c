@@ -1318,7 +1318,19 @@ void bam2ga(const char *bam_filename, const char *avro_filename, const char *cod
 
 	// read BAM header
 	bam_header_t *bam_header = bam_header_read(bam_fd);
+	char header_filename[strlen(avro_filename) + 100];
+	sprintf(header_filename, "%s.header", avro_filename);
 
+	FILE *header_file = fopen(header_filename, "w");
+	fprintf(header_file, "%s", bam_header->text);
+/*
+	for (int i = 0; i < bam_header->n_targets; i++) {
+		fprintf(header_file, "@SQ\tSN:%s\tLN:%d\n", bam_header->target_name[i], bam_header->target_len[i]);
+	}
+*/
+	fclose(header_file);
+
+	// main loop
 	size_t i = 0;
 	bam1_t *bam1 = bam_init1();
 	while (bam_read1(bam_fd, bam1) > 0) {
@@ -1343,16 +1355,3 @@ void bam2ga(const char *bam_filename, const char *avro_filename, const char *cod
 	// We don't need this schema anymore 
 	free_schemas();
 }
-
-/*
-int main(int argc, char *argv[]) {
-	// check parameters
-	if (argc != 4) {
-		printf("Usage: %s <bam-file> <avro-file> <codec: null, deflate, snappy, lzma>\n", argv[0]);
-		exit(-1);
-	}
-
-	bam2ga(argv[1], argv[2], argv[3]);
-}
-*/
-

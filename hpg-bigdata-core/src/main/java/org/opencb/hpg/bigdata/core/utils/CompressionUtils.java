@@ -2,10 +2,12 @@ package org.opencb.hpg.bigdata.core.utils;
 
 
 import org.apache.avro.file.CodecFactory;
+import org.apache.hadoop.io.compress.BZip2Codec;
 import org.apache.hadoop.io.compress.DeflateCodec;
 import org.apache.hadoop.io.compress.GzipCodec;
 import org.apache.hadoop.io.compress.SnappyCodec;
-import org.apache.hadoop.io.compress.BZip2Codec;
+
+import parquet.hadoop.metadata.CompressionCodecName;
 
 public class CompressionUtils {
 	
@@ -34,4 +36,17 @@ public class CompressionUtils {
 		
 		return CodecFactory.deflateCodec(CodecFactory.DEFAULT_DEFLATE_LEVEL);
 	}
+
+	public static CompressionCodecName getParquetCodec(String name) {
+		if (name == null) {
+			return CompressionCodecName.UNCOMPRESSED;
+		} else if (name.equalsIgnoreCase("gzip")) {
+			return CompressionCodecName.GZIP;
+		} else if (name.equalsIgnoreCase("lzo")) {
+			return CompressionCodecName.LZO;
+		}
+		
+		return CompressionCodecName.SNAPPY;
+	}
+
 }
