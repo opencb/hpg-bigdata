@@ -63,12 +63,13 @@ import org.opencb.hpg.bigdata.core.converters.FullVCFCodec;
 import org.opencb.hpg.bigdata.core.converters.SAMRecord2ReadAlignmentConverter;
 import org.opencb.hpg.bigdata.core.converters.variation.VariantAvroEncoderTask;
 import org.opencb.hpg.bigdata.core.converters.variation.VariantConverterContext;
+import org.opencb.hpg.bigdata.core.io.Bam2GaMR;
+import org.opencb.hpg.bigdata.core.io.VcfBlockIterator;
 import org.opencb.hpg.bigdata.core.io.avro.AvroFileWriter;
 import org.opencb.hpg.bigdata.core.io.avro.AvroWriter;
 import org.opencb.hpg.bigdata.core.utils.CompressionUtils;
 import org.opencb.hpg.bigdata.core.utils.PathUtils;
 import org.opencb.hpg.bigdata.core.utils.ReadUtils;
-import org.opencb.hpg.bigdata.core.io.VcfBlockIterator;
 
 /**
  * Created by imedina on 16/03/15.
@@ -265,10 +266,21 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 		String out = PathUtils.clean(output);
 
 		if (PathUtils.isHdfs(input)) {
-			logger.error("Conversion '{}' with HDFS as input '{}', not implemented yet !", ga4ghCommandOptions.conversion, input);
-			System.exit(-1);
-		}
+			
+			if (!PathUtils.isHdfs(output)) {
+				logger.error("To run command sam2ga with HDFS input file, then output files '{}' must be stored in the HDFS/Haddop too.", output);
+				System.exit(-1);
+			}
 
+			try {
+				Bam2GaMR.run(in, out, codecName);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			
+			return;
+		} 
+		
 		if (!PathUtils.isHdfs(output) && ga4ghCommandOptions.conversion.equals(BAM_2_GA)) {
 			System.loadLibrary("hpgbigdata");
 			new NativeSupport().bam2ga(in, out, ga4ghCommandOptions.compression == null ? "snappy" : ga4ghCommandOptions.compression);
