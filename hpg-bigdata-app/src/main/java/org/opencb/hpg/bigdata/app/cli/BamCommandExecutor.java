@@ -22,10 +22,11 @@ import java.util.Date;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.opencb.hpg.bigdata.core.io.ReadAlignment2ParquetMR;
+import org.ga4gh.models.ReadAlignment;
 import org.opencb.hpg.bigdata.core.io.ReadAlignmentDepthMR;
 import org.opencb.hpg.bigdata.core.io.ReadAlignmentSortMR;
 import org.opencb.hpg.bigdata.core.io.ReadAlignmentStatsMR;
+import org.opencb.hpg.bigdata.core.io.parquet.ParquetMR;
 import org.opencb.hpg.bigdata.core.utils.PathUtils;
 
 /**
@@ -182,8 +183,8 @@ public class BamCommandExecutor extends CommandExecutor {
 		}
 
 		try {
-			ReadAlignment2ParquetMR.run(in, out, codecName);
-		} catch (Exception e) {
+            new ParquetMR(ReadAlignment.getClassSchema()).run(in, out, codecName);
+        } catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
