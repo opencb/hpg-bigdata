@@ -43,7 +43,9 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.specific.SpecificDatumReader;
@@ -74,46 +76,80 @@ import org.opencb.hpg.bigdata.core.utils.ReadUtils;
 /**
  * Created by imedina on 16/03/15.
  */
-public class Ga4ghCommandExecutor extends CommandExecutor {
+public class ConvertCommandExecutor extends CommandExecutor {
 
-	private final static String FASTQ_2_GA = "fastq2ga"; 
-	private final static String GA_2_FASTQ = "ga2fastq"; 
-	private final static String SAM_2_GA   = "sam2ga"; 
-	private final static String GA_2_SAM   = "ga2sam"; 
-	private final static String BAM_2_GA   = "bam2ga"; 
-	private final static String GA_2_BAM   = "ga2bam"; 
-	private final static String CRAM_2_GA  = "cram2ga"; 
-	private final static String GA_2_CRAM  = "ga2cram";
-    private final static String VCF_2_GA   = "vcf2ga";
+    public enum Conversion {
+        FASTQ_2_GA ("fastq2ga", "Save Fastq file as Global Alliance for Genomics and Health (ga4gh) in Avro format"),
+        GA_2_FASTQ ("ga2fastq", "Save Global Alliance for Genomics and Health (ga4gh) in Avro format as Fastq file"),
+        SAM_2_GA   ("sam2ga", "Save SAM file as Global Alliance for Genomics and Health (ga4gh) in Avro format"),
+        GA_2_SAM   ("ga2sam", "Save Global Alliance for Genomics and Health (ga4gh) in Avro format as SAM file"),
+        BAM_2_GA   ("bam2ga", "Save BAM file as Global Alliance for Genomics and Health (ga4gh) in Avro format"),
+        GA_2_BAM   ("ga2bam", "Save Global Alliance for Genomics and Health (ga4gh) in Avro format as BAM file"),
+        CRAM_2_GA  ("cram2ga", "Save CRAM file as Global Alliance for Genomics and Health (ga4gh) in Avro format"),
+        GA_2_CRAM  ("ga2cram", "Save Global Alliance for Genomics and Health (ga4gh) in Avro format as CRAM file"),
+        VCF_2_GA   ("vcf2ga", "Save VCF file as Global Alliance for Genomics and Health (ga4gh) in Avro format"),
+        AVRO_2_PARQUET   ("avro2parquet", "Save Avro file in Parquet format"),
+        ;
 
-	private final static String AVRO_2_PARQUET = "avro2parquet";
+        final private String name;
+        final private String description;
+        final static Map<String, Conversion> names = new HashMap<>();
 
+        Conversion(String name, String description) {
+            this.name = name;
+            this.description = description;
+        }
 
-	private final static String FASTQ_2_GA_DESC = "Save Fastq file as Global Alliance for Genomics and Health (ga4gh) in Avro format"; 
-	private final static String GA_2_FASTQ_DESC = "Save Global Alliance for Genomics and Health (ga4gh) in Avro format as Fastq file"; 
-	private final static String SAM_2_GA_DESC   = "Save SAM file as Global Alliance for Genomics and Health (ga4gh) in Avro format"; 
-	private final static String GA_2_SAM_DESC   = "Save Global Alliance for Genomics and Health (ga4gh) in Avro format as SAM file";
-	private final static String BAM_2_GA_DESC   = "Save BAM file as Global Alliance for Genomics and Health (ga4gh) in Avro format"; 
-	private final static String GA_2_BAM_DESC   = "Save Global Alliance for Genomics and Health (ga4gh) in Avro format as BAM file";
-	private final static String CRAM_2_GA_DESC  = "Save CRAM file as Global Alliance for Genomics and Health (ga4gh) in Avro format"; 
-	private final static String GA_2_CRAM_DESC  = "Save Global Alliance for Genomics and Health (ga4gh) in Avro format as CRAM file";
-    private final static String VCF_2_GA_DESC   = "Save VCF file as Global Alliance for Genomics and Health (ga4gh) in Avro format";
+        static public Conversion fromName(String name) {
+            if (names.isEmpty()) {
+                for (Conversion conversion : Conversion.values()) {
+                    names.put(conversion.toString(), conversion);
+                }
+            }
+            return names.get(name);
+        }
 
-	private final static String AVRO_2_PARQUET_DESC  = "Save Avro file in Parquet format";
+        @Override
+        public String toString() {
+            return name;
+        }
 
+        static public String getValidConversionString() {
+            String res = "";
+
+            Conversion[] valid = new Conversion[]{
+                    Conversion.FASTQ_2_GA ,
+                    Conversion.GA_2_FASTQ ,
+                    Conversion.SAM_2_GA ,
+                    Conversion.GA_2_SAM ,
+                    Conversion.BAM_2_GA ,
+                    Conversion.GA_2_BAM ,
+                    Conversion.CRAM_2_GA ,
+                    Conversion.VCF_2_GA,
+//                Conversion.AVRO_2_PARQUET,
+            };
+
+            for (Conversion conversion : valid) {
+                res += "\t- " + conversion.name + "\t" + conversion.description + "\n";
+            }
+
+            return res;
+
+        }
+    }
 	private final static String SAM_HEADER_SUFFIX = ".header";
 
 	private final static int SAM_FLAG  = 0;
 	private final static int BAM_FLAG  = 1;
 	private final static int CRAM_FLAG = 2;
 
-	private CliOptionsParser.Ga4ghCommandOptions ga4ghCommandOptions;
+	private CliOptionsParser.ConvertCommandOptions convertCommandOptions;
 
-	public Ga4ghCommandExecutor(CliOptionsParser.Ga4ghCommandOptions ga4ghCommandOptions) {
-		super(ga4ghCommandOptions.commonOptions.logLevel, ga4ghCommandOptions.commonOptions.verbose,
-				ga4ghCommandOptions.commonOptions.conf);
+	public ConvertCommandExecutor(CliOptionsParser.ConvertCommandOptions convertCommandOptions) {
+		super(convertCommandOptions.commonOptions.logLevel, convertCommandOptions.commonOptions.verbose,
+				convertCommandOptions.commonOptions.conf);
 
-		this.ga4ghCommandOptions = ga4ghCommandOptions;
+		this.convertCommandOptions = convertCommandOptions;
 	}
 
 
@@ -124,42 +160,42 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 		logger.info("Executing {} CLI options", "ga4gh");
 
 		try {
-			switch (ga4ghCommandOptions.conversion) {
+			switch (convertCommandOptions.conversion) {
 			case FASTQ_2_GA: {
-				if (ga4ghCommandOptions.toParquet) {
+				if (convertCommandOptions.toParquet) {
 					logger.info("Invalid parameter 'parquet' compression value '{}'");
 					System.exit(-1);					
 				}
-				fastq2ga(ga4ghCommandOptions.input, ga4ghCommandOptions.output, ga4ghCommandOptions.compression);
+				fastq2ga(convertCommandOptions.input, convertCommandOptions.output, convertCommandOptions.compression);
 				break;
 			}
 			case GA_2_FASTQ: {
-				ga2fastq(ga4ghCommandOptions.input, ga4ghCommandOptions.output);
+				ga2fastq(convertCommandOptions.input, convertCommandOptions.output);
 				break;
 			}
 			case SAM_2_GA: {
-				sam2ga(ga4ghCommandOptions.input, ga4ghCommandOptions.output, ga4ghCommandOptions.compression);
+				sam2ga(convertCommandOptions.input, convertCommandOptions.output, convertCommandOptions.compression);
 				break;
 			}
 			case GA_2_SAM: {
-				ga2sam(ga4ghCommandOptions.input, ga4ghCommandOptions.output, SAM_FLAG);
+				ga2sam(convertCommandOptions.input, convertCommandOptions.output, SAM_FLAG);
 				break;
 			}
 			case BAM_2_GA: {
-				sam2ga(ga4ghCommandOptions.input, ga4ghCommandOptions.output, ga4ghCommandOptions.compression);
+				sam2ga(convertCommandOptions.input, convertCommandOptions.output, convertCommandOptions.compression);
 				break;
 			}
 			case GA_2_BAM: {
-				ga2sam(ga4ghCommandOptions.input, ga4ghCommandOptions.output, BAM_FLAG);
+				ga2sam(convertCommandOptions.input, convertCommandOptions.output, BAM_FLAG);
 				break;
 			}
 			case CRAM_2_GA: {
-				cram2ga(ga4ghCommandOptions.input, ga4ghCommandOptions.output, ga4ghCommandOptions.compression);
+				cram2ga(convertCommandOptions.input, convertCommandOptions.output, convertCommandOptions.compression);
 				break;
 			}
 
 			case GA_2_CRAM: {
-				System.out.println("Conversion '" + ga4ghCommandOptions.conversion + "' not implemented yet.\nValid conversions are:\n" + getValidConversionString());
+				System.out.println("Conversion '" + convertCommandOptions.conversion + "' not implemented yet.\nValid conversions are:\n" + Conversion.getValidConversionString());
 				/*
 				ga2sam(ga4ghCommandOptions.input, ga4ghCommandOptions.output, CRAM_FLAG);
 				 */
@@ -167,7 +203,7 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 			}
 
             case VCF_2_GA: {
-                vcf2ga(ga4ghCommandOptions.input, ga4ghCommandOptions.output, ga4ghCommandOptions.compression);
+                vcf2ga(convertCommandOptions.input, convertCommandOptions.output, convertCommandOptions.compression);
                 break;
             }
 
@@ -177,8 +213,8 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 //			}
 
 			default: {
-				logger.error("Invalid conversion {}", ga4ghCommandOptions.conversion);
-				System.out.println("Invalid conversion (" + ga4ghCommandOptions.conversion + "). Valid conversions are:\n" + getValidConversionString());
+				logger.error("Invalid conversion {}", convertCommandOptions.conversion);
+				System.out.println("Invalid conversion (" + convertCommandOptions.conversion + "). Valid conversions are:\n" + Conversion.getValidConversionString());
 				System.exit(-1);
 			}
 			}
@@ -186,7 +222,7 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 			e.printStackTrace();
 		}
 
-		logger.debug("Input file: {}", ga4ghCommandOptions.input);
+		logger.debug("Input file: {}", convertCommandOptions.input);
 	}
 
     private void fastq2ga(String input, String output, String codecName) throws Exception {
@@ -195,7 +231,7 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 		String out = PathUtils.clean(output);
 
 		if (PathUtils.isHdfs(input)) {
-			logger.error("Conversion '{}' with HDFS as input '{}', not implemented yet !", ga4ghCommandOptions.conversion, input);
+			logger.error("Conversion '{}' with HDFS as input '{}', not implemented yet !", convertCommandOptions.conversion, input);
 			System.exit(-1);
 		}
 
@@ -231,7 +267,7 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 		String out = PathUtils.clean(output);
 
 		if (PathUtils.isHdfs(output)) {
-			logger.error("Conversion '{}' with HDFS as output '{}', not implemented yet !", ga4ghCommandOptions.conversion, output);
+			logger.error("Conversion '{}' with HDFS as output '{}', not implemented yet !", convertCommandOptions.conversion, output);
 			System.exit(-1);
 		}
 
@@ -281,9 +317,9 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 			return;
 		} 
 		
-		if (!PathUtils.isHdfs(output) && ga4ghCommandOptions.conversion.equals(BAM_2_GA)) {
+		if (!PathUtils.isHdfs(output) && convertCommandOptions.conversion.equals(Conversion.BAM_2_GA)) {
 			System.loadLibrary("hpgbigdata");
-			new NativeSupport().bam2ga(in, out, ga4ghCommandOptions.compression == null ? "snappy" : ga4ghCommandOptions.compression);
+			new NativeSupport().bam2ga(in, out, convertCommandOptions.compression == null ? "snappy" : convertCommandOptions.compression);
 			return;
 		}
 		
@@ -332,7 +368,7 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 		String out = PathUtils.clean(output);
 
 		if (PathUtils.isHdfs(output)) {
-			logger.error("Conversion '{}' with HDFS as output '{}', not implemented yet !", ga4ghCommandOptions.conversion, output);
+			logger.error("Conversion '{}' with HDFS as output '{}', not implemented yet !", convertCommandOptions.conversion, output);
 			System.exit(-1);
 		}
 
@@ -382,7 +418,7 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 			break;
 		}
 		case CRAM_FLAG: {
-			logger.error("Conversion '{}' not implemented yet !", ga4ghCommandOptions.conversion);
+			logger.error("Conversion '{}' not implemented yet !", convertCommandOptions.conversion);
 			System.exit(-1);
 			writer = new SAMFileWriterFactory().makeCRAMWriter(header, os, null);
 			break;
@@ -406,7 +442,7 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
 	}
 
 	private void cram2ga(String input, String output, String codecName) throws IOException {
-		logger.error("Conversion '{}' not implemented yet !", ga4ghCommandOptions.conversion);
+		logger.error("Conversion '{}' not implemented yet !", convertCommandOptions.conversion);
 		System.exit(-1);
 
 		// reader
@@ -450,7 +486,7 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
         String out = PathUtils.clean(output);
 
         if (PathUtils.isHdfs(input)) {
-            logger.error("Conversion '{}' with HDFS as input '{}', not implemented yet !", ga4ghCommandOptions.conversion, input);
+            logger.error("Conversion '{}' with HDFS as input '{}', not implemented yet !", convertCommandOptions.conversion, input);
             System.exit(-1);
         }
 
@@ -503,22 +539,4 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
         os.close();
     }
 
-	private String getValidConversionString() {
-		String res = new String();
-		res += "\t- " + FASTQ_2_GA + "\t" + FASTQ_2_GA_DESC + "\n";
-		res += "\t- " + GA_2_FASTQ + "\t" + GA_2_FASTQ_DESC + "\n";
-		res += "\t- " + SAM_2_GA + "\t" + SAM_2_GA_DESC + "\n";
-		res += "\t- " + GA_2_SAM + "\t" + GA_2_SAM_DESC + "\n";
-		res += "\t- " + BAM_2_GA + "\t" + BAM_2_GA_DESC + "\n";
-		res += "\t- " + GA_2_BAM + "\t" + GA_2_BAM_DESC + "\n";
-		res += "\t- " + CRAM_2_GA + "\t" + CRAM_2_GA_DESC + "\n";
-		res += "\t- " + VCF_2_GA + "\t" + VCF_2_GA_DESC+ "\n";
-		//res += "\t- " + GA_2_CRAM + "\t" + GA_2_CRAM_DESC + "\n";
-
-		res += "\n";
-		res += "\t- " + AVRO_2_PARQUET + "\t" + AVRO_2_PARQUET_DESC + "\n";
-
-		return res;
-
-	}
 }

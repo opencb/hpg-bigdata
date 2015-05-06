@@ -30,7 +30,7 @@ public class CliOptionsParser {
 
     private FastqCommandOptions fastqCommandOptions;
     private BamCommandOptions bamCommandOptions;
-    private Ga4ghCommandOptions ga4ghCommandOptions;
+    private ConvertCommandOptions convertCommandOptions;
     private AlignCommandOptions alignCommandOptions;
 
     public CliOptionsParser() {
@@ -43,13 +43,13 @@ public class CliOptionsParser {
 
         fastqCommandOptions = new FastqCommandOptions();
         bamCommandOptions = new BamCommandOptions();
-        ga4ghCommandOptions = new Ga4ghCommandOptions();
+        convertCommandOptions = new ConvertCommandOptions();
         alignCommandOptions = new AlignCommandOptions();
 
-        jcommander.addCommand("fastq", fastqCommandOptions);
-        jcommander.addCommand("bam", bamCommandOptions);
-        jcommander.addCommand("ga4gh", ga4ghCommandOptions);
-        jcommander.addCommand("align", alignCommandOptions);
+        jcommander.addCommand(fastqCommandOptions);
+        jcommander.addCommand(bamCommandOptions);
+        jcommander.addCommand(convertCommandOptions);
+        jcommander.addCommand(alignCommandOptions);
 
     }
 
@@ -155,8 +155,22 @@ public class CliOptionsParser {
     }
 
 
-    @Parameters(commandNames = {"ga4gh"}, commandDescription = "Description")
-    public class Ga4ghCommandOptions {
+    public static class ConvertionConverter implements IStringConverter<ConvertCommandExecutor.Conversion> {
+        @Override
+        public ConvertCommandExecutor.Conversion convert(String s) {
+            ConvertCommandExecutor.Conversion conversion = ConvertCommandExecutor.Conversion.fromName(s);
+            if (conversion == null) {
+                String message = "Value " + s + " is not a valid conversion. Accepted values: \n" +
+                        ConvertCommandExecutor.Conversion.getValidConversionString();
+
+                throw new ParameterException(message);
+            }
+            return conversion;
+        }
+    }
+
+    @Parameters(commandNames = {"convert"}, commandDescription = "Convert between different formats")
+    public class ConvertCommandOptions {
 
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
@@ -167,8 +181,8 @@ public class CliOptionsParser {
         @Parameter(names = {"-o", "--output"}, description = "", required = false, arity = 1)
         public String output = null;
 
-        @Parameter(names = {"-c", "--conversion"}, description = "Accepted values: fastq2ga, ga2fastq, sam2ga, ga2sam, bam2ga, ga2bam", required = true, arity = 1)
-        public String conversion;
+        @Parameter(names = {"-c", "--conversion"}, description = "Accepted values: fastq2ga, ga2fastq, sam2ga, ga2sam, bam2ga, ga2bam", required = true, arity = 1, converter = ConvertionConverter.class)
+        public ConvertCommandExecutor.Conversion conversion;
 
         @Parameter(names = {"-x", "--compression"}, description = "Accepted values: snappy, deflate, bzip2, xz. Default: snappy", required = false, arity = 1)
         public String compression;
@@ -177,6 +191,35 @@ public class CliOptionsParser {
         public boolean toParquet = false;
     }
 
+    @Parameters(commandNames = {"load-hbase"}, commandDescription = "Load")
+    public class LoadHBaseCommandOptions {
+
+        @ParametersDelegate
+        public CommonCommandOptions commonOptions = commonCommandOptions;
+
+        @Parameter(names = {"-i", "--input"}, description = "Avro input files", required = true, arity = 1)
+        public String input = null;
+
+        @Parameter(names = {"-C", "--credentials"}, description = "", required = false, arity = 1)
+        public String credentials;
+
+    }
+
+    @Parameters(commandNames = {"load-parquet"}, commandDescription = "Load")
+    public class LoadHiveCommandOptions {
+
+        @ParametersDelegate
+        public CommonCommandOptions commonOptions = commonCommandOptions;
+
+        @Parameter(names = {"-i", "--input"}, description = "Avro or Parquet input files", required = true, arity = 1)
+        public String input = null;
+
+        @Parameter(names = {"-o", "--output"}, description = "", required = false, arity = 1)
+        public String output = null;
+
+        @Parameter(names = {"-C", "--credentials"}, description = "", required = false, arity = 1)
+        public String credentials;
+    }
 
     @Parameters(commandNames = {"align"}, commandDescription = "Description")
     public class AlignCommandOptions {
@@ -211,8 +254,8 @@ public class CliOptionsParser {
         return bamCommandOptions;
     }
 
-    public Ga4ghCommandOptions getGa4ghCommandOptions() {
-        return ga4ghCommandOptions;
+    public ConvertCommandOptions getConvertCommandOptions() {
+        return convertCommandOptions;
     }
 
     public AlignCommandOptions getAlignCommandOptions() {
