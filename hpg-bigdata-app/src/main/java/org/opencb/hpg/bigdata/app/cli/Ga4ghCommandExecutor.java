@@ -483,7 +483,7 @@ public class Ga4ghCommandExecutor extends CommandExecutor {
         AvroFileWriter<Variant> writer = new AvroFileWriter<>(Variant.getClassSchema(), compression, os);
 
         // main loop
-        int numTasks = 4;
+        int numTasks = Integer.getInteger("ga4gh.vcf2ga.parallel", 4);
         int batchSize = 1024*1024;  //Batch size in bytes
         int capacity = numTasks+1;
         VariantConverterContext variantConverterContext = new VariantConverterContext();
