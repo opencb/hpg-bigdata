@@ -16,7 +16,7 @@
   -->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>org.opencb.hpg</groupId>
@@ -34,7 +34,7 @@
 			<artifactId>hpg-bigdata-core</artifactId>
 		</dependency>
 
-	<dependency>
+		<dependency>
 			<groupId>com.beust</groupId>
 			<artifactId>jcommander</artifactId>
 			<version>1.47</version>
@@ -70,32 +70,32 @@
 					</execution>
 				</executions>
 			</plugin>
-<!-- 		<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>appassembler-maven-plugin</artifactId>
-				<version>1.9</version>
-				<executions>
-					<execution>
-						<phase>install</phase>
-						<goals>
-							<goal>assemble</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<repositoryName>libs</repositoryName>
-					<repositoryLayout>flat</repositoryLayout>
-					<useWildcardClassPath>true</useWildcardClassPath>
-					<extraJvmArguments>-Xms128m -Xmx4096m</extraJvmArguments>
-					<programs>
-						<program>
-							<name>bigdata.sh</name>
-							<mainClass>org.opencb.hpg.bigdata.app.BigDataMain</mainClass>
-						</program>
-					</programs>
-				</configuration>
-			</plugin>
-			 -->
+			<!-- 		<plugin>
+                            <groupId>org.codehaus.mojo</groupId>
+                            <artifactId>appassembler-maven-plugin</artifactId>
+                            <version>1.9</version>
+                            <executions>
+                                <execution>
+                                    <phase>install</phase>
+                                    <goals>
+                                        <goal>assemble</goal>
+                                    </goals>
+                                </execution>
+                            </executions>
+                            <configuration>
+                                <repositoryName>libs</repositoryName>
+                                <repositoryLayout>flat</repositoryLayout>
+                                <useWildcardClassPath>true</useWildcardClassPath>
+                                <extraJvmArguments>-Xms128m -Xmx4096m</extraJvmArguments>
+                                <programs>
+                                    <program>
+                                        <name>bigdata.sh</name>
+                                        <mainClass>org.opencb.hpg.bigdata.app.BigDataMain</mainClass>
+                                    </program>
+                                </programs>
+                            </configuration>
+                        </plugin>
+                         -->
 		</plugins>
 	</build>
 
