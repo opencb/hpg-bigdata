@@ -30,7 +30,7 @@
 	</modules>
 
 	<name>HPG Big data project</name>
-	<description>HPG Big data project aims to manage biological data in a Big data enviroment</description>
+	<description>HPG Big data project aims to manage biological data in a Big data environment</description>
 	<url>https://github.com/opencb/hpg-bigdata</url>
 
 	<properties>
@@ -107,16 +107,16 @@
 				<artifactId>guava</artifactId>
 				<version>18.0</version>
 			</dependency>
-			<!--<dependency>-->
-				<!--<groupId>org.slf4j</groupId>-->
-				<!--<artifactId>slf4j-api</artifactId>-->
-				<!--<version>1.7.12</version>-->
-			<!--</dependency>-->
-			<!--<dependency>-->
-				<!--<groupId>org.slf4j</groupId>-->
-				<!--<artifactId>slf4j-simple</artifactId>-->
-				<!--<version>1.7.12</version>-->
-			<!--</dependency>-->
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-api</artifactId>
+				<version>1.7.12</version>
+			</dependency>
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-simple</artifactId>
+				<version>1.7.12</version>
+			</dependency>
 			<dependency>
 				<groupId>com.fasterxml.jackson.core</groupId>
 				<artifactId>jackson-databind</artifactId>
