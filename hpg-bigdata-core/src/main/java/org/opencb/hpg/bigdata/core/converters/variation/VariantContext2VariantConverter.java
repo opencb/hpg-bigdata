@@ -329,8 +329,19 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
 			c.setCallSetName(StringUtils.EMPTY);
 
 			List<Integer> cgt = new ArrayList<Integer>(gt.getPloidy());
+			boolean unknownGT = false;
+			// TODO issue with ./. -> propose ignore call
 			for(Allele a : gt.getAlleles()){
-				cgt.add(alleleMap.get(a.getBaseString()));
+				String baseString = a.getBaseString();
+				Integer e = alleleMap.get(baseString);
+				if(null == e){
+					unknownGT = true;
+					break;
+				}
+				cgt.add(e);
+			} 
+			if(unknownGT){
+				continue; // ignore Call -> Genotype not known (e.g. "./.")
 			}
 			c.setGenotype(cgt);
 			c.setPhaseset(Boolean.valueOf(gt.isPhased()).toString()); // TODO decide what's the correct string
