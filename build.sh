@@ -1,6 +1,6 @@
 #!/bin/bash
 
-mvn install -DskipTests
+mvn -T 2 clean install -DskipTests
 
 cd hpg-bigdata-core/native
 ./build.sh

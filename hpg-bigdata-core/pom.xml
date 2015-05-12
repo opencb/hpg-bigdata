@@ -61,6 +61,12 @@
 			<groupId>org.apache.avro</groupId>
 			<artifactId>avro</artifactId>
 			<version>1.7.7</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.avro</groupId>
@@ -88,22 +94,22 @@
 		<dependency>
 			<groupId>com.twitter</groupId>
 			<artifactId>parquet-avro</artifactId>
-			<version>1.6.0rc7</version>
+			<version>1.6.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.twitter</groupId>
 			<artifactId>parquet-column</artifactId>
-			<version>1.6.0rc7</version>
+			<version>1.6.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.twitter</groupId>
 			<artifactId>parquet-hadoop</artifactId>
-			<version>1.6.0rc7</version>
+			<version>1.6.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.github.samtools</groupId>
 			<artifactId>htsjdk</artifactId>
-			<version>1.129</version>
+			<version>1.131</version>
 		</dependency>
 
 		<dependency>

@@ -4,6 +4,26 @@ build
 node_modules
 private
 
+# native
+bgzip
+htsfile
+tabix
+sam
+hfile
+test-*
+test_view
+fieldarith
+*.pico
+version.h
+ace2sam
+maq2sam-long
+maq2sam-short
+md5fa
+md5sum-lite
+wgsim
+vcf-miniview
+hpg-bigdata-core/native/third-party/samtools/samtools
+
 # General
 *.jar
 *.war
@@ -14,6 +34,7 @@ private
 *.so.*
 *.out
 *.log
+
 
 # Maven
 target/
