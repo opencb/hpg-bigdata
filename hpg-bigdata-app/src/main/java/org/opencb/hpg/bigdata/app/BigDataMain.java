@@ -71,7 +71,7 @@ public class BigDataMain {
                         commandExecutor = new BamCommandExecutor(cliOptionsParser.getBamCommandOptions());
                     }
                     break;
-                case "ga4gh":
+                case "convert":
                     if (cliOptionsParser.getConvertCommandOptions().commonOptions.help) {
                         cliOptionsParser.printUsage();
                     } else {
