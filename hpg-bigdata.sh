@@ -1,5 +1,7 @@
 #!/bin/bash
 
+## Parallel threads for vcf2ga conversion using linux
+parallel="-Dga4gh.vcf2ga.parallel=4"
 
 # If a specific java binary isn't specified search for the standard 'java' binary
 if [ -z "$JAVACMD" ] ; then
@@ -38,5 +40,5 @@ then
 	hadoop jar hpg-bigdata-app/target/hpg-bigdata-app-0.1.0-jar-with-dependencies.jar $@
 else
 	echo "Executing in a local environment"
-	$JAVACMD -jar hpg-bigdata-app/target/hpg-bigdata-app-0.1.0-jar-with-dependencies.jar $@
+	$JAVACMD $parallel -jar hpg-bigdata-app/target/hpg-bigdata-app-0.1.0-jar-with-dependencies.jar $@
 fi
