@@ -29,6 +29,7 @@ import htsjdk.samtools.fastq.FastqReader;
 import htsjdk.samtools.util.LineReader;
 import htsjdk.samtools.util.StringLineReader;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
@@ -49,6 +50,7 @@ import java.util.Map;
 
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.specific.SpecificDatumReader;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
@@ -491,7 +493,10 @@ public class ConvertCommandExecutor extends CommandExecutor {
         }
 
         // reader
-        VcfBlockIterator iterator = new VcfBlockIterator(Paths.get(in).toFile(), new FullVCFCodec());
+        VcfBlockIterator iterator = 
+        		StringUtils.equals("-", in)?
+        				new VcfBlockIterator(new BufferedInputStream(System.in), new FullVCFCodec())
+        				: new VcfBlockIterator(Paths.get(in).toFile(), new FullVCFCodec());
         DataReader<CharBuffer> reader = new DataReader<CharBuffer>() {
             @Override public List<CharBuffer> read(int size) {
                 return (iterator.hasNext() ? iterator.next(size) : Collections.<CharBuffer>emptyList());
