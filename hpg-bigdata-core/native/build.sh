@@ -5,11 +5,9 @@ echo "Building library avro-c-1.7.7"
 cd third-party/avro-c-1.7.7/
 if [ ! -d "build" ]; then
   mkdir build
-  cd build
-  cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo
-else
-  cd build
 fi
+cd build
+cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo
 make
 
 cd ../../..

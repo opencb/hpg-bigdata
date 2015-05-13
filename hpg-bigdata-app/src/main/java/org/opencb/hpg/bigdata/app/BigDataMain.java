@@ -21,7 +21,7 @@ import org.opencb.hpg.bigdata.app.cli.BamCommandExecutor;
 import org.opencb.hpg.bigdata.app.cli.CliOptionsParser;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
 import org.opencb.hpg.bigdata.app.cli.FastqCommandExecutor;
-import org.opencb.hpg.bigdata.app.cli.Ga4ghCommandExecutor;
+import org.opencb.hpg.bigdata.app.cli.ConvertCommandExecutor;
 
 import com.beust.jcommander.ParameterException;
 
@@ -71,11 +71,11 @@ public class BigDataMain {
                         commandExecutor = new BamCommandExecutor(cliOptionsParser.getBamCommandOptions());
                     }
                     break;
-                case "ga4gh":
-                    if (cliOptionsParser.getGa4ghCommandOptions().commonOptions.help) {
+                case "convert":
+                    if (cliOptionsParser.getConvertCommandOptions().commonOptions.help) {
                         cliOptionsParser.printUsage();
                     } else {
-                        commandExecutor = new Ga4ghCommandExecutor(cliOptionsParser.getGa4ghCommandOptions());
+                        commandExecutor = new ConvertCommandExecutor(cliOptionsParser.getConvertCommandOptions());
                     }
                     break;
                 case "align":

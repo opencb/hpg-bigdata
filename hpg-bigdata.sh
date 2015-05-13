@@ -1,5 +1,10 @@
 #!/bin/bash
 
+## find script directory
+DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
+## Parallel threads for vcf2ga conversion using linux
+parallel="-Dga4gh.vcf2ga.parallel=4"
 
 # If a specific java binary isn't specified search for the standard 'java' binary
 if [ -z "$JAVACMD" ] ; then
@@ -30,13 +35,16 @@ do
   fi
 done
 
-export LD_LIBRARY_PATH=hpg-bigdata-core/native/:hpg-bigdata-core/native/third-party/avro-c-1.7.7/build/src/:hpg-bigdata-core/native/third-party/htslib/ 
+hbc="$DIR/hpg-bigdata-core"
+hba="$DIR/hpg-bigdata-app"
+
+export LD_LIBRARY_PATH=$hbc/native/:$hbc/native/third-party/avro-c-1.7.7/build/src/:$hbc/native/third-party/htslib/ 
 
 if [ $hadoop -eq 1 ];
 then
 	echo "Executing in a Hadoop environment"
-	hadoop jar hpg-bigdata-app/target/hpg-bigdata-app-0.1.0-jar-with-dependencies.jar $@
+	hadoop jar $hba/target/hpg-bigdata-app-0.1.0-jar-with-dependencies.jar $@
 else
 	echo "Executing in a local environment"
-	$JAVACMD -jar hpg-bigdata-app/target/hpg-bigdata-app-0.1.0-jar-with-dependencies.jar $@
+	$JAVACMD $parallel -jar $hba/target/hpg-bigdata-app-0.1.0-jar-with-dependencies.jar $@
 fi

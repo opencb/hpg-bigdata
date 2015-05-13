@@ -24,8 +24,6 @@ public class ParquetMR {
 
     private final Schema schema;
 
-
-
     public ParquetMR(Schema schema) {
         this.schema = schema;
     }
@@ -34,7 +32,7 @@ public class ParquetMR {
 
         Configuration conf = new Configuration();
 
-        Job job = Job.getInstance(conf, "ReadAlignment2Parquet");
+        Job job = Job.getInstance(conf, "ParquetMR");
         job.setJarByClass(this.getClass());
 
         // point to input data
