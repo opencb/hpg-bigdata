@@ -22,8 +22,8 @@ import java.util.Date;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.opencb.hpg.bigdata.core.io.ReadKmersMR;
-import org.opencb.hpg.bigdata.core.io.ReadStatsMR;
+import org.opencb.hpg.bigdata.tools.stats.read.mr.ReadKmersMR;
+import org.opencb.hpg.bigdata.tools.stats.read.mr.ReadStatsMR;
 import org.opencb.hpg.bigdata.core.utils.PathUtils;
 
 /**

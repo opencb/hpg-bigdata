@@ -57,7 +57,7 @@ import org.ga4gh.models.Variant;
 import org.ga4gh.models.VariantSet;
 import org.ga4gh.models.VariantSetMetadata;
 import org.opencb.hpg.bigdata.core.converters.Converter;
-import org.opencb.hpg.bigdata.core.converters.FullVCFCodec;
+import org.opencb.hpg.bigdata.core.converters.FullVcfCodec;
 import org.opencb.hpg.bigdata.core.io.avro.AvroWriter;
 import org.opencb.hpg.bigdata.core.utils.CompressionUtils;
 
@@ -97,11 +97,11 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
 			
 			
 			Converter<String,CallSet> gtConverter = new Genotype2CallSet();
-			Converter<VCFHeaderLine,VariantSetMetadata> infoConverter = new VCFHeaderLine2VariantSetMetadataConverter();
+			Converter<VCFHeaderLine,VariantSetMetadata> infoConverter = new VcfHeaderLine2VariantSetMetadataConverter();
 			VariantContext2VariantConverter varConverter = new VariantContext2VariantConverter();
 			try(FeatureReader<VariantContext> freader = AbstractFeatureReader.getFeatureReader(
 					file.getAbsolutePath(),
-					new FullVCFCodec(),
+					new FullVcfCodec(),
 					true);){
 				VCFHeader header = (VCFHeader) freader.getHeader();
 				

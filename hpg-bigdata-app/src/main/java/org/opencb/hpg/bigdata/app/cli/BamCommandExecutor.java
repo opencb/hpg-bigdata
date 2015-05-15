@@ -23,10 +23,10 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.ga4gh.models.ReadAlignment;
-import org.opencb.hpg.bigdata.core.io.ReadAlignmentDepthMR;
-import org.opencb.hpg.bigdata.core.io.ReadAlignmentSortMR;
-import org.opencb.hpg.bigdata.core.io.ReadAlignmentStatsMR;
-import org.opencb.hpg.bigdata.core.io.parquet.ParquetMR;
+import org.opencb.hpg.bigdata.tools.stats.alignment.mr.ReadAlignmentDepthMR;
+import org.opencb.hpg.bigdata.tools.stats.alignment.mr.ReadAlignmentSortMR;
+import org.opencb.hpg.bigdata.tools.stats.alignment.mr.ReadAlignmentStatsMR;
+import org.opencb.hpg.bigdata.tools.io.parquet.ParquetMR;
 import org.opencb.hpg.bigdata.core.utils.PathUtils;
 
 /**

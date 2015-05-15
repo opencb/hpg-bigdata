@@ -56,23 +56,23 @@ import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.ga4gh.models.Read;
+import org.opencb.hpg.bigdata.core.models.Read;
 import org.ga4gh.models.ReadAlignment;
 import org.ga4gh.models.Variant;
 import org.opencb.commons.io.DataReader;
 import org.opencb.commons.run.ParallelTaskRunner;
 import org.opencb.hpg.bigdata.core.NativeSupport;
 import org.opencb.hpg.bigdata.core.converters.FastqRecord2ReadConverter;
-import org.opencb.hpg.bigdata.core.converters.FullVCFCodec;
+import org.opencb.hpg.bigdata.core.converters.FullVcfCodec;
 import org.opencb.hpg.bigdata.core.converters.SAMRecord2ReadAlignmentConverter;
 import org.opencb.hpg.bigdata.core.converters.variation.VariantAvroEncoderTask;
 import org.opencb.hpg.bigdata.core.converters.variation.VariantConverterContext;
-import org.opencb.hpg.bigdata.core.io.Bam2GaMR;
+import org.opencb.hpg.bigdata.tools.converters.mr.Bam2AvroMR;
 import org.opencb.hpg.bigdata.core.io.VcfBlockIterator;
 import org.opencb.hpg.bigdata.core.io.avro.AvroFileWriter;
 import org.opencb.hpg.bigdata.core.io.avro.AvroWriter;
-import org.opencb.hpg.bigdata.core.io.parquet.ParquetConverter;
-import org.opencb.hpg.bigdata.core.io.parquet.ParquetMR;
+import org.opencb.hpg.bigdata.tools.io.parquet.ParquetConverter;
+import org.opencb.hpg.bigdata.tools.io.parquet.ParquetMR;
 import org.opencb.hpg.bigdata.core.utils.CompressionUtils;
 import org.opencb.hpg.bigdata.core.utils.PathUtils;
 import org.opencb.hpg.bigdata.core.utils.ReadUtils;
@@ -314,7 +314,7 @@ public class ConvertCommandExecutor extends CommandExecutor {
 			}
 
 			try {
-				Bam2GaMR.run(in, out, codecName);
+				Bam2AvroMR.run(in, out, codecName);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -513,8 +513,8 @@ public class ConvertCommandExecutor extends CommandExecutor {
             // reader
             VcfBlockIterator iterator =
                     StringUtils.equals("-", in)?
-                            new VcfBlockIterator(new BufferedInputStream(System.in), new FullVCFCodec())
-                            : new VcfBlockIterator(Paths.get(in).toFile(), new FullVCFCodec());
+                            new VcfBlockIterator(new BufferedInputStream(System.in), new FullVcfCodec())
+                            : new VcfBlockIterator(Paths.get(in).toFile(), new FullVcfCodec());
             DataReader<CharBuffer> reader = new DataReader<CharBuffer>() {
                 @Override
                 public List<CharBuffer> read(int size) {

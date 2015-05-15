@@ -16,7 +16,7 @@
 
 package org.opencb.hpg.bigdata.core.utils;
 
-import org.ga4gh.models.Read;
+import org.opencb.hpg.bigdata.core.models.Read;
 
 public class ReadUtils {
 

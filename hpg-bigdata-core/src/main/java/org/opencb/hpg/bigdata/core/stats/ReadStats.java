@@ -19,7 +19,7 @@ package org.opencb.hpg.bigdata.core.stats;
 import java.util.HashMap;
 import java.util.List;
 
-import org.ga4gh.models.Read;
+import org.opencb.hpg.bigdata.core.models.Read;
 
 public class ReadStats {
 

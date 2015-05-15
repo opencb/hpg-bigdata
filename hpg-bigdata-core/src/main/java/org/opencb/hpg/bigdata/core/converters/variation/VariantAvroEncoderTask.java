@@ -23,7 +23,7 @@ import org.ga4gh.models.CallSet;
 import org.ga4gh.models.Variant;
 import org.ga4gh.models.VariantSet;
 import org.opencb.commons.run.ParallelTaskRunner;
-import org.opencb.hpg.bigdata.core.converters.FullVCFCodec;
+import org.opencb.hpg.bigdata.core.converters.FullVcfCodec;
 import org.opencb.hpg.bigdata.core.io.avro.AvroEncoder;
 import org.opencb.hpg.bigdata.core.utils.VariantContextBlockIterator;
 import org.slf4j.Logger;
@@ -50,7 +50,7 @@ public class VariantAvroEncoderTask implements ParallelTaskRunner.Task<CharBuffe
     private final AvroEncoder<Variant> encoder;
     private final VariantContext2VariantConverter converter;
     private final VariantContextBlockIterator variantContextBlockIterator;
-    private final FullVCFCodec codec;
+    private final FullVcfCodec codec;
 
     static AtomicLong parseTime = new AtomicLong(0);
     static AtomicLong convertTime = new AtomicLong(0);
@@ -62,7 +62,7 @@ public class VariantAvroEncoderTask implements ParallelTaskRunner.Task<CharBuffe
     public VariantAvroEncoderTask(VariantConverterContext variantConverterContext, VCFHeader header, VCFHeaderVersion version) {
         this.variantConverterContext = variantConverterContext;
         this.header = header;
-        codec = new FullVCFCodec();
+        codec = new FullVcfCodec();
         codec.setVCFHeader(this.header, version);
         converter = new VariantContext2VariantConverter();
         encoder = new AvroEncoder<>(Variant.getClassSchema());

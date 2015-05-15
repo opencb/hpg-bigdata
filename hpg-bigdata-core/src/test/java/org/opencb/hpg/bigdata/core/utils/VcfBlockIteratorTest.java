@@ -28,7 +28,7 @@ import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.opencb.hpg.bigdata.core.converters.FullVCFCodec;
+import org.opencb.hpg.bigdata.core.converters.FullVcfCodec;
 import org.opencb.hpg.bigdata.core.io.VcfBlockIterator;
 
 /**
@@ -68,7 +68,7 @@ public class VcfBlockIteratorTest {
 		int cnt = 0;
 		try(
 			InputStream in = getStream();
-			VcfBlockIterator iter = new VcfBlockIterator(in, new FullVCFCodec());){
+			VcfBlockIterator iter = new VcfBlockIterator(in, new FullVcfCodec());){
 			for(List<CharBuffer> s : iter){
 				cnt += s.size();
 			}

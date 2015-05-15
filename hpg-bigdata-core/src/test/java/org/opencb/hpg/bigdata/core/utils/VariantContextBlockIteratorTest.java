@@ -34,7 +34,7 @@ import org.apache.commons.io.IOUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.opencb.hpg.bigdata.core.converters.FullVCFCodec;
+import org.opencb.hpg.bigdata.core.converters.FullVcfCodec;
 
 /**
  * @author mh719
@@ -43,7 +43,7 @@ import org.opencb.hpg.bigdata.core.converters.FullVCFCodec;
 public class VariantContextBlockIteratorTest {
 	
 	List<CharBuffer> rows;
-	FullVCFCodec codec;
+	FullVcfCodec codec;
 	VCFHeader header;
 	private VCFHeaderVersion version;
 
@@ -54,7 +54,7 @@ public class VariantContextBlockIteratorTest {
 	public void setUp() throws Exception {
 		rows = new LinkedList<CharBuffer>();
 		String inFile = "/"+this.getClass().getName().replaceAll("\\.", "/")+".vcf";
-		FullVCFCodec codec = new FullVCFCodec();
+		FullVcfCodec codec = new FullVcfCodec();
 		try(InputStream in = getStream(inFile);){
 			LineIterator iter = codec.makeSourceFromStream(in);
 			this.header = (VCFHeader) codec.readActualHeader(iter);
@@ -89,7 +89,7 @@ public class VariantContextBlockIteratorTest {
 
 	@Test
 	public void test() {
-		FullVCFCodec fc = new FullVCFCodec();
+		FullVcfCodec fc = new FullVcfCodec();
 		fc.setVCFHeader(this.header, this.version);
 		VariantContextBlockIterator iter = new VariantContextBlockIterator(fc);
 		List<VariantContext> ctxList = iter.convert(this.rows);

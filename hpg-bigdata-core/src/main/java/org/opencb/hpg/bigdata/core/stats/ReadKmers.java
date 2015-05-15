@@ -16,8 +16,6 @@
 
 package org.opencb.hpg.bigdata.core.stats;
 
-import htsjdk.samtools.fastq.FastqRecord;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -25,8 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import org.ga4gh.models.Read;
-import org.opencb.hpg.bigdata.core.converters.FastqRecord2ReadConverter;
+import org.opencb.hpg.bigdata.core.models.Read;
 
 public class ReadKmers {
 

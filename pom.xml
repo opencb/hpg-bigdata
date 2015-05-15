@@ -27,7 +27,8 @@
 	<modules>
 		<module>hpg-bigdata-app</module>
 		<module>hpg-bigdata-core</module>
-	</modules>
+        <module>hpg-bigdata-tools</module>
+    </modules>
 
 	<name>HPG Big data project</name>
 	<description>HPG Big data project aims to manage biological data in a Big data environment</description>
@@ -88,6 +89,11 @@
 			<dependency>
 				<groupId>org.opencb.hpg</groupId>
 				<artifactId>hpg-bigdata-core</artifactId>
+				<version>${hpg.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.opencb.hpg</groupId>
+				<artifactId>hpg-bigdata-tools</artifactId>
 				<version>${hpg.version}</version>
 			</dependency>
 			<dependency>
