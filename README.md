@@ -104,3 +104,8 @@ The source files (Fastq, SAM, BAM...) have to be located in the local file syste
     $ ./hpg-bigdata.sh fastq --kmers 7 -i hdfs://test.fq.ga -o /tmp/kmers-test.fq
     $ ./hpg-bigdata.sh fastq --stats --kmers 7 -i hdfs://test.fq.ga -o /tmp/stats-kmers-test.fq
     
+# Supporters
+JetBrains is supporting this open source project with:
+
+[![Intellij IDEA](https://www.jetbrains.com/idea/docs/logo_intellij_idea.png)]
+(http://www.jetbrains.com/idea/)
