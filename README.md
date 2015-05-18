@@ -24,11 +24,9 @@ This repository implements converters and tools for working with NGS data in HPC
 
 
 
-##### convert command
-
-
-  The command **convert** al lows you to save Fastq, SAM, BAM, VCF,... files as Avro files according to the GA4GH models. You can specify a compression method, e.g., deflate, snappy, bzip2.
-  The source files (Fastq, SAM, BAM...) have to be located in the local file system, on the other hand, destination files can be saved both in the local file system and in the Hadoop file system (HDFS), in the latter case, you must use the notation **hdfs://**
+##### _convert_ command
+The command **convert** al lows you to save Fastq, SAM, BAM, VCF,... files as Avro files according to the GA4GH models. You can specify a compression method, e.g., deflate, snappy, bzip2.
+The source files (Fastq, SAM, BAM...) have to be located in the local file system, on the other hand, destination files can be saved both in the local file system and in the Hadoop file system (HDFS), in the latter case, you must use the notation **hdfs://**
   
   Some examples using the test files in the folder data:
    
@@ -58,9 +56,7 @@ This repository implements converters and tools for working with NGS data in HPC
     $ ./hpg-bigdata.sh convert -c ga2bam -i hdfs://test.bam.hdfs.ga -o data/test.bam.hdfs.ga.bam
    
 
-##### Fastq command
-
-
+##### _fastq_ command
   The command **fastq** allows you to compute some statistical values for a given Fastq file that must be stored in the Haddop/HDFS environment, and according to the GA4GH Avro models (Check the command **convert**)
   
   Some examples:
