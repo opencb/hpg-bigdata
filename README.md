@@ -16,8 +16,6 @@ This repository implements converters and tools for working with NGS data in HPC
   4. Libraries: libz, libsnappy, liblzma, libncurses
 
 ### Running
-
-
   For command line options invoke:
 
     imedina@ivory:~$ ./hpg-bigdata.sh -h
