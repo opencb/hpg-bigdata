@@ -18,9 +18,9 @@ package org.opencb.hpg.bigdata.core.utils;
 
 import org.apache.avro.file.CodecFactory;
 
-public class CompressionUtils {
+public class AvroUtils {
 	
-	public static CodecFactory getAvroCodec(String name) {
+	public static CodecFactory getCodec(String name) {
 		if (name == null) {
 			return CodecFactory.nullCodec();
 		} else if (name.equalsIgnoreCase("bzip2")) {

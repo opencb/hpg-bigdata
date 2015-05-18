@@ -27,23 +27,23 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.ga4gh.models.LinearAlignment;
 import org.ga4gh.models.ReadAlignment;
-import org.opencb.hpg.bigdata.tools.converters.mr.ReadAlignmentKey;
+import org.opencb.hpg.bigdata.tools.converters.mr.ChunkKey;
 import org.opencb.hpg.bigdata.tools.io.RegionDepthWritable;
 
 public class ReadAlignmentDepthMR {
 
-	public static class ReadAlignmentDepthMapper extends Mapper<AvroKey<ReadAlignment>, NullWritable, ReadAlignmentKey, RegionDepthWritable> {
+	public static class ReadAlignmentDepthMapper extends Mapper<AvroKey<ReadAlignment>, NullWritable, ChunkKey, RegionDepthWritable> {
 
 		@Override
 		public void map(AvroKey<ReadAlignment> key, NullWritable value, Context context) throws IOException, InterruptedException {
 			ReadAlignment ra = (ReadAlignment) key.datum();
 			LinearAlignment la = (LinearAlignment) ra.getAlignment();
 
-			ReadAlignmentKey newKey;
+			ChunkKey newKey;
 			RegionDepthWritable newValue;
 
 			if (la == null) {
-				newKey = new ReadAlignmentKey(new String("*"), (long) 0);
+				newKey = new ChunkKey(new String("*"), (long) 0);
 				newValue = new RegionDepthWritable("null", 0, 0, 0);
 			} else {
 				long start_chunk = la.getPosition().getPosition() / RegionDepthWritable.CHUNK_SIZE;
@@ -52,7 +52,7 @@ public class ReadAlignmentDepthMR {
 					//System.out.println("-----------> chunks (start, end) = (" + start_chunk + ", " + end_chunk + ")");
 					//System.exit(-1);
 				}
-				newKey = new ReadAlignmentKey(la.getPosition().getReferenceName().toString(), start_chunk); 
+				newKey = new ChunkKey(la.getPosition().getReferenceName().toString(), start_chunk);
 
 				newValue = new RegionDepthWritable(newKey.getName(), la.getPosition().getPosition(), start_chunk, ra.getAlignedSequence().length());
 				newValue.update(la.getPosition().getPosition(), la.getCigar());
@@ -63,7 +63,7 @@ public class ReadAlignmentDepthMR {
 		}
 	}
 
-	public static class ReadAlignmentDepthReducer extends Reducer<ReadAlignmentKey, RegionDepthWritable, Text, NullWritable> {
+	public static class ReadAlignmentDepthReducer extends Reducer<ChunkKey, RegionDepthWritable, Text, NullWritable> {
 
 		public HashMap<String, HashMap<Long, RegionDepthWritable>> regions = null;
 		public HashMap<String, Long> accDepth = null;
@@ -98,7 +98,7 @@ public class ReadAlignmentDepthMR {
 			//System.out.println("Depth = " + (accDep / accLen));
 		}
 
-		public void reduce(ReadAlignmentKey key, Iterable<RegionDepthWritable> values, Context context) throws IOException, InterruptedException {
+		public void reduce(ChunkKey key, Iterable<RegionDepthWritable> values, Context context) throws IOException, InterruptedException {
 			//System.out.println("reduce : " + key.toString());
 			if (context.getConfiguration().get(key.getName()) == null) {
 				System.out.println("skipping unknown key (name, chunk) = (" + key.getName() + ", " + key.getChunk() + ")");
@@ -200,7 +200,7 @@ public class ReadAlignmentDepthMR {
 
 		// mapper
 		job.setMapperClass(ReadAlignmentDepthMapper.class);
-		job.setMapOutputKeyClass(ReadAlignmentKey.class);
+		job.setMapOutputKeyClass(ChunkKey.class);
 		job.setMapOutputValueClass(RegionDepthWritable.class);
 
 		// reducer

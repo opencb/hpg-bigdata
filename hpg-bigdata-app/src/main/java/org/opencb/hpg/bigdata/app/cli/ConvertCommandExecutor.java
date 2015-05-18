@@ -71,9 +71,10 @@ import org.opencb.hpg.bigdata.tools.converters.mr.Bam2AvroMR;
 import org.opencb.hpg.bigdata.core.io.VcfBlockIterator;
 import org.opencb.hpg.bigdata.core.io.avro.AvroFileWriter;
 import org.opencb.hpg.bigdata.core.io.avro.AvroWriter;
+import org.opencb.hpg.bigdata.tools.converters.mr.Vcf2AvroMR;
 import org.opencb.hpg.bigdata.tools.io.parquet.ParquetConverter;
 import org.opencb.hpg.bigdata.tools.io.parquet.ParquetMR;
-import org.opencb.hpg.bigdata.core.utils.CompressionUtils;
+import org.opencb.hpg.bigdata.core.utils.AvroUtils;
 import org.opencb.hpg.bigdata.core.utils.PathUtils;
 import org.opencb.hpg.bigdata.core.utils.ReadUtils;
 
@@ -252,7 +253,7 @@ public class ConvertCommandExecutor extends CommandExecutor {
 		} else {
 			os = new FileOutputStream(out);
 		}
-		AvroWriter<Read> writer = new AvroWriter<>(Read.getClassSchema(), CompressionUtils.getAvroCodec(codecName), os);
+		AvroWriter<Read> writer = new AvroWriter<>(Read.getClassSchema(), AvroUtils.getCodec(codecName), os);
 
 		// main loop
 		FastqRecord2ReadConverter converter = new FastqRecord2ReadConverter();
@@ -353,7 +354,7 @@ public class ConvertCommandExecutor extends CommandExecutor {
 			os = new FileOutputStream(output);
 		}
 
-		AvroWriter<ReadAlignment> writer = new AvroWriter<ReadAlignment>(ReadAlignment.getClassSchema(), CompressionUtils.getAvroCodec(codecName), os);
+		AvroWriter<ReadAlignment> writer = new AvroWriter<ReadAlignment>(ReadAlignment.getClassSchema(), AvroUtils.getCodec(codecName), os);
 
 		// main loop
 		SAMRecord2ReadAlignmentConverter converter = new SAMRecord2ReadAlignmentConverter();
@@ -463,7 +464,7 @@ public class ConvertCommandExecutor extends CommandExecutor {
 
 		// writer
 		OutputStream os = new FileOutputStream(output);
-		AvroWriter<ReadAlignment> writer = new AvroWriter<ReadAlignment>(ReadAlignment.getClassSchema(), CompressionUtils.getAvroCodec(codecName), os);
+		AvroWriter<ReadAlignment> writer = new AvroWriter<ReadAlignment>(ReadAlignment.getClassSchema(), AvroUtils.getCodec(codecName), os);
 
 		// main loop
 		SAMRecord2ReadAlignmentConverter converter = new SAMRecord2ReadAlignmentConverter();
@@ -504,67 +505,70 @@ public class ConvertCommandExecutor extends CommandExecutor {
 
         } else {
             if (PathUtils.isHdfs(input)) {
-                logger.error("Conversion '{}' with HDFS as input '{}', not implemented yet !", convertCommandOptions.conversion, input);
-                System.exit(-1);
-            }
 
-
-
-            // reader
-            VcfBlockIterator iterator =
-                    StringUtils.equals("-", in)?
-                            new VcfBlockIterator(new BufferedInputStream(System.in), new FullVcfCodec())
-                            : new VcfBlockIterator(Paths.get(in).toFile(), new FullVcfCodec());
-            DataReader<CharBuffer> reader = new DataReader<CharBuffer>() {
-                @Override
-                public List<CharBuffer> read(int size) {
-                    return (iterator.hasNext() ? iterator.next(size) : Collections.<CharBuffer>emptyList());
+                try {
+                    Vcf2AvroMR.run(in, out, compression);
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
 
-                @Override
-                public boolean close() {
-                    try {
-                        iterator.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        return false;
-                    }
-                    return true;
-                }
-            };
-
-            // writer
-            OutputStream os;
-            if (PathUtils.isHdfs(output)) {
-                Configuration config = new Configuration();
-                FileSystem hdfs = FileSystem.get(config);
-                os = hdfs.create(new Path(out));
             } else {
-                os = new FileOutputStream(out);
+                // reader
+                VcfBlockIterator iterator =
+                        StringUtils.equals("-", in) ?
+                                new VcfBlockIterator(new BufferedInputStream(System.in), new FullVcfCodec())
+                                : new VcfBlockIterator(Paths.get(in).toFile(), new FullVcfCodec());
+                DataReader<CharBuffer> reader = new DataReader<CharBuffer>() {
+                    @Override
+                    public List<CharBuffer> read(int size) {
+                        return (iterator.hasNext() ? iterator.next(size) : Collections.<CharBuffer>emptyList());
+                    }
+
+                    @Override
+                    public boolean close() {
+                        try {
+                            iterator.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            return false;
+                        }
+                        return true;
+                    }
+                };
+
+                // writer
+                OutputStream os;
+                if (PathUtils.isHdfs(output)) {
+                    Configuration config = new Configuration();
+                    FileSystem hdfs = FileSystem.get(config);
+                    os = hdfs.create(new Path(out));
+                } else {
+                    os = new FileOutputStream(out);
+                }
+
+                AvroFileWriter<Variant> writer = new AvroFileWriter<>(Variant.getClassSchema(), compression, os);
+
+                // main loop
+                int numTasks = Integer.getInteger("ga4gh.vcf2ga.parallel", 4);
+                int batchSize = 1024 * 1024;  //Batch size in bytes
+                int capacity = numTasks + 1;
+                VariantConverterContext variantConverterContext = new VariantConverterContext();
+                ParallelTaskRunner.Config config = new ParallelTaskRunner.Config(numTasks, batchSize, capacity, false);
+                ParallelTaskRunner<CharBuffer, ByteBuffer> runner =
+                        new ParallelTaskRunner<>(
+                                reader,
+                                () -> new VariantAvroEncoderTask(variantConverterContext, iterator.getHeader(), iterator.getVersion()),
+                                writer, config);
+                long start = System.currentTimeMillis();
+                runner.run();
+                System.out.println("Time " + (System.currentTimeMillis() - start) / 1000.0 + "s");
+
+                // close
+                iterator.close();
+                writer.close();
+                os.close();
+
             }
-
-            AvroFileWriter<Variant> writer = new AvroFileWriter<>(Variant.getClassSchema(), compression, os);
-
-            // main loop
-            int numTasks = Integer.getInteger("ga4gh.vcf2ga.parallel", 4);
-            int batchSize = 1024 * 1024;  //Batch size in bytes
-            int capacity = numTasks + 1;
-            VariantConverterContext variantConverterContext = new VariantConverterContext();
-            ParallelTaskRunner.Config config = new ParallelTaskRunner.Config(numTasks, batchSize, capacity, false);
-            ParallelTaskRunner<CharBuffer, ByteBuffer> runner =
-                    new ParallelTaskRunner<>(
-                            reader,
-                            () -> new VariantAvroEncoderTask(variantConverterContext, iterator.getHeader(), iterator.getVersion()),
-                            writer, config);
-            long start = System.currentTimeMillis();
-            runner.run();
-            System.out.println("Time " + (System.currentTimeMillis() - start) / 1000.0 + "s");
-
-            // close
-            iterator.close();
-            writer.close();
-            os.close();
-
         }
     }
 }

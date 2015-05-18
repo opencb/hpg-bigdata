@@ -59,7 +59,7 @@ import org.ga4gh.models.VariantSetMetadata;
 import org.opencb.hpg.bigdata.core.converters.Converter;
 import org.opencb.hpg.bigdata.core.converters.FullVcfCodec;
 import org.opencb.hpg.bigdata.core.io.avro.AvroWriter;
-import org.opencb.hpg.bigdata.core.utils.CompressionUtils;
+import org.opencb.hpg.bigdata.core.utils.AvroUtils;
 
 /**
  * Chr20 of 1000 genomes -> 855,196 rows  = 30 header, 855,166 rows
@@ -88,8 +88,8 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
 				OutputStream callOs = new FileOutputStream(new File(args[1]+".Call"));
 				OutputStream vsOs = new FileOutputStream(new File(args[1]+".variantSet")); ){
 			CodecFactory codec = 
-					CompressionUtils.getAvroCodec("deflate");
-//					CompressionUtils.getAvroCodec("snappy");
+					AvroUtils.getCodec("deflate");
+//					CompressionUtils.getCodec("snappy");
 			AvroWriter<Variant> writer = new AvroWriter<Variant>(Variant.getClassSchema(), codec, os);
 			AvroWriter<CallSet> callWriter = new AvroWriter<CallSet>(CallSet.getClassSchema(), codec, callOs);
 			AvroWriter<VariantSet> vsWriter = new AvroWriter<VariantSet>(VariantSet.getClassSchema(), codec, vsOs);

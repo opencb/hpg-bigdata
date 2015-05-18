@@ -20,6 +20,7 @@ import java.io.IOException;
 
 import org.apache.avro.mapred.AvroKey;
 import org.apache.avro.mapreduce.AvroJob;
+import org.apache.avro.mapreduce.AvroKeyOutputFormat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
@@ -77,7 +78,7 @@ public class Fastq2AvroMR {
 		
 		job.setMapOutputKeyClass(Text.class);
 		job.setMapOutputValueClass(SequencedFragment.class);
-		
+		job.setOutputFormatClass(AvroKeyOutputFormat.class);
 		
 /*		
 		job.setOutputFormatClass(AvroParquetOutputFormat.class);

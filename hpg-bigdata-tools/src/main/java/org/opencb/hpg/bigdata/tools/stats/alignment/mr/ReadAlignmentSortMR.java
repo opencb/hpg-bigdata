@@ -33,27 +33,27 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.ga4gh.models.LinearAlignment;
 import org.ga4gh.models.ReadAlignment;
-import org.opencb.hpg.bigdata.tools.converters.mr.ReadAlignmentKey;
+import org.opencb.hpg.bigdata.tools.converters.mr.ChunkKey;
 
 public class ReadAlignmentSortMR {
 	
-	public static class ReadAlignmentSortMapper extends Mapper<AvroKey<ReadAlignment>, NullWritable, ReadAlignmentKey, AvroValue<ReadAlignment>> {
+	public static class ReadAlignmentSortMapper extends Mapper<AvroKey<ReadAlignment>, NullWritable, ChunkKey, AvroValue<ReadAlignment>> {
 
 		public void map(AvroKey<ReadAlignment> key, NullWritable value, Context context) throws IOException, InterruptedException {
-			ReadAlignmentKey newKey;
+			ChunkKey newKey;
 			LinearAlignment la = (LinearAlignment) key.datum().getAlignment();
 			if (la == null) {
-				newKey = new ReadAlignmentKey(new String("unmapped"), (long) 0);
+				newKey = new ChunkKey(new String("unmapped"), (long) 0);
 			} else {
-				newKey = new ReadAlignmentKey(la.getPosition().getReferenceName().toString(), la.getPosition().getPosition()); 
+				newKey = new ChunkKey(la.getPosition().getReferenceName().toString(), la.getPosition().getPosition());
 			}
 			context.write(newKey, new AvroValue<ReadAlignment>(key.datum()));
 		}
 	}
 
-	public static class ReadAlignmentSortReducer extends Reducer<ReadAlignmentKey, AvroValue<ReadAlignment>, AvroKey<ReadAlignment>, NullWritable> {
+	public static class ReadAlignmentSortReducer extends Reducer<ChunkKey, AvroValue<ReadAlignment>, AvroKey<ReadAlignment>, NullWritable> {
 
-		public void reduce(ReadAlignmentKey key, Iterable<AvroValue<ReadAlignment>> values, Context context) throws IOException, InterruptedException {
+		public void reduce(ChunkKey key, Iterable<AvroValue<ReadAlignment>> values, Context context) throws IOException, InterruptedException {
 			for (AvroValue<ReadAlignment> value : values) {
 				context.write(new AvroKey<ReadAlignment>(value.datum()), NullWritable.get());
 			}
@@ -81,7 +81,7 @@ public class ReadAlignmentSortMR {
 		job.setMapperClass(ReadAlignmentSortMapper.class);
 		//AvroJob.setMapOutputKeySchema(job, ReadAlignment.SCHEMA$);
 		AvroJob.setMapOutputValueSchema(job, ReadAlignment.SCHEMA$);
-		job.setMapOutputKeyClass(ReadAlignmentKey.class);
+		job.setMapOutputKeyClass(ChunkKey.class);
 		//job.setMapOutputValueClass(AvroKeyInputFormat.class);
 
 		// reducer

@@ -23,7 +23,7 @@ import java.io.IOException;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.io.WritableUtils;
 
-public class ReadAlignmentKey implements WritableComparable<ReadAlignmentKey> {
+public class ChunkKey implements WritableComparable<ChunkKey> {
 
 	private String name;
 	private Long chunk;
@@ -31,9 +31,9 @@ public class ReadAlignmentKey implements WritableComparable<ReadAlignmentKey> {
 	/**
 	 * Constructor.
 	 */
-	public ReadAlignmentKey() { }
+	public ChunkKey() { }
 
-	public ReadAlignmentKey(String name, Long chunk) {
+	public ChunkKey(String name, Long chunk) {
 		this.name = name;
 		this.chunk = chunk;
 	}
@@ -61,7 +61,7 @@ public class ReadAlignmentKey implements WritableComparable<ReadAlignmentKey> {
 		out.writeLong(chunk);
 	}@Override
 	
-	public int compareTo(ReadAlignmentKey o) {
+	public int compareTo(ChunkKey o) {
 		int result = name.compareTo(o.name);
 		if(0 == result) {
 			result = chunk.compareTo(o.chunk);

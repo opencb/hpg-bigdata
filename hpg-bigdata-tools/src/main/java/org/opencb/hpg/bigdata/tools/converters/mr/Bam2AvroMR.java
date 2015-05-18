@@ -26,6 +26,7 @@ import java.io.IOException;
 
 import org.apache.avro.mapred.AvroKey;
 import org.apache.avro.mapreduce.AvroJob;
+import org.apache.avro.mapreduce.AvroKeyOutputFormat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
@@ -44,28 +45,28 @@ import org.seqdoop.hadoop_bam.SAMRecordWritable;
 import org.seqdoop.hadoop_bam.util.WrapSeekable;
 
 public class Bam2AvroMR {
-	
-	public static class Bam2GaMapper extends Mapper<LongWritable, SAMRecordWritable, ReadAlignmentKey, SAMRecordWritable> {
+
+	public static class Bam2GaMapper extends Mapper<LongWritable, SAMRecordWritable, ChunkKey, SAMRecordWritable> {
 		@Override
 		public void map(LongWritable key, SAMRecordWritable value, Context context) throws IOException, InterruptedException {
-			ReadAlignmentKey newKey;
+			ChunkKey newKey;
 			
 			SAMRecord sam = value.get();
 			if (sam.getReadUnmappedFlag()) {
-				newKey = new ReadAlignmentKey(new String("*"), (long) 0);
+				newKey = new ChunkKey(new String("*"), (long) 0);
 			} else {
 				long start_chunk = sam.getAlignmentStart() / RegionDepthWritable.CHUNK_SIZE;
 				long end_chunk = sam.getAlignmentEnd() / RegionDepthWritable.CHUNK_SIZE;
-				newKey = new ReadAlignmentKey(sam.getReferenceName(), start_chunk); 
+				newKey = new ChunkKey(sam.getReferenceName(), start_chunk);
 				
 				context.write(newKey, value);
 			}
 		}
 	}
 
-	public static class Bam2GaReducer extends Reducer<ReadAlignmentKey, SAMRecordWritable, AvroKey<ReadAlignment>, NullWritable> {
-		
-		public void reduce(ReadAlignmentKey key, Iterable<SAMRecordWritable> values, Context context) throws IOException, InterruptedException {
+	public static class Bam2GaReducer extends Reducer<ChunkKey, SAMRecordWritable, AvroKey<ReadAlignment>, NullWritable> {
+
+		public void reduce(ChunkKey key, Iterable<SAMRecordWritable> values, Context context) throws IOException, InterruptedException {
 			SAMRecord sam;
 			SAMRecord2ReadAlignmentConverter converter = new SAMRecord2ReadAlignmentConverter();
 			
@@ -116,9 +117,10 @@ public class Bam2AvroMR {
 			FileOutputFormat.setOutputCompressorClass(job, CompressionUtils.getHadoopCodec(codecName));
 		}
 		
-		job.setMapOutputKeyClass(ReadAlignmentKey.class);
+		job.setMapOutputKeyClass(ChunkKey.class);
 		job.setMapOutputValueClass(SAMRecordWritable.class);
-		
+        job.setOutputFormatClass(AvroKeyOutputFormat.class);
+
 		
 /*		
 		job.setOutputFormatClass(AvroParquetOutputFormat.class);
