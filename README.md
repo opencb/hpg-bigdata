@@ -1,14 +1,41 @@
 # Overview
 This repository implements converters and tools for working with NGS data in HPC or Hadoop cluster
 
+### Documentation
+You can find HPG BigData documentation and tutorials at: https://github.com/opencb/hpg-bigdata/wiki.
 
-### Download and Building
+### Issues Tracking
+You can report bugs or request new features at [GitHub issue tracking](https://github.com/opencb/hpg-bigdata/issues).
+
+### Release Notes and Roadmap
+Releases notes are available at [GitHub releases](https://github.com/opencb/hpg-bigdata/releases).
+
+Roadmap is available at [GitHub milestones](https://github.com/opencb/hpg-bigdata/milestones). You can report bugs or request new features at [GitHub issue tracking](https://github.com/opencb/hpg-bigdata/issues).
+
+### Versioning
+HPG BigData is versioned following the rules from [Semantic versioning](http://semver.org/).
+
+### Maintainers
+We recommend to contact HPG BigData developers by writing to OpenCB mailing list opencb@googlegroups.com. The main developers and maintainers are:
+* Ignacio Medina (im411@cam.ac.uk) (_Founder and Project Leader_)
+* Joaquin Tarraga (jtarraga@cipf.es)
+* Jacobo Coll (jacobo.coll-moragon@genomicsengland.co.uk)
+
+##### Other Contributors
+* Matthias Haimel (mh719@cam.ac.uk)
+* Jose M. Mut (jmmut@ebi.ac.uk)
+
+##### Contributing
+HPG BigData is an open-source and collaborative project. We appreciate any help and feeback from users, you can contribute in many different ways such as simple bug reporting and feature request. Dependending on your skills you are more than welcome to develop client tools, new features or even fixing bugs.
+
+
+# How to build
 
 
     $ git clone https://github.com/opencb/hpg-bigdata.git
     $ ./build.sh
 
-##### Requirements
+### Requirements
 
   1. Java 1.8
   2. opencb/java-common-libs v3.0-SNAPSHOT
