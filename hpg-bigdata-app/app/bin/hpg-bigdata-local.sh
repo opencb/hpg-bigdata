@@ -20,9 +20,8 @@ if [ -z "$JAVACMD" ] ; then
   fi
 fi
 
-version=${hpg.version}
 native=${DIR}/../native
 
 export LD_LIBRARY_PATH=${DIR}/../libs/
 
-$JAVACMD $parallel -classpath ${DIR}/../libs/hpg-bigdata-app-${version}-jar-with-dependencies.jar org.opencb.hpg.bigdata.app.BigDataLocalMain $@
+$JAVACMD $parallel -classpath ${DIR}/../libs/*.jar org.opencb.hpg.bigdata.app.BigDataLocalMain $@

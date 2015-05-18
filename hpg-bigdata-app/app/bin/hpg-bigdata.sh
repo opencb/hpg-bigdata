@@ -15,9 +15,8 @@ if [ -z "$HADOOPCMD" ] ; then
   fi
 fi
 
-version=${hpg.version}
 native=${DIR}/../native
 
 export LD_LIBRARY_PATH=${DIR}/../libs/
 
-$HADOOPCMD jar ${DIR}/../libs/hpg-bigdata-app-${version}-jar-with-dependencies.jar $@
+$HADOOPCMD jar ${DIR}/../libs/*.jar $@

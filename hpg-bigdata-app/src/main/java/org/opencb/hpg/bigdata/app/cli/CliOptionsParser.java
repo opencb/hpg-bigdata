@@ -43,7 +43,7 @@ public class CliOptionsParser {
         convertCommandOptions = new ConvertCommandOptions();
         jcommander.addCommand(convertCommandOptions);
         if (hadoop) {
-            jcommander.setProgramName("bin/hpg-bigdata.sh");
+            jcommander.setProgramName("hpg-bigdata.sh");
             fastqCommandOptions = new FastqCommandOptions();
             bamCommandOptions = new BamCommandOptions();
             alignCommandOptions = new AlignCommandOptions();
@@ -52,7 +52,7 @@ public class CliOptionsParser {
             jcommander.addCommand(bamCommandOptions);
             jcommander.addCommand(alignCommandOptions);
         } else {    //local
-            jcommander.setProgramName("bin/hpg-bigdata-local.sh");
+            jcommander.setProgramName("hpg-bigdata-local.sh");
         }
     }
 

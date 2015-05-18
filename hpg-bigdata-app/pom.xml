@@ -50,11 +50,6 @@
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
             </resource>
-            <resource>
-                <directory>src/main/sh</directory>
-                <filtering>true</filtering>
-                <targetPath>${basedir}/../build</targetPath>
-            </resource>
         </resources>
 
 		<plugins>
