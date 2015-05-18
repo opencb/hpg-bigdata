@@ -25,13 +25,16 @@ import org.opencb.hpg.bigdata.app.cli.ConvertCommandExecutor;
 
 import com.beust.jcommander.ParameterException;
 
+import java.io.IOException;
+import java.util.Properties;
+
 /**
  * Created by imedina on 15/03/15.
  */
 public class BigDataMain {
 
     public static void main(String[] args) {    	
-        CliOptionsParser cliOptionsParser = new CliOptionsParser();
+        CliOptionsParser cliOptionsParser = new CliOptionsParser(true);
         
         if (args == null || args.length == 0) {
         	cliOptionsParser.printUsage();
@@ -49,10 +52,10 @@ public class BigDataMain {
         if (parsedCommand == null || parsedCommand.isEmpty()) {
             if (cliOptionsParser.getGeneralOptions().help) {
                 cliOptionsParser.printUsage();
-                System.exit(-1);
+                System.exit(0);
             }
             if (cliOptionsParser.getGeneralOptions().version) {
-                System.out.println("version = 3.1.0");
+                printVersion();
             }
         } else {
             CommandExecutor commandExecutor = null;
@@ -93,5 +96,18 @@ public class BigDataMain {
                 commandExecutor.execute();
             }
         }
+    }
+
+    public static void printVersion() {
+        Properties properties = new Properties();
+        try {
+            properties.load(BigDataMain.class.getClassLoader().getResourceAsStream("conf.properties"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        String version = properties.getProperty("HPG.BIGDATA.VERSION", "<unkwnown>");
+        System.out.println("HPG BigData v" + version);
+        System.out.println("");
+        System.out.println("Read more on https://github.com/opencb/hpg-bigdata");
     }
 }

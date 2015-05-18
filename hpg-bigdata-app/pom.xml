@@ -45,10 +45,23 @@
 		<sourceDirectory>src/main/java</sourceDirectory>
 		<testSourceDirectory>src/test/java</testSourceDirectory>
 
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+            <resource>
+                <directory>src/main/sh</directory>
+                <filtering>true</filtering>
+                <targetPath>${basedir}/../build</targetPath>
+            </resource>
+        </resources>
+
 		<plugins>
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
 				<configuration>
+                    <outputDirectory>../build/libs</outputDirectory>
 					<archive>
 						<manifest>
 							<mainClass>org.opencb.hpg.bigdata.app.BigDataMain</mainClass>
@@ -70,32 +83,6 @@
 					</execution>
 				</executions>
 			</plugin>
-<!-- 		<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>appassembler-maven-plugin</artifactId>
-				<version>1.9</version>
-				<executions>
-					<execution>
-						<phase>install</phase>
-						<goals>
-							<goal>assemble</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<repositoryName>libs</repositoryName>
-					<repositoryLayout>flat</repositoryLayout>
-					<useWildcardClassPath>true</useWildcardClassPath>
-					<extraJvmArguments>-Xms128m -Xmx4096m</extraJvmArguments>
-					<programs>
-						<program>
-							<name>bigdata.sh</name>
-							<mainClass>org.opencb.hpg.bigdata.app.BigDataMain</mainClass>
-						</program>
-					</programs>
-				</configuration>
-			</plugin>
-			 -->
 		</plugins>
 	</build>
 

@@ -33,24 +33,27 @@ public class CliOptionsParser {
     private ConvertCommandOptions convertCommandOptions;
     private AlignCommandOptions alignCommandOptions;
 
-    public CliOptionsParser() {
+    public CliOptionsParser(boolean hadoop) {
         generalOptions = new GeneralOptions();
 
         jcommander = new JCommander(generalOptions);
-        jcommander.setProgramName("hpg-bigdata.sh");
 
         commonCommandOptions = new CommonCommandOptions();
 
-        fastqCommandOptions = new FastqCommandOptions();
-        bamCommandOptions = new BamCommandOptions();
         convertCommandOptions = new ConvertCommandOptions();
-        alignCommandOptions = new AlignCommandOptions();
-
-        jcommander.addCommand(fastqCommandOptions);
-        jcommander.addCommand(bamCommandOptions);
         jcommander.addCommand(convertCommandOptions);
-        jcommander.addCommand(alignCommandOptions);
+        if (hadoop) {
+            jcommander.setProgramName("bin/hpg-bigdata.sh");
+            fastqCommandOptions = new FastqCommandOptions();
+            bamCommandOptions = new BamCommandOptions();
+            alignCommandOptions = new AlignCommandOptions();
 
+            jcommander.addCommand(fastqCommandOptions);
+            jcommander.addCommand(bamCommandOptions);
+            jcommander.addCommand(alignCommandOptions);
+        } else {    //local
+            jcommander.setProgramName("bin/hpg-bigdata-local.sh");
+        }
     }
 
     public void parse(String[] args) throws ParameterException {
