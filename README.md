@@ -30,20 +30,35 @@ HPG BigData is an open-source and collaborative project. We appreciate any help 
 
 
 # How to build
+HPG BigData is mainly developed in Java and it uses [Apache Maven](http://maven.apache.org/) as building tool. HPG BigData requires Java 8 and others OpenCB Java dependencies that can be found in [Maven Central Repository](http://search.maven.org/).
+
+Stable releases are merged and tagged at **_master_** branch, you are encourage to use latest stable release for production. Current active development is carried out at **_develop_** branch, only compilation is guaranteed and bugs are expected, use this branch for development or for testing new functionalities. Only dependencies of **_master_** branch are ensured to be deployed at [Maven Central Repository](http://search.maven.org/), **_develop_** branch may require users to download and install other active OpenCB repositories:
+* _GA4GH_: https://github.com/opencb/ga4gh (branch 'develop')
+* _java-common-libs_: https://github.com/opencb/java-common-libs (branch 'develop')
+
+### System requirements
+These are other requirements:
+
+* Java 1.8
+* cmake
+* Libraries: libz, libsnappy, liblzma, libncurses
 
 
-    $ git clone https://github.com/opencb/hpg-bigdata.git
-    $ ./build.sh
+### Cloning
+HPG BigData is an open-source and free project, you can download **_develop_** branch by executing:
 
-### Requirements
+    imedina@ivory:~$ git clone https://github.com/opencb/hpg-bigdata.git
+    Cloning into 'hpg-bigdata'...
+    remote: Counting objects: 3206, done.
+    remote: Compressing objects: 100% (118/118), done.
+    remote: Total 3206 (delta 47), reused 0 (delta 0), pack-reused 3039
+    Receiving objects: 100% (3206/3206), 11.54 MiB | 1.35 MiB/s, done.
+    Resolving deltas: 100% (913/913), done.
+    Checking connectivity... done.
 
-  1. Java 1.8
-  2. opencb/java-common-libs v3.0-SNAPSHOT
-  3. cmake
-  4. Libraries: libz, libsnappy, liblzma, libncurses
 
 ### Running
-  For command line options invoke:
+For command line options invoke:
 
     imedina@ivory:~$ ./hpg-bigdata.sh -h
 
