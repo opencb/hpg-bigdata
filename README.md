@@ -20,7 +20,11 @@ This repository implements converters and tools for working with NGS data in HPC
 
   For command line options invoke:
 
-    $./hpg-bigdata.sh -h
+```bash
+
+    ./hpg-bigdata.sh -h
+
+```
 
 ##### _convert_ command
 The command **convert** al lows you to save Fastq, SAM, BAM, VCF,... files as Avro files according to the GA4GH models. You can specify a compression method, e.g., deflate, snappy, bzip2.
@@ -62,5 +66,4 @@ The source files (Fastq, SAM, BAM...) have to be located in the local file syste
     $ ./hpg-bigdata.sh fastq --stats -i hdfs://test.fq.ga -o /tmp/stats-test.fq
     $ ./hpg-bigdata.sh fastq --kmers 7 -i hdfs://test.fq.ga -o /tmp/kmers-test.fq
     $ ./hpg-bigdata.sh fastq --stats --kmers 7 -i hdfs://test.fq.ga -o /tmp/stats-kmers-test.fq
-    
     
