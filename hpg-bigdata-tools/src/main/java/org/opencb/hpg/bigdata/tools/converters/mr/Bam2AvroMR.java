@@ -25,6 +25,7 @@ import htsjdk.samtools.seekablestream.SeekableStream;
 import java.io.IOException;
 
 import org.apache.avro.mapred.AvroKey;
+import org.apache.avro.mapred.AvroValue;
 import org.apache.avro.mapreduce.AvroJob;
 import org.apache.avro.mapreduce.AvroKeyOutputFormat;
 import org.apache.hadoop.conf.Configuration;
@@ -37,6 +38,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.ga4gh.models.ReadAlignment;
+import org.ga4gh.models.Variant;
 import org.opencb.hpg.bigdata.core.converters.SAMRecord2ReadAlignmentConverter;
 import org.opencb.hpg.bigdata.tools.io.RegionDepthWritable;
 import org.opencb.hpg.bigdata.tools.utils.CompressionUtils;
@@ -46,36 +48,34 @@ import org.seqdoop.hadoop_bam.util.WrapSeekable;
 
 public class Bam2AvroMR {
 
-	public static class Bam2GaMapper extends Mapper<LongWritable, SAMRecordWritable, ChunkKey, SAMRecordWritable> {
+	public static class Bam2GaMapper extends Mapper<LongWritable, SAMRecordWritable, ChunkKey, AvroValue<ReadAlignment>> {
 		@Override
 		public void map(LongWritable key, SAMRecordWritable value, Context context) throws IOException, InterruptedException {
 			ChunkKey newKey;
 			
 			SAMRecord sam = value.get();
 			if (sam.getReadUnmappedFlag()) {
-				newKey = new ChunkKey(new String("*"), (long) 0);
+				// do nothing
+				// newKey = new ChunkKey(new String("*"), (long) 0);
 			} else {
 				long start_chunk = sam.getAlignmentStart() / RegionDepthWritable.CHUNK_SIZE;
 				long end_chunk = sam.getAlignmentEnd() / RegionDepthWritable.CHUNK_SIZE;
 				newKey = new ChunkKey(sam.getReferenceName(), start_chunk);
-				
-				context.write(newKey, value);
+
+				SAMRecord2ReadAlignmentConverter converter = new SAMRecord2ReadAlignmentConverter();
+				ReadAlignment readAlignment = converter.forward(sam);
+
+				//context.write(newKey, value);
+				context.write(newKey, new AvroValue<>(readAlignment));
 			}
 		}
 	}
 
-	public static class Bam2GaReducer extends Reducer<ChunkKey, SAMRecordWritable, AvroKey<ReadAlignment>, NullWritable> {
+	public static class Bam2GaReducer extends Reducer<ChunkKey, AvroValue<ReadAlignment>, AvroKey<ReadAlignment>, NullWritable> {
 
-		public void reduce(ChunkKey key, Iterable<SAMRecordWritable> values, Context context) throws IOException, InterruptedException {
-			SAMRecord sam;
-			SAMRecord2ReadAlignmentConverter converter = new SAMRecord2ReadAlignmentConverter();
-			
-			for (SAMRecordWritable value : values) {
-				sam = value.get();
-				sam.setReferenceName(key.getName());
-				sam.setMateReferenceName(context.getConfiguration().get("" + sam.getMateReferenceIndex()));
-				ReadAlignment readAlignment = converter.forward(sam);
-				context.write(new AvroKey<ReadAlignment>(readAlignment), NullWritable.get());
+		public void reduce(ChunkKey key, Iterable<AvroValue<ReadAlignment>> values, Context context) throws IOException, InterruptedException {
+			for (AvroValue<ReadAlignment> value : values) {
+				context.write(new AvroKey<>(value.datum()), NullWritable.get());
 			}
 		}
 	}
@@ -105,8 +105,9 @@ public class Bam2AvroMR {
 		// parameters it sets
 		AvroJob.setOutputKeySchema(job, ReadAlignment.getClassSchema());
 		job.setOutputValueClass(NullWritable.class);
-				
-		// point to input data
+        AvroJob.setMapOutputValueSchema(job, ReadAlignment.getClassSchema());
+
+        // point to input data
 		FileInputFormat.setInputPaths(job, new Path(input));
 		job.setInputFormatClass(AnySAMInputFormat.class);
 		
@@ -116,23 +117,11 @@ public class Bam2AvroMR {
 			FileOutputFormat.setCompressOutput(job, true);
 			FileOutputFormat.setOutputCompressorClass(job, CompressionUtils.getHadoopCodec(codecName));
 		}
-		
-		job.setMapOutputKeyClass(ChunkKey.class);
-		job.setMapOutputValueClass(SAMRecordWritable.class);
         job.setOutputFormatClass(AvroKeyOutputFormat.class);
 
-		
-/*		
-		job.setOutputFormatClass(AvroParquetOutputFormat.class);
-		AvroParquetOutputFormat.setOutputPath(job, outputPath);
-		AvroParquetOutputFormat.setSchema(job, schema);
-		AvroParquetOutputFormat.setCompression(job, CompressionCodecName.SNAPPY);
-		AvroParquetOutputFormat.setCompressOutput(job, true);
+        job.setMapOutputKeyClass(ChunkKey.class);
+        job.setMapOutputValueClass(AvroValue.class);
 
-		// set a large block size to ensure a single row group.  see discussion
-		AvroParquetOutputFormat.setBlockSize(job, 500 * 1024 * 1024);
-*/
-		
 		job.setMapperClass(Bam2GaMapper.class);
 		job.setReducerClass(Bam2GaReducer.class);
 
