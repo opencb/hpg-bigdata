@@ -18,7 +18,7 @@ HPG BigData is versioned following the rules from [Semantic versioning](http://s
 ### Maintainers
 We recommend to contact HPG BigData developers by writing to OpenCB mailing list opencb@googlegroups.com. The main developers and maintainers are:
 * Ignacio Medina (im411@cam.ac.uk) (_Founder and Project Leader_)
-* Joaquin Tarraga (jtarraga@cipf.es)
+* Joaquín Tárraga (jtarraga@cipf.es)
 * Jacobo Coll (jacobo.coll-moragon@genomicsengland.co.uk)
 
 ##### Other Contributors
@@ -33,8 +33,11 @@ HPG BigData is an open-source and collaborative project. We appreciate any help 
 HPG BigData is mainly developed in Java and it uses [Apache Maven](http://maven.apache.org/) as building tool. HPG BigData requires Java 8 and others OpenCB Java dependencies that can be found in [Maven Central Repository](http://search.maven.org/).
 
 Stable releases are merged and tagged at **_master_** branch, you are encourage to use latest stable release for production. Current active development is carried out at **_develop_** branch, only compilation is guaranteed and bugs are expected, use this branch for development or for testing new functionalities. Only dependencies of **_master_** branch are ensured to be deployed at [Maven Central Repository](http://search.maven.org/), **_develop_** branch may require users to download and install other active OpenCB repositories:
-* _GA4GH_: https://github.com/opencb/ga4gh (branch 'develop')
+
+* _GA4GH_: https://github.com/opencb/ga4gh (branch 'master')
 * _java-common-libs_: https://github.com/opencb/java-common-libs (branch 'develop')
+
+To build the application, run `./build.sh` on the main folder. It will create a new folder **build**. Find the launch scripts on **build/bin**, and some examples on **buld/examples**.
 
 ### System requirements
 These are other requirements:
@@ -60,7 +63,9 @@ HPG BigData is an open-source and free project, you can download **_develop_** b
 ### Running
 For command line options invoke:
 
+    imedina@ivory:~$ cd build/bin
     imedina@ivory:~$ ./hpg-bigdata.sh -h
+    imedina@ivory:~$ ./hpg-bigdata-local.sh -h
 
 
 ##### _convert_ command
@@ -69,30 +74,30 @@ The source files (Fastq, SAM, BAM...) have to be located in the local file syste
   
   Some examples using the test files in the folder data:
    
-    $ ./hpg-bigdata.sh convert -c fastq2ga -i data/test.fq -o data/test.fq.ga -x snappy
-    $ ./hpg-bigdata.sh convert -c fastq2ga -i data/test.fq -o hdfs://test.fq.hdfs.ga -x snappy
+    $ ./hpg-bigdata-local.sh convert -c fastq2ga -i ../data/test.fq -o ../data/test.fq.avro -x snappy
+    $ ./hpg-bigdata.sh convert -c fastq2ga -i hdfs://../data/test.fq -o hdfs://test.fq.hdfs.avro -x snappy
     
-    $ ./hpg-bigdata.sh convert -c sam2ga -i data/test.sam -o data/test.sam.ga -x deflate
-    $ ./hpg-bigdata.sh convert -c sam2ga -i data/test.sam -o hdfs://test.sam.hdfs.ga -x deflate
+    $ ./hpg-bigdata-local.sh convert -c sam2ga -i ../data/test.sam -o ../data/test.sam.avro -x bzip2
+    $ ./hpg-bigdata.sh convert -c sam2ga -i hdfs://../data/test.sam -o hdfs://test.sam.hdfs.avro -x bzip2
     
-    $ ./hpg-bigdata.sh convert -c bam2ga -i data/test.bam -o data/test.bam.ga -x bzip2
-    $ ./hpg-bigdata.sh convert -c bam2ga -i data/test.bam -o hdfs://test.bam.hdfs.ga -x bzip2
+    $ ./hpg-bigdata-local.sh convert -c bam2ga -i ../data/test.bam -o ../data/test.bam.avro -x deflate
+    $ ./hpg-bigdata.sh convert -c bam2ga -i hdfs://../data/test.bam -o hdfs://test.bam.hdfs.avro -x deflate
 
-    $ ./hpg-bigdata.sh convert -c vcf2ga -i data/test.vcf.gz -o test.vcf.ga.avro -x snappy
-    $ ./hpg-bigdata.sh convert -c vcf2ga -i data/test.vcf.gz -o hdfs://test.vcf.gz.hdfs.ga.avro -x snappy
+    $ ./hpg-bigdata-local.sh convert -c vcf2ga -i ../data/test.vcf -o test.vcf.avro -x snappy
+    $ ./hpg-bigdata.sh convert -c vcf2ga -i hdfs://../data/test.vcf -o hdfs://test.vcf.gz.hdfs.avro -x snappy
 
   In addition, by using the command **convert**, you can save the Avro files as the original formats (Fastq, SAM, BAM...). In this case, the Avro files can be located both in the local file system and in the HDFS. 
   
   Some examples:
    
-    $ ./hpg-bigdata.sh convert -c ga2fastq -i data/test.fq.ga -o data/test.fq.ga.fq
-    $ ./hpg-bigdata.sh convert -c ga2fastq -i hdfs://test.fq.hdfs.ga -o data/test.fq.hdfs.ga.fq 
+    $ ./hpg-bigdata-local.sh convert -c ga2fastq -i ../data/test.fq.avro -o ../data/test.fq.avro.fq
+    $ ./hpg-bigdata.sh convert -c ga2fastq -i hdfs://../datat/est.fq.hdfs.avro -o ../data/test.fq.hdfs.avro.fq
     
-    $ ./hpg-bigdata.sh convert -c ga2sam -i data/test.sam.ga -o data/test.sam.ga.sam
-    $ ./hpg-bigdata.sh convert -c ga2sam -i hdfs://test.sam.hdfs.ga -o data/test.sam.hdfs.ga.sam
+    $ ./hpg-bigdata-local.sh convert -c ga2sam -i ../data/test.sam.avro -o ../data/test.sam.avro.sam
+    $ ./hpg-bigdata.sh convert -c ga2sam -i hdfs://../data/test.sam.hdfs.avro -o ../data/test.sam.hdfs.avro.sam
     
-    $ ./hpg-bigdata.sh convert -c ga2bam -i data/test.bam.ga -o data/test.sam.ga.bam
-    $ ./hpg-bigdata.sh convert -c ga2bam -i hdfs://test.bam.hdfs.ga -o data/test.bam.hdfs.ga.bam
+    $ ./hpg-bigdata-local.sh convert -c ga2bam -i ../data/test.bam.avro -o ../data/test.sam.avro.bam
+    $ ./hpg-bigdata.sh convert -c ga2bam -i hdfs://../data/test.bam.hdfs.avro -o ../data/test.bam.hdfs.avro.bam
    
 
 ##### _fastq_ command
