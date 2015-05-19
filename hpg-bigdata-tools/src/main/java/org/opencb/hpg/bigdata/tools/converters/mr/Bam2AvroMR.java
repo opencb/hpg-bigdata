@@ -98,7 +98,7 @@ public class Bam2AvroMR {
 			}			
 		}
 		
-		Job job = Job.getInstance(conf, "Bam2GaMR");		
+		Job job = Job.getInstance(conf, "Bam2AvroMR");
 		job.setJarByClass(Bam2AvroMR.class);
 
 		// We call setOutputSchema first so we can override the configuration

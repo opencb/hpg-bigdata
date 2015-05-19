@@ -4,7 +4,7 @@
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 ## Parallel threads for vcf2ga conversion using linux
-parallel="-Dga4gh.vcf2ga.parallel=4"
+parallel="-Dconvert.vcf2avro.parallel=4"
 
 # If a specific java binary isn't specified search for the standard 'java' binary
 if [ -z "$JAVACMD" ] ; then

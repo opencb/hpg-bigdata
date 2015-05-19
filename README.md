@@ -74,30 +74,30 @@ The source files (Fastq, SAM, BAM...) have to be located in the local file syste
   
   Some examples using the test files in the folder data:
    
-    $ ./hpg-bigdata-local.sh convert -c fastq2ga -i ../data/test.fq -o ../data/test.fq.avro -x snappy
-    $ ./hpg-bigdata.sh convert -c fastq2ga -i hdfs://../data/test.fq -o hdfs://test.fq.hdfs.avro -x snappy
+    $ ./hpg-bigdata-local.sh convert -c fastq2avro -i ../data/test.fq -o ../data/test.fq.avro -x snappy
+    $ ./hpg-bigdata.sh convert -c fastq2avro -i hdfs://../data/test.fq -o hdfs://test.fq.hdfs.avro -x snappy
     
-    $ ./hpg-bigdata-local.sh convert -c sam2ga -i ../data/test.sam -o ../data/test.sam.avro -x bzip2
-    $ ./hpg-bigdata.sh convert -c sam2ga -i hdfs://../data/test.sam -o hdfs://test.sam.hdfs.avro -x bzip2
+    $ ./hpg-bigdata-local.sh convert -c sam2avro -i ../data/test.sam -o ../data/test.sam.avro -x bzip2
+    $ ./hpg-bigdata.sh convert -c sam2avro -i hdfs://../data/test.sam -o hdfs://test.sam.hdfs.avro -x bzip2
     
-    $ ./hpg-bigdata-local.sh convert -c bam2ga -i ../data/test.bam -o ../data/test.bam.avro -x deflate
-    $ ./hpg-bigdata.sh convert -c bam2ga -i hdfs://../data/test.bam -o hdfs://test.bam.hdfs.avro -x deflate
+    $ ./hpg-bigdata-local.sh convert -c bam2avro -i ../data/test.bam -o ../data/test.bam.avro -x deflate
+    $ ./hpg-bigdata.sh convert -c bam2avro -i hdfs://../data/test.bam -o hdfs://test.bam.hdfs.avro -x deflate
 
-    $ ./hpg-bigdata-local.sh convert -c vcf2ga -i ../data/test.vcf -o test.vcf.avro -x snappy
-    $ ./hpg-bigdata.sh convert -c vcf2ga -i hdfs://../data/test.vcf -o hdfs://test.vcf.gz.hdfs.avro -x snappy
+    $ ./hpg-bigdata-local.sh convert -c vcf2avro -i ../data/test.vcf -o test.vcf.avro -x snappy
+    $ ./hpg-bigdata.sh convert -c vcf2avro -i hdfs://../data/test.vcf -o hdfs://test.vcf.gz.hdfs.avro -x snappy
 
   In addition, by using the command **convert**, you can save the Avro files as the original formats (Fastq, SAM, BAM...). In this case, the Avro files can be located both in the local file system and in the HDFS. 
   
   Some examples:
    
-    $ ./hpg-bigdata-local.sh convert -c ga2fastq -i ../data/test.fq.avro -o ../data/test.fq.avro.fq
-    $ ./hpg-bigdata.sh convert -c ga2fastq -i hdfs://../datat/est.fq.hdfs.avro -o ../data/test.fq.hdfs.avro.fq
+    $ ./hpg-bigdata-local.sh convert -c avro2fastq -i ../data/test.fq.avro -o ../data/test.fq.avro.fq
+    $ ./hpg-bigdata.sh convert -c avro2fastq -i hdfs://../datat/est.fq.hdfs.avro -o ../data/test.fq.hdfs.avro.fq
     
-    $ ./hpg-bigdata-local.sh convert -c ga2sam -i ../data/test.sam.avro -o ../data/test.sam.avro.sam
-    $ ./hpg-bigdata.sh convert -c ga2sam -i hdfs://../data/test.sam.hdfs.avro -o ../data/test.sam.hdfs.avro.sam
+    $ ./hpg-bigdata-local.sh convert -c avro2sam -i ../data/test.sam.avro -o ../data/test.sam.avro.sam
+    $ ./hpg-bigdata.sh convert -c avro2sam -i hdfs://../data/test.sam.hdfs.avro -o ../data/test.sam.hdfs.avro.sam
     
-    $ ./hpg-bigdata-local.sh convert -c ga2bam -i ../data/test.bam.avro -o ../data/test.sam.avro.bam
-    $ ./hpg-bigdata.sh convert -c ga2bam -i hdfs://../data/test.bam.hdfs.avro -o ../data/test.bam.hdfs.avro.bam
+    $ ./hpg-bigdata-local.sh convert -c avro2bam -i ../data/test.bam.avro -o ../data/test.sam.avro.bam
+    $ ./hpg-bigdata.sh convert -c avro2bam -i hdfs://../data/test.bam.hdfs.avro -o ../data/test.bam.hdfs.avro.bam
    
 
 ##### _fastq_ command

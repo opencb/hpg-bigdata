@@ -117,7 +117,7 @@ public class BamCommandExecutor extends CommandExecutor {
 		String out = PathUtils.clean(output);
 
 		if (!PathUtils.isHdfs(input)) {
-			logger.error("To run BAM stats, input files '{}' must be stored in the HDFS/Haddop. Use the command 'ga4gh bam2sa' to import your file.", input);
+			logger.error("To run BAM stats, input files '{}' must be stored in the HDFS/Haddop. Use the command 'convert bam2sa' to import your file.", input);
 			System.exit(-1);
 		}
 
@@ -134,7 +134,7 @@ public class BamCommandExecutor extends CommandExecutor {
 		String out = PathUtils.clean(output);
 
 		if (!PathUtils.isHdfs(input)) {
-			logger.error("To run BAM stats, input files '{}' must be stored in the HDFS/Hadoop. Use the command 'ga4gh bam2sa' to import your file.", input);
+			logger.error("To run BAM stats, input files '{}' must be stored in the HDFS/Hadoop. Use the command 'convert bam2sa' to import your file.", input);
 			System.exit(-1);
 		}
 
@@ -151,7 +151,7 @@ public class BamCommandExecutor extends CommandExecutor {
 		String out = PathUtils.clean(output);
 
 		if (!PathUtils.isHdfs(input)) {
-			logger.error("To run BAM stats, input files '{}' must be stored in the HDFS/Haddop. Use the command 'ga4gh bam2sa' to import your file.", input);
+			logger.error("To run BAM stats, input files '{}' must be stored in the HDFS/Haddop. Use the command 'convert bam2sa' to import your file.", input);
 			System.exit(-1);
 		}
 
@@ -173,7 +173,7 @@ public class BamCommandExecutor extends CommandExecutor {
 		String out = PathUtils.clean(output);
 
 		if (!PathUtils.isHdfs(input)) {
-			logger.error("To run BAM stats, input files '{}' must be stored in the HDFS/Haddop. Use the command 'ga4gh bam2sa' to import your file.", input);
+			logger.error("To run BAM stats, input files '{}' must be stored in the HDFS/Haddop. Use the command 'convert bam2sa' to import your file.", input);
 			System.exit(-1);
 		}
 

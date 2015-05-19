@@ -84,16 +84,16 @@ import org.opencb.hpg.bigdata.core.utils.ReadUtils;
 public class ConvertCommandExecutor extends CommandExecutor {
 
     public enum Conversion {
-        FASTQ_2_GA ("fastq2ga", "Save Fastq file as Global Alliance for Genomics and Health (ga4gh) in Avro format"),
-        GA_2_FASTQ ("ga2fastq", "Save Global Alliance for Genomics and Health (ga4gh) in Avro format as Fastq file"),
-        SAM_2_GA   ("sam2ga", "Save SAM file as Global Alliance for Genomics and Health (ga4gh) in Avro format"),
-        GA_2_SAM   ("ga2sam", "Save Global Alliance for Genomics and Health (ga4gh) in Avro format as SAM file"),
-        BAM_2_GA   ("bam2ga", "Save BAM file as Global Alliance for Genomics and Health (ga4gh) in Avro format"),
-        GA_2_BAM   ("ga2bam", "Save Global Alliance for Genomics and Health (ga4gh) in Avro format as BAM file"),
-        CRAM_2_GA  ("cram2ga", "Save CRAM file as Global Alliance for Genomics and Health (ga4gh) in Avro format"),
-        GA_2_CRAM  ("ga2cram", "Save Global Alliance for Genomics and Health (ga4gh) in Avro format as CRAM file"),
-        VCF_2_GA   ("vcf2ga", "Save VCF file as Global Alliance for Genomics and Health (ga4gh) in Avro format"),
-        AVRO_2_PARQUET   ("avro2parquet", "Save Avro file in Parquet format"),
+        FASTQ_2_AVRO ("fastq2avro", "Save Fastq file as Global Alliance for Genomics and Health (ga4gh) in Avro format"),
+        AVRO_2_FASTQ ("avro2fastq", "Save Global Alliance for Genomics and Health (ga4gh) in Avro format as Fastq file"),
+        SAM_2_AVRO ("sam2avro", "Save SAM file as Global Alliance for Genomics and Health (ga4gh) in Avro format"),
+        AVRO_2_SAM ("avro2sam", "Save Global Alliance for Genomics and Health (ga4gh) in Avro format as SAM file"),
+        BAM_2_AVRO ("bam2avro", "Save BAM file as Global Alliance for Genomics and Health (ga4gh) in Avro format"),
+        AVRO_2_BAM ("avro2bam", "Save Global Alliance for Genomics and Health (ga4gh) in Avro format as BAM file"),
+        CRAM_2_AVRO ("cram2avro", "Save CRAM file as Global Alliance for Genomics and Health (ga4gh) in Avro format"),
+        AVRO_2_CRAM ("avro2cram", "Save Global Alliance for Genomics and Health (ga4gh) in Avro format as CRAM file"),
+        VCF_2_AVRO ("vcf2avro", "Save VCF file as Global Alliance for Genomics and Health (ga4gh) in Avro format"),
+        AVRO_2_PARQUET ("avro2parquet", "Save Avro file in Parquet format"),
         ;
 
         final private String name;
@@ -123,14 +123,14 @@ public class ConvertCommandExecutor extends CommandExecutor {
             String res = "";
 
             Conversion[] valid = new Conversion[]{
-                    Conversion.FASTQ_2_GA ,
-                    Conversion.GA_2_FASTQ ,
-                    Conversion.SAM_2_GA ,
-                    Conversion.GA_2_SAM ,
-                    Conversion.BAM_2_GA ,
-                    Conversion.GA_2_BAM ,
-                    Conversion.CRAM_2_GA ,
-                    Conversion.VCF_2_GA,
+                    Conversion.FASTQ_2_AVRO,
+                    Conversion.AVRO_2_FASTQ,
+                    Conversion.SAM_2_AVRO,
+                    Conversion.AVRO_2_SAM,
+                    Conversion.BAM_2_AVRO,
+                    Conversion.AVRO_2_BAM,
+                    Conversion.CRAM_2_AVRO,
+                    Conversion.VCF_2_AVRO,
 //                Conversion.AVRO_2_PARQUET,
             };
 
@@ -159,56 +159,56 @@ public class ConvertCommandExecutor extends CommandExecutor {
 
 
 	/**
-	 * Parse specific 'ga4gh' command options
+	 * Parse specific 'convert' command options
 	 */
 	public void execute() {
-		logger.info("Executing {} CLI options", "ga4gh");
+		logger.info("Executing {} CLI options", "convert");
 
 		try {
 			switch (convertCommandOptions.conversion) {
-			case FASTQ_2_GA: {
+			case FASTQ_2_AVRO: {
 				if (convertCommandOptions.toParquet) {
 					logger.info("Invalid parameter 'parquet' compression value '{}'");
 					System.exit(-1);					
 				}
-				fastq2ga(convertCommandOptions.input, convertCommandOptions.output, convertCommandOptions.compression);
+				fastq2avro(convertCommandOptions.input, convertCommandOptions.output, convertCommandOptions.compression);
 				break;
 			}
-			case GA_2_FASTQ: {
-				ga2fastq(convertCommandOptions.input, convertCommandOptions.output);
+			case AVRO_2_FASTQ: {
+				avro2fastq(convertCommandOptions.input, convertCommandOptions.output);
 				break;
 			}
-			case SAM_2_GA: {
-				sam2ga(convertCommandOptions.input, convertCommandOptions.output, convertCommandOptions.compression);
+			case SAM_2_AVRO: {
+				sam2avro(convertCommandOptions.input, convertCommandOptions.output, convertCommandOptions.compression);
 				break;
 			}
-			case GA_2_SAM: {
-				ga2sam(convertCommandOptions.input, convertCommandOptions.output, SAM_FLAG);
+			case AVRO_2_SAM: {
+				avro2sam(convertCommandOptions.input, convertCommandOptions.output, SAM_FLAG);
 				break;
 			}
-			case BAM_2_GA: {
-				sam2ga(convertCommandOptions.input, convertCommandOptions.output, convertCommandOptions.compression);
+			case BAM_2_AVRO: {
+				sam2avro(convertCommandOptions.input, convertCommandOptions.output, convertCommandOptions.compression);
 				break;
 			}
-			case GA_2_BAM: {
-				ga2sam(convertCommandOptions.input, convertCommandOptions.output, BAM_FLAG);
+			case AVRO_2_BAM: {
+				avro2sam(convertCommandOptions.input, convertCommandOptions.output, BAM_FLAG);
 				break;
 			}
-			case CRAM_2_GA: {
-				cram2ga(convertCommandOptions.input, convertCommandOptions.output, convertCommandOptions.compression);
+			case CRAM_2_AVRO: {
+				cram2avro(convertCommandOptions.input, convertCommandOptions.output, convertCommandOptions.compression);
 				break;
 			}
 
-			case GA_2_CRAM: {
+			case AVRO_2_CRAM: {
 				System.out.println("Conversion '" + convertCommandOptions.conversion + "' not implemented yet.\nValid conversions are:\n" + Conversion.getValidConversionString());
 				/*
-				ga2sam(ga4ghCommandOptions.input, ga4ghCommandOptions.output, CRAM_FLAG);
+				avro2sam(ga4ghCommandOptions.input, ga4ghCommandOptions.output, CRAM_FLAG);
 				 */
 				break;
 			}
 
-            case VCF_2_GA: {
-                vcf2ga(convertCommandOptions.input, convertCommandOptions.output, convertCommandOptions.compression);
+            case VCF_2_AVRO: {
+                vcf2avro(convertCommandOptions.input, convertCommandOptions.output, convertCommandOptions.compression);
                 break;
             }
 
@@ -231,7 +231,7 @@ public class ConvertCommandExecutor extends CommandExecutor {
 	}
 
 
-    private void fastq2ga(String input, String output, String codecName) throws Exception {
+    private void fastq2avro(String input, String output, String codecName) throws Exception {
 		// clean paths
 		String in = PathUtils.clean(input);
 		String out = PathUtils.clean(output);
@@ -267,7 +267,7 @@ public class ConvertCommandExecutor extends CommandExecutor {
 		os.close();
 	}
 
-	private void ga2fastq(String input, String output) throws IOException {	
+	private void avro2fastq(String input, String output) throws IOException {
 		// clean paths
 		String in = PathUtils.clean(input);
 		String out = PathUtils.clean(output);
@@ -302,7 +302,7 @@ public class ConvertCommandExecutor extends CommandExecutor {
 		is.close();
 	}
 
-	private void sam2ga(String input, String output, String codecName) throws IOException {
+	private void sam2avro(String input, String output, String codecName) throws IOException {
 		// clean paths
 		String in = PathUtils.clean(input);
 		String out = PathUtils.clean(output);
@@ -310,7 +310,7 @@ public class ConvertCommandExecutor extends CommandExecutor {
 		if (PathUtils.isHdfs(input)) {
 			
 			if (!PathUtils.isHdfs(output)) {
-				logger.error("To run command sam2ga with HDFS input file, then output files '{}' must be stored in the HDFS/Haddop too.", output);
+				logger.error("To run command sam2avro with HDFS input file, then output files '{}' must be stored in the HDFS/Haddop too.", output);
 				System.exit(-1);
 			}
 
@@ -323,7 +323,7 @@ public class ConvertCommandExecutor extends CommandExecutor {
 			return;
 		} 
 		
-		if (!PathUtils.isHdfs(output) && convertCommandOptions.conversion.equals(Conversion.BAM_2_GA)) {
+		if (!PathUtils.isHdfs(output) && convertCommandOptions.conversion.equals(Conversion.BAM_2_AVRO)) {
 			System.loadLibrary("hpgbigdata");
 			new NativeSupport().bam2ga(in, out, convertCommandOptions.compression == null ? "snappy" : convertCommandOptions.compression);
 			return;
@@ -368,7 +368,7 @@ public class ConvertCommandExecutor extends CommandExecutor {
 		os.close();
 	}
 
-	private void ga2sam(String input, String output, int flag) throws IOException {
+	private void avro2sam(String input, String output, int flag) throws IOException {
 		// clean paths
 		String in = PathUtils.clean(input);
 		String out = PathUtils.clean(output);
@@ -447,7 +447,7 @@ public class ConvertCommandExecutor extends CommandExecutor {
 		is.close();
 	}
 
-	private void cram2ga(String input, String output, String codecName) throws IOException {
+	private void cram2avro(String input, String output, String codecName) throws IOException {
 		logger.error("Conversion '{}' not implemented yet !", convertCommandOptions.conversion);
 		System.exit(-1);
 
@@ -482,7 +482,7 @@ public class ConvertCommandExecutor extends CommandExecutor {
 	}
 
 
-    private void vcf2ga(String input, String output, String compression) throws Exception {
+    private void vcf2avro(String input, String output, String compression) throws Exception {
 //        String output = convertCommandOptions.output;
 //        String input = convertCommandOptions.input;
 //        String compression = convertCommandOptions.compression;
@@ -549,7 +549,7 @@ public class ConvertCommandExecutor extends CommandExecutor {
                 AvroFileWriter<Variant> writer = new AvroFileWriter<>(Variant.getClassSchema(), compression, os);
 
                 // main loop
-                int numTasks = Integer.getInteger("ga4gh.vcf2ga.parallel", 4);
+                int numTasks = Integer.getInteger("convert.vcf2avro.parallel", 4);
                 int batchSize = 1024 * 1024;  //Batch size in bytes
                 int capacity = numTasks + 1;
                 VariantConverterContext variantConverterContext = new VariantConverterContext();

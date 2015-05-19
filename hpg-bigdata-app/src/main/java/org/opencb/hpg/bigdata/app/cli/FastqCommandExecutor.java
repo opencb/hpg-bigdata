@@ -91,7 +91,7 @@ public class FastqCommandExecutor extends CommandExecutor {
 		String out = PathUtils.clean(output);
 
 		if (!PathUtils.isHdfs(input)) {
-			logger.error("To run fastq stats, input files '{}' must be stored in the HDFS/Haddop. Use the command 'ga4gh fastq2sa' to import your file.", input);
+			logger.error("To run fastq stats, input files '{}' must be stored in the HDFS/Haddop. Use the command 'convert fastq2sa' to import your file.", input);
 			System.exit(-1);
 		}
 
@@ -108,7 +108,7 @@ public class FastqCommandExecutor extends CommandExecutor {
 		String out = PathUtils.clean(output);
 
 		if (!PathUtils.isHdfs(input)) {
-			logger.error("To run fastq kmers, input files '{}' must be stored in the HDFS/Haddop. Use the command 'ga4gh fastq2sa' to import your file.", input);
+			logger.error("To run fastq kmers, input files '{}' must be stored in the HDFS/Haddop. Use the command 'convert fastq2sa' to import your file.", input);
 			System.exit(-1);
 		}
 

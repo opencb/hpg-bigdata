@@ -57,7 +57,7 @@ public class Fastq2AvroMR {
 	public static int convert(String input, String output, String codecName) throws Exception {
 		Configuration conf = new Configuration();
 
-		Job job = Job.getInstance(conf, "Fastq2GaMR");		
+		Job job = Job.getInstance(conf, "Fastq2AvroMR");
 		job.setJarByClass(Fastq2AvroMR.class);
 
 		// We call setOutputSchema first so we can override the configuration

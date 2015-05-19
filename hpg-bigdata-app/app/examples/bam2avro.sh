@@ -6,4 +6,4 @@ cmd_local=$DIR/../bin/hpg-bigdata-local.sh
 data=${DIR}/../data
 
 
-${cmd_local} convert -c bam2ga -i ${DIR}/../data/test.bam -o ${DIR}/../data/test.bam.avro
+${cmd_local} convert -c bam2avro -i ${DIR}/../data/test.bam -o ${DIR}/../data/test.bam.avro
