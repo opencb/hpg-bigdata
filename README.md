@@ -37,7 +37,7 @@ Stable releases are merged and tagged at **_master_** branch, you are encourage 
 * _GA4GH_: https://github.com/opencb/ga4gh (branch 'master')
 * _java-common-libs_: https://github.com/opencb/java-common-libs (branch 'develop')
 
-To build the application, run `./build.sh` on the main folder. It will create a new folder **build**. Find the launch scripts on **build/bin**, and some examples on **buld/examples**.
+To build the application, run `./build.sh` on the main folder. It will create a new folder **build**. Find the launch scripts on **build/bin**, and some examples on **build/examples**.
 
 ### System requirements
 These are other requirements:
