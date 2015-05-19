@@ -21,7 +21,7 @@
 	<parent>
 		<groupId>org.opencb.hpg</groupId>
 		<artifactId>hpg-bigdata</artifactId>
-		<version>0.1.0</version>
+		<version>0.5-SNAPSHOT</version>
 		<relativePath>..</relativePath>
 	</parent>
 
