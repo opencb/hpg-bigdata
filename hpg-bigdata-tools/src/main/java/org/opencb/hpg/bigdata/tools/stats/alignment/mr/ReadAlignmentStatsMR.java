@@ -39,14 +39,40 @@ public class ReadAlignmentStatsMR {
 
 	public static class ReadAlignmentStatsMapper extends Mapper<AvroKey<ReadAlignment>, NullWritable, LongWritable, ReadAlignmentStatsWritable> {
 
+		int newKey;
+		int numRecords;
+		final int MAX_NUM_AVRO_RECORDS = 1000;
+
+		public void setup(Context context) {
+			newKey = 0;
+			numRecords = 0;
+		}
+
 		@Override
 		public void map(AvroKey<ReadAlignment> key, NullWritable value, Context context) throws IOException, InterruptedException {
 			ReadAlignmentStatsWritable stats = new ReadAlignmentStatsWritable();
 			stats.updateByReadAlignment(key.datum());
-			context.write(new LongWritable(1), stats);
+			context.write(new LongWritable(newKey), stats);
+
+			// count records and update new key
+			numRecords++;
+			if (numRecords >= MAX_NUM_AVRO_RECORDS) {
+				newKey++;
+				numRecords = 0;
+			}
 		}
 	}
 
+	public static class ReadAlignmentStatsCombiner extends Reducer<LongWritable, ReadAlignmentStatsWritable, LongWritable, ReadAlignmentStatsWritable> {
+
+		public void reduce(LongWritable key, Iterable<ReadAlignmentStatsWritable> values, Context context) throws IOException, InterruptedException {
+			ReadAlignmentStatsWritable stats = new ReadAlignmentStatsWritable();
+			for (ReadAlignmentStatsWritable value : values) {
+				stats.update(value);
+			}
+			context.write(new LongWritable(1), stats);
+		}
+	}
 	public static class ReadAlignmentStatsReducer extends Reducer<LongWritable, ReadAlignmentStatsWritable, Text, NullWritable> {
 
 		public void reduce(LongWritable key, Iterable<ReadAlignmentStatsWritable> values, Context context) throws IOException, InterruptedException {
@@ -78,7 +104,10 @@ public class ReadAlignmentStatsMR {
 		job.setMapperClass(ReadAlignmentStatsMapper.class);
 		job.setMapOutputKeyClass(LongWritable.class);
 		job.setMapOutputValueClass(ReadAlignmentStatsWritable.class);
-		
+
+		// combiner
+		job.setCombinerClass(ReadAlignmentStatsCombiner.class);
+
 		// reducer
 		job.setReducerClass(ReadAlignmentStatsReducer.class);
 		job.setNumReduceTasks(1);
