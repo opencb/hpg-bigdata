@@ -22,6 +22,11 @@ fi
 
 native=${DIR}/../native
 
-export LD_LIBRARY_PATH=${DIR}/../libs/
+PLATFORM=`uname -s`
+if [[ "Darwin" == "$PLATFORM" ]]; then
+	export DYLD_LIBRARY_PATH=${DIR}/../libs/
+else
+	export LD_LIBRARY_PATH=${DIR}/../libs/
+fi
 
 $JAVACMD $parallel -classpath ${DIR}/../libs/*.jar org.opencb.hpg.bigdata.app.BigDataLocalMain $@

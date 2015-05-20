@@ -73,6 +73,11 @@
 			<name>Jacobo</name>
 			<email>jacobo167@gmail.com</email>
 		</developer>
+		<developer>
+			<id>mh11</id>
+			<name>Matthias</name>
+			<email>mh719+git@cam.ac.uk</email>
+		</developer>
 	</developers>
 
 	<mailingLists>
