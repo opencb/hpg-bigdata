@@ -73,6 +73,7 @@ public class ReadAlignmentStatsMR {
 			context.write(new LongWritable(1), stats);
 		}
 	}
+
 	public static class ReadAlignmentStatsReducer extends Reducer<LongWritable, ReadAlignmentStatsWritable, Text, NullWritable> {
 
 		public void reduce(LongWritable key, Iterable<ReadAlignmentStatsWritable> values, Context context) throws IOException, InterruptedException {

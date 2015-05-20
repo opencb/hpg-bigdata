@@ -32,6 +32,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.opencb.hpg.bigdata.core.models.Read;
+import org.opencb.hpg.bigdata.tools.io.ReadAlignmentStatsWritable;
 import org.opencb.hpg.bigdata.tools.io.ReadStatsWritable;
 
 public class ReadStatsMR {
@@ -39,10 +40,15 @@ public class ReadStatsMR {
 	public static class ReadStatsMapper extends Mapper<AvroKey<Read>, NullWritable, LongWritable, ReadStatsWritable> {
 		
 		private static int kvalue = 0;
-		
+		int newKey;
+		int numRecords;
+		final int MAX_NUM_AVRO_RECORDS = 1000;
+
 		public  void setup(Context context) {
 			Configuration conf = context.getConfiguration();
 			kvalue = Integer.parseInt(conf.get("kvalue"));
+			newKey = 0;
+			numRecords = 0;
 		}
 		
 		@Override
@@ -50,13 +56,39 @@ public class ReadStatsMR {
 			ReadStatsWritable stats = new ReadStatsWritable();
 			stats.kmers.kvalue = kvalue;
 			stats.updateByRead(key.datum());
+			context.write(new LongWritable(newKey), stats);
+
+			// count records and update new key
+			numRecords++;
+			if (numRecords >= MAX_NUM_AVRO_RECORDS) {
+				newKey++;
+				numRecords = 0;
+			}
+		}
+	}
+
+	public static class ReadStatsCombiner extends Reducer<LongWritable, ReadStatsWritable, LongWritable, ReadStatsWritable> {
+
+		private static int kvalue = 0;
+
+		public  void setup(Context context) {
+			Configuration conf = context.getConfiguration();
+			kvalue = Integer.parseInt(conf.get("kvalue"));
+		}
+
+		public void reduce(LongWritable key, Iterable<ReadStatsWritable> values, Context context) throws IOException, InterruptedException {
+			ReadStatsWritable stats = new ReadStatsWritable();
+			stats.kmers.kvalue = kvalue;
+			for (ReadStatsWritable value : values) {
+				stats.update(value);
+			}
 			context.write(new LongWritable(1), stats);
 		}
 	}
 
 	public static class ReadStatsReducer extends Reducer<LongWritable, ReadStatsWritable, Text, NullWritable> {
 
-		private static int kvalue = 0;
+		private static int kvalue;
 		
 		public  void setup(Context context) {
 			Configuration conf = context.getConfiguration();
@@ -94,7 +126,10 @@ public class ReadStatsMR {
 		job.setMapperClass(ReadStatsMapper.class);
 		job.setMapOutputKeyClass(LongWritable.class);
 		job.setMapOutputValueClass(ReadStatsWritable.class);
-		
+
+		// combiner
+		job.setCombinerClass(ReadStatsCombiner.class);
+
 		// reducer
 		job.setReducerClass(ReadStatsReducer.class);
 		job.setNumReduceTasks(1);
