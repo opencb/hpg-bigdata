@@ -38,7 +38,6 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.ga4gh.models.ReadAlignment;
-import org.ga4gh.models.Variant;
 import org.opencb.hpg.bigdata.core.converters.SAMRecord2ReadAlignmentConverter;
 import org.opencb.hpg.bigdata.tools.io.RegionDepthWritable;
 import org.opencb.hpg.bigdata.tools.utils.CompressionUtils;
@@ -84,8 +83,7 @@ public class Bam2AvroMR {
 		Configuration conf = new Configuration();
 
 		{
-			// read header, and save sequence index/name in config 
-			
+			// read header, and save sequence index/name in conf
 			final Path p = new Path(input);
 			final SeekableStream sam = WrapSeekable.openPath(conf, p);
 			final SAMFileReader reader = new SAMFileReader(sam, false);
