@@ -56,6 +56,7 @@ import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.util.ToolRunner;
 import org.opencb.hpg.bigdata.core.models.Read;
 import org.ga4gh.models.ReadAlignment;
 import org.ga4gh.models.Variant;
@@ -68,6 +69,7 @@ import org.opencb.hpg.bigdata.core.converters.SAMRecord2ReadAlignmentConverter;
 import org.opencb.hpg.bigdata.core.converters.variation.VariantAvroEncoderTask;
 import org.opencb.hpg.bigdata.core.converters.variation.VariantConverterContext;
 import org.opencb.hpg.bigdata.tools.converters.mr.Bam2AvroMR;
+import org.opencb.hpg.bigdata.tools.converters.mr.Variant2HbaseMR;
 import org.opencb.hpg.bigdata.core.io.VcfBlockIterator;
 import org.opencb.hpg.bigdata.core.io.avro.AvroFileWriter;
 import org.opencb.hpg.bigdata.core.io.avro.AvroWriter;
@@ -93,6 +95,7 @@ public class ConvertCommandExecutor extends CommandExecutor {
         CRAM_2_AVRO ("cram2avro", "Save CRAM file as Global Alliance for Genomics and Health (ga4gh) in Avro format"),
         AVRO_2_CRAM ("avro2cram", "Save Global Alliance for Genomics and Health (ga4gh) in Avro format as CRAM file"),
         VCF_2_AVRO ("vcf2avro", "Save VCF file as Global Alliance for Genomics and Health (ga4gh) in Avro format"),
+        VARIANT_2_HBASE ("variant2hbase", "Load ga4gh avro variant file into HBase"),
         AVRO_2_PARQUET ("avro2parquet", "Save Avro file in Parquet format"),
         ;
 
@@ -131,6 +134,7 @@ public class ConvertCommandExecutor extends CommandExecutor {
                     Conversion.AVRO_2_BAM,
                     Conversion.CRAM_2_AVRO,
                     Conversion.VCF_2_AVRO,
+                    Conversion.VARIANT_2_HBASE
 //                Conversion.AVRO_2_PARQUET,
             };
 
@@ -209,6 +213,10 @@ public class ConvertCommandExecutor extends CommandExecutor {
 
             case VCF_2_AVRO: {
                 vcf2avro(convertCommandOptions.input, convertCommandOptions.output, convertCommandOptions.compression);
+                break;
+            }
+            case VARIANT_2_HBASE: {
+                variant2hbase(convertCommandOptions.input, convertCommandOptions.output);
                 break;
             }
 
@@ -482,7 +490,15 @@ public class ConvertCommandExecutor extends CommandExecutor {
 	}
 
 
-    private void vcf2avro(String input, String output, String compression) throws Exception {
+    private void variant2hbase(String input, String output) throws Exception {
+		Variant2HbaseMR mr = new Variant2HbaseMR();
+		String[] args = new String[]{"-i",input,"-t","VariantLoad"};
+		int run = ToolRunner.run(mr, args);
+		if(run != 0)
+			throw new IllegalStateException(String.format("Variant 2 HBase finished with %s !", run));
+	}
+
+	private void vcf2avro(String input, String output, String compression) throws Exception {
 //        String output = convertCommandOptions.output;
 //        String input = convertCommandOptions.input;
 //        String compression = convertCommandOptions.compression;
