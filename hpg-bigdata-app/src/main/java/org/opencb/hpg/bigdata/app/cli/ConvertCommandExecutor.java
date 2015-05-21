@@ -43,6 +43,8 @@ import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -492,8 +494,12 @@ public class ConvertCommandExecutor extends CommandExecutor {
 
     private void variant2hbase(String input, String output) throws Exception {
 		Variant2HbaseMR mr = new Variant2HbaseMR();
-		String[] args = new String[]{"-i",input,"-t","VariantLoad"};
-		int run = ToolRunner.run(mr, args);
+		List<String> args = new ArrayList<String>(Arrays.asList(new String[]{"-i",input,"-t","VariantLoad"}));
+		if(StringUtils.isNotBlank(output)){
+			args.add("-o");
+			args.add(output);
+		}
+		int run = ToolRunner.run(mr, args.toArray(new String[0]));
 		if(run != 0)
 			throw new IllegalStateException(String.format("Variant 2 HBase finished with %s !", run));
 	}

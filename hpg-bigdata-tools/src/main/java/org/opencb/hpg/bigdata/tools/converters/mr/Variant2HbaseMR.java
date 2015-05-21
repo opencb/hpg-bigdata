@@ -10,6 +10,7 @@ import org.apache.avro.mapred.AvroKey;
 import org.apache.avro.mapreduce.AvroJob;
 import org.apache.avro.mapreduce.AvroKeyInputFormat;
 import org.apache.commons.lang.NotImplementedException;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -155,11 +156,14 @@ public class Variant2HbaseMR extends Mapper<AvroKey<Variant>, NullWritable, Immu
 	public int run(String[] args) throws Exception {
 		String tablename = "test_table";
 		String inputfile = null;
+		String output = null;
 		for(int i = 0; i < args.length; ++i){
 			if(args[i] == "-t")
 				tablename = args[++i];
 			if(args[i] == "-i")
 				inputfile = args[++i];
+			if(args[i] == "-o")
+				output = args[++i];
 		}
 
 	    setConf(HBaseConfiguration.addHbaseResources(getConf()));
@@ -172,19 +176,27 @@ public class Variant2HbaseMR extends Mapper<AvroKey<Variant>, NullWritable, Immu
 		AvroJob.setInputKeySchema(job, Variant.getClassSchema());
 		FileInputFormat.setInputPaths(job, new Path(inputfile));
 		job.setInputFormatClass(AvroKeyInputFormat.class);
-	    
 
 		// output -> Hbase
 		TableMapReduceUtil.initTableReducerJob(tablename, null, job);
 		job.setNumReduceTasks(0); // Write to table directory
+		if(StringUtils.isNotBlank(output)){
+			Configuration conf = getConf();
+			conf.set("hbase.zookeeper.quorum", output);
+			conf.set("hbase.master", output+":60000");
+			setConf(conf);
+		}
 	    
 		// mapper
 		job.setMapperClass(Variant2HbaseMR.class);
 		
 		// create Table if needed
 		createTableIfNeeded(tablename);
-		
-		return job.waitForCompletion(true)?0:1;
+		long start = System.currentTimeMillis();
+		boolean completed = job.waitForCompletion(true);
+		long end = System.currentTimeMillis();
+		getLog().info(String.format("Loading run for %s ms!", (end-start)));
+		return completed?0:1;
 	}
 
 	/**
