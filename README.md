@@ -43,7 +43,7 @@ To build the application, run `./build.sh` on the main folder. It will create a 
 These are other requirements:
 
 * Java 1.8
-* cmake
+* cmake, g++
 * Libraries: libz, libsnappy, liblzma, libncurses
 
 

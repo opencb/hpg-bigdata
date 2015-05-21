@@ -75,12 +75,15 @@ import org.opencb.hpg.bigdata.tools.converters.mr.Variant2HbaseMR;
 import org.opencb.hpg.bigdata.core.io.VcfBlockIterator;
 import org.opencb.hpg.bigdata.core.io.avro.AvroFileWriter;
 import org.opencb.hpg.bigdata.core.io.avro.AvroWriter;
+import org.opencb.hpg.bigdata.tools.converters.mr.Fastq2AvroMR;
 import org.opencb.hpg.bigdata.tools.converters.mr.Vcf2AvroMR;
 import org.opencb.hpg.bigdata.tools.io.parquet.ParquetConverter;
 import org.opencb.hpg.bigdata.tools.io.parquet.ParquetMR;
 import org.opencb.hpg.bigdata.core.utils.AvroUtils;
 import org.opencb.hpg.bigdata.core.utils.PathUtils;
 import org.opencb.hpg.bigdata.core.utils.ReadUtils;
+
+import static org.opencb.hpg.bigdata.tools.converters.mr.Fastq2AvroMR.*;
 
 /**
  * Created by imedina on 16/03/15.
@@ -247,8 +250,19 @@ public class ConvertCommandExecutor extends CommandExecutor {
 		String out = PathUtils.clean(output);
 
 		if (PathUtils.isHdfs(input)) {
-			logger.error("Conversion '{}' with HDFS as input '{}', not implemented yet !", convertCommandOptions.conversion, input);
-			System.exit(-1);
+
+			if (!PathUtils.isHdfs(output)) {
+				logger.error("To run command sam2avro with HDFS input file, then output files '{}' must be stored in the HDFS/Haddop too.", output);
+				System.exit(-1);
+			}
+
+			try {
+				Fastq2AvroMR.run(in, out, codecName);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
+			return;
 		}
 
 		// reader
