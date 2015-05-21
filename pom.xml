@@ -40,6 +40,8 @@
 		<biodata.version>0.4-SNAPSHOT</biodata.version>
 		<datastore.version>0.4-SNAPSHOT</datastore.version>
 		<commons-lib.version>3.0-SNAPSHOT</commons-lib.version>
+		<hbase.version>1.0.1</hbase.version>
+		<hadoop.version>2.6.0</hadoop.version>
 		<compileSource>1.8</compileSource>
 		<build.dir>build</build.dir>
 	</properties>
@@ -111,7 +113,38 @@
 				<artifactId>commons-lib</artifactId>
 				<version>${commons-lib.version}</version>
 			</dependency>
-
+			<dependency>
+				<groupId>org.apache.hbase</groupId>
+				<artifactId>hbase-common</artifactId>
+				<version>${hbase.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.hbase</groupId>
+				<artifactId>hbase-client</artifactId>
+				<version>${hbase.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.hbase</groupId>
+				<artifactId>hbase-server</artifactId>
+				<version>${hbase.version}</version>
+<!-- 				<exclusions> -->
+<!-- 					<exclusion> -->
+<!-- 						<groupId>org.apache.hadoop</groupId> -->
+<!-- 						<artifactId>hadoop-client</artifactId> -->
+<!-- 					</exclusion> -->
+<!-- 				</exclusions> -->
+			</dependency>
+			<dependency>
+				<groupId>org.apache.hadoop</groupId>
+				<artifactId>hadoop-client</artifactId>
+				<version>${hadoop.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.hadoop</groupId>
+				<artifactId>hadoop-common</artifactId>
+				<version>${hadoop.version}</version>
+			</dependency>
+			
 			<!-- General dependencies -->
 			<dependency>
 				<groupId>com.google.guava</groupId>
