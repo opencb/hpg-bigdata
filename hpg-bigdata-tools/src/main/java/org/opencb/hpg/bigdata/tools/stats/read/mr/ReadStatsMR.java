@@ -31,8 +31,9 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.opencb.hpg.bigdata.core.models.Read;
-import org.opencb.hpg.bigdata.tools.io.ReadAlignmentStatsWritable;
+import org.opencb.biodata.models.sequence.Read;
+import org.opencb.biodata.tools.sequence.tasks.SequenceStats;
+import org.opencb.biodata.tools.sequence.tasks.SequenceStatsCalculator;
 import org.opencb.hpg.bigdata.tools.io.ReadStatsWritable;
 
 public class ReadStatsMR {
@@ -53,10 +54,8 @@ public class ReadStatsMR {
 		
 		@Override
 		public void map(AvroKey<Read> key, NullWritable value, Context context) throws IOException, InterruptedException {
-			ReadStatsWritable stats = new ReadStatsWritable();
-			stats.kmers.kvalue = kvalue;
-			stats.updateByRead(key.datum());
-			context.write(new LongWritable(newKey), stats);
+            SequenceStats stats = new SequenceStatsCalculator().compute(key.datum(), kvalue);
+			context.write(new LongWritable(newKey), new ReadStatsWritable(stats));
 
 			// count records and update new key
 			numRecords++;
@@ -69,37 +68,37 @@ public class ReadStatsMR {
 
 	public static class ReadStatsCombiner extends Reducer<LongWritable, ReadStatsWritable, LongWritable, ReadStatsWritable> {
 
-		private static int kvalue = 0;
+        private static int kvalue = 0;
 
-		public  void setup(Context context) {
-			Configuration conf = context.getConfiguration();
-			kvalue = Integer.parseInt(conf.get("kvalue"));
-		}
+        public  void setup(Mapper.Context context) {
+            Configuration conf = context.getConfiguration();
+            kvalue = Integer.parseInt(conf.get("kvalue"));
+        }
 
 		public void reduce(LongWritable key, Iterable<ReadStatsWritable> values, Context context) throws IOException, InterruptedException {
-			ReadStatsWritable stats = new ReadStatsWritable();
-			stats.kmers.kvalue = kvalue;
+            SequenceStats stats = new SequenceStats(kvalue);
+            SequenceStatsCalculator calculator = new SequenceStatsCalculator();
 			for (ReadStatsWritable value : values) {
-				stats.update(value);
+                calculator.update(value.getStats(), stats);
 			}
-			context.write(new LongWritable(1), stats);
+			context.write(new LongWritable(1), new ReadStatsWritable(stats));
 		}
 	}
 
 	public static class ReadStatsReducer extends Reducer<LongWritable, ReadStatsWritable, Text, NullWritable> {
 
-		private static int kvalue;
-		
-		public  void setup(Context context) {
-			Configuration conf = context.getConfiguration();
-			kvalue = Integer.parseInt(conf.get("kvalue"));
-		}
+        private static int kvalue = 0;
+
+        public  void setup(Mapper.Context context) {
+            Configuration conf = context.getConfiguration();
+            kvalue = Integer.parseInt(conf.get("kvalue"));
+        }
 
 		public void reduce(LongWritable key, Iterable<ReadStatsWritable> values, Context context) throws IOException, InterruptedException {
-			ReadStatsWritable stats = new ReadStatsWritable();
-			stats.kmers.kvalue = kvalue;
+            SequenceStats stats = new SequenceStats(kvalue);
+            SequenceStatsCalculator calculator = new SequenceStatsCalculator();
 			for (ReadStatsWritable value : values) {
-				stats.update(value);
+                calculator.update(value.getStats(), stats);
 			}
 			context.write(new Text(stats.toJSON()), NullWritable.get());
 		}
@@ -113,10 +112,10 @@ public class ReadStatsMR {
 		job.setJarByClass(ReadStatsMR.class);
 
 		// input
-		AvroJob.setInputKeySchema(job, Read.getClassSchema());
 		FileInputFormat.setInputPaths(job, new Path(input));
 		job.setInputFormatClass(AvroKeyInputFormat.class);
-				
+		AvroJob.setInputKeySchema(job, Read.SCHEMA$);
+
 		// output
 		FileOutputFormat.setOutputPath(job, new Path(output));
 		job.setOutputKeyClass(ReadStatsWritable.class);

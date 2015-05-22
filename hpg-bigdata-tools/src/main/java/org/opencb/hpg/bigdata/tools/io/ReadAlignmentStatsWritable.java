@@ -68,8 +68,8 @@ public class ReadAlignmentStatsWritable extends ReadAlignmentStats implements Wr
 			out.writeLong(cu.getOperationLength());
 		}
 */		
-		ReadStatsWritable aux = new ReadStatsWritable(readStats);
-		aux.write(out);
+		//ReadStatsWritable aux = new ReadStatsWritable(readStats);
+		//aux.write(out);
 	}
 
 	@Override
@@ -113,8 +113,8 @@ public class ReadAlignmentStatsWritable extends ReadAlignmentStats implements Wr
 			cigar.add(cu);
 		}
 */
-		ReadStatsWritable aux = new ReadStatsWritable();
-		aux.readFields(in);
-		readStats.set(aux);
+		//ReadStatsWritable aux = new ReadStatsWritable();
+		//aux.readFields(in);
+		//readStats.set(aux);
 	}
 }

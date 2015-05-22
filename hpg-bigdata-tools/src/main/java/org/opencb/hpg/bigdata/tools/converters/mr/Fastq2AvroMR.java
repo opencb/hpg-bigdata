@@ -33,9 +33,8 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.io.Text;
 
-import org.opencb.hpg.bigdata.core.models.Read;
+import org.opencb.biodata.models.sequence.Read;
 import org.opencb.hpg.bigdata.tools.utils.CompressionUtils;
-import org.seqdoop.hadoop_bam.FastqInputFormat;
 import org.seqdoop.hadoop_bam.SequencedFragment;
 
 public class Fastq2AvroMR {
@@ -65,9 +64,9 @@ public class Fastq2AvroMR {
 
 		// We call setOutputSchema first so we can override the configuration
 		// parameters it sets
-		AvroJob.setOutputKeySchema(job, Read.getClassSchema());
+		AvroJob.setOutputKeySchema(job, Read.SCHEMA$);
 		job.setOutputValueClass(NullWritable.class);
-		AvroJob.setMapOutputValueSchema(job, Read.getClassSchema());
+		AvroJob.setMapOutputValueSchema(job, Read.SCHEMA$);
 
 		// point to input data
 		FileInputFormat.setInputPaths(job, new Path(input));

@@ -34,6 +34,11 @@
 			<groupId>org.opencb.ga4gh</groupId>
 			<artifactId>ga4gh</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.opencb.biodata</groupId>
+			<artifactId>biodata-models</artifactId>
+			<version>0.5-SNAPSHOT</version>
+		</dependency>
         <dependency>
             <groupId>org.opencb.commons</groupId>
             <artifactId>commons-lib</artifactId>
@@ -65,6 +70,22 @@
 			<groupId>org.apache.avro</groupId>
 			<artifactId>avro-ipc</artifactId>
 			<version>1.7.7</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.opencb.biodata</groupId>
+			<artifactId>biodata-tools</artifactId>
+			<version>0.5-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>org.opencb.biodata</groupId>
+			<artifactId>biodata-models</artifactId>
+			<version>0.5-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>org.opencb.biodata</groupId>
+			<artifactId>biodata-formats</artifactId>
+			<version>0.5-SNAPSHOT</version>
 		</dependency>
 
 		<dependency>

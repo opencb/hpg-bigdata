@@ -22,40 +22,47 @@ import java.io.IOException;
 import java.util.HashMap;
 
 import org.apache.hadoop.io.Writable;
-import org.opencb.hpg.bigdata.core.stats.ReadStats;
+import org.opencb.biodata.tools.sequence.tasks.SequenceInfo;
+import org.opencb.biodata.tools.sequence.tasks.SequenceStats;
 
-public class ReadStatsWritable extends ReadStats implements Writable {
+public class ReadStatsWritable implements Writable {
 
-	public ReadStatsWritable() {
-		super();
+	public SequenceStats stats;
+
+	public ReadStatsWritable() { }
+
+	public ReadStatsWritable(SequenceStats stats) {	setStats(stats); }
+
+	public SequenceStats getStats() {
+		return stats;
 	}
 
-	public ReadStatsWritable(ReadStats readStats) {
-		super(readStats);
+	public void setStats(SequenceStats stats) {
+		this.stats = stats;
 	}
 
 	@Override
 	public void write(DataOutput out) throws IOException {
-		out.writeInt(numSeqs);
-		out.writeInt(numA);
-		out.writeInt(numT);
-		out.writeInt(numG);
-		out.writeInt(numC);
-		out.writeInt(numN);
-		out.writeInt(minSeqLength);
-		out.writeInt(maxSeqLength);
-		out.writeInt(accSeqQual);
+		out.writeInt(stats.numSeqs);
+		out.writeInt(stats.numA);
+		out.writeInt(stats.numT);
+		out.writeInt(stats.numG);
+		out.writeInt(stats.numC);
+		out.writeInt(stats.numN);
+		out.writeInt(stats.minSeqLength);
+		out.writeInt(stats.maxSeqLength);
+		out.writeInt(stats.accSeqQual);
 		
-		out.writeInt(lengthMap.size());
-		for(int key:lengthMap.keySet()) {
+		out.writeInt(stats.lengthMap.size());
+		for(int key:stats.lengthMap.keySet()) {
 			out.writeInt(key);
-			out.writeInt(lengthMap.get(key));		
+			out.writeInt(stats.lengthMap.get(key));
 		}
 
-		out.writeInt(infoMap.size());
-		for(int key:infoMap.keySet()) {
+		out.writeInt(stats.infoMap.size());
+		for(int key:stats.infoMap.keySet()) {
 			out.writeInt(key);
-			final Info info = infoMap.get(key);
+			final SequenceInfo info = stats.infoMap.get(key);
 			out.writeInt(info.numA);
 			out.writeInt(info.numT);
 			out.writeInt(info.numG);
@@ -67,41 +74,43 @@ public class ReadStatsWritable extends ReadStats implements Writable {
 		
 		// I don't knwo why it does not work
 		// new FastqKmersWritable(kmers).write(out);
-		out.writeInt(kmers.kvalue);
+		out.writeInt(stats.kmers.kvalue);
 		
-		out.writeInt(kmers.kmersMap.size());
-		for(String key:kmers.kmersMap.keySet()) {
+		out.writeInt(stats.kmers.kmersMap.size());
+		for(String key:stats.kmers.kmersMap.keySet()) {
 			out.writeUTF(key);
-			out.writeInt(kmers.kmersMap.get(key));		
+			out.writeInt(stats.kmers.kmersMap.get(key));
 		}
 	}
 
 	@Override
 	public void readFields(DataInput in) throws IOException {
 		int size, key;
-		Info info;
+		SequenceInfo info;
 
-		numSeqs = in.readInt();
-		numA = in.readInt();
-		numT = in.readInt();
-		numG = in.readInt();
-		numC = in.readInt();
-		numN = in.readInt();
-		minSeqLength = in.readInt();
-		maxSeqLength = in.readInt();
-		accSeqQual = in.readInt();
+		stats = new SequenceStats();
+
+		stats.numSeqs = in.readInt();
+		stats.numA = in.readInt();
+		stats.numT = in.readInt();
+		stats.numG = in.readInt();
+		stats.numC = in.readInt();
+		stats.numN = in.readInt();
+		stats.minSeqLength = in.readInt();
+		stats.maxSeqLength = in.readInt();
+		stats.accSeqQual = in.readInt();
 		
 		size = in.readInt();
-		lengthMap = new HashMap<Integer, Integer>(size);
+		stats.lengthMap = new HashMap<Integer, Integer>(size);
 		for (int i = 0; i < size; i++) {
-			lengthMap.put(in.readInt(), in.readInt());
+			stats.lengthMap.put(in.readInt(), in.readInt());
 		}
 
 		size = in.readInt();
-		infoMap = new HashMap<Integer, Info>(size);
+		stats.infoMap = new HashMap<Integer, SequenceInfo>(size);
 		for (int i = 0; i < size; i++) {
 			key = in.readInt();
-			info = new Info();
+			info = new SequenceInfo();
 			info.numA = in.readInt();
 			info.numT = in.readInt();
 			info.numG = in.readInt();
@@ -109,17 +118,17 @@ public class ReadStatsWritable extends ReadStats implements Writable {
 			info.numN = in.readInt();
 			info.numQual = in.readInt();
 			info.accQual = in.readInt();
-			infoMap.put(key, info);
+			stats.infoMap.put(key, info);
 		}
 		
 		// I don't knwo why it does not work
 		//new FastqKmersWritable(kmers).readFields(in);
-		kmers.kvalue = in.readInt();
+		stats.kmers.kvalue = in.readInt();
 		
 		size = in.readInt();
-		kmers.kmersMap = new HashMap<String, Integer>(size);
+		stats.kmers.kmersMap = new HashMap<String, Integer>(size);
 		for (int i = 0; i < size; i++) {
-			kmers.kmersMap.put(in.readUTF(), in.readInt());
+			stats.kmers.kmersMap.put(in.readUTF(), in.readInt());
 		}
 	}
 }

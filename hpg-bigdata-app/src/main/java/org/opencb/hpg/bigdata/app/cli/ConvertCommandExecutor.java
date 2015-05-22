@@ -57,9 +57,9 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.util.ToolRunner;
-import org.opencb.hpg.bigdata.core.models.Read;
 import org.ga4gh.models.ReadAlignment;
 import org.ga4gh.models.Variant;
+import org.opencb.biodata.models.sequence.Read;
 import org.opencb.commons.io.DataReader;
 import org.opencb.commons.run.ParallelTaskRunner;
 import org.opencb.hpg.bigdata.core.NativeSupport;
@@ -250,7 +250,7 @@ public class ConvertCommandExecutor extends CommandExecutor {
 		if (PathUtils.isHdfs(input)) {
 
 			if (!PathUtils.isHdfs(output)) {
-				logger.error("To run command sam2avro with HDFS input file, then output files '{}' must be stored in the HDFS/Haddop too.", output);
+				logger.error("To run command sam2avro with HDFS input file, then import output files '{}' must be stored in the HDFS/Haddop too.", output);
 				System.exit(-1);
 			}
 

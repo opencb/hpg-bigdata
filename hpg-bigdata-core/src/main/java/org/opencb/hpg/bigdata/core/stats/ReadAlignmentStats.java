@@ -22,6 +22,7 @@ import java.util.List;
 import org.ga4gh.models.CigarUnit;
 import org.ga4gh.models.LinearAlignment;
 import org.ga4gh.models.ReadAlignment;
+import org.opencb.biodata.tools.sequence.tasks.SequenceStats;
 
 public class ReadAlignmentStats {
 
@@ -49,7 +50,7 @@ public class ReadAlignmentStats {
 //	public long pos;
 //	public List<CigarUnit> cigar;
 
-	public ReadStats readStats;
+	//public SequenceStats readStats;
 
 
 	public ReadAlignmentStats () {
@@ -77,7 +78,7 @@ public class ReadAlignmentStats {
 //		pos = 0;
 //		cigar = null;
 		
-		readStats = new ReadStats();
+		//readStats = new SequenceStats();
 	}
 
 	public void update(ReadAlignmentStats stats) {
@@ -117,7 +118,7 @@ public class ReadAlignmentStats {
 		}
 
 		
-		readStats.update(stats.readStats);
+		//readStats.update(stats.readStats);
 	}
 
 	public void updateByReadAlignment(ReadAlignment ra) {
@@ -212,7 +213,7 @@ public class ReadAlignmentStats {
 			numUnmapped++;
 		}
 
-		readStats.updateBySequences2(ra.getAlignedSequence().toString(), ra.getAlignedQuality());		
+		//readStats.updateBySequences2(ra.getAlignedSequence().toString(), ra.getAlignedQuality());
 	}
 
 	public String toJSON() {
@@ -258,7 +259,7 @@ public class ReadAlignmentStats {
 			res.append("]");
 		}
 
-		res.append(", \"read_stats\": " + readStats.toJSON());
+		//res.append(", \"read_stats\": " + readStats.toJSON());
 		res.append("}");
 		return res.toString();
 	}

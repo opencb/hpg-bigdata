@@ -21,40 +21,47 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.HashMap;
 
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
-import org.opencb.hpg.bigdata.core.stats.ReadKmers;
+import org.opencb.biodata.tools.sequence.tasks.SequenceKmers;
 
-public class ReadKmersWritable extends ReadKmers implements Writable {
-	
-	public ReadKmersWritable() {
-		super();
+public class ReadKmersWritable implements Writable {
+
+	public SequenceKmers kmers;
+
+	public ReadKmersWritable() { }
+
+	public ReadKmersWritable(SequenceKmers kmers) {
+		setKmers(kmers);
 	}
-	
-	public ReadKmersWritable(ReadKmers kmers) {
-		kvalue = kmers.kvalue;
-		kmersMap = kmers.kmersMap;
+
+	public SequenceKmers getKmers() {
+		return kmers;
+	}
+
+	public void setKmers(SequenceKmers kmers) {
+		this.kmers = kmers;
 	}
 
 	@Override
 	public void write(DataOutput out) throws IOException {
-		out.writeInt(kvalue);
+		out.writeInt(kmers.kvalue);
 		
-		out.writeInt(kmersMap.size());
-		for(String key:kmersMap.keySet()) {
+		out.writeInt(kmers.kmersMap.size());
+		for(String key:kmers.kmersMap.keySet()) {
 			out.writeUTF(key);
-			out.writeInt(kmersMap.get(key));		
+			out.writeInt(kmers.kmersMap.get(key));
 		}
 	}
 
 	@Override
 	public void readFields(DataInput in) throws IOException {
-		kvalue = in.readInt();
+
+		kmers = new SequenceKmers(in.readInt());
 
 		int size = in.readInt();
-		kmersMap = new HashMap<String, Integer>(size);
+		kmers.kmersMap = new HashMap<String, Integer>(size);
 		for (int i = 0; i < size; i++) {
-			kmersMap.put(in.readUTF(), in.readInt());
+			kmers.kmersMap.put(in.readUTF(), in.readInt());
 		}
 	}
 }
