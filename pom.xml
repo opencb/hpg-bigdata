@@ -144,7 +144,7 @@
 				<artifactId>hadoop-common</artifactId>
 				<version>${hadoop.version}</version>
 			</dependency>
-			
+
 			<!-- General dependencies -->
 			<dependency>
 				<groupId>com.google.guava</groupId>
@@ -172,6 +172,13 @@
 				<version>4.12</version>
 				<scope>test</scope>
 			</dependency>
+<!-- 			<dependency> -->
+<!-- 				<groupId>jdk.tools</groupId> -->
+<!-- 				<artifactId>jdk.tools</artifactId> -->
+<!-- 				<version>${compileSource}</version> -->
+<!-- 				<scope>system</scope> -->
+<!-- 				<systemPath>${java.home}/lib/tools.jar</systemPath> -->
+<!-- 			</dependency> -->
 		</dependencies>
 	</dependencyManagement>
 
