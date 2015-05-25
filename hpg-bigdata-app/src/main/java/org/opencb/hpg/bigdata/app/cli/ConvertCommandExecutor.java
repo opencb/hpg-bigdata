@@ -151,7 +151,7 @@ public class ConvertCommandExecutor extends CommandExecutor {
 
         }
     }
-	private final static String SAM_HEADER_SUFFIX = ".header";
+	public final static String SAM_HEADER_SUFFIX = ".header";
 
 	private final static int SAM_FLAG  = 0;
 	private final static int BAM_FLAG  = 1;
