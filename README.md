@@ -36,6 +36,7 @@ Stable releases are merged and tagged at **_master_** branch, you are encourage 
 
 * _GA4GH_: https://github.com/opencb/ga4gh (branch 'master')
 * _java-common-libs_: https://github.com/opencb/java-common-libs (branch 'develop')
+* _biodata_: https://github.com/opencb/biodata (branch 'develop')
 
 To build the application, run `./build.sh` on the main folder. It will create a new folder **build**. Find the launch scripts on **build/bin**, and some examples on **build/examples**.
 
@@ -108,7 +109,15 @@ The source files (Fastq, SAM, BAM...) have to be located in the local file syste
     $ ./hpg-bigdata.sh fastq --stats -i hdfs://test.fq.ga -o /tmp/stats-test.fq
     $ ./hpg-bigdata.sh fastq --kmers 7 -i hdfs://test.fq.ga -o /tmp/kmers-test.fq
     $ ./hpg-bigdata.sh fastq --stats --kmers 7 -i hdfs://test.fq.ga -o /tmp/stats-kmers-test.fq
-    
+
+##### _bam_ command
+  The command **bam** allows you to compute some statistical values for a given BAM file that must be stored in the Haddop/HDFS environment, and according to the GA4GH Avro models (Check the command **convert**)
+
+  Some examples:
+
+    $ ./hpg-bigdata.sh bam --command stats -i hdfs://test.bam.hdfs.avro -o /tmp/bam-stats
+
+
 # Supporters
 JetBrains is supporting this open source project with:
 
