@@ -1,10 +1,5 @@
 package org.opencb.hpg.bigdata.tools.converters.mr;
 
-import htsjdk.samtools.SAMFileHeader;
-import htsjdk.samtools.SAMFileReader;
-import htsjdk.samtools.SAMSequenceRecord;
-import htsjdk.samtools.seekablestream.SeekableStream;
-import htsjdk.variant.variantcontext.Genotype;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFHeader;
 import org.apache.avro.mapred.AvroKey;
@@ -12,11 +7,8 @@ import org.apache.avro.mapred.AvroValue;
 import org.apache.avro.mapreduce.AvroJob;
 import org.apache.avro.mapreduce.AvroKeyOutputFormat;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hdfs.DFSInputStream;
-import org.apache.hadoop.hdfs.client.HdfsDataInputStream;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Writable;
@@ -26,26 +18,20 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.ga4gh.models.CallSet;
-import org.ga4gh.models.ReadAlignment;
 import org.ga4gh.models.Variant;
 import org.ga4gh.models.VariantSet;
+import org.opencb.biodata.tools.alignment.tasks.RegionDepth;
 import org.opencb.hpg.bigdata.core.converters.FullVcfCodec;
 import org.opencb.hpg.bigdata.core.converters.variation.Genotype2CallSet;
 import org.opencb.hpg.bigdata.core.converters.variation.VariantContext2VariantConverter;
 import org.opencb.hpg.bigdata.core.converters.variation.VariantConverterContext;
 import org.opencb.hpg.bigdata.core.io.VcfBlockIterator;
-import org.opencb.hpg.bigdata.tools.io.RegionDepthWritable;
 import org.opencb.hpg.bigdata.tools.utils.CompressionUtils;
-import org.seqdoop.hadoop_bam.AnySAMInputFormat;
-import org.seqdoop.hadoop_bam.SAMRecordWritable;
 import org.seqdoop.hadoop_bam.VCFInputFormat;
 import org.seqdoop.hadoop_bam.VariantContextWritable;
-import org.seqdoop.hadoop_bam.util.WrapSeekable;
 
 import java.io.*;
-import java.nio.file.Paths;
 import java.util.List;
-import java.util.zip.GZIPInputStream;
 
 /**
  * Created by hpccoll1 on 18/05/15.
@@ -112,8 +98,8 @@ public class Vcf2AvroMR {
             ChunkKey newKey;
 
             VariantContext variantContext = value.get();
-            long start_chunk = variantContext.getStart() / RegionDepthWritable.CHUNK_SIZE;
-            long end_chunk = variantContext.getEnd() / RegionDepthWritable.CHUNK_SIZE;
+            long start_chunk = variantContext.getStart() / RegionDepth.CHUNK_SIZE;
+            long end_chunk = variantContext.getEnd() / RegionDepth.CHUNK_SIZE;
             newKey = new ChunkKey(variantContext.getContig(), start_chunk);
             Variant variant = converter.forward(variantContext);
             context.write(newKey, new AvroValue<>(variant));

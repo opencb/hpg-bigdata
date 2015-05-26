@@ -27,6 +27,8 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.ga4gh.models.LinearAlignment;
 import org.ga4gh.models.ReadAlignment;
+import org.opencb.biodata.tools.alignment.tasks.RegionDepth;
+import org.opencb.biodata.tools.alignment.tasks.RegionDepthCalculator;
 import org.opencb.hpg.bigdata.tools.converters.mr.ChunkKey;
 import org.opencb.hpg.bigdata.tools.io.RegionDepthWritable;
 
@@ -44,18 +46,21 @@ public class ReadAlignmentDepthMR {
 
 			if (la == null) {
 				newKey = new ChunkKey(new String("*"), (long) 0);
-				newValue = new RegionDepthWritable("null", 0, 0, 0);
+				newValue = new RegionDepthWritable(new RegionDepth("*", 0, 0, 0));
 			} else {
-				long start_chunk = la.getPosition().getPosition() / RegionDepthWritable.CHUNK_SIZE;
-				long end_chunk = (la.getPosition().getPosition() + ra.getAlignedSequence().length())  / RegionDepthWritable.CHUNK_SIZE;
+				long start_chunk = la.getPosition().getPosition() / RegionDepth.CHUNK_SIZE;
+				long end_chunk = (la.getPosition().getPosition() + ra.getAlignedSequence().length())  / RegionDepth.CHUNK_SIZE;
 				if (start_chunk != end_chunk) {
 					//System.out.println("-----------> chunks (start, end) = (" + start_chunk + ", " + end_chunk + ")");
 					//System.exit(-1);
 				}
 				newKey = new ChunkKey(la.getPosition().getReferenceName().toString(), start_chunk);
 
-				newValue = new RegionDepthWritable(newKey.getName(), la.getPosition().getPosition(), start_chunk, ra.getAlignedSequence().length());
-				newValue.update(la.getPosition().getPosition(), la.getCigar());
+				RegionDepthCalculator calculator = new RegionDepthCalculator();
+				RegionDepth regionDepth = calculator.compute(ra);
+				newValue = new RegionDepthWritable(regionDepth);
+				//newValue = new RegionDepthWritable(newKey.getName(), la.getPosition().getPosition(), start_chunk, ra.getAlignedSequence().length());
+				//newValue.update(la.getPosition().getPosition(), la.getCigar());
 
 				//System.out.println("map : " + newKey.toString() + ", chrom. length = " + context.getConfiguration().get(newKey.getName()));
 			}
@@ -65,12 +70,12 @@ public class ReadAlignmentDepthMR {
 
 	public static class ReadAlignmentDepthReducer extends Reducer<ChunkKey, RegionDepthWritable, Text, NullWritable> {
 
-		public HashMap<String, HashMap<Long, RegionDepthWritable>> regions = null;
+		public HashMap<String, HashMap<Long, RegionDepth>> regions = null;
 		public HashMap<String, Long> accDepth = null;
 
 		public void setup(Context context) throws IOException, InterruptedException {
-			regions = new HashMap<String, HashMap<Long, RegionDepthWritable>>();
-			accDepth = new HashMap<String, Long>();
+			regions = new HashMap<>();
+			accDepth = new HashMap<>();
 		}
 
 		public void cleanup(Context context) throws IOException, InterruptedException {
@@ -99,42 +104,46 @@ public class ReadAlignmentDepthMR {
 		}
 
 		public void reduce(ChunkKey key, Iterable<RegionDepthWritable> values, Context context) throws IOException, InterruptedException {
-			//System.out.println("reduce : " + key.toString());
 			if (context.getConfiguration().get(key.getName()) == null) {
 				System.out.println("skipping unknown key (name, chunk) = (" + key.getName() + ", " + key.getChunk() + ")");
 				return;
 			}
 
-			int size = RegionDepthWritable.CHUNK_SIZE;
-			if (Integer.parseInt(context.getConfiguration().get(key.getName())) / size == key.getChunk()) {
-				size = Integer.parseInt(context.getConfiguration().get(key.getName())) % size;
+			int size = RegionDepth.CHUNK_SIZE;
+			int chromLength = Integer.parseInt(context.getConfiguration().get(key.getName()));
+			if ( chromLength / size == key.getChunk()) {
+				size = chromLength % size;
 			}
-			RegionDepthWritable currRegionDepth = new RegionDepthWritable(key.getName(), key.getChunk() * RegionDepthWritable.CHUNK_SIZE, key.getChunk(), size);
+			RegionDepth currRegionDepth = new RegionDepth(key.getName(), key.getChunk() * RegionDepth.CHUNK_SIZE, key.getChunk(), size);
 
 			long chunk;
-			RegionDepthWritable pending = null;
-			HashMap<Long, RegionDepthWritable> map = null;
+			RegionDepth pending = null;
+			HashMap<Long, RegionDepth> map = null;
+
+			RegionDepth regionDepth;
+			RegionDepthCalculator calculator = new RegionDepthCalculator();
 
 			for (RegionDepthWritable value: values) {
-				if (value.size > 0) {
+				regionDepth = value.getRegionDepth();
+				if (regionDepth.size > 0) {
 
-					currRegionDepth.merge(value);
+					calculator.update(value.getRegionDepth(), currRegionDepth);
 
-					if (value.size > RegionDepthWritable.CHUNK_SIZE) {
+					if (regionDepth.size > RegionDepth.CHUNK_SIZE) {
 						// we must split the current RegionDepth and add a pending RegionDepth
-						long endChunk = (value.position + value.size) / RegionDepthWritable.CHUNK_SIZE;
-						for (chunk = value.chunk + 1 ; chunk < endChunk ; chunk++) {
+						long endChunk = (regionDepth.position + regionDepth.size) / RegionDepth.CHUNK_SIZE;
+						for (chunk = regionDepth.chunk + 1 ; chunk < endChunk ; chunk++) {
 							if ((map = regions.get(currRegionDepth.chrom)) == null) {
 								// no pending regions for this chrom, create it
-								map = new HashMap<Long, RegionDepthWritable> ();
+								map = new HashMap<>();
 								regions.put(currRegionDepth.chrom, map);
 							}
 							if ((pending = map.get(chunk)) == null) {
 								// there are not pending regions on this chunk
-								pending = new RegionDepthWritable(key.getName(), chunk * RegionDepthWritable.CHUNK_SIZE, chunk, RegionDepthWritable.CHUNK_SIZE);
+								pending = new RegionDepth(key.getName(), chunk * RegionDepth.CHUNK_SIZE, chunk, RegionDepth.CHUNK_SIZE);
 								map.put(chunk, pending);
 							}
-							pending.mergeChunk(value, chunk);
+							calculator.updateChunk(regionDepth, chunk, pending);
 						}
 					}
 				}
@@ -144,7 +153,7 @@ public class ReadAlignmentDepthMR {
 			chunk = currRegionDepth.chunk;
 			if ((map = regions.get(currRegionDepth.chrom)) != null) {
 				if ((pending = map.get(chunk)) != null) {
-					currRegionDepth.merge(pending);
+					calculator.update(pending, currRegionDepth);
 					map.remove(chunk);
 				}
 			}

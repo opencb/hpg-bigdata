@@ -41,8 +41,8 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.ga4gh.models.ReadAlignment;
+import org.opencb.biodata.tools.alignment.tasks.RegionDepth;
 import org.opencb.hpg.bigdata.core.converters.SAMRecord2ReadAlignmentConverter;
-import org.opencb.hpg.bigdata.tools.io.RegionDepthWritable;
 import org.opencb.hpg.bigdata.tools.utils.CompressionUtils;
 import org.seqdoop.hadoop_bam.AnySAMInputFormat;
 import org.seqdoop.hadoop_bam.SAMRecordWritable;
@@ -60,8 +60,8 @@ public class Bam2AvroMR {
 				// do nothing
 				// newKey = new ChunkKey(new String("*"), (long) 0);
 			} else {
-				long start_chunk = sam.getAlignmentStart() / RegionDepthWritable.CHUNK_SIZE;
-				long end_chunk = sam.getAlignmentEnd() / RegionDepthWritable.CHUNK_SIZE;
+				long start_chunk = sam.getAlignmentStart() / RegionDepth.CHUNK_SIZE;
+				long end_chunk = sam.getAlignmentEnd() / RegionDepth.CHUNK_SIZE;
 				newKey = new ChunkKey(sam.getReferenceName(), start_chunk);
 
 				SAMRecord2ReadAlignmentConverter converter = new SAMRecord2ReadAlignmentConverter();
