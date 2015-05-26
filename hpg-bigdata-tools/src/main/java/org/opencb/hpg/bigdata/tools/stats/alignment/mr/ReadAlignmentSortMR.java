@@ -43,7 +43,7 @@ public class ReadAlignmentSortMR {
 			ChunkKey newKey;
 			LinearAlignment la = (LinearAlignment) key.datum().getAlignment();
 			if (la == null) {
-				newKey = new ChunkKey(new String("unmapped"), (long) 0);
+				newKey = new ChunkKey(new String("*"), (long) 0);
 			} else {
 				newKey = new ChunkKey(la.getPosition().getReferenceName().toString(), la.getPosition().getPosition());
 			}

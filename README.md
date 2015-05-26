@@ -115,8 +115,8 @@ The source files (Fastq, SAM, BAM...) have to be located in the local file syste
 
   Some examples:
 
-    $ ./hpg-bigdata.sh bam --command stats -i hdfs://test.bam.hdfs.avro -o /tmp/bam-stats
-    $ ./hpg-bigdata.sh bam --command depth -i hdfs://test.bam.hdfs.avro -o /tmp/bam-stats
+    $ ./hpg-bigdata.sh bam --command stats -i hdfs:///test.bam.avro/part-r-00000.avro -o /tmp/bam-stats
+    $ ./hpg-bigdata.sh bam --command depth -i hdfs:///test.bam.avro/part-r-00000.avro -o /tmp/bam-stats
 
 
 # Supporters
