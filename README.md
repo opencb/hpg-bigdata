@@ -111,11 +111,12 @@ The source files (Fastq, SAM, BAM...) have to be located in the local file syste
     $ ./hpg-bigdata.sh fastq --stats --kmers 7 -i hdfs://test.fq.ga -o /tmp/stats-kmers-test.fq
 
 ##### _bam_ command
-  The command **bam** allows you to compute some statistical values for a given BAM file that must be stored in the Haddop/HDFS environment, and according to the GA4GH Avro models (Check the command **convert**)
+  The command **bam** allows you to compute some statistical values and the coverage or depth for a given BAM file that must be stored in the Haddop/HDFS environment, and according to the GA4GH Avro models (Check the command **convert**).
 
   Some examples:
 
     $ ./hpg-bigdata.sh bam --command stats -i hdfs://test.bam.hdfs.avro -o /tmp/bam-stats
+    $ ./hpg-bigdata.sh bam --command depth -i hdfs://test.bam.hdfs.avro -o /tmp/bam-stats
 
 
 # Supporters
