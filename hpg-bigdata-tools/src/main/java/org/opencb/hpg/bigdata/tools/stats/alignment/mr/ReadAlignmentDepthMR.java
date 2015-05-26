@@ -18,6 +18,7 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -29,7 +30,10 @@ import org.ga4gh.models.LinearAlignment;
 import org.ga4gh.models.ReadAlignment;
 import org.opencb.biodata.tools.alignment.tasks.RegionDepth;
 import org.opencb.biodata.tools.alignment.tasks.RegionDepthCalculator;
+import org.opencb.biodata.tools.sequence.tasks.SequenceStats;
+import org.opencb.biodata.tools.sequence.tasks.SequenceStatsCalculator;
 import org.opencb.hpg.bigdata.tools.converters.mr.ChunkKey;
+import org.opencb.hpg.bigdata.tools.io.ReadStatsWritable;
 import org.opencb.hpg.bigdata.tools.io.RegionDepthWritable;
 
 public class ReadAlignmentDepthMR {
@@ -65,6 +69,23 @@ public class ReadAlignmentDepthMR {
 				//System.out.println("map : " + newKey.toString() + ", chrom. length = " + context.getConfiguration().get(newKey.getName()));
 			}
 			context.write(newKey, newValue);
+		}
+	}
+
+	public static class ReadAlignmentDepthCombiner extends Reducer<ChunkKey, RegionDepthWritable, ChunkKey, RegionDepthWritable> {
+
+		public void reduce(ChunkKey key, Iterable<RegionDepthWritable> values, Context context) throws IOException, InterruptedException {
+            RegionDepth regionDepth;
+            if (key.getName().equals("*")) {
+                regionDepth = new RegionDepth("*", 0, 0, 0);
+            } else {
+                regionDepth = new RegionDepth(key.getName(), key.getChunk() * RegionDepth.CHUNK_SIZE, key.getChunk(), RegionDepth.CHUNK_SIZE);
+                RegionDepthCalculator calculator = new RegionDepthCalculator();
+                for (RegionDepthWritable value : values) {
+                    calculator.update(value.getRegionDepth(), regionDepth);
+                }
+            }
+			context.write(key, new RegionDepthWritable(regionDepth));
 		}
 	}
 
@@ -212,7 +233,10 @@ public class ReadAlignmentDepthMR {
 		job.setMapOutputKeyClass(ChunkKey.class);
 		job.setMapOutputValueClass(RegionDepthWritable.class);
 
-		// reducer
+        // combiner
+        job.setCombinerClass(ReadAlignmentDepthCombiner.class);
+
+        // reducer
 		job.setReducerClass(ReadAlignmentDepthReducer.class);
 		job.setNumReduceTasks(1);
 
