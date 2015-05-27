@@ -348,7 +348,10 @@ public class ConvertCommandExecutor extends CommandExecutor {
 		} 
 		
 		if (!PathUtils.isHdfs(output) && convertCommandOptions.conversion.equals(Conversion.BAM_2_AVRO)) {
-			System.loadLibrary("hpgbigdata");
+            System.out.println("Loading library hpgbigdata...");
+            System.out.println("\tjava.libary.path = " + System.getProperty("java.library.path"));
+            System.loadLibrary("hpgbigdata");
+            System.out.println("...done!");
 			new NativeSupport().bam2ga(in, out, convertCommandOptions.compression == null ? "snappy" : convertCommandOptions.compression);
 			return;
 		}
