@@ -149,7 +149,7 @@ public class ReadAlignmentSortMR {
 		OutputStream os = fs.create(new Path(output + "/part-r-00000.avro.header"));
 		os.write(data);
 		os.close();
-		
+
 		return 0;
 	}
 }
