@@ -16,12 +16,7 @@
 
 package org.opencb.hpg.bigdata.app;
 
-import org.opencb.hpg.bigdata.app.cli.AlignCommandExecutor;
-import org.opencb.hpg.bigdata.app.cli.BamCommandExecutor;
-import org.opencb.hpg.bigdata.app.cli.CliOptionsParser;
-import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
-import org.opencb.hpg.bigdata.app.cli.FastqCommandExecutor;
-import org.opencb.hpg.bigdata.app.cli.ConvertCommandExecutor;
+import org.opencb.hpg.bigdata.app.cli.*;
 
 import com.beust.jcommander.ParameterException;
 
@@ -65,6 +60,13 @@ public class BigDataMain {
                         cliOptionsParser.printUsage();
                     } else {
                         commandExecutor = new FastqCommandExecutor(cliOptionsParser.getFastqCommandOptions());
+                    }
+                    break;
+                case "fastq-align":
+                    if (cliOptionsParser.getFastqAlignCommandOptions().commonOptions.help) {
+                        cliOptionsParser.printUsage();
+                    } else {
+                        commandExecutor = new FastqAlignCommandExecutor(cliOptionsParser.getFastqAlignCommandOptions());
                     }
                     break;
                 case "bam":

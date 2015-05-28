@@ -29,7 +29,10 @@ public class CliOptionsParser {
     private final CommonCommandOptions commonCommandOptions;
 
     private FastqCommandOptions fastqCommandOptions;
+    private FastqAlignCommandOptions fastqAlignCommandOptions;
+
     private BamCommandOptions bamCommandOptions;
+
     private ConvertCommandOptions convertCommandOptions;
     private AlignCommandOptions alignCommandOptions;
 
@@ -44,11 +47,16 @@ public class CliOptionsParser {
         jcommander.addCommand(convertCommandOptions);
         if (hadoop) {
             jcommander.setProgramName("hpg-bigdata.sh");
+
             fastqCommandOptions = new FastqCommandOptions();
+            fastqAlignCommandOptions = new FastqAlignCommandOptions();
+
             bamCommandOptions = new BamCommandOptions();
             alignCommandOptions = new AlignCommandOptions();
 
             jcommander.addCommand(fastqCommandOptions);
+            jcommander.addCommand(fastqAlignCommandOptions);
+
             jcommander.addCommand(bamCommandOptions);
             jcommander.addCommand(alignCommandOptions);
         } else {    //local
@@ -105,7 +113,6 @@ public class CliOptionsParser {
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
 
-
         @Parameter(names = {"-i", "--input"}, description = "HDFS input file (the FastQ file must be stored in GA4GH/Avro model)", required = true, arity = 1)
         public String input = null;
 
@@ -120,9 +127,23 @@ public class CliOptionsParser {
 
         @Parameter(names = {"-k", "--kmers"}, description = "Compute k-mers (according to the indicated length)", required = false, arity = 1)
         public Integer kmers = 0;
-
     }
 
+    @Parameters(commandNames = {"fastq-align"}, commandDescription = "Description")
+    public class FastqAlignCommandOptions {
+
+        @ParametersDelegate
+        public CommonCommandOptions commonOptions = commonCommandOptions;
+
+        @Parameter(names = {"-i", "--input"}, description = "HDFS input file (the FastQ file must be stored in GA4GH/Avro model)", required = true, arity = 1)
+        public String input = null;
+
+        @Parameter(names = {"-o", "--output"}, description = "HDFS output directory to save alignments stored in GA4GH/Avro model", required = false, arity = 1)
+        public String output = null;
+
+        @Parameter(names = {"", "--index"}, description = "HDFS index file", required = true, arity = 1)
+        public String index = null;
+    }
 
     @Parameters(commandNames = {"bam"}, commandDescription = "Description")
     public class BamCommandOptions {
@@ -249,9 +270,9 @@ public class CliOptionsParser {
         return generalOptions;
     }
 
-    public FastqCommandOptions getFastqCommandOptions() {
-        return fastqCommandOptions;
-    }
+    public FastqCommandOptions getFastqCommandOptions() { return fastqCommandOptions;  }
+
+    public FastqAlignCommandOptions getFastqAlignCommandOptions() { return fastqAlignCommandOptions;  }
 
     public BamCommandOptions getBamCommandOptions() {
         return bamCommandOptions;
