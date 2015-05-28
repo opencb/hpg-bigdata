@@ -64,7 +64,7 @@ import org.ga4gh.models.Variant;
 import org.opencb.biodata.models.sequence.Read;
 import org.opencb.commons.io.DataReader;
 import org.opencb.commons.run.ParallelTaskRunner;
-import org.opencb.hpg.bigdata.core.NativeSupport;
+import org.opencb.hpg.bigdata.core.NativeConverter;
 import org.opencb.hpg.bigdata.core.converters.FastqRecord2ReadConverter;
 import org.opencb.hpg.bigdata.core.converters.FullVcfCodec;
 import org.opencb.hpg.bigdata.core.converters.SAMRecord2ReadAlignmentConverter;
@@ -82,8 +82,6 @@ import org.opencb.hpg.bigdata.tools.io.parquet.ParquetMR;
 import org.opencb.hpg.bigdata.core.utils.AvroUtils;
 import org.opencb.hpg.bigdata.core.utils.PathUtils;
 import org.opencb.hpg.bigdata.core.utils.ReadUtils;
-
-import static org.opencb.hpg.bigdata.tools.converters.mr.Fastq2AvroMR.*;
 
 /**
  * Created by imedina on 16/03/15.
@@ -352,7 +350,7 @@ public class ConvertCommandExecutor extends CommandExecutor {
             System.out.println("\tjava.libary.path = " + System.getProperty("java.library.path"));
             System.loadLibrary("hpgbigdata");
             System.out.println("...done!");
-			new NativeSupport().bam2ga(in, out, convertCommandOptions.compression == null ? "snappy" : convertCommandOptions.compression);
+			new NativeConverter().bam2ga(in, out, convertCommandOptions.compression == null ? "snappy" : convertCommandOptions.compression);
 			return;
 		}
 		
