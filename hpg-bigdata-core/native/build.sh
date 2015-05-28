@@ -44,4 +44,4 @@ fi
 echo
 echo "Building the dynamic library $olib"
 
-gcc -O3 -std=gnu99 ./third-party/hpg-aligner/index.c ./third-party/hpg-aligner/mapper.c -o $olib -shared -fPIC -I jni/
+gcc -O3 -std=gnu99 jni/org_opencb_hpg_bigdata_core_NativeAligner.c ./third-party/hpg-aligner/index.c ./third-party/hpg-aligner/mapper.c -o $olib -shared -fPIC -I jni/ -I $JAVA_HOME/include -I $JAVA_HOME/include/linux -I $JAVA_HOME/include/darwin

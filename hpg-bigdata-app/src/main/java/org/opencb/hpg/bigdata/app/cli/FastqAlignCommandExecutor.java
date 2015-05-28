@@ -20,6 +20,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.opencb.hpg.bigdata.core.utils.PathUtils;
+import org.opencb.hpg.bigdata.tools.stats.read.mr.ReadAlignMR;
 import org.opencb.hpg.bigdata.tools.stats.read.mr.ReadKmersMR;
 import org.opencb.hpg.bigdata.tools.stats.read.mr.ReadStatsMR;
 
@@ -78,7 +79,7 @@ public class FastqAlignCommandExecutor extends CommandExecutor {
 
 		try {
 			System.out.println("input = " + in + ", index = " + index + ", out = " + out);
-			//AlignMR.run(in, out);
+			ReadAlignMR.run(in, index, out);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
