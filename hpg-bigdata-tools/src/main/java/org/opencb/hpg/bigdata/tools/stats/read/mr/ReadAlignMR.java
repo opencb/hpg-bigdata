@@ -30,6 +30,7 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.ga4gh.models.ReadAlignment;
 import org.opencb.biodata.models.sequence.Read;
 import org.opencb.hpg.bigdata.core.NativeAligner;
 
