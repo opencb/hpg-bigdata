@@ -33,6 +33,8 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.ga4gh.models.ReadAlignment;
 import org.opencb.biodata.models.sequence.Read;
 import org.opencb.hpg.bigdata.core.NativeAligner;
+import org.opencb.hpg.bigdata.core.converters.SAMRecord2ReadAlignmentConverter;
+import org.opencb.hpg.bigdata.core.utils.ReadAlignmentUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,7 +42,7 @@ import java.util.ArrayList;
 
 public class ReadAlignMR {
 	
-	public static class ReadAlignMapper extends Mapper<AvroKey<Read>, NullWritable, LongWritable, AvroValue<Read>> {
+	public static class ReadAlignMapper extends Mapper<AvroKey<Read>, NullWritable, AvroKey<ReadAlignment>, NullWritable> {
 
 		String indexFolder;
 		long index;
@@ -63,13 +65,17 @@ public class ReadAlignMR {
             String sam = nativeAligner.map(fastq.toString(), index);
             System.out.println("mapReads, sam:\n" + sam);
 
-			boolean first = true;
-			for(Read read: pending) {
-				if (first) {
-					first = false;
-					context.write(new LongWritable(1), new AvroValue(read));
-				}
-			}
+            int lineCounter = 0;
+            String lines[] = sam.split("\n");
+
+            ReadAlignment readAlignment;
+            SAMRecord2ReadAlignmentConverter converter = new SAMRecord2ReadAlignmentConverter();
+
+            for (String line: lines) {
+                readAlignment = converter.forward(converter.backward2(line));
+                System.out.println(readAlignment);
+                context.write(new AvroKey<>(readAlignment), NullWritable.get());
+            }
 
 			pending.clear();
 		}
@@ -120,31 +126,11 @@ public class ReadAlignMR {
 
 		@Override
 		public void map(AvroKey<Read> key, NullWritable value, Context context) throws IOException, InterruptedException {
-			Read read = key.datum();
-
-			pending.add(read);
-
+			pending.add(key.datum());
 			if (pending.size() >= MAX_NUM_AVRO_RECORDS) {
 				System.out.println("------> map");
 				mapReads(context);
 			}
-		}
-	}
-
-	public static class ReadAlignReducer extends Reducer<LongWritable, AvroValue<Read>, AvroKey<Read>, NullWritable> {
-
-		public  void setup(Mapper.Context context) {
-			Configuration conf = context.getConfiguration();
-		}
-
-		public void reduce(LongWritable key, Iterable<AvroValue<Read>> values, Context context) throws IOException, InterruptedException {
-            int counter = 0;
-			for (AvroValue<Read> value : values) {
-                counter++;
-				context.write(new AvroKey<>(value.datum()), NullWritable.get());
-			}
-            System.out.println("------> reduce");
-            System.out.println("\t" + counter);
 		}
 	}
 
@@ -156,7 +142,7 @@ public class ReadAlignMR {
 		job.setJarByClass(ReadAlignMR.class);
 
 		AvroJob.setInputKeySchema(job, Read.SCHEMA$);
-		AvroJob.setOutputKeySchema(job, Read.SCHEMA$);
+		AvroJob.setOutputKeySchema(job, ReadAlignment.SCHEMA$);
 
 		// input
 		FileInputFormat.setInputPaths(job, new Path(input));
@@ -164,20 +150,19 @@ public class ReadAlignMR {
 
 		// output
 		FileOutputFormat.setOutputPath(job, new Path(output));
-		job.setOutputValueClass(AvroValue.class);
+		job.setOutputKeyClass(AvroValue.class);
 		job.setOutputValueClass(NullWritable.class);
 		job.setOutputFormatClass(AvroKeyOutputFormat.class);
 
 		// mapper
 		job.setMapperClass(ReadAlignMapper.class);
-		job.setMapOutputKeyClass(LongWritable.class);
-		job.setMapOutputValueClass(AvroValue.class);
-		AvroJob.setMapOutputValueSchema(job, Read.SCHEMA$);
+		job.setMapOutputKeyClass(AvroValue.class);
+		job.setMapOutputValueClass(NullWritable.class);
+		AvroJob.setMapOutputKeySchema(job, ReadAlignment.SCHEMA$);
 
-		// reducer
-		job.setReducerClass(ReadAlignReducer.class);
-		job.setNumReduceTasks(1);
-
+        // reducer
+        job.setNumReduceTasks(0);
+        
 		return (job.waitForCompletion(true) ? 0 : 1);
 	}
 }

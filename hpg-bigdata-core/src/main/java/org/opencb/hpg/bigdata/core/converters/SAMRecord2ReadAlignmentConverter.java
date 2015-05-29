@@ -189,8 +189,10 @@ public class SAMRecord2ReadAlignmentConverter implements Converter<SAMRecord, Re
 
 	@Override
 	public SAMRecord backward(ReadAlignment in) {
+        return backward2(ReadAlignmentUtils.getSamString(in));
+    }
 
-		final String samLine = ReadAlignmentUtils.getSamString(in);
+    public SAMRecord backward2(final String samLine) {
 
 		final String[] fields = new String[1000];
 		final int numFields = StringUtil.split(samLine, fields, '\t');
