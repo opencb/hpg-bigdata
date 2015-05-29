@@ -1,4 +1,4 @@
-package org.opencb.hpg.bigdata.tools.stats.alignment.mr;
+package org.opencb.hpg.bigdata.tools.tasks.alignment.mr;
 
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMSequenceRecord;
@@ -18,7 +18,6 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -30,10 +29,7 @@ import org.ga4gh.models.LinearAlignment;
 import org.ga4gh.models.ReadAlignment;
 import org.opencb.biodata.tools.alignment.tasks.RegionDepth;
 import org.opencb.biodata.tools.alignment.tasks.RegionDepthCalculator;
-import org.opencb.biodata.tools.sequence.tasks.SequenceStats;
-import org.opencb.biodata.tools.sequence.tasks.SequenceStatsCalculator;
 import org.opencb.hpg.bigdata.tools.converters.mr.ChunkKey;
-import org.opencb.hpg.bigdata.tools.io.ReadStatsWritable;
 import org.opencb.hpg.bigdata.tools.io.RegionDepthWritable;
 
 public class ReadAlignmentDepthMR {

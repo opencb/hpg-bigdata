@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.opencb.hpg.bigdata.tools.stats.read.mr;
+package org.opencb.hpg.bigdata.tools.tasks.alignment.mr;
 
 import org.apache.avro.mapred.AvroKey;
 import org.apache.avro.mapred.AvroValue;
@@ -23,43 +23,42 @@ import org.apache.avro.mapreduce.AvroKeyInputFormat;
 import org.apache.avro.mapreduce.AvroKeyOutputFormat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.ga4gh.models.ReadAlignment;
-import org.opencb.biodata.models.sequence.Read;
 import org.opencb.hpg.bigdata.core.NativeAligner;
 import org.opencb.hpg.bigdata.core.converters.SAMRecord2ReadAlignmentConverter;
-import org.opencb.hpg.bigdata.core.utils.ReadAlignmentUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class ReadAlignMR {
+public class ReadAlignmentAlignMR {
 	
-	public static class ReadAlignMapper extends Mapper<AvroKey<Read>, NullWritable, AvroKey<ReadAlignment>, NullWritable> {
+	public static class ReadAlignmentAlignMapper extends Mapper<AvroKey<ReadAlignment>, NullWritable, AvroKey<ReadAlignment>, NullWritable> {
 
 		String indexFolder;
 		long index;
 
 		final int MAX_NUM_AVRO_RECORDS = 40;
-		ArrayList<Read> pending = new ArrayList<>(MAX_NUM_AVRO_RECORDS);
+		ArrayList<ReadAlignment> pending = new ArrayList<>(MAX_NUM_AVRO_RECORDS);
 
         private NativeAligner nativeAligner = new NativeAligner();
 
 		private void mapReads(Context context) throws IOException, InterruptedException {
 
             StringBuilder fastq = new StringBuilder();
-            for(Read read: pending) {
-                fastq.append("@").append(read.getId()).append("\n");
-                fastq.append(read.getSequence()).append("\n");
+            for(ReadAlignment readAlignment: pending) {
+                fastq.append("@").append(readAlignment.getId()).append("\n");
+                fastq.append(readAlignment.getAlignedSequence()).append("\n");
                 fastq.append("+").append("\n");
-                fastq.append(read.getQuality()).append("\n");
+				for(int q: readAlignment.getAlignedQuality()) {
+					fastq.append((char) q);
+				}
+				fastq.append("\n");
             }
 
             String sam = nativeAligner.map(fastq.toString(), index);
@@ -125,7 +124,7 @@ public class ReadAlignMR {
 		}
 
 		@Override
-		public void map(AvroKey<Read> key, NullWritable value, Context context) throws IOException, InterruptedException {
+		public void map(AvroKey<ReadAlignment> key, NullWritable value, Context context) throws IOException, InterruptedException {
 			pending.add(key.datum());
 			if (pending.size() >= MAX_NUM_AVRO_RECORDS) {
 				System.out.println("------> map");
@@ -134,28 +133,28 @@ public class ReadAlignMR {
 		}
 	}
 
-	public static int run(String input, String indexFolder, String output) throws Exception {
+	public static int run(AlignerParams params) throws Exception {
 		Configuration conf = new Configuration();
-		conf.set("indexFolder", indexFolder);
+		conf.set("indexFolder", params.indexFolderName);
 
 		Job job = Job.getInstance(conf, "ReadAlignMR");
-		job.setJarByClass(ReadAlignMR.class);
+		job.setJarByClass(ReadAlignmentAlignMR.class);
 
-		AvroJob.setInputKeySchema(job, Read.SCHEMA$);
+		AvroJob.setInputKeySchema(job, ReadAlignment.SCHEMA$);
 		AvroJob.setOutputKeySchema(job, ReadAlignment.SCHEMA$);
 
 		// input
-		FileInputFormat.setInputPaths(job, new Path(input));
+		FileInputFormat.setInputPaths(job, new Path(params.seqFileName1));
 		job.setInputFormatClass(AvroKeyInputFormat.class);
 
 		// output
-		FileOutputFormat.setOutputPath(job, new Path(output));
+		FileOutputFormat.setOutputPath(job, new Path(params.resultFileName));
 		job.setOutputKeyClass(AvroValue.class);
 		job.setOutputValueClass(NullWritable.class);
 		job.setOutputFormatClass(AvroKeyOutputFormat.class);
 
 		// mapper
-		job.setMapperClass(ReadAlignMapper.class);
+		job.setMapperClass(ReadAlignmentAlignMapper.class);
 		job.setMapOutputKeyClass(AvroValue.class);
 		job.setMapOutputValueClass(NullWritable.class);
 		AvroJob.setMapOutputKeySchema(job, ReadAlignment.SCHEMA$);

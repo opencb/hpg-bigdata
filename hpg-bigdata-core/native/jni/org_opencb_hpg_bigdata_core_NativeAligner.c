@@ -1,11 +1,14 @@
 #include "org_opencb_hpg_bigdata_core_NativeAligner.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <malloc.h>
 
 //------------------------------------------------------------------------------//
 
-void *load_index(char *index_path);
+void *load_index(const char *index_path);
 void free_index(void *index);
 
-char *map(char *fastq, void *index);
+char *map(const char *fastq, void *index);
 
 //------------------------------------------------------------------------------//
 

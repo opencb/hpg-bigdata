@@ -23,9 +23,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.ga4gh.models.ReadAlignment;
-import org.opencb.hpg.bigdata.tools.stats.alignment.mr.ReadAlignmentDepthMR;
-import org.opencb.hpg.bigdata.tools.stats.alignment.mr.ReadAlignmentSortMR;
-import org.opencb.hpg.bigdata.tools.stats.alignment.mr.ReadAlignmentStatsMR;
+import org.opencb.hpg.bigdata.tools.tasks.alignment.mr.ReadAlignmentDepthMR;
+import org.opencb.hpg.bigdata.tools.tasks.alignment.mr.ReadAlignmentSortMR;
+import org.opencb.hpg.bigdata.tools.tasks.alignment.mr.ReadAlignmentStatsMR;
 import org.opencb.hpg.bigdata.tools.io.parquet.ParquetMR;
 import org.opencb.hpg.bigdata.core.utils.PathUtils;
 
@@ -62,8 +62,8 @@ public class BamCommandExecutor extends CommandExecutor {
 
 		String outName = null;
 		switch(bamCommandOptions.command) {
-		case "stats": {
-			outName = "stats.json";
+		case "tasks": {
+			outName = "tasks.json";
 			stats(bamCommandOptions.input, outHdfsDirname);
 			break;
 		}
@@ -117,7 +117,7 @@ public class BamCommandExecutor extends CommandExecutor {
 		String out = PathUtils.clean(output);
 
 		if (!PathUtils.isHdfs(input)) {
-			logger.error("To run BAM stats, input files '{}' must be stored in the HDFS/Haddop. Use the command 'convert bam2sa' to import your file.", input);
+			logger.error("To run BAM tasks, input files '{}' must be stored in the HDFS/Haddop. Use the command 'convert bam2sa' to import your file.", input);
 			System.exit(-1);
 		}
 
@@ -134,7 +134,7 @@ public class BamCommandExecutor extends CommandExecutor {
 		String out = PathUtils.clean(output);
 
 		if (!PathUtils.isHdfs(input)) {
-			logger.error("To run BAM stats, input files '{}' must be stored in the HDFS/Hadoop. Use the command 'convert bam2sa' to import your file.", input);
+			logger.error("To run BAM tasks, input files '{}' must be stored in the HDFS/Hadoop. Use the command 'convert bam2sa' to import your file.", input);
 			System.exit(-1);
 		}
 
@@ -151,12 +151,12 @@ public class BamCommandExecutor extends CommandExecutor {
 		String out = PathUtils.clean(output);
 
 		if (!PathUtils.isHdfs(input)) {
-			logger.error("To run BAM stats, input files '{}' must be stored in the HDFS/Haddop. Use the command 'convert bam2sa' to import your file.", input);
+			logger.error("To run BAM tasks, input files '{}' must be stored in the HDFS/Haddop. Use the command 'convert bam2sa' to import your file.", input);
 			System.exit(-1);
 		}
 
 		if (!PathUtils.isHdfs(output)) {
-			logger.error("To run BAM stats, output directory '{}' must be a HDFS/Hadoop.", output);
+			logger.error("To run BAM tasks, output directory '{}' must be a HDFS/Hadoop.", output);
 			System.exit(-1);
 		}
 
@@ -173,12 +173,12 @@ public class BamCommandExecutor extends CommandExecutor {
 		String out = PathUtils.clean(output);
 
 		if (!PathUtils.isHdfs(input)) {
-			logger.error("To run BAM stats, input files '{}' must be stored in the HDFS/Haddop. Use the command 'convert bam2sa' to import your file.", input);
+			logger.error("To run BAM tasks, input files '{}' must be stored in the HDFS/Haddop. Use the command 'convert bam2sa' to import your file.", input);
 			System.exit(-1);
 		}
 
 		if (!PathUtils.isHdfs(output)) {
-			logger.error("To run BAM stats, output directory '{}' must be a HDFS/Hadoop.", output);
+			logger.error("To run BAM tasks, output directory '{}' must be a HDFS/Hadoop.", output);
 			System.exit(-1);
 		}
 

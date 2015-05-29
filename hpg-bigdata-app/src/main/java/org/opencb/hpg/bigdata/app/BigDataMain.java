@@ -76,18 +76,18 @@ public class BigDataMain {
                         commandExecutor = new BamCommandExecutor(cliOptionsParser.getBamCommandOptions());
                     }
                     break;
+                case "bam-align":
+                    if (cliOptionsParser.getBamAlignCommandOptions().commonOptions.help) {
+                        cliOptionsParser.printUsage();
+                    } else {
+                        commandExecutor = new BamAlignCommandExecutor(cliOptionsParser.getBamAlignCommandOptions());
+                    }
+                    break;
                 case "convert":
                     if (cliOptionsParser.getConvertCommandOptions().commonOptions.help) {
                         cliOptionsParser.printUsage();
                     } else {
                         commandExecutor = new ConvertCommandExecutor(cliOptionsParser.getConvertCommandOptions());
-                    }
-                    break;
-                case "align":
-                    if (cliOptionsParser.getAlignCommandOptions().commonOptions.help) {
-                        cliOptionsParser.printUsage();
-                    } else {
-                        commandExecutor = new AlignCommandExecutor(cliOptionsParser.getAlignCommandOptions());
                     }
                     break;
                 default:

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.opencb.hpg.bigdata.tools.stats.read.mr;
+package org.opencb.hpg.bigdata.tools.tasks.read.mr;
 
 import java.io.IOException;
 

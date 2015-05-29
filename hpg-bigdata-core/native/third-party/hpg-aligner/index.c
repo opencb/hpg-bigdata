@@ -6,7 +6,7 @@
 //
 //----------------------------------------------------------------------------------------------------------------------
 
-void *load_index(char *index_path) {
+void *load_index(const char *index_path) {
     char *index = (char *) calloc(100, sizeof(char));
     sprintf(index, "index located at %s", index_path);
     printf("Loading index...\n\t%s\n...done!\n", index);

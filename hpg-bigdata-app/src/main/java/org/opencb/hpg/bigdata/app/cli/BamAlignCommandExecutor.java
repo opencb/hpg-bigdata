@@ -20,7 +20,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.opencb.hpg.bigdata.core.utils.PathUtils;
 import org.opencb.hpg.bigdata.tools.tasks.alignment.mr.AlignerParams;
-import org.opencb.hpg.bigdata.tools.tasks.read.mr.ReadAlignMR;
+import org.opencb.hpg.bigdata.tools.tasks.alignment.mr.ReadAlignmentAlignMR;
 
 import java.io.IOException;
 import java.util.Date;
@@ -28,19 +28,19 @@ import java.util.Date;
 /**
  * Created by imedina on 03/02/15.
  */
-public class FastqAlignCommandExecutor extends CommandExecutor {
+public class BamAlignCommandExecutor extends CommandExecutor {
 
-	private CliOptionsParser.FastqAlignCommandOptions fastqAlignCommandOptions;
+	private CliOptionsParser.BamAlignCommandOptions bamAlignCommandOptions;
 
-	public FastqAlignCommandExecutor(CliOptionsParser.FastqAlignCommandOptions fastqAlignCommandOptions) {
-		super(fastqAlignCommandOptions.commonOptions.logLevel, fastqAlignCommandOptions.commonOptions.verbose,
-				fastqAlignCommandOptions.commonOptions.conf);
+	public BamAlignCommandExecutor(CliOptionsParser.BamAlignCommandOptions bamAlignCommandOptions) {
+		super(bamAlignCommandOptions.commonOptions.logLevel, bamAlignCommandOptions.commonOptions.verbose,
+				bamAlignCommandOptions.commonOptions.conf);
 
-		this.fastqAlignCommandOptions = fastqAlignCommandOptions;
+		this.bamAlignCommandOptions = bamAlignCommandOptions;
 	}
 
 	/**
-	 * Parse specific 'fastq' command options
+	 * Parse specific 'bam-align' command options
 	 */
 	public void execute() {
 		logger.info("Executing {} CLI options", "fastq");
@@ -56,22 +56,22 @@ public class FastqAlignCommandExecutor extends CommandExecutor {
 		String outHdfsDirname = new String("" + new Date().getTime());
 
 		// clean paths
-		String in = PathUtils.clean(fastqAlignCommandOptions.input);
-		String index = PathUtils.clean(fastqAlignCommandOptions.index);
-		String out = PathUtils.clean(fastqAlignCommandOptions.output);
+		String in = PathUtils.clean(bamAlignCommandOptions.input);
+		String index = PathUtils.clean(bamAlignCommandOptions.index);
+		String out = PathUtils.clean(bamAlignCommandOptions.output);
 
-		if (!PathUtils.isHdfs(fastqAlignCommandOptions.input)) {
-			logger.error("To align fastq, the input FastQ file '{}' must be stored in the HDFS/Haddop. Use the command 'convert fastq2sa' to import your file.", fastqAlignCommandOptions.input);
+		if (!PathUtils.isHdfs(bamAlignCommandOptions.input)) {
+			logger.error("To align BAM, the input BAM file '{}' must be stored in the HDFS/Haddop. Use the command 'convert bam2avro' to import your file.", bamAlignCommandOptions.input);
 			System.exit(-1);
 		}
 
-		if (!PathUtils.isHdfs(fastqAlignCommandOptions.index)) {
-			logger.error("To align fastq, the index folder '{}' must be stored in the HDFS/Haddop.", fastqAlignCommandOptions.index);
+		if (!PathUtils.isHdfs(bamAlignCommandOptions.index)) {
+			logger.error("To align BAM, the index folder '{}' must be stored in the HDFS/Haddop.", bamAlignCommandOptions.index);
 			System.exit(-1);
 		}
 
-		if (!PathUtils.isHdfs(fastqAlignCommandOptions.output)) {
-			logger.error("To align fastq, the output folder '{}' must be stored in the HDFS/Haddop.", fastqAlignCommandOptions.output);
+		if (!PathUtils.isHdfs(bamAlignCommandOptions.output)) {
+			logger.error("To align BAM, the output folder '{}' must be stored in the HDFS/Haddop.", bamAlignCommandOptions.output);
 			System.exit(-1);
 		}
 
@@ -82,7 +82,7 @@ public class FastqAlignCommandExecutor extends CommandExecutor {
 			params.seqFileName1 = in;
 			params.indexFolderName = index;
 			params.resultFileName = out;
-			ReadAlignMR.run(params);
+			ReadAlignmentAlignMR.run(params);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

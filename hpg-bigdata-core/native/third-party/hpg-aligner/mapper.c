@@ -6,7 +6,7 @@
 //
 //----------------------------------------------------------------------------------------------------------------------
 
-char *map(char *fastq, char *index_path) {
+char *map(const char *fastq, char *index_path) {
     char *sam = (char *) calloc(4000, sizeof(char));
 
     printf("libhpgaligner.so, map:\n%s\n", fastq);

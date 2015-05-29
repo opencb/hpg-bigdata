@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-package org.opencb.hpg.bigdata.tools.stats.alignment.mr;
+package org.opencb.hpg.bigdata.tools.tasks.alignment.mr;
 
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.PrintWriter;
 
 import org.apache.avro.mapred.AvroKey;
 import org.apache.avro.mapred.AvroValue;

@@ -32,9 +32,9 @@ public class CliOptionsParser {
     private FastqAlignCommandOptions fastqAlignCommandOptions;
 
     private BamCommandOptions bamCommandOptions;
+    private BamAlignCommandOptions bamAlignCommandOptions;
 
     private ConvertCommandOptions convertCommandOptions;
-    private AlignCommandOptions alignCommandOptions;
 
     public CliOptionsParser(boolean hadoop) {
         generalOptions = new GeneralOptions();
@@ -52,13 +52,13 @@ public class CliOptionsParser {
             fastqAlignCommandOptions = new FastqAlignCommandOptions();
 
             bamCommandOptions = new BamCommandOptions();
-            alignCommandOptions = new AlignCommandOptions();
+            bamAlignCommandOptions = new BamAlignCommandOptions();
 
             jcommander.addCommand(fastqCommandOptions);
             jcommander.addCommand(fastqAlignCommandOptions);
 
             jcommander.addCommand(bamCommandOptions);
-            jcommander.addCommand(alignCommandOptions);
+            jcommander.addCommand(bamAlignCommandOptions);
         } else {    //local
             jcommander.setProgramName("hpg-bigdata-local.sh");
         }
@@ -119,7 +119,7 @@ public class CliOptionsParser {
         @Parameter(names = {"-o", "--output"}, description = "Local output directory to save results, summary, images...", required = false, arity = 1)
         public String output = null;
 
-        @Parameter(names = {"-s", "--stats"}, description = "Run statistics", required = false)
+        @Parameter(names = {"-s", "--tasks"}, description = "Run statistics", required = false)
         public boolean stats = false;
 
         @Parameter(names = {"-f", "--filter"}, description = "", required = false, arity = 1)
@@ -158,7 +158,7 @@ public class CliOptionsParser {
         @Parameter(names = {"-o", "--output"}, description = "Local output directory to save results, summary, images...", required = false, arity = 1)
         public String output = null;
 
-        @Parameter(names = {"--command"}, description = "Accepted values: stats, sort, depth, to-parquet", required = false, arity = 1)
+        @Parameter(names = {"--command"}, description = "Accepted values: tasks, sort, depth, to-parquet", required = false, arity = 1)
         public String command = null;
 
         @Parameter(names = {"--filter"}, description = "", required = false, arity = 1)
@@ -178,6 +178,21 @@ public class CliOptionsParser {
         
     }
 
+    @Parameters(commandNames = {"bam-align"}, commandDescription = "Description")
+    public class BamAlignCommandOptions {
+
+        @ParametersDelegate
+        public CommonCommandOptions commonOptions = commonCommandOptions;
+
+        @Parameter(names = {"-i", "--input"}, description = "HDFS input file (the BAM file must be stored in GA4GH/Avro model)", required = true, arity = 1)
+        public String input = null;
+
+        @Parameter(names = {"-o", "--output"}, description = "HDFS output directory to save alignments stored in GA4GH/Avro model", required = false, arity = 1)
+        public String output = null;
+
+        @Parameter(names = {"", "--index"}, description = "HDFS index file", required = true, arity = 1)
+        public String index = null;
+    }
 
     public static class ConvertionConverter implements IStringConverter<ConvertCommandExecutor.Conversion> {
         @Override
@@ -245,27 +260,6 @@ public class CliOptionsParser {
         public String credentials;
     }
 
-    @Parameters(commandNames = {"align"}, commandDescription = "Description")
-    public class AlignCommandOptions {
-
-
-        @ParametersDelegate
-        public CommonCommandOptions commonOptions = commonCommandOptions;
-
-
-        @Parameter(names = {"-i", "--input"}, description = "", required = true, arity = 1)
-        public String input = null;
-
-        @Parameter(names = {"-o", "--output"}, description = "", required = false, arity = 1)
-        public String output = null;
-
-        @Parameter(names = {"--index-file"}, description = "", required = false)
-        public String referenceGenomeFile;
-
-
-    }
-
-
     public GeneralOptions getGeneralOptions() {
         return generalOptions;
     }
@@ -278,12 +272,9 @@ public class CliOptionsParser {
         return bamCommandOptions;
     }
 
+    public BamAlignCommandOptions getBamAlignCommandOptions() { return bamAlignCommandOptions;  }
+
     public ConvertCommandOptions getConvertCommandOptions() {
         return convertCommandOptions;
     }
-
-    public AlignCommandOptions getAlignCommandOptions() {
-        return alignCommandOptions;
-    }
-
 }
