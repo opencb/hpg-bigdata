@@ -29,8 +29,10 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.ga4gh.models.ReadAlignment;
+import org.opencb.hpg.bigdata.core.AlignerParams;
 import org.opencb.hpg.bigdata.core.NativeAligner;
 import org.opencb.hpg.bigdata.core.converters.SAMRecord2ReadAlignmentConverter;
+import org.opencb.hpg.bigdata.tools.utils.AlignerUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,13 +42,15 @@ public class ReadAlignmentAlignMR {
 	
 	public static class ReadAlignmentAlignMapper extends Mapper<AvroKey<ReadAlignment>, NullWritable, AvroKey<ReadAlignment>, NullWritable> {
 
-		String indexFolder;
-		long index;
+		long nativeIndex;  // pointer to the Native structure for searching index
+		long nativeParams; // pointer to the Native structure for aligner parameters
+		AlignerParams params;
 
 		final int MAX_NUM_AVRO_RECORDS = 40;
 		ArrayList<ReadAlignment> pending = new ArrayList<>(MAX_NUM_AVRO_RECORDS);
 
         private NativeAligner nativeAligner = new NativeAligner();
+		private AlignerUtils alignerUtils = new AlignerUtils();
 
 		private void mapReads(Context context) throws IOException, InterruptedException {
 
@@ -61,20 +65,7 @@ public class ReadAlignmentAlignMR {
 				fastq.append("\n");
             }
 
-            String sam = nativeAligner.map(fastq.toString(), index);
-            System.out.println("mapReads, sam:\n" + sam);
-
-            int lineCounter = 0;
-            String lines[] = sam.split("\n");
-
-            ReadAlignment readAlignment;
-            SAMRecord2ReadAlignmentConverter converter = new SAMRecord2ReadAlignmentConverter();
-
-            for (String line: lines) {
-                readAlignment = converter.forward(converter.backward2(line));
-                System.out.println(readAlignment);
-                context.write(new AvroKey<>(readAlignment), NullWritable.get());
-            }
+			alignerUtils.mapReads(fastq.toString(), nativeAligner, nativeIndex, nativeParams, context);
 
 			pending.clear();
 		}
@@ -82,31 +73,15 @@ public class ReadAlignmentAlignMR {
 		public  void setup(Context context) {
 			System.out.println("------> setup");
 
-			System.out.println("Loading library hpgaligner...");
-			//System.out.println("\tjava.libary.path = " + System.getProperty("java.library.path"));
-            //System.out.println("\tLD_LIBRARY_PATH = " + System.getenv("LD_LIBRARY_PATH"));
-
-            boolean loaded = false;
-            String ld_library_path = System.getenv("LD_LIBRARY_PATH");
-            String paths[] = ld_library_path.split(":");
-            for(String path: paths) {
-                if (new File(path + "/libhpgaligner.so").exists()) {
-                    loaded = true;
-                    System.load(path + "/libhpgaligner.so");
-                    break;
-                }
-            }
-            if (!loaded) {
-                System.out.println("Library libhpgaligner.so not found. Set your environment variable: LD_LIBRARY_PATH library");
-                System.exit(-1);
-            }
-			System.out.println("...done!");
+			// load dynamic library
+			alignerUtils.loadLibrary("libhpgaligner.so");
 
             // load index
             Configuration conf = context.getConfiguration();
-            indexFolder = conf.get("indexFolder");
-            System.out.println("===========> index folder = " + indexFolder);
-            index = nativeAligner.load_index(indexFolder);
+			params = AlignerUtils.newAlignerParams(conf);
+			System.out.println("params.indexFolderName = " + params.indexFolderName);
+			nativeIndex = nativeAligner.load_index(params.indexFolderName);
+			nativeParams = nativeAligner.load_params(params);
 		}
 
 		public  void cleanup(Context context) {
@@ -119,8 +94,9 @@ public class ReadAlignmentAlignMR {
 				}
 			}
 
-            // free index
-            nativeAligner.free_index(index);
+			// free
+			nativeAligner.free_index(nativeIndex);
+			nativeAligner.free_params(nativeParams);
 		}
 
 		@Override
@@ -135,7 +111,11 @@ public class ReadAlignmentAlignMR {
 
 	public static int run(AlignerParams params) throws Exception {
 		Configuration conf = new Configuration();
-		conf.set("indexFolder", params.indexFolderName);
+        conf.set("seqFileName1", params.seqFileName1);
+        conf.set("seqFileName2", params.seqFileName2);
+        conf.set("indexFolderName", params.indexFolderName);
+        conf.set("numSeeds", "" + params.numSeeds);
+        conf.set("minSWScore", "" + params.minSWScore);
 
 		Job job = Job.getInstance(conf, "ReadAlignMR");
 		job.setJarByClass(ReadAlignmentAlignMR.class);

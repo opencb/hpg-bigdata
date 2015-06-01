@@ -19,7 +19,7 @@ package org.opencb.hpg.bigdata.app.cli;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.opencb.hpg.bigdata.core.utils.PathUtils;
-import org.opencb.hpg.bigdata.tools.tasks.alignment.mr.AlignerParams;
+import org.opencb.hpg.bigdata.core.AlignerParams;
 import org.opencb.hpg.bigdata.tools.tasks.alignment.mr.ReadAlignmentAlignMR;
 
 import java.io.IOException;

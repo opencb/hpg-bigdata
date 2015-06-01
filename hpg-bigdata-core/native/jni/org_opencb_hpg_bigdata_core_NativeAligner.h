@@ -9,6 +9,22 @@ extern "C" {
 #endif
 /*
  * Class:     org_opencb_hpg_bigdata_core_NativeAligner
+ * Method:    load_params
+ * Signature: (Lorg/opencb/hpg/bigdata/core/AlignerParams;)J
+ */
+JNIEXPORT jlong JNICALL Java_org_opencb_hpg_bigdata_core_NativeAligner_load_1params
+  (JNIEnv *, jobject, jobject);
+
+/*
+ * Class:     org_opencb_hpg_bigdata_core_NativeAligner
+ * Method:    free_params
+ * Signature: (J)V
+ */
+JNIEXPORT void JNICALL Java_org_opencb_hpg_bigdata_core_NativeAligner_free_1params
+  (JNIEnv *, jobject, jlong);
+
+/*
+ * Class:     org_opencb_hpg_bigdata_core_NativeAligner
  * Method:    load_index
  * Signature: (Ljava/lang/String;)J
  */
@@ -26,10 +42,10 @@ JNIEXPORT void JNICALL Java_org_opencb_hpg_bigdata_core_NativeAligner_free_1inde
 /*
  * Class:     org_opencb_hpg_bigdata_core_NativeAligner
  * Method:    map
- * Signature: (Ljava/lang/String;J)Ljava/lang/String;
+ * Signature: (Ljava/lang/String;JJ)Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_org_opencb_hpg_bigdata_core_NativeAligner_map
-  (JNIEnv *, jobject, jstring, jlong);
+  (JNIEnv *, jobject, jstring, jlong, jlong);
 
 #ifdef __cplusplus
 }

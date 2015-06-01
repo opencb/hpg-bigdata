@@ -17,10 +17,14 @@
 package org.opencb.hpg.bigdata.core;
 
 public class NativeAligner {
+	// params
+	public native long load_params(AlignerParams paramsObj);
+	public native void free_params(long params);
+
 	// index
 	public native long load_index(String indexPath);
 	public native void free_index(long index);
 
 	// map
-	public native String map(String sequences, long index);
+	public native String map(String sequences, long index, long params);
 }
