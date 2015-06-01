@@ -111,11 +111,7 @@ public class ReadAlignmentAlignMR {
 
 	public static int run(AlignerParams params) throws Exception {
 		Configuration conf = new Configuration();
-        conf.set("seqFileName1", params.seqFileName1);
-        conf.set("seqFileName2", params.seqFileName2);
-        conf.set("indexFolderName", params.indexFolderName);
-        conf.set("numSeeds", "" + params.numSeeds);
-        conf.set("minSWScore", "" + params.minSWScore);
+        AlignerUtils.updateConfiguration(params, conf);
 
 		Job job = Job.getInstance(conf, "ReadAlignMR");
 		job.setJarByClass(ReadAlignmentAlignMR.class);

@@ -52,19 +52,19 @@ JNIEXPORT jlong JNICALL Java_org_opencb_hpg_bigdata_core_NativeAligner_load_1par
     	    printf("Error getting seqFileName1 parameter\n");
     	}
 
-        // get the field ID of the "seqFileName1" field of this class
-	    fid_string = (*env)->GetFieldID(env, cls, "seqFileName1", "Ljava/lang/String;");
+        // get the field ID of the "seqFileName2" field of this class
+	    fid_string = (*env)->GetFieldID(env, cls, "seqFileName2", "Ljava/lang/String;");
 	    if (fid_string) {
 	        val_string = (jstring) (*env)->GetObjectField(env, params_obj, fid_string);
 	        if (val_string) {
                 str = (*env)->GetStringUTFChars(env, val_string, NULL);
-                params->seq_filename1 = strdup(str);
+                params->seq_filename2 = strdup(str);
                 (*env)->ReleaseStringUTFChars(env, val_string, str);
 	        } else {
-                printf("Error getting String object (seqFileName1)\n");
+                printf("Error getting String object (seqFileName2)\n");
 	        }
     	} else {
-    	    printf("Error getting seqFileName1 parameter\n");
+    	    printf("Error getting seqFileName2 parameter\n");
     	}
 
         // get the field ID of the "resultFileName" field of this class

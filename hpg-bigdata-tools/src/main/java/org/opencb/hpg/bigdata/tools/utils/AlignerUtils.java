@@ -32,10 +32,17 @@ public class AlignerUtils {
         return params;
     }
 
+    public static void updateConfiguration(AlignerParams params, Configuration conf) {
+        conf.set("seqFileName1", params.seqFileName1);
+        conf.set("seqFileName2", params.seqFileName2);
+        conf.set("indexFolderName", params.indexFolderName);
+        conf.set("numSeeds", "" + params.numSeeds);
+        conf.set("minSWScore", "" + params.minSWScore);
+    }
 
     public void mapReads(String fastq, NativeAligner nativeAligner,
-                          long nativeIndex, long nativeParams,
-                          Mapper.Context context) throws IOException, InterruptedException {
+                         long nativeIndex, long nativeParams,
+                         Mapper.Context context) throws IOException, InterruptedException {
 
         String sam = nativeAligner.map(fastq, nativeIndex, nativeParams);
         System.out.println("mapReads, sam:\n" + sam);
