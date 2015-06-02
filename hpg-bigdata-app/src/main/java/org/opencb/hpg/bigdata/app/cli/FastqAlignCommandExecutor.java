@@ -64,12 +64,12 @@ public class FastqAlignCommandExecutor extends CommandExecutor {
 			logger.error("To align fastq, the input FastQ file '{}' must be stored in the HDFS/Haddop. Use the command 'convert fastq2sa' to import your file.", fastqAlignCommandOptions.input);
 			System.exit(-1);
 		}
-
+/*
 		if (!PathUtils.isHdfs(fastqAlignCommandOptions.index)) {
 			logger.error("To align fastq, the index folder '{}' must be stored in the HDFS/Haddop.", fastqAlignCommandOptions.index);
 			System.exit(-1);
 		}
-
+*/
 		if (!PathUtils.isHdfs(fastqAlignCommandOptions.output)) {
 			logger.error("To align fastq, the output folder '{}' must be stored in the HDFS/Haddop.", fastqAlignCommandOptions.output);
 			System.exit(-1);

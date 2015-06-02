@@ -139,11 +139,11 @@ JNIEXPORT void JNICALL Java_org_opencb_hpg_bigdata_core_NativeAligner_free_1inde
 JNIEXPORT jstring JNICALL Java_org_opencb_hpg_bigdata_core_NativeAligner_map
   (JNIEnv *env, jobject this, jstring fastq, jlong index, jlong params) {
 
-    const char *reads = (*env)->GetStringUTFChars(env, fastq, NULL);
-    char *sam = map(reads, (void *)index);
-
     printf("Java_org_opencb_hpg_bigdata_core_NativeAligner_map, params:\n");
     aligner_params_display((aligner_params_t *) params);
+
+    const char *reads = (*env)->GetStringUTFChars(env, fastq, NULL);
+    char *sam = map(reads, (void *)index);
 
     jstring res = (*env)->NewStringUTF(env, sam);
 

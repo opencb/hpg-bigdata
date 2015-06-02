@@ -64,12 +64,12 @@ public class BamAlignCommandExecutor extends CommandExecutor {
 			logger.error("To align BAM, the input BAM file '{}' must be stored in the HDFS/Haddop. Use the command 'convert bam2avro' to import your file.", bamAlignCommandOptions.input);
 			System.exit(-1);
 		}
-
+/*
 		if (!PathUtils.isHdfs(bamAlignCommandOptions.index)) {
 			logger.error("To align BAM, the index folder '{}' must be stored in the HDFS/Haddop.", bamAlignCommandOptions.index);
 			System.exit(-1);
 		}
-
+*/
 		if (!PathUtils.isHdfs(bamAlignCommandOptions.output)) {
 			logger.error("To align BAM, the output folder '{}' must be stored in the HDFS/Haddop.", bamAlignCommandOptions.output);
 			System.exit(-1);
