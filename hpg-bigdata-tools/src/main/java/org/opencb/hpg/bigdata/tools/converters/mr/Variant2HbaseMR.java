@@ -13,7 +13,6 @@ import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
@@ -23,7 +22,6 @@ import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
-import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Job;
@@ -92,7 +90,7 @@ public class Variant2HbaseMR extends Mapper<AvroKey<Variant>, NullWritable, Immu
 	        ImmutableBytesWritable rowKey = new ImmutableBytesWritable(id);
 	        
 	        /* Submit data to HBase */
-			context.write(rowKey, put);
+//			context.write(rowKey, put);
 		}		
 	}
 
@@ -151,9 +149,40 @@ public class Variant2HbaseMR extends Mapper<AvroKey<Variant>, NullWritable, Immu
 	public Configuration getConf() {
 		return this.config;
 	}
+	
+	public static int run(String[] args,String other) throws Exception{
+		Configuration conf = new Configuration();
+		String tablename = "test_table";
+		String inputfile = null;
+		String output = null;
+		for(int i = 0; i < args.length; ++i){
+			if(args[i] == "-t")
+				tablename = args[++i];
+			if(args[i] == "-i")
+				inputfile = args[++i];
+			if(args[i] == "-o")
+				output = args[++i];
+		}
+		Job job = Job.getInstance(conf, "Variant2HBase");
+		job.setJarByClass(Variant2HbaseMR.class);
+
+		// input
+		AvroJob.setInputKeySchema(job, Variant.getClassSchema());
+		FileInputFormat.setInputPaths(job, new Path(inputfile));
+		job.setInputFormatClass(AvroKeyInputFormat.class);
+		
+		job.setNumReduceTasks(0); 
+	    
+		// mapper
+		job.setMapperClass(Variant2HbaseMR.class);
+
+		return (job.waitForCompletion(true) ? 0 : 1);		
+	}
 
 	@Override
 	public int run(String[] args) throws Exception {
+		getLog().info(String.format("Configuration: %s ", getConf()));
+        setConf(new Configuration());
 		String tablename = "test_table";
 		String inputfile = null;
 		String output = null;
@@ -166,7 +195,7 @@ public class Variant2HbaseMR extends Mapper<AvroKey<Variant>, NullWritable, Immu
 				output = args[++i];
 		}
 
-	    setConf(HBaseConfiguration.addHbaseResources(getConf()));
+//	    setConf(HBaseConfiguration.addHbaseResources(getConf()));
 
 	    Job job = Job.getInstance(getConf());
 	    job.setJobName(this.getClass().getName() + "_" + tablename);
@@ -178,7 +207,7 @@ public class Variant2HbaseMR extends Mapper<AvroKey<Variant>, NullWritable, Immu
 		job.setInputFormatClass(AvroKeyInputFormat.class);
 
 		// output -> Hbase
-		TableMapReduceUtil.initTableReducerJob(tablename, null, job);
+//		TableMapReduceUtil.initTableReducerJob(tablename, null, job);
 		job.setNumReduceTasks(0); // Write to table directory
 		if(StringUtils.isNotBlank(output)){
 			Configuration conf = getConf();
@@ -191,7 +220,7 @@ public class Variant2HbaseMR extends Mapper<AvroKey<Variant>, NullWritable, Immu
 		job.setMapperClass(Variant2HbaseMR.class);
 		
 		// create Table if needed
-		createTableIfNeeded(tablename);
+//		createTableIfNeeded(tablename);
 		long start = System.currentTimeMillis();
 		boolean completed = job.waitForCompletion(true);
 		long end = System.currentTimeMillis();
