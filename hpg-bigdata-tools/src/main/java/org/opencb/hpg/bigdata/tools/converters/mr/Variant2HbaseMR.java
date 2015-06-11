@@ -13,6 +13,7 @@ import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
@@ -22,15 +23,18 @@ import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
+import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.ga4gh.models.Call;
 import org.ga4gh.models.Variant;
 import org.opencb.commons.utils.CryptoUtils;
+import org.opencb.hpg.bigdata.core.utils.PathUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,15 +47,14 @@ public class Variant2HbaseMR extends Mapper<AvroKey<Variant>, NullWritable, Immu
     private final static String ROWKEY_SEPARATOR = "_";
     private static final int SV_THRESHOLD = 50; // TODO update as needed 
 	
-    private final Logger log;
+    private final static Logger log = LoggerFactory.getLogger(Variant2HbaseMR.class);
 	private Configuration config;
 
 	public Variant2HbaseMR() {
 		super();
-		log = LoggerFactory.getLogger(this.getClass().toString());
 	}
 	
-	public Logger getLog() {
+	public static Logger getLog() {
 		return log;
 	}
 	
@@ -70,10 +73,43 @@ public class Variant2HbaseMR extends Mapper<AvroKey<Variant>, NullWritable, Immu
 			throws IOException, InterruptedException {
 		Variant variant = key.datum();
 			
-		if(!isReference(variant)){ // is a variant (not just coverage info)
-	        byte[] id = Bytes.toBytes(buildStorageId(variant));
-	        
+//		if(!isReference(variant)){ // is a variant (not just coverage info)
+		if(true){ // all
+			int altCnt = variant.getAlternateBases().size();
+			if(altCnt > 1){
+				context.getCounter("VCF","biallelic_COUNT").increment(1);
+				return; // skip biallelic cases
+			}
+			List<Call> calls = variant.getCalls();
+			if(null == calls || calls.isEmpty()){
+				context.getCounter("VCF","NO_CALL_COUNT").increment(1);
+				return; // skip SV
+			}
+			int altIdx = 0;
+			CharSequence altBases = "";
+			if(altCnt > 0) {
+				altBases = variant.getAlternateBases().get(altIdx);
+			}
+			CharSequence refBases = variant.getReferenceBases();
+			if(altBases.length() >= SV_THRESHOLD || refBases.length() >= SV_THRESHOLD){
+				context.getCounter("VCF","SV_COUNT").increment(1);
+				return; // skip SV
+			}
+			String idStr = buildStorageId(
+	        		variant.getReferenceName(),
+	        		variant.getStart(),
+	        		refBases,
+	        		altBases
+	        		);
+			byte[] id = Bytes.toBytes(idStr);		        
 			Put put = new Put(id);
+	        for(Call call : calls){
+	        	addEntry(put,call);
+	        }
+	        ImmutableBytesWritable rowKey = new ImmutableBytesWritable(id);
+	        
+	        /* Submit data to HBase */
+			context.write(rowKey, put);
 
 	        /* Ignore fields */
 //	      List<CharSequence> ids = v.getAlleleIds(); // graph mode -> not supported
@@ -82,17 +118,11 @@ public class Variant2HbaseMR extends Mapper<AvroKey<Variant>, NullWritable, Immu
 //	        v.getInfo() 
 //	        v.getNames()
 //	        v.getEnd();
-	        
-	        List<Call> calls = variant.getCalls();
-	        for(Call call : calls){
-	        	addEntry(put,call);
-	        }
-	        ImmutableBytesWritable rowKey = new ImmutableBytesWritable(id);
-	        
-	        /* Submit data to HBase */
-//			context.write(rowKey, put);
+			
 		}		
 	}
+	
+	
 
 	private boolean isReference(Variant variant) {
 		return null == variant.getAlternateBases() || variant.getAlternateBases().isEmpty();
@@ -104,38 +134,36 @@ public class Variant2HbaseMR extends Mapper<AvroKey<Variant>, NullWritable, Immu
     	/* other possibility
     	 * id = call.getCallSetName()
     	 */
+    
+    	// TODO check what happens in case of > 1 alt base
         put.addColumn(
         		COLUMN_FAMILY, 
-        		Bytes.toBytes(id.toString()), 
-        		Bytes.toBytes(call.toString()));        			
+        		Bytes.toBytes(idStr), 
+        		Bytes.toBytes(call.toString())
+        		);   // json     			
 	}
 
-	public String buildStorageId(Variant v) {
-        CharSequence chr = v.getReferenceName(); // TODO check for chr at chromosome name and remove it (maybe expect it to be done before.
+	public String buildStorageId(CharSequence chr,Long start, CharSequence refBases, CharSequence altBases) {
+//        CharSequence chr = v.getReferenceName(); 
+		// TODO check for chr at chromosome name and remove it (maybe expect it to be done before.
 		StringBuilder builder = new StringBuilder(chr); 
         builder.append(ROWKEY_SEPARATOR);
-        builder.append(String.format("%012d", v.getStart()));
+        builder.append(String.format("%012d", start));
         builder.append(ROWKEY_SEPARATOR);
         
-        if (v.getReferenceBases().length() < SV_THRESHOLD) {
-            builder.append(v.getReferenceBases());
+        if (refBases.length() < SV_THRESHOLD) {
+            builder.append(refBases);
         } else {
-            builder.append(new String(CryptoUtils.encryptSha1(v.getReferenceBases().toString())));
+            builder.append(new String(CryptoUtils.encryptSha1(refBases.toString())));
         }
 
         builder.append(ROWKEY_SEPARATOR);
         
-        if(v.getAlternateBases().size() > 1)
-        	throw new NotImplementedException("More than one alternate for same position not yet supported!!! for position " + builder.toString());
-        
-        if(v.getAlternateBases().size() == 1){
-        	CharSequence ab = v.getAlternateBases().get(0);
-            if (ab.length() < SV_THRESHOLD) {
-                builder.append(ab);
-            } else {
-                builder.append(new String(CryptoUtils.encryptSha1(ab.toString())));
-            }        	
-        }
+        if (altBases.length() < SV_THRESHOLD) {
+            builder.append(altBases);
+        } else {
+            builder.append(new String(CryptoUtils.encryptSha1(altBases.toString())));
+        }  
         
         return builder.toString();
     }
@@ -163,8 +191,15 @@ public class Variant2HbaseMR extends Mapper<AvroKey<Variant>, NullWritable, Immu
 			if(args[i] == "-o")
 				output = args[++i];
 		}
+		
+
+		conf.set("hbase.zookeeper.quorum", "who1");
+		conf.set("hbase.master", "who1:60000");
+		
 		Job job = Job.getInstance(conf, "Variant2HBase");
 		job.setJarByClass(Variant2HbaseMR.class);
+
+		conf = HBaseConfiguration.addHbaseResources(conf);
 
 		// input
 		AvroJob.setInputKeySchema(job, Variant.getClassSchema());
@@ -172,10 +207,16 @@ public class Variant2HbaseMR extends Mapper<AvroKey<Variant>, NullWritable, Immu
 		job.setInputFormatClass(AvroKeyInputFormat.class);
 		
 		job.setNumReduceTasks(0); 
-	    
+
+		// output
+		TableMapReduceUtil.initTableReducerJob(tablename, null, job);
+		
 		// mapper
 		job.setMapperClass(Variant2HbaseMR.class);
 
+		// create table if needed
+		createTableIfNeeded(tablename, conf);
+		
 		return (job.waitForCompletion(true) ? 0 : 1);		
 	}
 
@@ -235,9 +276,13 @@ public class Variant2HbaseMR extends Mapper<AvroKey<Variant>, NullWritable, Immu
 	 * @throws IOException
 	 */
 	public void createTableIfNeeded(String tablename) throws IOException {
+		createTableIfNeeded(tablename, getConf());
+	}
+	
+	public static void createTableIfNeeded(String tablename, Configuration conf) throws IOException {
 		TableName tname = TableName.valueOf(tablename);
 		try(
-			Connection con = ConnectionFactory.createConnection(getConf());
+			Connection con = ConnectionFactory.createConnection(conf);
 			Table table = con.getTable(tname);
 			Admin admin = con.getAdmin();
 			){
@@ -250,7 +295,7 @@ public class Variant2HbaseMR extends Mapper<AvroKey<Variant>, NullWritable, Immu
 		}
 	}
 
-	private boolean exist(TableName tname, Admin admin) throws IOException {
+	private static boolean exist(TableName tname, Admin admin) throws IOException {
 		for (TableName tn : admin.listTableNames()) {
 			if(tn.equals(tname)){
 				return true;

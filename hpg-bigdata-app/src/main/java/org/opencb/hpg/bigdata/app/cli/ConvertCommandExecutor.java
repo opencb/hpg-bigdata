@@ -507,14 +507,12 @@ public class ConvertCommandExecutor extends CommandExecutor {
 
 
     private void variant2hbase(String input, String output) throws Exception {
-//		Variant2HbaseMR mr = new Variant2HbaseMR();
-		List<String> args = new ArrayList<String>(Arrays.asList(new String[]{"-i",input,"-t","VariantLoad"}));
+		List<String> args = new ArrayList<String>(Arrays.asList(new String[]{"-i",input,"-t","VariantLoadAll"}));
 		if(StringUtils.isNotBlank(output)){
 			args.add("-o");
 			args.add(output);
 		}
 		int run = Variant2HbaseMR.run(args.toArray(new String[0]), null);
-//		int run = ToolRunner.run(mr, args.toArray(new String[0]));
 		if(run != 0)
 			throw new IllegalStateException(String.format("Variant 2 HBase finished with %s !", run));
 	}
