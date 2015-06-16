@@ -78,6 +78,7 @@ import org.opencb.hpg.bigdata.core.utils.ReadUtils;
  */
 public class ConvertCommandExecutor extends CommandExecutor {
 
+    @Deprecated
     public enum Conversion {
         FASTQ_2_GA ("fastq2ga", "Save Fastq file as Global Alliance for Genomics and Health (ga4gh) in Avro format"),
         GA_2_FASTQ ("ga2fastq", "Save Global Alliance for Genomics and Health (ga4gh) in Avro format as Fastq file"),
