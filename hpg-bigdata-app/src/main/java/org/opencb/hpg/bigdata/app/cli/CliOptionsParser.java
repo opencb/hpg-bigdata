@@ -34,26 +34,40 @@ public class CliOptionsParser {
     private AlignCommandOptions alignCommandOptions;
     private IndexCommandOptions indexCommandOptions;
 
-    public CliOptionsParser() {
+    public CliOptionsParser(boolean hadoop) {
         generalOptions = new GeneralOptions();
 
         jcommander = new JCommander(generalOptions);
-        jcommander.setProgramName("hpg-bigdata.sh");
 
         commonCommandOptions = new CommonCommandOptions();
 
         convertCommandOptions = new ConvertCommandOptions();
-        fastqCommandOptions = new FastqCommandOptions();
-        bamCommandOptions = new BamCommandOptions();
-        alignCommandOptions = new AlignCommandOptions();
-        indexCommandOptions = new IndexCommandOptions();
 
-        jcommander.addCommand("convert", convertCommandOptions);
-        jcommander.addCommand(fastqCommandOptions);
-        jcommander.addCommand(bamCommandOptions);
-        jcommander.addCommand("align", alignCommandOptions);
-        jcommander.addCommand("index", indexCommandOptions);
+//          OLD CODE
+//        fastqCommandOptions = new FastqCommandOptions();
+//        bamCommandOptions = new BamCommandOptions();
+//        alignCommandOptions = new AlignCommandOptions();
+//        indexCommandOptions = new IndexCommandOptions();
+//
+//        jcommander.addCommand("convert", convertCommandOptions);
+//        jcommander.addCommand(fastqCommandOptions);
+//        jcommander.addCommand(bamCommandOptions);
+//        jcommander.addCommand("align", alignCommandOptions);
+//        jcommander.addCommand("index", indexCommandOptions);
 
+        jcommander.addCommand(convertCommandOptions);
+        if (hadoop) {
+            jcommander.setProgramName("hpg-bigdata.sh");
+            fastqCommandOptions = new FastqCommandOptions();
+            bamCommandOptions = new BamCommandOptions();
+            alignCommandOptions = new AlignCommandOptions();
+
+            jcommander.addCommand(fastqCommandOptions);
+            jcommander.addCommand(bamCommandOptions);
+            jcommander.addCommand(alignCommandOptions);
+        } else {    //local
+            jcommander.setProgramName("hpg-bigdata-local.sh");
+        }
     }
 
     public void parse(String[] args) throws ParameterException {
@@ -192,7 +206,7 @@ public class CliOptionsParser {
         @Parameter(names = {"-o", "--output"}, description = "", required = false, arity = 1)
         public String output = null;
 
-        @Parameter(names = {"-c", "--conversion"}, description = "Accepted values: fastq2ga, ga2fastq, sam2ga, ga2sam, bam2ga, ga2bam", required = true, arity = 1, converter = ConvertionConverter.class)
+        @Parameter(names = {"-c", "--conversion"}, description = "Accepted values: fastq2avro, avro2fastq, sam2avro, avro2sam, bam2avro, avro2bam, vcf2avro", required = true, arity = 1, converter = ConvertionConverter.class)
         public ConvertCommandExecutor.Conversion conversion;
 
         @Parameter(names = {"-x", "--compression"}, description = "Accepted values: snappy, deflate, bzip2, xz. [snappy]", required = false, arity = 1)

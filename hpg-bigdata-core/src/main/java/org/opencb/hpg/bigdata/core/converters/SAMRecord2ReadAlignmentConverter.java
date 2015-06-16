@@ -78,7 +78,7 @@ public class SAMRecord2ReadAlignmentConverter implements Converter<SAMRecord, Re
 		boolean duplicateFragment = in.getDuplicateReadFlag();
 
 		// the number of reads in the fragment (extension to SAM flag 0x1)
-		int numberReads = in.getProperPairFlag() ? 2 : 1;
+		int numberReads = in.getReadPairedFlag() ? 2 : 1;
 
 		// the observed length of the fragment, equivalent to TLEN in SAM
 		int fragmentLength = in.getReadPairedFlag() ? in.getInferredInsertSize() : 0;
@@ -155,13 +155,14 @@ public class SAMRecord2ReadAlignmentConverter implements Converter<SAMRecord, Re
 		}
 
 		// next mate position
-		Position nextMatePosition = new Position();
-		if (in.getReadPairedFlag()) {	
+		Position nextMatePosition = null;
+		if (in.getReadPairedFlag()) {
+            nextMatePosition = new Position();
 			nextMatePosition.setPosition((long) in.getMateAlignmentStart());
 			nextMatePosition.setReferenceName(in.getMateReferenceName());
 			nextMatePosition.setSequenceId("");
 			nextMatePosition.setStrand(in.getMateNegativeStrandFlag() ? Strand.NEG_STRAND : Strand.POS_STRAND);
-		}
+        }
 
 		// A map of additional read alignment information.
 		Map<CharSequence, List<CharSequence>> info = new HashMap<CharSequence, List<CharSequence>>();

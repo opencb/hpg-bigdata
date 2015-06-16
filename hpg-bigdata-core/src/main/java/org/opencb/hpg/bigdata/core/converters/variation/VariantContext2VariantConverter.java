@@ -57,9 +57,9 @@ import org.ga4gh.models.Variant;
 import org.ga4gh.models.VariantSet;
 import org.ga4gh.models.VariantSetMetadata;
 import org.opencb.hpg.bigdata.core.converters.Converter;
-import org.opencb.hpg.bigdata.core.converters.FullVCFCodec;
+import org.opencb.hpg.bigdata.core.converters.FullVcfCodec;
 import org.opencb.hpg.bigdata.core.io.avro.AvroWriter;
-import org.opencb.hpg.bigdata.core.utils.CompressionUtils;
+import org.opencb.hpg.bigdata.core.utils.AvroUtils;
 
 /**
  * Chr20 of 1000 genomes -> 855,196 rows  = 30 header, 855,166 rows
@@ -88,8 +88,8 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
 				OutputStream callOs = new FileOutputStream(new File(args[1]+".Call"));
 				OutputStream vsOs = new FileOutputStream(new File(args[1]+".variantSet")); ){
 			CodecFactory codec = 
-					CompressionUtils.getAvroCodec("deflate");
-//					CompressionUtils.getAvroCodec("snappy");
+					AvroUtils.getCodec("deflate");
+//					CompressionUtils.getCodec("snappy");
 			AvroWriter<Variant> writer = new AvroWriter<Variant>(Variant.getClassSchema(), codec, os);
 			AvroWriter<CallSet> callWriter = new AvroWriter<CallSet>(CallSet.getClassSchema(), codec, callOs);
 			AvroWriter<VariantSet> vsWriter = new AvroWriter<VariantSet>(VariantSet.getClassSchema(), codec, vsOs);
@@ -97,11 +97,11 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
 			
 			
 			Converter<String,CallSet> gtConverter = new Genotype2CallSet();
-			Converter<VCFHeaderLine,VariantSetMetadata> infoConverter = new VCFHeaderLine2VariantSetMetadataConverter();
+			Converter<VCFHeaderLine,VariantSetMetadata> infoConverter = new VcfHeaderLine2VariantSetMetadataConverter();
 			VariantContext2VariantConverter varConverter = new VariantContext2VariantConverter();
 			try(FeatureReader<VariantContext> freader = AbstractFeatureReader.getFeatureReader(
 					file.getAbsolutePath(),
-					new FullVCFCodec(),
+					new FullVcfCodec(),
 					true);){
 				VCFHeader header = (VCFHeader) freader.getHeader();
 				
@@ -329,8 +329,19 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
 			c.setCallSetName(StringUtils.EMPTY);
 
 			List<Integer> cgt = new ArrayList<Integer>(gt.getPloidy());
+			boolean unknownGT = false;
+			// TODO issue with ./. -> propose ignore call
 			for(Allele a : gt.getAlleles()){
-				cgt.add(alleleMap.get(a.getBaseString()));
+				String baseString = a.getBaseString();
+				Integer e = alleleMap.get(baseString);
+				if(null == e){
+					unknownGT = true;
+					break;
+				}
+				cgt.add(e);
+			} 
+			if(unknownGT){
+				continue; // ignore Call -> Genotype not known (e.g. "./.")
 			}
 			c.setGenotype(cgt);
 			c.setPhaseset(Boolean.valueOf(gt.isPhased()).toString()); // TODO decide what's the correct string

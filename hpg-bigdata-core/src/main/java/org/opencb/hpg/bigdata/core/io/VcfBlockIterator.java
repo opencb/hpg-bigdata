@@ -36,8 +36,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPInputStream;
 
 import org.apache.commons.io.FilenameUtils;
-import org.apache.directory.api.util.exception.NotImplementedException;
-import org.opencb.hpg.bigdata.core.converters.FullVCFCodec;
+import org.apache.commons.lang.NotImplementedException;
+import org.opencb.hpg.bigdata.core.converters.FullVcfCodec;
 
 /**
  * @author mh719
@@ -57,10 +57,10 @@ public class VcfBlockIterator implements AutoCloseable,Iterator<List<CharBuffer>
 	private final VCFHeaderVersion version;
 	
 	public VcfBlockIterator(File vcfFile) throws IOException {
-		this(vcfFile,new FullVCFCodec());
+		this(vcfFile,new FullVcfCodec());
 	}
 	
-	public VcfBlockIterator(File vcfFile, FullVCFCodec codec) throws IOException {
+	public VcfBlockIterator(File vcfFile, FullVcfCodec codec) throws IOException {
 		this.file = vcfFile;
 		this.in = buildInputStream(this.file);
 		this.iter = codec.makeSourceFromStream(this.in);
@@ -68,7 +68,7 @@ public class VcfBlockIterator implements AutoCloseable,Iterator<List<CharBuffer>
 		this.version = codec.getVCFHeaderVersion();
 	}
 	
-	public VcfBlockIterator(InputStream in, FullVCFCodec codec) throws IOException {
+	public VcfBlockIterator(InputStream in, FullVcfCodec codec) throws IOException {
 		this.file = null;
 		this.in = in;
 		this.iter = codec.makeSourceFromStream(this.in);

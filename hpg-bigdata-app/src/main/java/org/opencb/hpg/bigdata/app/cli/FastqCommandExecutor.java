@@ -22,8 +22,8 @@ import java.util.Date;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.opencb.hpg.bigdata.core.io.ReadKmersMR;
-import org.opencb.hpg.bigdata.core.io.ReadStatsMR;
+import org.opencb.hpg.bigdata.tools.stats.read.mr.ReadKmersMR;
+import org.opencb.hpg.bigdata.tools.stats.read.mr.ReadStatsMR;
 import org.opencb.hpg.bigdata.core.utils.PathUtils;
 
 /**
@@ -91,7 +91,7 @@ public class FastqCommandExecutor extends CommandExecutor {
 		String out = PathUtils.clean(output);
 
 		if (!PathUtils.isHdfs(input)) {
-			logger.error("To run fastq stats, input files '{}' must be stored in the HDFS/Haddop. Use the command 'ga4gh fastq2sa' to import your file.", input);
+			logger.error("To run fastq stats, input files '{}' must be stored in the HDFS/Haddop. Use the command 'convert fastq2sa' to import your file.", input);
 			System.exit(-1);
 		}
 
@@ -108,7 +108,7 @@ public class FastqCommandExecutor extends CommandExecutor {
 		String out = PathUtils.clean(output);
 
 		if (!PathUtils.isHdfs(input)) {
-			logger.error("To run fastq kmers, input files '{}' must be stored in the HDFS/Haddop. Use the command 'ga4gh fastq2sa' to import your file.", input);
+			logger.error("To run fastq kmers, input files '{}' must be stored in the HDFS/Haddop. Use the command 'convert fastq2sa' to import your file.", input);
 			System.exit(-1);
 		}
 

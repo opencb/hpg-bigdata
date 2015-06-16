@@ -27,7 +27,7 @@ import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.specific.SpecificDatumWriter;
 import org.opencb.commons.io.DataWriter;
-import org.opencb.hpg.bigdata.core.utils.CompressionUtils;
+import org.opencb.hpg.bigdata.core.utils.AvroUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +51,7 @@ public class AvroFileWriter <T> implements DataWriter<ByteBuffer> {
 
         datumWriter = new SpecificDatumWriter<>();
         writer = new DataFileWriter<>(datumWriter);
-        writer.setCodec(CompressionUtils.getAvroCodec(this.codecName));
+        writer.setCodec(AvroUtils.getCodec(this.codecName));
     }
 
     @Override

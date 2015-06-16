@@ -22,7 +22,7 @@
     <parent>
 		<groupId>org.opencb.hpg</groupId>
 		<artifactId>hpg-bigdata</artifactId>
-		<version>0.1.0</version>
+		<version>0.5-SNAPSHOT</version>
 		<relativePath>..</relativePath>
 	</parent>
 
@@ -33,28 +33,26 @@
 		<dependency>
 			<groupId>org.opencb.ga4gh</groupId>
 			<artifactId>ga4gh</artifactId>
-			<version>0.5.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.opencb.biodata</groupId>
+			<artifactId>biodata-models</artifactId>
+			<version>0.5-SNAPSHOT</version>
 		</dependency>
         <dependency>
             <groupId>org.opencb.commons</groupId>
             <artifactId>commons-lib</artifactId>
         </dependency>
-
         <dependency>
-            <groupId>org.seqdoop</groupId>
-            <artifactId>hadoop-bam</artifactId>
-            <version>7.0.0</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.seqdoop</groupId>
-                    <artifactId>htsjdk</artifactId>
-                </exclusion>
-            </exclusions>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.4</version>
         </dependency>
+
         <dependency>
             <groupId>com.github.samtools</groupId>
             <artifactId>htsjdk</artifactId>
-            <version>1.129</version>
+            <version>1.131</version>
         </dependency>
 
 		<dependency>
@@ -73,43 +71,21 @@
 			<artifactId>avro-ipc</artifactId>
 			<version>1.7.7</version>
 		</dependency>
+
 		<dependency>
-			<groupId>org.apache.avro</groupId>
-			<artifactId>avro-mapred</artifactId>
-			<version>1.7.7</version>
-			<classifier>hadoop2</classifier>
+			<groupId>org.opencb.biodata</groupId>
+			<artifactId>biodata-tools</artifactId>
+			<version>0.5-SNAPSHOT</version>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.hadoop</groupId>
-			<artifactId>hadoop-common</artifactId>
-			<version>2.6.0</version>
+			<groupId>org.opencb.biodata</groupId>
+			<artifactId>biodata-models</artifactId>
+			<version>0.5-SNAPSHOT</version>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.hadoop</groupId>
-			<artifactId>hadoop-client</artifactId>
-			<version>2.6.0</version>
-		</dependency>
-		<!-- <dependency> <groupId>org.seqdoop</groupId> <artifactId>hadoop-bam</artifactId> 
-			<version>7.0.0</version> </dependency> -->
-		<dependency>
-			<groupId>com.twitter</groupId>
-			<artifactId>parquet-avro</artifactId>
-			<version>1.6.0</version>
-		</dependency>
-		<dependency>
-			<groupId>com.twitter</groupId>
-			<artifactId>parquet-column</artifactId>
-			<version>1.6.0</version>
-		</dependency>
-		<dependency>
-			<groupId>com.twitter</groupId>
-			<artifactId>parquet-hadoop</artifactId>
-			<version>1.6.0</version>
-		</dependency>
-		<dependency>
-			<groupId>com.github.samtools</groupId>
-			<artifactId>htsjdk</artifactId>
-			<version>1.131</version>
+			<groupId>org.opencb.biodata</groupId>
+			<artifactId>biodata-formats</artifactId>
+			<version>0.5-SNAPSHOT</version>
 		</dependency>
 
 		<dependency>
