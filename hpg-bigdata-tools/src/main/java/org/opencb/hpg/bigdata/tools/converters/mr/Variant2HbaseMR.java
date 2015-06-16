@@ -34,6 +34,7 @@ import org.apache.hadoop.util.Tool;
 import org.ga4gh.models.Call;
 import org.ga4gh.models.Variant;
 import org.opencb.commons.utils.CryptoUtils;
+import org.opencb.hpg.bigdata.core.utils.HBaseUtils;
 import org.opencb.hpg.bigdata.core.utils.PathUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,8 +45,6 @@ import org.slf4j.LoggerFactory;
  */
 public class Variant2HbaseMR extends Mapper<AvroKey<Variant>, NullWritable, ImmutableBytesWritable, Put> implements Tool {
     public final static byte[] COLUMN_FAMILY = Bytes.toBytes("d");
-    private final static String ROWKEY_SEPARATOR = "_";
-    private static final int SV_THRESHOLD = 50; // TODO update as needed 
 	
     private final static Logger log = LoggerFactory.getLogger(Variant2HbaseMR.class);
 	private Configuration config;
@@ -91,16 +90,16 @@ public class Variant2HbaseMR extends Mapper<AvroKey<Variant>, NullWritable, Immu
 				altBases = variant.getAlternateBases().get(altIdx);
 			}
 			CharSequence refBases = variant.getReferenceBases();
-			if(altBases.length() >= SV_THRESHOLD || refBases.length() >= SV_THRESHOLD){
+			if(altBases.length() >= HBaseUtils.SV_THRESHOLD || refBases.length() >= HBaseUtils.SV_THRESHOLD){
 				context.getCounter("VCF","SV_COUNT").increment(1);
 				return; // skip SV
 			}
-			String idStr = buildStorageId(
-	        		variant.getReferenceName(),
-	        		variant.getStart(),
-	        		refBases,
-	        		altBases
-	        		);
+			String idStr = HBaseUtils.buildStorageId(
+					variant.getReferenceName(),
+					variant.getStart(),
+					refBases,
+					altBases
+			);
 			byte[] id = Bytes.toBytes(idStr);		        
 			Put put = new Put(id);
 	        for(Call call : calls){
@@ -142,31 +141,6 @@ public class Variant2HbaseMR extends Mapper<AvroKey<Variant>, NullWritable, Immu
         		Bytes.toBytes(call.toString())
         		);   // json     			
 	}
-
-	public String buildStorageId(CharSequence chr,Long start, CharSequence refBases, CharSequence altBases) {
-//        CharSequence chr = v.getReferenceName(); 
-		// TODO check for chr at chromosome name and remove it (maybe expect it to be done before.
-		StringBuilder builder = new StringBuilder(chr); 
-        builder.append(ROWKEY_SEPARATOR);
-        builder.append(String.format("%012d", start));
-        builder.append(ROWKEY_SEPARATOR);
-        
-        if (refBases.length() < SV_THRESHOLD) {
-            builder.append(refBases);
-        } else {
-            builder.append(new String(CryptoUtils.encryptSha1(refBases.toString())));
-        }
-
-        builder.append(ROWKEY_SEPARATOR);
-        
-        if (altBases.length() < SV_THRESHOLD) {
-            builder.append(altBases);
-        } else {
-            builder.append(new String(CryptoUtils.encryptSha1(altBases.toString())));
-        }  
-        
-        return builder.toString();
-    }
 
 	@Override
 	public void setConf(Configuration conf) {
