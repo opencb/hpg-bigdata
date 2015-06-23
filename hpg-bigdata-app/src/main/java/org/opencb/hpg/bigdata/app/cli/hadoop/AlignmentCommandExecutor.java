@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-package org.opencb.hpg.bigdata.app.cli;
+package org.opencb.hpg.bigdata.app.cli.hadoop;
+
+import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
 
 /**
  * Created by imedina on 16/03/15.
  */
-public class AlignCommandExecutor extends CommandExecutor {
+public class AlignmentCommandExecutor extends CommandExecutor {
 
     private CliOptionsParser.AlignCommandOptions alignCommandOptions;
 
-    public AlignCommandExecutor(CliOptionsParser.AlignCommandOptions alignCommandOptions) {
+    public AlignmentCommandExecutor(CliOptionsParser.AlignCommandOptions alignCommandOptions) {
         super(alignCommandOptions.commonOptions.logLevel, alignCommandOptions.commonOptions.verbose,
                 alignCommandOptions.commonOptions.conf);
 
@@ -34,7 +36,7 @@ public class AlignCommandExecutor extends CommandExecutor {
     /**
      * Parse specific 'align' command options
      */
-    public void execute() {
+    public void execute() throws Exception {
         logger.info("Executing {} CLI options", "align");
 
         logger.debug("Input file: {}", alignCommandOptions.input);

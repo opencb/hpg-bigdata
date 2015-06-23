@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
-package org.opencb.hpg.bigdata.app.cli;
+package org.opencb.hpg.bigdata.app.cli.hadoop;
 
 import com.beust.jcommander.*;
+import org.opencb.hpg.bigdata.app.cli.hadoop.ConvertCommandExecutor;
+
+import java.util.List;
 
 /**
  * Created by imedina on 03/02/15.
@@ -26,6 +29,8 @@ public class CliOptionsParser {
     private final JCommander jcommander;
 
     private final GeneralOptions generalOptions;
+
+
     private final CommonCommandOptions commonCommandOptions;
 
     private FastqCommandOptions fastqCommandOptions;
@@ -42,7 +47,8 @@ public class CliOptionsParser {
         commonCommandOptions = new CommonCommandOptions();
 
         convertCommandOptions = new ConvertCommandOptions();
-
+jcommander.addCommand("a", alignCommandOptions);
+jcommander.addCommand("alignment", alignCommandOptions);
 //          OLD CODE
 //        fastqCommandOptions = new FastqCommandOptions();
 //        bamCommandOptions = new BamCommandOptions();
@@ -76,6 +82,18 @@ public class CliOptionsParser {
 
     public String getCommand() {
         return (jcommander.getParsedCommand() != null) ? jcommander.getParsedCommand(): "";
+    }
+
+    public boolean isHelp() {
+        String parsedCommand = jcommander.getParsedCommand();
+        if (parsedCommand != null) {
+            JCommander jCommander = jcommander.getCommands().get(parsedCommand);
+            List<Object> objects = jCommander.getObjects();
+            if (!objects.isEmpty() && objects.get(0) instanceof CommonCommandOptions) {
+                return ((CommonCommandOptions) objects.get(0)).help;
+            }
+        }
+        return getCommonCommandOptions().help;
     }
 
     public void printUsage(){
@@ -295,6 +313,10 @@ public class CliOptionsParser {
 
     public GeneralOptions getGeneralOptions() {
         return generalOptions;
+    }
+
+    public CommonCommandOptions getCommonCommandOptions() {
+        return commonCommandOptions;
     }
 
     public FastqCommandOptions getFastqCommandOptions() {

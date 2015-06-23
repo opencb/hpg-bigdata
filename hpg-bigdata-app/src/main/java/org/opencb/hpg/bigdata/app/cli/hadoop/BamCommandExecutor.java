@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.opencb.hpg.bigdata.app.cli;
+package org.opencb.hpg.bigdata.app.cli.hadoop;
 
 import java.io.IOException;
 import java.util.Date;
@@ -23,6 +23,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.ga4gh.models.ReadAlignment;
+import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
 import org.opencb.hpg.bigdata.tools.stats.alignment.mr.ReadAlignmentDepthMR;
 import org.opencb.hpg.bigdata.tools.stats.alignment.mr.ReadAlignmentSortMR;
 import org.opencb.hpg.bigdata.tools.stats.alignment.mr.ReadAlignmentStatsMR;

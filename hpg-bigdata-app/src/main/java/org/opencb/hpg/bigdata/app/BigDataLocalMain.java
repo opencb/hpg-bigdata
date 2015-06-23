@@ -1,9 +1,9 @@
 package org.opencb.hpg.bigdata.app;
 
 import com.beust.jcommander.ParameterException;
-import org.opencb.hpg.bigdata.app.cli.CliOptionsParser;
+import org.opencb.hpg.bigdata.app.cli.hadoop.CliOptionsParser;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
-import org.opencb.hpg.bigdata.app.cli.ConvertCommandExecutor;
+import org.opencb.hpg.bigdata.app.cli.hadoop.ConvertCommandExecutor;
 
 /**
  * Created by hpccoll1 on 18/05/15.
@@ -50,7 +50,12 @@ public class BigDataLocalMain {
             }
 
             if (commandExecutor != null) {
-                commandExecutor.execute();
+                try {
+                    commandExecutor.execute();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    System.exit(1);
+                }
             }
         }
     }

@@ -16,12 +16,12 @@
 
 package org.opencb.hpg.bigdata.app;
 
-import org.opencb.hpg.bigdata.app.cli.AlignCommandExecutor;
-import org.opencb.hpg.bigdata.app.cli.BamCommandExecutor;
-import org.opencb.hpg.bigdata.app.cli.CliOptionsParser;
+import org.opencb.hpg.bigdata.app.cli.hadoop.AlignmentCommandExecutor;
+import org.opencb.hpg.bigdata.app.cli.hadoop.BamCommandExecutor;
+import org.opencb.hpg.bigdata.app.cli.hadoop.CliOptionsParser;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
-import org.opencb.hpg.bigdata.app.cli.FastqCommandExecutor;
-import org.opencb.hpg.bigdata.app.cli.ConvertCommandExecutor;
+import org.opencb.hpg.bigdata.app.cli.hadoop.FastqCommandExecutor;
+import org.opencb.hpg.bigdata.app.cli.hadoop.ConvertCommandExecutor;
 
 import com.beust.jcommander.ParameterException;
 
@@ -33,7 +33,8 @@ import java.util.Properties;
  */
 public class BigDataMain {
 
-    public static void main(String[] args) {    	
+    public static void main(String[] args) {
+
         CliOptionsParser cliOptionsParser = new CliOptionsParser(true);
         
         if (args == null || args.length == 0) {
@@ -59,41 +60,52 @@ public class BigDataMain {
             }
         } else {
             CommandExecutor commandExecutor = null;
-            switch (parsedCommand) {
-                case "fastq":
-                    if (cliOptionsParser.getFastqCommandOptions().commonOptions.help) {
-                        cliOptionsParser.printUsage();
-                    } else {
-                        commandExecutor = new FastqCommandExecutor(cliOptionsParser.getFastqCommandOptions());
-                    }
-                    break;
-                case "bam":
-                    if (cliOptionsParser.getBamCommandOptions().commonOptions.help) {
-                        cliOptionsParser.printUsage();
-                    } else {
-                        commandExecutor = new BamCommandExecutor(cliOptionsParser.getBamCommandOptions());
-                    }
-                    break;
-                case "convert":
-                    if (cliOptionsParser.getConvertCommandOptions().commonOptions.help) {
-                        cliOptionsParser.printUsage();
-                    } else {
-                        commandExecutor = new ConvertCommandExecutor(cliOptionsParser.getConvertCommandOptions());
-                    }
-                    break;
-                case "align":
-                    if (cliOptionsParser.getAlignCommandOptions().commonOptions.help) {
-                        cliOptionsParser.printUsage();
-                    } else {
-                        commandExecutor = new AlignCommandExecutor(cliOptionsParser.getAlignCommandOptions());
-                    }
-                    break;
-                default:
-                    break;
+            // Check if any command -h option is present
+            if(cliOptionsParser.isHelp()) {
+                cliOptionsParser.printUsage();
+            } else {
+                switch (parsedCommand) {
+                    case "fastq":
+                        if (cliOptionsParser.getFastqCommandOptions().commonOptions.help) {
+                            cliOptionsParser.printUsage();
+                        } else {
+                            commandExecutor = new FastqCommandExecutor(cliOptionsParser.getFastqCommandOptions());
+                        }
+                        break;
+                    case "bam":
+                        if (cliOptionsParser.getBamCommandOptions().commonOptions.help) {
+                            cliOptionsParser.printUsage();
+                        } else {
+                            commandExecutor = new BamCommandExecutor(cliOptionsParser.getBamCommandOptions());
+                        }
+                        break;
+                    case "convert":
+                        if (cliOptionsParser.getConvertCommandOptions().commonOptions.help) {
+                            cliOptionsParser.printUsage();
+                        } else {
+                            commandExecutor = new ConvertCommandExecutor(cliOptionsParser.getConvertCommandOptions());
+                        }
+                        break;
+                    case "align":
+                        if (cliOptionsParser.getAlignCommandOptions().commonOptions.help) {
+                            cliOptionsParser.printUsage();
+                        } else {
+                            commandExecutor = new AlignmentCommandExecutor(cliOptionsParser.getAlignCommandOptions());
+                        }
+                        break;
+                    default:
+                        System.out.printf("ERROR: not valid command passed: '" + parsedCommand + "'");
+                        break;
+                }
             }
 
             if (commandExecutor != null) {
-                commandExecutor.execute();
+                try {
+                    commandExecutor.execute();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    System.exit(1);
+                }
             }
         }
     }
