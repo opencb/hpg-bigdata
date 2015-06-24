@@ -19,4 +19,5 @@ native=${DIR}/../native
 
 export LD_LIBRARY_PATH=${DIR}/../libs/
 
+echo "Executing: $HADOOPCMD jar ${DIR}/../libs/*.jar $@"
 $HADOOPCMD jar ${DIR}/../libs/*.jar $@

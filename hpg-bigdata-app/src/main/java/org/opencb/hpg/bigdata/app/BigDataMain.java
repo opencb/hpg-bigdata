@@ -16,14 +16,9 @@
 
 package org.opencb.hpg.bigdata.app;
 
-import org.opencb.hpg.bigdata.app.cli.hadoop.AlignmentCommandExecutor;
-import org.opencb.hpg.bigdata.app.cli.hadoop.BamCommandExecutor;
-import org.opencb.hpg.bigdata.app.cli.hadoop.CliOptionsParser;
-import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
-import org.opencb.hpg.bigdata.app.cli.hadoop.FastqCommandExecutor;
-import org.opencb.hpg.bigdata.app.cli.hadoop.ConvertCommandExecutor;
-
 import com.beust.jcommander.ParameterException;
+import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
+import org.opencb.hpg.bigdata.app.cli.hadoop.*;
 
 import java.io.IOException;
 import java.util.Properties;
@@ -61,22 +56,25 @@ public class BigDataMain {
         } else {
             CommandExecutor commandExecutor = null;
             // Check if any command -h option is present
-            if(cliOptionsParser.isHelp()) {
+            if(cliOptionsParser.isHelp()) { //cliOptionsParser.getCommonCommandOptions().help
+                System.out.println("aaaaaaaa");
                 cliOptionsParser.printUsage();
             } else {
+                String subCommand = cliOptionsParser.getSubCommand();
+                System.out.println("subCommand = " + subCommand);
                 switch (parsedCommand) {
                     case "fastq":
-                        if (cliOptionsParser.getFastqCommandOptions().commonOptions.help) {
+                        if (cliOptionsParser.getFastqCommandOptions().help) {
                             cliOptionsParser.printUsage();
                         } else {
                             commandExecutor = new FastqCommandExecutor(cliOptionsParser.getFastqCommandOptions());
                         }
                         break;
                     case "bam":
-                        if (cliOptionsParser.getBamCommandOptions().commonOptions.help) {
+                        if (cliOptionsParser.getAlignmentCommandOptions().help) {
                             cliOptionsParser.printUsage();
                         } else {
-                            commandExecutor = new BamCommandExecutor(cliOptionsParser.getBamCommandOptions());
+                            commandExecutor = new BamCommandExecutor(cliOptionsParser.getAlignmentCommandOptions());
                         }
                         break;
                     case "convert":
@@ -87,10 +85,10 @@ public class BigDataMain {
                         }
                         break;
                     case "align":
-                        if (cliOptionsParser.getAlignCommandOptions().commonOptions.help) {
+                        if (cliOptionsParser.getAlignmentCommandOptions().help) {
                             cliOptionsParser.printUsage();
                         } else {
-                            commandExecutor = new AlignmentCommandExecutor(cliOptionsParser.getAlignCommandOptions());
+                            commandExecutor = new AlignmentCommandExecutor(cliOptionsParser.getAlignmentCommandOptions());
                         }
                         break;
                     default:

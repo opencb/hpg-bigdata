@@ -35,13 +35,12 @@ import org.opencb.hpg.bigdata.core.utils.PathUtils;
  */
 public class BamCommandExecutor extends CommandExecutor {
 
-    private CliOptionsParser.BamCommandOptions bamCommandOptions;
+    private CliOptionsParser.AlignmentCommandOptions alignmentCommandOptions;
 
-    public BamCommandExecutor(CliOptionsParser.BamCommandOptions bamCommandOptions) {
-        super(bamCommandOptions.commonOptions.logLevel, bamCommandOptions.commonOptions.verbose,
-                bamCommandOptions.commonOptions.conf);
+    public BamCommandExecutor(CliOptionsParser.AlignmentCommandOptions alignmentCommandOptions) {
+        super(alignmentCommandOptions.logLevel, alignmentCommandOptions.verbose, alignmentCommandOptions.conf);
 
-        this.bamCommandOptions = bamCommandOptions;
+        this.alignmentCommandOptions = alignmentCommandOptions;
     }
 
 
@@ -62,23 +61,23 @@ public class BamCommandExecutor extends CommandExecutor {
 		String outHdfsDirname = new String("" + new Date().getTime());
 
 		String outName = null;
-		switch(bamCommandOptions.command) {
+		switch(alignmentCommandOptions.command) {
 		case "stats": {
 			outName = "stats.json";
-			stats(bamCommandOptions.input, outHdfsDirname);
+			stats(alignmentCommandOptions.input, outHdfsDirname);
 			break;
 		}
 		case "depth": {
 			outName = "depth.txt";
-			depth(bamCommandOptions.input, outHdfsDirname);
+			depth(alignmentCommandOptions.input, outHdfsDirname);
 			break;
 		}
 		case "sort": {
-			sort(bamCommandOptions.input, bamCommandOptions.output);
+			sort(alignmentCommandOptions.input, alignmentCommandOptions.output);
 			return;
 		}
 		case "to-parquet": {
-			toParquet(bamCommandOptions.input, bamCommandOptions.output, bamCommandOptions.compression);
+			toParquet(alignmentCommandOptions.input, alignmentCommandOptions.output, alignmentCommandOptions.compression);
 			return;
 		}
 		default: {
@@ -94,12 +93,12 @@ public class BamCommandExecutor extends CommandExecutor {
 			if (!fs.exists(outFile)) {
 				System.out.println("out file = " + outFile.getName() + " does not exist !!");
 			} else {
-				String outRawFileName =  bamCommandOptions.output + "/" + outName;
+				String outRawFileName =  alignmentCommandOptions.output + "/" + outName;
 				fs.copyToLocalFile(outFile, new Path(outRawFileName));
 				
-				if (bamCommandOptions.command.equalsIgnoreCase("depth")) {
+				if (alignmentCommandOptions.command.equalsIgnoreCase("depth")) {
 					Path outJson = new Path(outHdfsDirname + ".summary.depth.json");
-					fs.copyToLocalFile(outJson, new Path(bamCommandOptions.output + "/depth.summary.json"));
+					fs.copyToLocalFile(outJson, new Path(alignmentCommandOptions.output + "/depth.summary.json"));
 					fs.delete(outJson, true);
 				}
 

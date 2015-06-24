@@ -35,8 +35,7 @@ public class FastqCommandExecutor extends CommandExecutor {
 	private CliOptionsParser.FastqCommandOptions fastqCommandOptions;
 
 	public FastqCommandExecutor(CliOptionsParser.FastqCommandOptions fastqCommandOptions) {
-		super(fastqCommandOptions.commonOptions.logLevel, fastqCommandOptions.commonOptions.verbose,
-				fastqCommandOptions.commonOptions.conf);
+		super(fastqCommandOptions.logLevel, fastqCommandOptions.verbose, fastqCommandOptions.conf);
 
 		this.fastqCommandOptions = fastqCommandOptions;
 	}
@@ -57,32 +56,43 @@ public class FastqCommandExecutor extends CommandExecutor {
 			e.printStackTrace();
 		}
 		String outHdfsDirname = new String("" + new Date().getTime());
-	
-		if (fastqCommandOptions.stats) {
-			stats(fastqCommandOptions.input, outHdfsDirname, fastqCommandOptions.kmers);
-		} else if (fastqCommandOptions.kmers > 0) {
-			kmers(fastqCommandOptions.input, outHdfsDirname, fastqCommandOptions.kmers);
-		} else {
-			logger.error("Error: FastQ command not yet implemented");
-			System.exit(-1);
-		}
 
-		// post-processing
-		Path outFile = new Path(outHdfsDirname + "/part-r-00000");
+		String subCommand = fastqCommandOptions.getSubCommand();
 
-		try {
-			if (!fs.exists(outFile)) {
-				System.out.println("out file = " + outFile.getName() + " does not exist !!");
-			} else {
-				String outRawFileName =  fastqCommandOptions.output + "/raw.json";
-				fs.copyToLocalFile(outFile, new Path(outRawFileName));
 
-				//Utils.parseStatsFile(outRawFileName, out);
-			}
-			fs.delete(new Path(outHdfsDirname), true);		
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+
+        switch (subCommand) {
+            case "convert":
+                System.out.println("convert");
+
+                break;
+        }
+
+//		if (fastqCommandOptions.stats) {
+//			stats(fastqCommandOptions.input, outHdfsDirname, fastqCommandOptions.kmers);
+//		} else if (fastqCommandOptions.kmers > 0) {
+//			kmers(fastqCommandOptions.input, outHdfsDirname, fastqCommandOptions.kmers);
+//		} else {
+//			logger.error("Error: FastQ command not yet implemented");
+//			System.exit(-1);
+//		}
+//
+//		// post-processing
+//		Path outFile = new Path(outHdfsDirname + "/part-r-00000");
+//
+//		try {
+//			if (!fs.exists(outFile)) {
+//				System.out.println("out file = " + outFile.getName() + " does not exist !!");
+//			} else {
+//				String outRawFileName =  fastqCommandOptions.output + "/raw.json";
+//				fs.copyToLocalFile(outFile, new Path(outRawFileName));
+//
+//				//Utils.parseStatsFile(outRawFileName, out);
+//			}
+//			fs.delete(new Path(outHdfsDirname), true);
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
 	}
 
 
