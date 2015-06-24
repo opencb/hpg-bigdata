@@ -40,8 +40,8 @@
 		<biodata.version>0.4-SNAPSHOT</biodata.version>
 		<datastore.version>0.4-SNAPSHOT</datastore.version>
 		<commons-lib.version>3.0-SNAPSHOT</commons-lib.version>
-		<hbase.version>1.0.1</hbase.version>
 		<hadoop.version>2.6.0</hadoop.version>
+		<hbase.version>1.0.1</hbase.version>
 		<compileSource>1.8</compileSource>
 		<build.dir>build</build.dir>
 	</properties>

@@ -17,7 +17,6 @@
 package org.opencb.hpg.bigdata.app.cli.hadoop;
 
 import com.beust.jcommander.*;
-import org.opencb.hpg.bigdata.app.cli.hadoop.ConvertCommandExecutor;
 
 import java.util.List;
 
