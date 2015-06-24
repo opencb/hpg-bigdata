@@ -19,39 +19,48 @@ package org.opencb.hpg.bigdata.tools.io;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 
 import org.apache.hadoop.io.Writable;
-import org.ga4gh.models.CigarUnit;
-import org.opencb.hpg.bigdata.core.stats.RegionDepth;
+import org.opencb.biodata.tools.alignment.tasks.RegionDepth;
 
-public class RegionDepthWritable extends RegionDepth implements Writable {
+public class RegionDepthWritable implements Writable {
 
-    public RegionDepthWritable(String chrom, long pos, long chunk, int size) {
-        super(chrom, pos, chunk, size);
-    }
+	public RegionDepth regionDepth;
+
+	public RegionDepthWritable() { }
+
+	public RegionDepthWritable(RegionDepth regionDepth) { setRegionDepth(regionDepth); }
+
+	public RegionDepth getRegionDepth() {
+		return regionDepth;
+	}
+
+	public void setRegionDepth(RegionDepth regionDepth) {
+		this.regionDepth = regionDepth;
+	}
 
     @Override
 	public void write(DataOutput out) throws IOException {
-		out.writeUTF(chrom);
-		out.writeLong(position);
-		out.writeLong(chunk);
-		out.writeInt(size);
-		for (int i = 0; i < size; i++) {
-			out.writeShort(array[i]);
+		out.writeUTF(regionDepth.chrom);
+		out.writeLong(regionDepth.position);
+		out.writeLong(regionDepth.chunk);
+		out.writeInt(regionDepth.size);
+		for (int i = 0; i < regionDepth.size; i++) {
+			out.writeShort(regionDepth.array[i]);
 		}		
 	}
 
 	@Override
 	public void readFields(DataInput in) throws IOException {
-		chrom = in.readUTF();
-		position = in.readLong();
-		chunk = in.readLong();
-		size = in.readInt();
-		array = (size > 0 ? new short[size] : null);
-		for (int i = 0; i < size; i++) {
-			array[i] = in.readShort();
+		regionDepth = new RegionDepth();
+
+		regionDepth.chrom = in.readUTF();
+		regionDepth.position = in.readLong();
+		regionDepth.chunk = in.readLong();
+		regionDepth.size = in.readInt();
+		regionDepth.array = (regionDepth.size > 0 ? new short[regionDepth.size] : null);
+		for (int i = 0; i < regionDepth.size; i++) {
+			regionDepth.array[i] = in.readShort();
 		}		
 	}
 }

@@ -31,7 +31,7 @@
     </modules>
 
 	<name>HPG Big data project</name>
-	<description>HPG Big data project aims to manage biological data in a Big data environment</description>
+	<description>HPG Big data project aims to manage genomic big data in a Hadoop-based cluster</description>
 	<url>https://github.com/opencb/hpg-bigdata</url>
 
 	<properties>

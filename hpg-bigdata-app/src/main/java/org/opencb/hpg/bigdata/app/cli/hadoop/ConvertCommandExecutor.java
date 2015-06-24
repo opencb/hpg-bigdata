@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.opencb.hpg.bigdata.app.cli;
+package org.opencb.hpg.bigdata.app.cli.hadoop;
 
 import htsjdk.samtools.CRAMFileReader;
 import htsjdk.samtools.SAMFileHeader;
@@ -59,11 +59,12 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.util.ToolRunner;
-import org.opencb.hpg.bigdata.core.models.Read;
 import org.ga4gh.models.ReadAlignment;
 import org.ga4gh.models.Variant;
+import org.opencb.biodata.models.sequence.Read;
 import org.opencb.commons.io.DataReader;
 import org.opencb.commons.run.ParallelTaskRunner;
+import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
 import org.opencb.hpg.bigdata.core.NativeSupport;
 import org.opencb.hpg.bigdata.core.converters.FastqRecord2ReadConverter;
 import org.opencb.hpg.bigdata.core.converters.FullVcfCodec;
@@ -83,13 +84,12 @@ import org.opencb.hpg.bigdata.core.utils.AvroUtils;
 import org.opencb.hpg.bigdata.core.utils.PathUtils;
 import org.opencb.hpg.bigdata.core.utils.ReadUtils;
 
-import static org.opencb.hpg.bigdata.tools.converters.mr.Fastq2AvroMR.*;
-
 /**
  * Created by imedina on 16/03/15.
  */
 public class ConvertCommandExecutor extends CommandExecutor {
 
+    @Deprecated
     public enum Conversion {
         FASTQ_2_AVRO ("fastq2avro", "Save Fastq file as Global Alliance for Genomics and Health (ga4gh) in Avro format"),
         AVRO_2_FASTQ ("avro2fastq", "Save Global Alliance for Genomics and Health (ga4gh) in Avro format as Fastq file"),
@@ -151,7 +151,7 @@ public class ConvertCommandExecutor extends CommandExecutor {
 
         }
     }
-	private final static String SAM_HEADER_SUFFIX = ".header";
+	public final static String SAM_HEADER_SUFFIX = ".header";
 
 	private final static int SAM_FLAG  = 0;
 	private final static int BAM_FLAG  = 1;
@@ -252,7 +252,7 @@ public class ConvertCommandExecutor extends CommandExecutor {
 		if (PathUtils.isHdfs(input)) {
 
 			if (!PathUtils.isHdfs(output)) {
-				logger.error("To run command sam2avro with HDFS input file, then output files '{}' must be stored in the HDFS/Haddop too.", output);
+				logger.error("To run command sam2avro with HDFS input file, then import output files '{}' must be stored in the HDFS/Haddop too.", output);
 				System.exit(-1);
 			}
 
@@ -348,7 +348,10 @@ public class ConvertCommandExecutor extends CommandExecutor {
 		} 
 		
 		if (!PathUtils.isHdfs(output) && convertCommandOptions.conversion.equals(Conversion.BAM_2_AVRO)) {
-			System.loadLibrary("hpgbigdata");
+            System.out.println("Loading library hpgbigdata...");
+            System.out.println("\tjava.libary.path = " + System.getProperty("java.library.path"));
+            System.loadLibrary("hpgbigdata");
+            System.out.println("...done!");
 			new NativeSupport().bam2ga(in, out, convertCommandOptions.compression == null ? "snappy" : convertCommandOptions.compression);
 			return;
 		}
@@ -607,23 +610,3 @@ public class ConvertCommandExecutor extends CommandExecutor {
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

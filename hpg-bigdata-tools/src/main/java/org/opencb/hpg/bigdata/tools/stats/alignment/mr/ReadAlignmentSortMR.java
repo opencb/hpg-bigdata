@@ -16,7 +16,10 @@
 
 package org.opencb.hpg.bigdata.tools.stats.alignment.mr;
 
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintWriter;
 
 import org.apache.avro.mapred.AvroKey;
 import org.apache.avro.mapred.AvroValue;
@@ -24,6 +27,9 @@ import org.apache.avro.mapreduce.AvroJob;
 import org.apache.avro.mapreduce.AvroKeyInputFormat;
 import org.apache.avro.mapreduce.AvroKeyOutputFormat;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Job;
@@ -43,7 +49,7 @@ public class ReadAlignmentSortMR {
 			ChunkKey newKey;
 			LinearAlignment la = (LinearAlignment) key.datum().getAlignment();
 			if (la == null) {
-				newKey = new ChunkKey(new String("unmapped"), (long) 0);
+				newKey = new ChunkKey(new String("*"), (long) 0);
 			} else {
 				newKey = new ChunkKey(la.getPosition().getReferenceName().toString(), la.getPosition().getPosition());
 			}
@@ -62,7 +68,7 @@ public class ReadAlignmentSortMR {
 
 	public static int run(String input, String output) throws Exception {
 		Configuration conf = new Configuration();
-		
+
 		Job job = Job.getInstance(conf, "ReadAlignmentSortMR");		
 		job.setJarByClass(ReadAlignmentSortMR.class);
 
@@ -125,7 +131,25 @@ public class ReadAlignmentSortMR {
 		//System.out.println("Output in " + output);
 		//System.exit(-1);
 		//return 0;
-		 
-		return (job.waitForCompletion(true) ? 0 : 1);
+
+		job.waitForCompletion(true);
+
+		// copy header to the output folder
+		FileSystem fs = FileSystem.get(conf);
+
+		// read header
+		Path srcHeaderPath = new Path(input + ".header");
+		FSDataInputStream dis = fs.open(srcHeaderPath);
+		FileStatus status = fs.getFileStatus(srcHeaderPath);
+		byte[] data = new byte[(int) status.getLen()];
+		dis.read(data, 0, (int) status.getLen());
+		dis.close();
+
+		// copy header
+		OutputStream os = fs.create(new Path(output + "/part-r-00000.avro.header"));
+		os.write(data);
+		os.close();
+
+		return 0;
 	}
 }

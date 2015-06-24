@@ -22,43 +22,54 @@ import java.io.IOException;
 import java.util.HashMap;
 
 import org.apache.hadoop.io.Writable;
-import org.opencb.hpg.bigdata.core.stats.ReadAlignmentStats;
+import org.opencb.biodata.tools.alignment.tasks.AlignmentStats;
+import org.opencb.biodata.tools.sequence.tasks.SequenceStats;
 
-public class ReadAlignmentStatsWritable extends ReadAlignmentStats implements Writable {
-	
-	public ReadAlignmentStatsWritable()  {
-		super();
-	}
+public class ReadAlignmentStatsWritable implements Writable {
+
+	public AlignmentStats stats;
+
+	public ReadAlignmentStatsWritable() { }
+
+	public ReadAlignmentStatsWritable(AlignmentStats stats) { setStats(stats); }
+
+	public AlignmentStats getStats() {
+			return stats;
+		}
+
+	public void setStats(AlignmentStats stats) { this.stats = stats; }
+
+	public void setSeqStats(SequenceStats seqStats) {	this.stats.seqStats = seqStats;	}
 
 	@Override
 	public void write(DataOutput out) throws IOException {
-		out.writeInt(numMapped);
-		out.writeInt(numUnmapped);
-		out.writeInt(numPaired);
-		out.writeInt(numMappedFirst);
-		out.writeInt(numMappedSecond);
+		out.writeInt(stats.numMapped);
+		out.writeInt(stats.numUnmapped);
+		out.writeInt(stats.numPaired);
+		out.writeInt(stats.numMappedFirst);
+		out.writeInt(stats.numMappedSecond);
 		
-		out.writeInt(NM);
+		out.writeInt(stats.NM);
 
-		out.writeInt(numHardC);
-		out.writeInt(numSoftC);
-		out.writeInt(numIn);
-		out.writeInt(numDel);
-		out.writeInt(numPad);
-		out.writeInt(numSkip);
+		out.writeInt(stats.numHardC);
+		out.writeInt(stats.numSoftC);
+		out.writeInt(stats.numIn);
+		out.writeInt(stats.numDel);
+		out.writeInt(stats.numPad);
+		out.writeInt(stats.numSkip);
 
-		out.writeInt(accMappingQuality);
-		out.writeInt(mappingQualityMap.size());
-		for(int key:mappingQualityMap.keySet()) {
+		out.writeInt(stats.accMappingQuality);
+		out.writeInt(stats.mappingQualityMap.size());
+		for(int key:stats.mappingQualityMap.keySet()) {
 			out.writeInt(key);
-			out.writeInt(mappingQualityMap.get(key));		
+			out.writeInt(stats.mappingQualityMap.get(key));
 		}
 		
-		out.writeInt(accInsert);
-		out.writeInt(insertMap.size());
-		for(int key:insertMap.keySet()) {
+		out.writeInt(stats.accInsert);
+		out.writeInt(stats.insertMap.size());
+		for(int key:stats.insertMap.keySet()) {
 			out.writeInt(key);
-			out.writeInt(insertMap.get(key));		
+			out.writeInt(stats.insertMap.get(key));
 		}
 /*
 		out.writeLong(pos);
@@ -68,41 +79,43 @@ public class ReadAlignmentStatsWritable extends ReadAlignmentStats implements Wr
 			out.writeLong(cu.getOperationLength());
 		}
 */		
-		ReadStatsWritable aux = new ReadStatsWritable(readStats);
+		ReadStatsWritable aux = new ReadStatsWritable(stats.seqStats);
 		aux.write(out);
 	}
 
 	@Override
 	public void readFields(DataInput in) throws IOException {
 		int size;
-		
-		numMapped = in.readInt();
-		numUnmapped = in.readInt();
-		numPaired = in.readInt();
-		numMappedFirst = in.readInt();
-		numMappedSecond = in.readInt();
 
-		NM = in.readInt();
+		stats = new AlignmentStats();
 
-		numHardC = in.readInt();
-		numSoftC = in.readInt();
-		numIn = in.readInt();
-		numDel = in.readInt();
-		numPad = in.readInt();
-		numSkip = in.readInt();
+		stats.numMapped = in.readInt();
+		stats.numUnmapped = in.readInt();
+		stats.numPaired = in.readInt();
+		stats.numMappedFirst = in.readInt();
+		stats.numMappedSecond = in.readInt();
 
-		accMappingQuality =  in.readInt();
+		stats.NM = in.readInt();
+
+		stats.numHardC = in.readInt();
+		stats.numSoftC = in.readInt();
+		stats.numIn = in.readInt();
+		stats.numDel = in.readInt();
+		stats.numPad = in.readInt();
+		stats.numSkip = in.readInt();
+
+		stats.accMappingQuality =  in.readInt();
 		size = in.readInt();
-		mappingQualityMap = new HashMap<Integer, Integer>(size);
+		stats.mappingQualityMap = new HashMap<Integer, Integer>(size);
 		for (int i = 0; i < size; i++) {
-			mappingQualityMap.put(in.readInt(), in.readInt());
+			stats.mappingQualityMap.put(in.readInt(), in.readInt());
 		}
-		
-		accInsert =  in.readInt();
+
+		stats.accInsert =  in.readInt();
 		size = in.readInt();
-		insertMap = new HashMap<Integer, Integer>(size);
+		stats.insertMap = new HashMap<Integer, Integer>(size);
 		for (int i = 0; i < size; i++) {
-			insertMap.put(in.readInt(), in.readInt());
+			stats.insertMap.put(in.readInt(), in.readInt());
 		}
 /*
 		pos = in.readLong();
@@ -115,6 +128,6 @@ public class ReadAlignmentStatsWritable extends ReadAlignmentStats implements Wr
 */
 		ReadStatsWritable aux = new ReadStatsWritable();
 		aux.readFields(in);
-		readStats.set(aux);
+		setSeqStats(aux.getStats());
 	}
 }

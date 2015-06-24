@@ -22,13 +22,16 @@ import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SAMSequenceRecord;
 import htsjdk.samtools.seekablestream.SeekableStream;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 
 import org.apache.avro.mapred.AvroKey;
 import org.apache.avro.mapred.AvroValue;
 import org.apache.avro.mapreduce.AvroJob;
 import org.apache.avro.mapreduce.AvroKeyOutputFormat;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
@@ -38,8 +41,8 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.ga4gh.models.ReadAlignment;
+import org.opencb.biodata.tools.alignment.tasks.RegionDepth;
 import org.opencb.hpg.bigdata.core.converters.SAMRecord2ReadAlignmentConverter;
-import org.opencb.hpg.bigdata.tools.io.RegionDepthWritable;
 import org.opencb.hpg.bigdata.tools.utils.CompressionUtils;
 import org.seqdoop.hadoop_bam.AnySAMInputFormat;
 import org.seqdoop.hadoop_bam.SAMRecordWritable;
@@ -57,8 +60,8 @@ public class Bam2AvroMR {
 				// do nothing
 				// newKey = new ChunkKey(new String("*"), (long) 0);
 			} else {
-				long start_chunk = sam.getAlignmentStart() / RegionDepthWritable.CHUNK_SIZE;
-				long end_chunk = sam.getAlignmentEnd() / RegionDepthWritable.CHUNK_SIZE;
+				long start_chunk = sam.getAlignmentStart() / RegionDepth.CHUNK_SIZE;
+				long end_chunk = sam.getAlignmentEnd() / RegionDepth.CHUNK_SIZE;
 				newKey = new ChunkKey(sam.getReferenceName(), start_chunk);
 
 				SAMRecord2ReadAlignmentConverter converter = new SAMRecord2ReadAlignmentConverter();
@@ -82,18 +85,16 @@ public class Bam2AvroMR {
 	public static int run(String input, String output, String codecName) throws Exception {
 		Configuration conf = new Configuration();
 
-		{
-			// read header, and save sequence index/name in conf
-			final Path p = new Path(input);
-			final SeekableStream sam = WrapSeekable.openPath(conf, p);
-			final SAMFileReader reader = new SAMFileReader(sam, false);
-			final SAMFileHeader header = reader.getFileHeader();
-			int i = 0;
-			SAMSequenceRecord sr;
-			while ((sr = header.getSequence(i)) != null) {
-				conf.set("" + i, sr.getSequenceName());
-				i++;
-			}			
+		// read header, and save sequence index/name in conf
+		final Path p = new Path(input);
+		final SeekableStream sam = WrapSeekable.openPath(conf, p);
+		final SAMFileReader reader = new SAMFileReader(sam, false);
+		final SAMFileHeader header = reader.getFileHeader();
+		int i = 0;
+		SAMSequenceRecord sr;
+		while ((sr = header.getSequence(i)) != null) {
+			conf.set("" + i, sr.getSequenceName());
+			i++;
 		}
 		
 		Job job = Job.getInstance(conf, "Bam2AvroMR");
@@ -123,6 +124,15 @@ public class Bam2AvroMR {
 		job.setMapperClass(Bam2GaMapper.class);
 		job.setReducerClass(Bam2GaReducer.class);
 
-		return (job.waitForCompletion(true) ? 0 : 1);
+		job.waitForCompletion(true);
+
+		// write header
+		Path headerPath = new Path(output + "/part-r-00000.avro.header");
+		FileSystem fs = FileSystem.get(new Configuration());
+		BufferedWriter br = new BufferedWriter(new OutputStreamWriter(fs.create(headerPath, true)));
+		br.write(header.getTextHeader());
+		br.close();
+
+		return 0;
 	}
 }

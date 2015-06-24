@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
-package org.opencb.hpg.bigdata.app.cli;
+package org.opencb.hpg.bigdata.app.cli.hadoop;
 
 import com.beust.jcommander.*;
+import org.opencb.hpg.bigdata.app.cli.hadoop.ConvertCommandExecutor;
+
+import java.util.List;
 
 /**
  * Created by imedina on 03/02/15.
@@ -26,12 +29,15 @@ public class CliOptionsParser {
     private final JCommander jcommander;
 
     private final GeneralOptions generalOptions;
+
+
     private final CommonCommandOptions commonCommandOptions;
 
     private FastqCommandOptions fastqCommandOptions;
     private BamCommandOptions bamCommandOptions;
     private ConvertCommandOptions convertCommandOptions;
     private AlignCommandOptions alignCommandOptions;
+    private IndexCommandOptions indexCommandOptions;
 
     public CliOptionsParser(boolean hadoop) {
         generalOptions = new GeneralOptions();
@@ -41,6 +47,20 @@ public class CliOptionsParser {
         commonCommandOptions = new CommonCommandOptions();
 
         convertCommandOptions = new ConvertCommandOptions();
+jcommander.addCommand("a", alignCommandOptions);
+jcommander.addCommand("alignment", alignCommandOptions);
+//          OLD CODE
+//        fastqCommandOptions = new FastqCommandOptions();
+//        bamCommandOptions = new BamCommandOptions();
+//        alignCommandOptions = new AlignCommandOptions();
+//        indexCommandOptions = new IndexCommandOptions();
+//
+//        jcommander.addCommand("convert", convertCommandOptions);
+//        jcommander.addCommand(fastqCommandOptions);
+//        jcommander.addCommand(bamCommandOptions);
+//        jcommander.addCommand("align", alignCommandOptions);
+//        jcommander.addCommand("index", indexCommandOptions);
+
         jcommander.addCommand(convertCommandOptions);
         if (hadoop) {
             jcommander.setProgramName("hpg-bigdata.sh");
@@ -64,6 +84,18 @@ public class CliOptionsParser {
         return (jcommander.getParsedCommand() != null) ? jcommander.getParsedCommand(): "";
     }
 
+    public boolean isHelp() {
+        String parsedCommand = jcommander.getParsedCommand();
+        if (parsedCommand != null) {
+            JCommander jCommander = jcommander.getCommands().get(parsedCommand);
+            List<Object> objects = jCommander.getObjects();
+            if (!objects.isEmpty() && objects.get(0) instanceof CommonCommandOptions) {
+                return ((CommonCommandOptions) objects.get(0)).help;
+            }
+        }
+        return getCommonCommandOptions().help;
+    }
+
     public void printUsage(){
         if(getCommand().isEmpty()) {
             jcommander.usage();
@@ -73,7 +105,9 @@ public class CliOptionsParser {
     }
 
 
-
+    /**
+     * This class contains all those parameters that are intended to work without any 'command'
+     */
     public class GeneralOptions {
 
         @Parameter(names = {"-h", "--help"}, help = true)
@@ -83,6 +117,9 @@ public class CliOptionsParser {
 
     }
 
+    /**
+     * This class contains all those parameters available for all 'commands'
+     */
     public class CommonCommandOptions {
 
         @Parameter(names = {"-h", "--help"}, help = true)
@@ -90,10 +127,11 @@ public class CliOptionsParser {
         @Parameter(names = {"-L", "--log-level"}, description = "This parameter set the level of the logging", required = false, arity = 1)
         public String logLevel = "info";
 
+        @Deprecated
         @Parameter(names = {"-v", "--verbose"}, description = "This parameter set the level of the logging", required = false, arity = 1)
         public boolean verbose;
 
-        @Parameter(names = {"-C", "--conf"}, description = "This parameter set the level of the logging", required = false, arity = 1)
+        @Parameter(names = {"-C", "--conf"}, description = "This ia a reserved parameter for configuration file", required = false, arity = 1)
         public String conf;
 
     }
@@ -158,6 +196,7 @@ public class CliOptionsParser {
     }
 
 
+    @Deprecated
     public static class ConvertionConverter implements IStringConverter<ConvertCommandExecutor.Conversion> {
         @Override
         public ConvertCommandExecutor.Conversion convert(String s) {
@@ -171,6 +210,7 @@ public class CliOptionsParser {
             return conversion;
         }
     }
+
 
     @Parameters(commandNames = {"convert"}, commandDescription = "Convert between different formats")
     public class ConvertCommandOptions {
@@ -187,12 +227,19 @@ public class CliOptionsParser {
         @Parameter(names = {"-c", "--conversion"}, description = "Accepted values: fastq2avro, avro2fastq, sam2avro, avro2sam, bam2avro, avro2bam, vcf2avro", required = true, arity = 1, converter = ConvertionConverter.class)
         public ConvertCommandExecutor.Conversion conversion;
 
-        @Parameter(names = {"-x", "--compression"}, description = "Accepted values: snappy, deflate, bzip2, xz. Default: snappy", required = false, arity = 1)
-        public String compression;
+        @Parameter(names = {"-x", "--compression"}, description = "Accepted values: snappy, deflate, bzip2, xz. [snappy]", required = false, arity = 1)
+        public String compression = "snappy";
 
-        @Parameter(names = {"-p", "--parquet"}, description = "Save data in ga4gh using the parquet format (for Hadoop only)", required = false)
+        @Parameter(names = {"-p", "--to-avro"}, description = "Serialize data to GA4GH Avro format [true]", required = false)
+        public boolean toAvro = true;
+
+        @Parameter(names = {"-p", "--to-avro"}, description = "Serialize data from  GA4GH Avro format [true]", required = false)
+        public boolean fromAvro = false;
+
+        @Parameter(names = {"-p", "--to-parquet"}, description = "Save data in ga4gh using the parquet format (for Hadoop only)", required = false)
         public boolean toParquet = false;
     }
+
 
     @Parameters(commandNames = {"load-hbase"}, commandDescription = "Load")
     public class LoadHBaseCommandOptions {
@@ -207,6 +254,7 @@ public class CliOptionsParser {
         public String credentials;
 
     }
+
 
     @Parameters(commandNames = {"load-parquet"}, commandDescription = "Load")
     public class LoadHiveCommandOptions {
@@ -224,9 +272,9 @@ public class CliOptionsParser {
         public String credentials;
     }
 
+
     @Parameters(commandNames = {"align"}, commandDescription = "Description")
     public class AlignCommandOptions {
-
 
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
@@ -241,12 +289,34 @@ public class CliOptionsParser {
         @Parameter(names = {"--index-file"}, description = "", required = false)
         public String referenceGenomeFile;
 
+    }
+
+
+    @Parameters(commandNames = {"index"}, commandDescription = "Description")
+    public class IndexCommandOptions {
+
+        @ParametersDelegate
+        public CommonCommandOptions commonOptions = commonCommandOptions;
+
+
+        @Parameter(names = {"-i", "--input"}, description = "", required = true, arity = 1)
+        public String input = null;
+
+        @Parameter(names = {"-o", "--output"}, description = "", required = false, arity = 1)
+        public String output = null;
+
+        @Parameter(names = {"--index-file"}, description = "", required = false)
+        public String referenceGenomeFile;
 
     }
 
 
     public GeneralOptions getGeneralOptions() {
         return generalOptions;
+    }
+
+    public CommonCommandOptions getCommonCommandOptions() {
+        return commonCommandOptions;
     }
 
     public FastqCommandOptions getFastqCommandOptions() {

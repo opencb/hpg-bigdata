@@ -55,7 +55,7 @@ public abstract class CommandExecutor {
         }
     }
 
-    public abstract void execute();
+    public abstract void execute() throws Exception;
 
     public String getLogLevel() {
         return logLevel;

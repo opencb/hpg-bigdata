@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.opencb.hpg.bigdata.app.cli;
+package org.opencb.hpg.bigdata.app.cli.hadoop;
 
 import java.io.IOException;
 import java.util.Date;
@@ -22,6 +22,7 @@ import java.util.Date;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
 import org.opencb.hpg.bigdata.tools.stats.read.mr.ReadKmersMR;
 import org.opencb.hpg.bigdata.tools.stats.read.mr.ReadStatsMR;
 import org.opencb.hpg.bigdata.core.utils.PathUtils;
