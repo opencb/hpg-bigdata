@@ -160,8 +160,7 @@ public class ConvertCommandExecutor extends CommandExecutor {
 	private CliOptionsParser.ConvertCommandOptions convertCommandOptions;
 
 	public ConvertCommandExecutor(CliOptionsParser.ConvertCommandOptions convertCommandOptions) {
-		super(convertCommandOptions.commonOptions.logLevel, convertCommandOptions.commonOptions.verbose,
-				convertCommandOptions.commonOptions.conf);
+//		super(convertCommandOptions.commonOptions.logLevel, convertCommandOptions.commonOptions.verbose, convertCommandOptions.commonOptions.conf);
 
 		this.convertCommandOptions = convertCommandOptions;
 	}
@@ -171,76 +170,76 @@ public class ConvertCommandExecutor extends CommandExecutor {
 	 * Parse specific 'convert' command options
 	 */
 	public void execute() {
-		logger.info("Executing {} CLI options", "convert");
-
-		try {
-			switch (convertCommandOptions.conversion) {
-			case FASTQ_2_AVRO: {
-				if (convertCommandOptions.toParquet) {
-					logger.info("Invalid parameter 'parquet' compression value '{}'");
-					System.exit(-1);					
-				}
-				fastq2avro(convertCommandOptions.input, convertCommandOptions.output, convertCommandOptions.compression);
-				break;
-			}
-			case AVRO_2_FASTQ: {
-				avro2fastq(convertCommandOptions.input, convertCommandOptions.output);
-				break;
-			}
-			case SAM_2_AVRO: {
-				sam2avro(convertCommandOptions.input, convertCommandOptions.output, convertCommandOptions.compression);
-				break;
-			}
-			case AVRO_2_SAM: {
-				avro2sam(convertCommandOptions.input, convertCommandOptions.output, SAM_FLAG);
-				break;
-			}
-			case BAM_2_AVRO: {
-				sam2avro(convertCommandOptions.input, convertCommandOptions.output, convertCommandOptions.compression);
-				break;
-			}
-			case AVRO_2_BAM: {
-				avro2sam(convertCommandOptions.input, convertCommandOptions.output, BAM_FLAG);
-				break;
-			}
-			case CRAM_2_AVRO: {
-				cram2avro(convertCommandOptions.input, convertCommandOptions.output, convertCommandOptions.compression);
-				break;
-			}
-
-			case AVRO_2_CRAM: {
-				System.out.println("Conversion '" + convertCommandOptions.conversion + "' not implemented yet.\nValid conversions are:\n" + Conversion.getValidConversionString());
-				/*
-				avro2sam(ga4ghCommandOptions.input, ga4ghCommandOptions.output, CRAM_FLAG);
-				 */
-				break;
-			}
-
-            case VCF_2_AVRO: {
-                vcf2avro(convertCommandOptions.input, convertCommandOptions.output, convertCommandOptions.compression);
-                break;
-            }
-            case VARIANT_2_HBASE: {
-                variant2hbase(convertCommandOptions.input, convertCommandOptions.output);
-                break;
-            }
-
-//			case AVRO_2_PARQUET: {
-//				avro2parquet(ga4ghCommandOptions.input, ga4ghCommandOptions.output);
-//				break;			
+//		logger.info("Executing {} CLI options", "convert");
+//
+//		try {
+//			switch (convertCommandOptions.conversion) {
+//			case FASTQ_2_AVRO: {
+//				if (convertCommandOptions.toParquet) {
+//					logger.info("Invalid parameter 'parquet' compression value '{}'");
+//					System.exit(-1);
+//				}
+//				fastq2avro(convertCommandOptions.input, convertCommandOptions.output, convertCommandOptions.compression);
+//				break;
 //			}
-
-			default: {
-				logger.error("Invalid conversion {}", convertCommandOptions.conversion);
-				System.out.println("Invalid conversion (" + convertCommandOptions.conversion + "). Valid conversions are:\n" + Conversion.getValidConversionString());
-				System.exit(-1);
-			}
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		logger.debug("Input file: {}", convertCommandOptions.input);
+//			case AVRO_2_FASTQ: {
+//				avro2fastq(convertCommandOptions.input, convertCommandOptions.output);
+//				break;
+//			}
+//			case SAM_2_AVRO: {
+//				sam2avro(convertCommandOptions.input, convertCommandOptions.output, convertCommandOptions.compression);
+//				break;
+//			}
+//			case AVRO_2_SAM: {
+//				avro2sam(convertCommandOptions.input, convertCommandOptions.output, SAM_FLAG);
+//				break;
+//			}
+//			case BAM_2_AVRO: {
+//				sam2avro(convertCommandOptions.input, convertCommandOptions.output, convertCommandOptions.compression);
+//				break;
+//			}
+//			case AVRO_2_BAM: {
+//				avro2sam(convertCommandOptions.input, convertCommandOptions.output, BAM_FLAG);
+//				break;
+//			}
+//			case CRAM_2_AVRO: {
+//				cram2avro(convertCommandOptions.input, convertCommandOptions.output, convertCommandOptions.compression);
+//				break;
+//			}
+//
+//			case AVRO_2_CRAM: {
+//				System.out.println("Conversion '" + convertCommandOptions.conversion + "' not implemented yet.\nValid conversions are:\n" + Conversion.getValidConversionString());
+//				/*
+//				avro2sam(ga4ghCommandOptions.input, ga4ghCommandOptions.output, CRAM_FLAG);
+//				 */
+//				break;
+//			}
+//
+//            case VCF_2_AVRO: {
+//                vcf2avro(convertCommandOptions.input, convertCommandOptions.output, convertCommandOptions.compression);
+//                break;
+//            }
+//            case VARIANT_2_HBASE: {
+//                variant2hbase(convertCommandOptions.input, convertCommandOptions.output);
+//                break;
+//            }
+//
+////			case AVRO_2_PARQUET: {
+////				avro2parquet(ga4ghCommandOptions.input, ga4ghCommandOptions.output);
+////				break;
+////			}
+//
+//			default: {
+//				logger.error("Invalid conversion {}", convertCommandOptions.conversion);
+//				System.out.println("Invalid conversion (" + convertCommandOptions.conversion + "). Valid conversions are:\n" + Conversion.getValidConversionString());
+//				System.exit(-1);
+//			}
+//			}
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
+//
+//		logger.debug("Input file: {}", convertCommandOptions.input);
 	}
 
 

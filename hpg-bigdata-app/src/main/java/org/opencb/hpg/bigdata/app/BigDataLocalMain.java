@@ -11,7 +11,7 @@ import org.opencb.hpg.bigdata.app.cli.hadoop.ConvertCommandExecutor;
 public class BigDataLocalMain {
 
     public static void main(String[] args) {
-        CliOptionsParser cliOptionsParser = new CliOptionsParser(false);
+        CliOptionsParser cliOptionsParser = new CliOptionsParser();
 
         if (args == null || args.length == 0) {
             cliOptionsParser.printUsage();

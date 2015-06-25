@@ -38,6 +38,10 @@ public abstract class CommandExecutor {
 
     }
 
+    public CommandExecutor(String logLevel) {
+        this(logLevel, false, null);
+    }
+
     public CommandExecutor(String logLevel, boolean verbose, String configFile) {
         this.logLevel = logLevel;
         this.verbose = verbose;

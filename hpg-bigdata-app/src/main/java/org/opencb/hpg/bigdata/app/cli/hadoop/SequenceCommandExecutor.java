@@ -19,9 +19,9 @@ package org.opencb.hpg.bigdata.app.cli.hadoop;
 import java.io.IOException;
 import java.util.Date;
 
+import com.beust.jcommander.JCommander;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
 import org.opencb.hpg.bigdata.tools.stats.read.mr.ReadKmersMR;
 import org.opencb.hpg.bigdata.tools.stats.read.mr.ReadStatsMR;
@@ -30,14 +30,14 @@ import org.opencb.hpg.bigdata.core.utils.PathUtils;
 /**
  * Created by imedina on 03/02/15.
  */
-public class FastqCommandExecutor extends CommandExecutor {
+public class SequenceCommandExecutor extends CommandExecutor {
 
-	private CliOptionsParser.FastqCommandOptions fastqCommandOptions;
+	private CliOptionsParser.SequenceCommandOptions sequenceCommandOptions;
 
-	public FastqCommandExecutor(CliOptionsParser.FastqCommandOptions fastqCommandOptions) {
-		super(fastqCommandOptions.logLevel, fastqCommandOptions.verbose, fastqCommandOptions.conf);
+	public SequenceCommandExecutor(CliOptionsParser.SequenceCommandOptions sequenceCommandOptions) {
+//		super(fastqCommandOptions.logLevel, fastqCommandOptions.verbose, fastqCommandOptions.conf);
 
-		this.fastqCommandOptions = fastqCommandOptions;
+		this.sequenceCommandOptions = sequenceCommandOptions;
 	}
 
 
@@ -45,7 +45,7 @@ public class FastqCommandExecutor extends CommandExecutor {
 	 * Parse specific 'fastq' command options
 	 */
 	public void execute() {
-		logger.info("Executing {} CLI options", "fastq");
+//		logger.info("Executing {} CLI options", "fastq");
 
 		// prepare the HDFS output folder
 		FileSystem fs = null;
@@ -57,15 +57,22 @@ public class FastqCommandExecutor extends CommandExecutor {
 		}
 		String outHdfsDirname = new String("" + new Date().getTime());
 
-		String subCommand = fastqCommandOptions.getSubCommand();
+		String subCommand = sequenceCommandOptions.getParsedSubCommand();
 
 
 
         switch (subCommand) {
             case "convert":
                 System.out.println("convert");
-
                 break;
+			case "stats":
+				System.out.println("stats");
+				break;
+			case "align":
+				System.out.println("align");
+				break;
+			default:
+				break;
         }
 
 //		if (fastqCommandOptions.stats) {

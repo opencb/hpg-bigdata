@@ -35,20 +35,20 @@ import org.opencb.hpg.bigdata.core.utils.PathUtils;
  */
 public class BamCommandExecutor extends CommandExecutor {
 
-    private CliOptionsParser.AlignmentCommandOptions alignmentCommandOptions;
+	private CliOptionsParser.AlignmentCommandOptions alignmentCommandOptions;
 
-    public BamCommandExecutor(CliOptionsParser.AlignmentCommandOptions alignmentCommandOptions) {
-        super(alignmentCommandOptions.logLevel, alignmentCommandOptions.verbose, alignmentCommandOptions.conf);
+	public BamCommandExecutor(CliOptionsParser.AlignmentCommandOptions alignmentCommandOptions) {
+//        super(alignmentCommandOptions.logLevel);
 
-        this.alignmentCommandOptions = alignmentCommandOptions;
-    }
+		this.alignmentCommandOptions = alignmentCommandOptions;
+	}
 
 
-    /**
-     * Parse specific 'bam' command options
-     */
-    public void execute() {
-        logger.info("Executing {} CLI options", "bam");
+	/**
+	 * Parse specific 'bam' command options
+	 */
+	public void execute() {
+		logger.info("Executing {} CLI options", "bam");
 
 		// prepare the HDFS output folder
 		FileSystem fs = null;
@@ -60,30 +60,33 @@ public class BamCommandExecutor extends CommandExecutor {
 		}
 		String outHdfsDirname = new String("" + new Date().getTime());
 
+		String outdir = null;
 		String outName = null;
-		switch(alignmentCommandOptions.command) {
-		case "stats": {
-			outName = "stats.json";
-			stats(alignmentCommandOptions.input, outHdfsDirname);
-			break;
-		}
-		case "depth": {
-			outName = "depth.txt";
-			depth(alignmentCommandOptions.input, outHdfsDirname);
-			break;
-		}
-		case "sort": {
-			sort(alignmentCommandOptions.input, alignmentCommandOptions.output);
-			return;
-		}
-		case "to-parquet": {
-			toParquet(alignmentCommandOptions.input, alignmentCommandOptions.output, alignmentCommandOptions.compression);
-			return;
-		}
-		default: {
-			logger.error("Error: BAM/SAM command not yet implemented");
-			System.exit(-1);
-		}
+		switch(alignmentCommandOptions.getParsedSubCommand()) {
+			case "stats": {
+                outdir = alignmentCommandOptions.statsAlignmentCommandOptions.output;
+				outName = "stats.json";
+				stats(alignmentCommandOptions.statsAlignmentCommandOptions.input, outHdfsDirname);
+				break;
+			}
+			case "depth": {
+				outName = "depth.txt";
+//				depth(alignmentCommandOptions.input, outHdfsDirname);
+				break;
+			}
+			case "sort": {
+//				sort(alignmentCommandOptions.input, alignmentCommandOptions.output);
+				return;
+			}
+			case "to-parquet": {
+                outdir = alignmentCommandOptions.convertAlignmentCommandOptions.output;
+				toParquet(alignmentCommandOptions.convertAlignmentCommandOptions.input, alignmentCommandOptions.convertAlignmentCommandOptions.output, alignmentCommandOptions.convertAlignmentCommandOptions.compression);
+				return;
+			}
+			default: {
+				logger.error("Error: BAM/SAM command not yet implemented");
+				System.exit(-1);
+			}
 		}
 
 		// post-processing
@@ -93,18 +96,18 @@ public class BamCommandExecutor extends CommandExecutor {
 			if (!fs.exists(outFile)) {
 				System.out.println("out file = " + outFile.getName() + " does not exist !!");
 			} else {
-				String outRawFileName =  alignmentCommandOptions.output + "/" + outName;
+				String outRawFileName = outdir + "/" + outName;
 				fs.copyToLocalFile(outFile, new Path(outRawFileName));
-				
-				if (alignmentCommandOptions.command.equalsIgnoreCase("depth")) {
-					Path outJson = new Path(outHdfsDirname + ".summary.depth.json");
-					fs.copyToLocalFile(outJson, new Path(alignmentCommandOptions.output + "/depth.summary.json"));
-					fs.delete(outJson, true);
-				}
+
+//				if (alignmentCommandOptions.command.equalsIgnoreCase("depth")) {
+//					Path outJson = new Path(outHdfsDirname + ".summary.depth.json");
+//					fs.copyToLocalFile(outJson, new Path(alignmentCommandOptions.output + "/depth.summary.json"));
+//					fs.delete(outJson, true);
+//				}
 
 				//Utils.parseStatsFile(outRawFileName, out);
 			}
-			fs.delete(new Path(outHdfsDirname), true);		
+			fs.delete(new Path(outHdfsDirname), true);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -166,7 +169,7 @@ public class BamCommandExecutor extends CommandExecutor {
 			e.printStackTrace();
 		}
 	}
-	
+
 	private void toParquet(String input, String output, String codecName) {
 		// clean paths
 		String in = PathUtils.clean(input);
@@ -183,8 +186,8 @@ public class BamCommandExecutor extends CommandExecutor {
 		}
 
 		try {
-            new ParquetMR(ReadAlignment.getClassSchema()).run(in, out, codecName);
-        } catch (Exception e) {
+			new ParquetMR(ReadAlignment.getClassSchema()).run(in, out, codecName);
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}

@@ -19,26 +19,21 @@ package org.opencb.hpg.bigdata.app.cli.hadoop;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
 
 /**
- * Created by imedina on 16/03/15.
+ * Created by imedina on 25/06/15.
  */
-public class AlignmentCommandExecutor extends CommandExecutor {
+public class VariantCommandExecutor extends CommandExecutor {
 
-    private CliOptionsParser.AlignmentCommandOptions alignmentCommandOptions;
+    private CliOptionsParser.VariantCommandOptions variantCommandOptions;
 
-    public AlignmentCommandExecutor(CliOptionsParser.AlignmentCommandOptions alignmentCommandOptions) {
-//        super(alignmentCommandOptions.logLevel, alignmentCommandOptions.verbose, alignmentCommandOptions.conf);
+    public VariantCommandExecutor(CliOptionsParser.VariantCommandOptions variantCommandOptions) {
+//		super(fastqCommandOptions.logLevel, fastqCommandOptions.verbose, fastqCommandOptions.conf);
 
-        this.alignmentCommandOptions = alignmentCommandOptions;
+        this.variantCommandOptions = variantCommandOptions;
     }
 
 
-    /**
-     * Parse specific 'align' command options
-     */
+    @Override
     public void execute() throws Exception {
-        logger.info("Executing {} CLI options", "align");
-
 
     }
-
 }
