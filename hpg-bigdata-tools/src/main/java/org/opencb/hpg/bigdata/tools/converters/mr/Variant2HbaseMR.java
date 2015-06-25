@@ -5,11 +5,11 @@ package org.opencb.hpg.bigdata.tools.converters.mr;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.avro.mapred.AvroKey;
 import org.apache.avro.mapreduce.AvroJob;
 import org.apache.avro.mapreduce.AvroKeyInputFormat;
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -29,13 +29,10 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.ga4gh.models.Call;
 import org.ga4gh.models.Variant;
-import org.opencb.commons.utils.CryptoUtils;
 import org.opencb.hpg.bigdata.core.utils.HBaseUtils;
-import org.opencb.hpg.bigdata.core.utils.PathUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,15 +62,29 @@ public class Variant2HbaseMR extends Mapper<AvroKey<Variant>, NullWritable, Immu
 	}
 	
 	@Override
-	protected void map(
-			AvroKey<Variant> key,
-			NullWritable value,
-			Mapper<AvroKey<Variant>, NullWritable, ImmutableBytesWritable, Put>.Context context)
+	protected void map(AvroKey<Variant> key,NullWritable value,Mapper<AvroKey<Variant>, NullWritable, ImmutableBytesWritable, Put>.Context context)
 			throws IOException, InterruptedException {
 		Variant variant = key.datum();
 			
-//		if(!isReference(variant)){ // is a variant (not just coverage info)
-		if(true){ // all
+		if(isReference(variant)){ // is a variant (not just coverage info)
+			String refplaceholder = "?"; // TODO require lookup service to expand
+			Map<CharSequence, List<CharSequence>> info = variant.getInfo();
+			List<CharSequence> endLst = info.get("END"); // Get End position
+			
+			if(null == endLst || endLst.isEmpty()){
+				context.getCounter("VCF","REF_END_EMPTY").increment(1);
+				return;
+			}
+			String endStr = endLst.get(0).toString();
+			Long endPos = Long.valueOf(endStr);
+			Long start = variant.getStart();
+			for(long pos = start; pos < endPos; ++pos){
+				// For each position -> store 
+				String idStr = HBaseUtils.buildRefernceStorageId(variant.getReferenceName(),pos,refplaceholder);
+				store(context,variant.getCalls(),idStr);
+			}
+		} else {
+//		if(true){ // all
 			int altCnt = variant.getAlternateBases().size();
 			if(altCnt > 1){
 				context.getCounter("VCF","biallelic_COUNT").increment(1);
@@ -85,7 +96,7 @@ public class Variant2HbaseMR extends Mapper<AvroKey<Variant>, NullWritable, Immu
 				return; // skip SV
 			}
 			int altIdx = 0;
-			CharSequence altBases = "";
+			CharSequence altBases = "-";
 			if(altCnt > 0) {
 				altBases = variant.getAlternateBases().get(altIdx);
 			}
@@ -94,21 +105,9 @@ public class Variant2HbaseMR extends Mapper<AvroKey<Variant>, NullWritable, Immu
 				context.getCounter("VCF","SV_COUNT").increment(1);
 				return; // skip SV
 			}
-			String idStr = HBaseUtils.buildStorageId(
-					variant.getReferenceName(),
-					variant.getStart(),
-					refBases,
-					altBases
-			);
-			byte[] id = Bytes.toBytes(idStr);		        
-			Put put = new Put(id);
-	        for(Call call : calls){
-	        	addEntry(put,call);
-	        }
-	        ImmutableBytesWritable rowKey = new ImmutableBytesWritable(id);
-	        
-	        /* Submit data to HBase */
-			context.write(rowKey, put);
+			String idStr = HBaseUtils.buildStorageId(variant.getReferenceName(),variant.getStart(),refBases,altBases);
+			
+			store(context, calls, idStr);
 
 	        /* Ignore fields */
 //	      List<CharSequence> ids = v.getAlleleIds(); // graph mode -> not supported
@@ -120,9 +119,22 @@ public class Variant2HbaseMR extends Mapper<AvroKey<Variant>, NullWritable, Immu
 			
 		}		
 	}
-	
-	
 
+	private void store(
+			Mapper<AvroKey<Variant>, NullWritable, ImmutableBytesWritable, Put>.Context context,
+			List<Call> calls, String idStr) throws IOException,
+			InterruptedException {
+		byte[] id = Bytes.toBytes(idStr);
+		Put put = new Put(id);
+		for(Call call : calls){
+			addEntry(put,call);
+		}
+		ImmutableBytesWritable rowKey = new ImmutableBytesWritable(id);
+		
+		/* Submit data to HBase */
+		context.write(rowKey, put);
+	}
+	
 	private boolean isReference(Variant variant) {
 		return null == variant.getAlternateBases() || variant.getAlternateBases().isEmpty();
 	}

@@ -45,6 +45,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.avro.file.CodecFactory;
@@ -73,6 +74,7 @@ import org.opencb.hpg.bigdata.core.utils.AvroUtils;
  */
 public class VariantContext2VariantConverter implements Converter<VariantContext, Variant> {
 	
+	public static final String VFC_FILTER_COLUMN = "VFC_FILTER_COLUMN";
 	private final AtomicReference<VariantConverterContext> ctx = new AtomicReference<VariantConverterContext>();
 
 	public static void main(String[] args) {
@@ -282,20 +284,20 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
 		 * TODO: QUAL - quality: Phred-scaled quality score 
 		 */
 		
+		// INFO		
+		v.setInfo(convertInfo(c));
+		
 		//  FILTER
 		/**
 		 * TODO: FILTER - filter status
 		 */
-		
-		// INFO		
-		v.setInfo(convertInfo(c));
+		Set<String> filter = c.getFilters();
+		List<CharSequence> filterList = new ArrayList<CharSequence>(filter);
 		
 		// Genotypes (Call's)
 		
-		v.setCalls(convertCalls(c));
+		v.setCalls(convertCalls(c,filterList));
 		
-		
-		// TODO Auto-generated method stub
 		return v;
 	}
 
@@ -305,7 +307,7 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
 	 * @return {@link List} of {@link Call}
 	 */
 	@SuppressWarnings("deprecation")
-	private List<Call> convertCalls(VariantContext context) {
+	private List<Call> convertCalls(VariantContext context,List<CharSequence> filters) {
 		GenotypesContext gtc = context.getGenotypes();
 		
 		// Create Allele mapping
@@ -364,6 +366,9 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
 				infoMap.put(VCFConstants.GENOTYPE_QUALITY_KEY,Arrays.asList((CharSequence)Integer.toString(gt.getGQ())));
 			}
 			
+			// Add Filter information to the genotype data
+			infoMap.put(VFC_FILTER_COLUMN, filters);
+			
 
 			Map<String, Object> extAttr = gt.getExtendedAttributes();
 			List<Double> lhList = Collections.emptyList();
@@ -382,7 +387,12 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
 						}
 					} else{
 						if(value instanceof List){
-							// TODO
+							// TODO Check if this works
+							List vlist = (List) value;
+							List<CharSequence> lst = new ArrayList<CharSequence>();
+							for(Object o : vlist)
+								lst.add(o.toString());
+							infoMap.put(extEntry.getKey(), lst);
 						} else {
 							infoMap.put(extEntry.getKey(), Collections.singletonList((CharSequence) value.toString()));
 						}

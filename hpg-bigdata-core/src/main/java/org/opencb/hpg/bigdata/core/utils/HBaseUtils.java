@@ -9,6 +9,10 @@ public class HBaseUtils {
     public static final int SV_THRESHOLD = 50; // TODO update as needed
     public final static String ROWKEY_SEPARATOR = "_";
 
+    public static String buildRefernceStorageId(CharSequence chr,Long start, CharSequence refBases) {
+    	return buildStorageId(chr, start, refBases, refBases);
+    }
+
     public static String buildStorageId(CharSequence chr,Long start, CharSequence refBases, CharSequence altBases) {
         StringBuilder builder = new StringBuilder();
 
