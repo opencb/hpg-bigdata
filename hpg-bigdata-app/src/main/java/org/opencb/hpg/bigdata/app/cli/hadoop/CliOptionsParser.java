@@ -17,9 +17,9 @@
 package org.opencb.hpg.bigdata.app.cli.hadoop;
 
 import com.beust.jcommander.*;
-import org.opencb.hpg.bigdata.app.cli.hadoop.ConvertCommandExecutor;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by imedina on 03/02/15.
@@ -29,26 +29,60 @@ public class CliOptionsParser {
     private final JCommander jcommander;
 
     private final GeneralOptions generalOptions;
-
-
     private final CommonCommandOptions commonCommandOptions;
 
+    // NGS Sequence command and subcommmands
     private FastqCommandOptions fastqCommandOptions;
-    private BamCommandOptions bamCommandOptions;
+
+
+
+    private SequenceConvertCommandOptions sequenceConvertCommandOptions;
+
+
+    // NGS Alignments command and subcommmands
+    private AlignmentCommandOptions alignmentCommandOptions;
+
+    // NGS variant command and subcommmands
+    private VariantCommandOptions variantCommandOptions;
+
+
     private ConvertCommandOptions convertCommandOptions;
     private AlignCommandOptions alignCommandOptions;
+
+
     private IndexCommandOptions indexCommandOptions;
 
     public CliOptionsParser(boolean hadoop) {
-        generalOptions = new GeneralOptions();
 
+        generalOptions = new GeneralOptions();
         jcommander = new JCommander(generalOptions);
 
+        jcommander.setProgramName("hpg-bigdata.sh");
         commonCommandOptions = new CommonCommandOptions();
 
+
+        fastqCommandOptions = new FastqCommandOptions();
+        jcommander.addCommand("fastq", fastqCommandOptions);
+        JCommander fastqSubCommands = jcommander.getCommands().get("fastq");
+        SequenceConvertCommandOptions sequenceConvertCommandOptions = new SequenceConvertCommandOptions();
+        fastqSubCommands.addCommand("convert", sequenceConvertCommandOptions);
+
+
+
+        alignmentCommandOptions = new AlignmentCommandOptions();
+
+        variantCommandOptions = new VariantCommandOptions();
+
         convertCommandOptions = new ConvertCommandOptions();
-jcommander.addCommand("a", alignCommandOptions);
-jcommander.addCommand("alignment", alignCommandOptions);
+
+        // Adding command
+//        jcommander.addCommand("sequence", fastqCommandOptions);
+//        jcommander.addCommand("alignment", alignmentCommandOptions);
+//        jcommander.addCommand("variant", variantCommandOptions);
+
+
+//        jcommander.addCommand("a", alignCommandOptions);
+//        jcommander.addCommand("alignment", alignCommandOptions);
 //          OLD CODE
 //        fastqCommandOptions = new FastqCommandOptions();
 //        bamCommandOptions = new BamCommandOptions();
@@ -61,19 +95,19 @@ jcommander.addCommand("alignment", alignCommandOptions);
 //        jcommander.addCommand("align", alignCommandOptions);
 //        jcommander.addCommand("index", indexCommandOptions);
 
-        jcommander.addCommand(convertCommandOptions);
-        if (hadoop) {
-            jcommander.setProgramName("hpg-bigdata.sh");
-            fastqCommandOptions = new FastqCommandOptions();
-            bamCommandOptions = new BamCommandOptions();
-            alignCommandOptions = new AlignCommandOptions();
-
-            jcommander.addCommand(fastqCommandOptions);
-            jcommander.addCommand(bamCommandOptions);
-            jcommander.addCommand(alignCommandOptions);
-        } else {    //local
-            jcommander.setProgramName("hpg-bigdata-local.sh");
-        }
+//        jcommander.addCommand(convertCommandOptions);
+//        if (hadoop) {
+//            jcommander.setProgramName("hpg-bigdata.sh");
+//            fastqCommandOptions = new FastqCommandOptions();
+//            alignmentCommandOptions = new AlignmentCommandOptions();
+//            alignCommandOptions = new AlignCommandOptions();
+//
+//            jcommander.addCommand(fastqCommandOptions);
+//            jcommander.addCommand(alignmentCommandOptions);
+//            jcommander.addCommand(alignCommandOptions);
+//        } else {    //local
+//            jcommander.setProgramName("hpg-bigdata-local.sh");
+//        }
     }
 
     public void parse(String[] args) throws ParameterException {
@@ -82,6 +116,16 @@ jcommander.addCommand("alignment", alignCommandOptions);
 
     public String getCommand() {
         return (jcommander.getParsedCommand() != null) ? jcommander.getParsedCommand(): "";
+    }
+
+    public String getSubCommand() {
+        String parsedCommand = jcommander.getParsedCommand();
+        if (jcommander.getCommands().containsKey(parsedCommand)) {
+            String subCommand = jcommander.getCommands().get(parsedCommand).getParsedCommand();
+            return subCommand != null ? subCommand: "";
+        } else {
+            return null;
+        }
     }
 
     public boolean isHelp() {
@@ -96,7 +140,8 @@ jcommander.addCommand("alignment", alignCommandOptions);
         return getCommonCommandOptions().help;
     }
 
-    public void printUsage(){
+    public void printUsageOld(){
+        jcommander.setColumnSize(120);
         if(getCommand().isEmpty()) {
             jcommander.usage();
         } else {
@@ -104,6 +149,34 @@ jcommander.addCommand("alignment", alignCommandOptions);
         }
     }
 
+    public void printUsage(){
+        if(!getCommand().isEmpty()) {
+            if(!getSubCommand().isEmpty()){
+                jcommander.getCommands().get(getCommand()).usage(getSubCommand());
+            } else {
+                new JCommander(jcommander.getCommands().get(getCommand()).getObjects().get(0)).usage();
+                System.err.println("Available commands");
+                printUsage(jcommander.getCommands().get(getCommand()));
+            }
+        } else {
+            new JCommander(generalOptions).usage();
+            System.err.println("Available commands");
+            printUsage(jcommander);
+        }
+    }
+
+    private void printUsage(JCommander commander) {
+        int gap = 10;
+        int leftGap = 1;
+        for (String s : commander.getCommands().keySet()) {
+            if (gap < s.length() + leftGap) {
+                gap = s.length() + leftGap;
+            }
+        }
+        for (Map.Entry<String, JCommander> entry : commander.getCommands().entrySet()) {
+            System.err.printf("%" + gap + "s    %s\n", entry.getKey(), commander.getCommandDescription(entry.getKey()));
+        }
+    }
 
     /**
      * This class contains all those parameters that are intended to work without any 'command'
@@ -112,6 +185,7 @@ jcommander.addCommand("alignment", alignCommandOptions);
 
         @Parameter(names = {"-h", "--help"}, help = true)
         public boolean help;
+
         @Parameter(names = {"--version"})
         public boolean version;
 
@@ -124,6 +198,7 @@ jcommander.addCommand("alignment", alignCommandOptions);
 
         @Parameter(names = {"-h", "--help"}, help = true)
         public boolean help;
+
         @Parameter(names = {"-L", "--log-level"}, description = "This parameter set the level of the logging", required = false, arity = 1)
         public String logLevel = "info";
 
@@ -134,15 +209,40 @@ jcommander.addCommand("alignment", alignCommandOptions);
         @Parameter(names = {"-C", "--conf"}, description = "This ia a reserved parameter for configuration file", required = false, arity = 1)
         public String conf;
 
+        public String getSubCommand() {
+            String parsedCommand = jcommander.getParsedCommand();
+            if (jcommander.getCommands().containsKey(parsedCommand)) {
+                String subCommand = jcommander.getCommands().get(parsedCommand).getParsedCommand();
+                return subCommand != null ? subCommand: "";
+            } else {
+                return "";
+            }
+        }
+
+        public boolean isHelp() {
+            return help;
+        }
     }
 
 
     @Parameters(commandNames = {"fastq"}, commandDescription = "Description")
-    public class FastqCommandOptions {
+    public class FastqCommandOptions extends CommonCommandOptions {
+
+//        final Convert createCommand;
+//
+//        public FastqCommandOptions() {
+//            jcommander.addCommand(this);
+//            JCommander users = jcommander.getCommands().get("fastq");
+//            users.addCommand("convert", createCommand = new Convert());
+//        }
+
+    }
+
+    @Parameters(commandNames = {"convert"}, commandDescription = "Create new user for OpenCGA-Catalog")
+    class SequenceConvertCommandOptions {
 
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
-
 
         @Parameter(names = {"-i", "--input"}, description = "HDFS input file (the FastQ file must be stored in GA4GH/Avro model)", required = true, arity = 1)
         public String input = null;
@@ -158,16 +258,15 @@ jcommander.addCommand("alignment", alignCommandOptions);
 
         @Parameter(names = {"-k", "--kmers"}, description = "Compute k-mers (according to the indicated length)", required = false, arity = 1)
         public Integer kmers = 0;
-
     }
 
 
-    @Parameters(commandNames = {"bam"}, commandDescription = "Description")
-    public class BamCommandOptions {
 
-        @ParametersDelegate
-        public CommonCommandOptions commonOptions = commonCommandOptions;
 
+
+
+    @Parameters(commandNames = {"alignment"}, commandDescription = "Description")
+    public class AlignmentCommandOptions extends CommonCommandOptions {
 
         @Parameter(names = {"-i", "--input"}, description = "HDFS input file (the BAM/SAM file must be stored in GA4GH/Avro model)", required = true, arity = 1)
         public String input = null;
@@ -192,7 +291,36 @@ jcommander.addCommand("alignment", alignCommandOptions);
 
         @Parameter(names = {"-x", "--compression"}, description = "For the command: 'to-parquet'. Accepted values: snappy, deflate, bzip2, xz. Default: snappy", required = false, arity = 1)
         public String compression = "snappy";
-        
+
+    }
+
+    @Parameters(commandNames = {"variant"}, commandDescription = "Description")
+    public class VariantCommandOptions extends CommonCommandOptions {
+
+        @Parameter(names = {"-i", "--input"}, description = "HDFS input file (the BAM/SAM file must be stored in GA4GH/Avro model)", required = true, arity = 1)
+        public String input = null;
+
+        @Parameter(names = {"-o", "--output"}, description = "Local output directory to save results, summary, images...", required = false, arity = 1)
+        public String output = null;
+
+        @Parameter(names = {"--command"}, description = "Accepted values: stats, sort, depth, to-parquet", required = false, arity = 1)
+        public String command = null;
+
+        @Parameter(names = {"--filter"}, description = "", required = false, arity = 1)
+        public String filter = null;
+
+        @Parameter(names = {"--index"}, description = "", required = false)
+        public boolean index = false;
+
+        @Parameter(names = {"--convert"}, description = "Accepted values: sam2bam, sam2cram, bam2fastq", required = false)
+        public boolean convert = false;
+
+        @Parameter(names = {"--to-fastq"}, description = "", required = false)
+        public boolean toFastq = false;
+
+        @Parameter(names = {"-x", "--compression"}, description = "For the command: 'to-parquet'. Accepted values: snappy, deflate, bzip2, xz. Default: snappy", required = false, arity = 1)
+        public String compression = "snappy";
+
     }
 
 
@@ -319,20 +447,25 @@ jcommander.addCommand("alignment", alignCommandOptions);
         return commonCommandOptions;
     }
 
-    public FastqCommandOptions getFastqCommandOptions() {
-        return fastqCommandOptions;
-    }
-
-    public BamCommandOptions getBamCommandOptions() {
-        return bamCommandOptions;
+    public IndexCommandOptions getIndexCommandOptions() {
+        return indexCommandOptions;
     }
 
     public ConvertCommandOptions getConvertCommandOptions() {
         return convertCommandOptions;
     }
 
-    public AlignCommandOptions getAlignCommandOptions() {
-        return alignCommandOptions;
+    public FastqCommandOptions getFastqCommandOptions() {
+        return fastqCommandOptions;
     }
+
+    public AlignmentCommandOptions getAlignmentCommandOptions() {
+        return alignmentCommandOptions;
+    }
+
+    public SequenceConvertCommandOptions getSequenceConvertCommandOptions() {
+        return sequenceConvertCommandOptions;
+    }
+
 
 }

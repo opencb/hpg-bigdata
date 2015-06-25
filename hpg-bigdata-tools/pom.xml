@@ -38,9 +38,8 @@
         <dependency>
             <groupId>com.github.samtools</groupId>
             <artifactId>htsjdk</artifactId>
-            <version>1.129</version>
+            <version>1.131</version>
         </dependency>
-
         <dependency>
             <groupId>org.apache.avro</groupId>
             <artifactId>avro</artifactId>
@@ -64,16 +63,6 @@
             <classifier>hadoop2</classifier>
         </dependency>
         <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-common</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-client</artifactId>
-        </dependency>
-        <!-- <dependency> <groupId>org.seqdoop</groupId> <artifactId>hadoop-bam</artifactId>
-            <version>7.0.0</version> </dependency> -->
-        <dependency>
             <groupId>com.twitter</groupId>
             <artifactId>parquet-avro</artifactId>
             <version>1.6.0</version>
@@ -89,14 +78,12 @@
             <version>1.6.0</version>
         </dependency>
         <dependency>
-            <groupId>com.github.samtools</groupId>
-            <artifactId>htsjdk</artifactId>
-            <version>1.131</version>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-common</artifactId>
         </dependency>
-
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-client</artifactId>
         </dependency>
         <dependency>
         	<groupId>org.apache.hbase</groupId>
@@ -109,6 +96,10 @@
         <dependency>
         	<groupId>org.apache.hbase</groupId>
         	<artifactId>hbase-server</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
         </dependency>
     </dependencies>
 

@@ -23,13 +23,12 @@ import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
  */
 public class AlignmentCommandExecutor extends CommandExecutor {
 
-    private CliOptionsParser.AlignCommandOptions alignCommandOptions;
+    private CliOptionsParser.AlignmentCommandOptions alignmentCommandOptions;
 
-    public AlignmentCommandExecutor(CliOptionsParser.AlignCommandOptions alignCommandOptions) {
-        super(alignCommandOptions.commonOptions.logLevel, alignCommandOptions.commonOptions.verbose,
-                alignCommandOptions.commonOptions.conf);
+    public AlignmentCommandExecutor(CliOptionsParser.AlignmentCommandOptions alignmentCommandOptions) {
+        super(alignmentCommandOptions.logLevel, alignmentCommandOptions.verbose, alignmentCommandOptions.conf);
 
-        this.alignCommandOptions = alignCommandOptions;
+        this.alignmentCommandOptions = alignmentCommandOptions;
     }
 
 
@@ -39,7 +38,9 @@ public class AlignmentCommandExecutor extends CommandExecutor {
     public void execute() throws Exception {
         logger.info("Executing {} CLI options", "align");
 
-        logger.debug("Input file: {}", alignCommandOptions.input);
+        logger.debug("Input file: {}", alignmentCommandOptions.input);
+
+
     }
 
 }
