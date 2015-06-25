@@ -89,7 +89,7 @@ public class CliOptionsParser {
 //        alignCommandOptions = new AlignCommandOptions();
 //        indexCommandOptions = new IndexCommandOptions();
 //
-//        jcommander.addCommand("convert", convertCommandOptions);
+        jcommander.addCommand("convert", convertCommandOptions);
 //        jcommander.addCommand(fastqCommandOptions);
 //        jcommander.addCommand(bamCommandOptions);
 //        jcommander.addCommand("align", alignCommandOptions);
@@ -358,13 +358,13 @@ public class CliOptionsParser {
         @Parameter(names = {"-x", "--compression"}, description = "Accepted values: snappy, deflate, bzip2, xz. [snappy]", required = false, arity = 1)
         public String compression = "snappy";
 
-        @Parameter(names = {"-p", "--to-avro"}, description = "Serialize data to GA4GH Avro format [true]", required = false)
+        @Parameter(names = {"--to-avro"}, description = "Serialize data to GA4GH Avro format [true]", required = false)
         public boolean toAvro = true;
 
-        @Parameter(names = {"-p", "--to-avro"}, description = "Serialize data from  GA4GH Avro format [true]", required = false)
+        @Parameter(names = {"--from-avro"}, description = "Serialize data from  GA4GH Avro format [true]", required = false)
         public boolean fromAvro = false;
 
-        @Parameter(names = {"-p", "--to-parquet"}, description = "Save data in ga4gh using the parquet format (for Hadoop only)", required = false)
+        @Parameter(names = {"--to-parquet"}, description = "Save data in ga4gh using the parquet format (for Hadoop only)", required = false)
         public boolean toParquet = false;
     }
 
