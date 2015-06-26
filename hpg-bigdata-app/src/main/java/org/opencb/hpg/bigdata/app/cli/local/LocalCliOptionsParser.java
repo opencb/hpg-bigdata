@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
-package org.opencb.hpg.bigdata.app.cli.hadoop;
+package org.opencb.hpg.bigdata.app.cli.local;
 
 import com.beust.jcommander.*;
+import org.opencb.hpg.bigdata.app.cli.hadoop.ConvertCommandExecutor;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
- * Created by imedina on 03/02/15.
+ * Created by imedina on 16/06/15.
  */
-public class CliOptionsParser {
+public class LocalCliOptionsParser {
 
     private final JCommander jcommander;
 
@@ -42,12 +44,7 @@ public class CliOptionsParser {
     // NGS variant command and subcommmands
     private VariantCommandOptions variantCommandOptions;
 
-    private ConvertCommandOptions convertCommandOptions;
-//    private AlignSequenceCommandOptions alignSequenceCommandOptions;
-//    private IndexCommandOptions indexCommandOptions;
-
-
-    public CliOptionsParser() {
+    public LocalCliOptionsParser() {
         generalOptions = new GeneralOptions();
         jcommander = new JCommander(generalOptions);
 
@@ -59,7 +56,6 @@ public class CliOptionsParser {
         JCommander sequenceSubCommands = jcommander.getCommands().get("sequence");
         sequenceSubCommands.addCommand("convert", sequenceCommandOptions.convertSequenceCommandOptions);
         sequenceSubCommands.addCommand("stats", sequenceCommandOptions.statsSequenceCommandOptions);
-        sequenceSubCommands.addCommand("align", sequenceCommandOptions.alignSequenceCommandOptions);
 
         alignmentCommandOptions = new AlignmentCommandOptions();
         jcommander.addCommand("alignment", sequenceCommandOptions);
@@ -71,9 +67,7 @@ public class CliOptionsParser {
         jcommander.addCommand("variant", sequenceCommandOptions);
         JCommander variantSubCommands = jcommander.getCommands().get("variant");
         variantSubCommands.addCommand("convert", variantCommandOptions.convertVariantCommandOptions);
-        variantSubCommands.addCommand("load", variantCommandOptions.loadVariantCommandOptions);
 
-//        convertCommandOptions = new ConvertCommandOptions();
     }
 
     public void parse(String[] args) throws ParameterException {
@@ -159,12 +153,10 @@ public class CliOptionsParser {
 
         ConvertSequenceCommandOptions convertSequenceCommandOptions;
         StatsSequenceCommandOptions statsSequenceCommandOptions;
-        AlignSequenceCommandOptions alignSequenceCommandOptions;
 
         public SequenceCommandOptions() {
             this.convertSequenceCommandOptions = new ConvertSequenceCommandOptions();
             this.statsSequenceCommandOptions = new StatsSequenceCommandOptions();
-            this.alignSequenceCommandOptions = new AlignSequenceCommandOptions();
         }
     }
 
@@ -210,23 +202,6 @@ public class CliOptionsParser {
 
         @Parameter(names = {"-k", "--kmers"}, description = "Compute k-mers (according to the indicated length)", required = false, arity = 1)
         public Integer kmers = 0;
-    }
-
-    @Parameters(commandNames = {"align"}, commandDescription = "Align reads to a reference genome using HPG Aligner in MapReduce")
-    public class AlignSequenceCommandOptions {
-
-        @ParametersDelegate
-        public CommonCommandOptions commonOptions = commonCommandOptions;
-
-        @Parameter(names = {"-i", "--input"}, description = "", required = true, arity = 1)
-        public String input = null;
-
-        @Parameter(names = {"-o", "--output"}, description = "", required = false, arity = 1)
-        public String output = null;
-
-        @Parameter(names = {"--index-file"}, description = "", required = false)
-        public String referenceGenomeFile;
-
     }
 
 
@@ -308,11 +283,9 @@ public class CliOptionsParser {
     public class VariantCommandOptions extends CommandOptions {
 
         ConvertVariantCommandOptions convertVariantCommandOptions;
-        LoadVariantCommandOptions loadVariantCommandOptions;
 
         public VariantCommandOptions() {
             this.convertVariantCommandOptions = new ConvertVariantCommandOptions();
-            this.loadVariantCommandOptions = new LoadVariantCommandOptions();
         }
     }
 
@@ -339,67 +312,15 @@ public class CliOptionsParser {
 
     }
 
-    @Parameters(commandNames = {"load"}, commandDescription = "Load avro gVCF/VCF files into different NoSQL, only HBase implemented so far")
-    public class LoadVariantCommandOptions {
-
-        @ParametersDelegate
-        public CommonCommandOptions commonOptions = commonCommandOptions;
-
-        @Parameter(names = {"-i", "--input"}, description = "GA4GH Avro input file", required = true, arity = 1)
-        public String input = null;
-
-        @Parameter(names = {"-d", "--database"}, description = "Database to load data, values: hbase", required = false, arity = 1)
-        public String database = "hbase";
-
-        @Parameter(names = {"-r", "--regions"}, description = "Database to load data, values: hbase", required = false, arity = 1)
-        public String regions = null;
-
-        @Parameter(names = {"-e", "--expand"}, description = "Expand and insert gVCF non-variant regions", required = false, arity = 1)
-        public boolean includeNonVariants;
-
-        @Parameter(names = {"-C", "--credentials"}, description = "Database credentials: username, password, host, port", required = false, arity = 1)
-        public String credentials;
-
-    }
-
-    @Deprecated
-    @Parameters(commandNames = {"convert"}, commandDescription = "Convert between different formats")
-    public class ConvertCommandOptions {
-
-        @ParametersDelegate
-        public CommonCommandOptions commonOptions = commonCommandOptions;
-
-        @Parameter(names = {"-i", "--input"}, description = "", required = true, arity = 1)
-        public String input = null;
-
-        @Parameter(names = {"-o", "--output"}, description = "", required = false, arity = 1)
-        public String output = null;
-
-        @Parameter(names = {"-c", "--conversion"}, description = "Accepted values: fastq2avro, avro2fastq, sam2avro, avro2sam, bam2avro, avro2bam, vcf2avro", required = true, arity = 1)
-        public ConvertCommandExecutor.Conversion conversion;
-
-        @Parameter(names = {"-x", "--compression"}, description = "Accepted values: snappy, deflate, bzip2, xz. [snappy]", required = false, arity = 1)
-        public String compression = "snappy";
-
-        @Parameter(names = {"-p", "--to-avro"}, description = "Serialize data to GA4GH Avro format [true]", required = false)
-        public boolean toAvro = true;
-
-        @Parameter(names = {"-p", "--to-avro"}, description = "Serialize data from  GA4GH Avro format [true]", required = false)
-        public boolean fromAvro = false;
-
-        @Parameter(names = {"-p", "--to-parquet"}, description = "Save data in ga4gh using the parquet format (for Hadoop only)", required = false)
-        public boolean toParquet = false;
-    }
-
 
     public void printUsage(){
         if(getCommand().isEmpty()) {
             System.err.println("");
-            System.err.println("Program:     HPG BigData for Hadoop (OpenCB)");
+            System.err.println("Program:     HPG BigData for HPC (OpenCB)");
             System.err.println("Version:     0.2.0");
-            System.err.println("Description: Hadoop-based tools for working with NGS data");
+            System.err.println("Description: Tools for working with NGS data in a standard HPC cluster");
             System.err.println("");
-            System.err.println("Usage:       hpg-bigdata.sh [-h|--help] [--version] <command> <subcommand> [options]");
+            System.err.println("Usage:       hpg-bigdata-local.sh [-h|--help] [--version] <command> <subcommand> [options]");
             System.err.println("");
             System.err.println("Commands:");
             printMainUsage();
@@ -408,7 +329,7 @@ public class CliOptionsParser {
             String parsedCommand = getCommand();
             if(getSubCommand().isEmpty()){
                 System.err.println("");
-                System.err.println("Usage:   hpg-bigdata.sh " + parsedCommand + " <subcommand> [options]");
+                System.err.println("Usage:   hpg-bigdata-local.sh " + parsedCommand + " <subcommand> [options]");
                 System.err.println("");
                 System.err.println("Subcommands:");
                 printCommandUsage(jcommander.getCommands().get(getCommand()));
@@ -416,7 +337,7 @@ public class CliOptionsParser {
             } else {
                 String parsedSubCommand = getSubCommand();
                 System.err.println("");
-                System.err.println("Usage:   hpg-bigdata.sh " + parsedCommand + " " + parsedSubCommand + " [options]");
+                System.err.println("Usage:   hpg-bigdata-local.sh " + parsedCommand + " " + parsedSubCommand + " [options]");
                 System.err.println("");
                 System.err.println("Options:");
                 printSubCommandUsage(jcommander.getCommands().get(parsedCommand).getCommands().get(parsedSubCommand));
@@ -467,14 +388,6 @@ public class CliOptionsParser {
         return commandOptions;
     }
 
-//    public IndexCommandOptions getIndexCommandOptions() {
-//        return indexCommandOptions;
-//    }
-
-    public ConvertCommandOptions getConvertCommandOptions() {
-        return convertCommandOptions;
-    }
-
     public SequenceCommandOptions getSequenceCommandOptions() {
         return sequenceCommandOptions;
     }
@@ -482,10 +395,6 @@ public class CliOptionsParser {
     public AlignmentCommandOptions getAlignmentCommandOptions() {
         return alignmentCommandOptions;
     }
-
-//    public ConvertSequenceCommandOptions getConvertSequenceCommandOptions() {
-//        return convertSequenceCommandOptions;
-//    }
 
     public CommonCommandOptions getCommonCommandOptions() {
         return commonCommandOptions;
