@@ -64,6 +64,7 @@ public class SequenceCommandExecutor extends CommandExecutor {
         switch (subCommand) {
             case "convert":
                 System.out.println("convert");
+				convert();
                 break;
 			case "stats":
 				System.out.println("stats");
@@ -102,6 +103,11 @@ public class SequenceCommandExecutor extends CommandExecutor {
 //		}
 	}
 
+
+	private void convert() {
+		CliOptionsParser.ConvertSequenceCommandOptions convertSequenceCommandOptions = sequenceCommandOptions.convertSequenceCommandOptions;
+
+	}
 
 	private void stats(String input, String output, int kvalue) {
 		// clean paths

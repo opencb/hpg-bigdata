@@ -18,6 +18,7 @@ package org.opencb.hpg.bigdata.app.cli.hadoop;
 
 import com.beust.jcommander.*;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -98,7 +99,7 @@ public class CliOptionsParser {
      */
     public class GeneralOptions {
 
-        @Parameter(names = {"-h", "--help"}, help = true)
+        @Parameter(names = {"-h", "--help"},  description = "This parameter prints this help", help = true)
         public boolean help;
 
         @Parameter(names = {"--version"})
@@ -111,7 +112,7 @@ public class CliOptionsParser {
      */
     public class CommandOptions {
 
-        @Parameter(names = {"-h", "--help"}, help = true)
+        @Parameter(names = {"-h", "--help"},  description = "This parameter prints this help", help = true)
         public boolean help;
 
         public JCommander getSubCommand() {
@@ -134,17 +135,17 @@ public class CliOptionsParser {
      */
     public class CommonCommandOptions {
 
-        @Parameter(names = {"-h", "--help"}, help = true)
+        @Parameter(names = {"-h", "--help"},  description = "This parameter prints this help", help = true)
         public boolean help;
 
-        @Parameter(names = {"-L", "--log-level"}, description = "This parameter set the level of the logging", required = false, arity = 1)
+        @Parameter(names = {"-L", "--log-level"}, description = "Set the level log, values: debug, info, warning, error, fatal", required = false, arity = 1)
         public String logLevel = "info";
 
         @Deprecated
         @Parameter(names = {"-v", "--verbose"}, description = "This parameter set the level of the logging", required = false, arity = 1)
         public boolean verbose;
 
-        @Parameter(names = {"--conf"}, description = "This ia a reserved parameter for configuration file", required = false, arity = 1)
+        @Parameter(names = {"--conf"}, description = "Set the configuration file", required = false, arity = 1)
         public String conf;
 
     }
@@ -153,8 +154,7 @@ public class CliOptionsParser {
     /*
      * Sequence (FASTQ) CLI options
      */
-
-    @Parameters(commandNames = {"sequence"}, commandDescription = "Different tools for working with NGS Fastq files")
+    @Parameters(commandNames = {"sequence"}, commandDescription = "Implements different tools for working with Fastq files")
     public class SequenceCommandOptions extends CommandOptions {
 
         ConvertSequenceCommandOptions convertSequenceCommandOptions;
@@ -168,7 +168,7 @@ public class CliOptionsParser {
         }
     }
 
-    @Parameters(commandNames = {"convert"}, commandDescription = "Create new user for OpenCGA-Catalog")
+    @Parameters(commandNames = {"convert"}, commandDescription = "Converts BAM files to different big data formats such as Avro and Parquet")
     class ConvertSequenceCommandOptions {
 
         @ParametersDelegate
@@ -190,7 +190,7 @@ public class CliOptionsParser {
         public Integer kmers = 0;
     }
 
-    @Parameters(commandNames = {"stats"}, commandDescription = "Create new user for OpenCGA-Catalog")
+    @Parameters(commandNames = {"stats"}, commandDescription = "Calculates different stats from sequencing data")
     class StatsSequenceCommandOptions {
 
         @ParametersDelegate
@@ -212,7 +212,7 @@ public class CliOptionsParser {
         public Integer kmers = 0;
     }
 
-    @Parameters(commandNames = {"align"}, commandDescription = "Description")
+    @Parameters(commandNames = {"align"}, commandDescription = "Align reads to a reference genome using HPG Aligner in MapReduce")
     public class AlignSequenceCommandOptions {
 
         @ParametersDelegate
@@ -234,7 +234,7 @@ public class CliOptionsParser {
     /*
      * Alignment (BAM) CLI options
      */
-    @Parameters(commandNames = {"alignment"}, commandDescription = "Different tools for working with NGS SAM/BAM files")
+    @Parameters(commandNames = {"alignment"}, commandDescription = "Implements different tools for working with SAM/BAM files")
     public class AlignmentCommandOptions extends CommandOptions {
 
         ConvertAlignmentCommandOptions convertAlignmentCommandOptions;
@@ -246,7 +246,7 @@ public class CliOptionsParser {
         }
     }
 
-    @Parameters(commandNames = {"convert"}, commandDescription = "Create new user for OpenCGA-Catalog")
+    @Parameters(commandNames = {"convert"}, commandDescription = "Converts BAM files to different big data formats such as Avro and Parquet")
     class ConvertAlignmentCommandOptions {
 
         @ParametersDelegate
@@ -258,20 +258,22 @@ public class CliOptionsParser {
         @Parameter(names = {"-o", "--output"}, description = "Local output directory to save results, summary, images...", required = false, arity = 1)
         public String output = null;
 
+        @Deprecated
         @Parameter(names = {"--command"}, description = "Accepted values: stats, sort, depth, to-parquet", required = false, arity = 1)
         public String command = null;
 
-        @Parameter(names = {"--filter"}, description = "", required = false, arity = 1)
-        public String filter = null;
-
-        @Parameter(names = {"--index"}, description = "", required = false)
-        public boolean index = false;
-
+        @Deprecated
         @Parameter(names = {"--convert"}, description = "Accepted values: sam2bam, sam2cram, bam2fastq", required = false)
-        public boolean convert = false;
+        public boolean convert;
+
+        @Parameter(names = {"--to-avro"}, description = "", required = false)
+        public boolean toAvro;
+
+        @Parameter(names = {"--to-parquet"}, description = "", required = false)
+        public boolean toParquet;
 
         @Parameter(names = {"--to-fastq"}, description = "", required = false)
-        public boolean toFastq = false;
+        public boolean toFastq;
 
         @Parameter(names = {"-x", "--compression"}, description = "For the command: 'to-parquet'. Accepted values: snappy, deflate, bzip2, xz. Default: snappy", required = false, arity = 1)
         public String compression = "snappy";
@@ -302,7 +304,7 @@ public class CliOptionsParser {
     /*
      * Variant (VCF) CLI options
      */
-    @Parameters(commandNames = {"variant"}, commandDescription = "Description")
+    @Parameters(commandNames = {"variant"}, commandDescription = "Implements different tools for working with gVCF/VCF files")
     public class VariantCommandOptions extends CommandOptions {
 
         ConvertVariantCommandOptions convertVariantCommandOptions;
@@ -314,7 +316,7 @@ public class CliOptionsParser {
         }
     }
 
-    @Parameters(commandNames = {"convert"}, commandDescription = "Create new user for OpenCGA-Catalog")
+    @Parameters(commandNames = {"convert"}, commandDescription = "Convert gVCF/VCF files to different big data formats such as Avro and Parquet using GA4GH models")
     class ConvertVariantCommandOptions {
 
         @ParametersDelegate
@@ -326,40 +328,41 @@ public class CliOptionsParser {
         @Parameter(names = {"-o", "--output"}, description = "Local output directory to save results, summary, images...", required = false, arity = 1)
         public String output = null;
 
-        @Parameter(names = {"--command"}, description = "Accepted values: stats, sort, depth, to-parquet", required = false, arity = 1)
-        public String command = null;
+        @Parameter(names = {"--to-avro"}, description = "Accepted values: sam2bam, sam2cram, bam2fastq", required = false)
+        public boolean toAvro;
 
-        @Parameter(names = {"--filter"}, description = "", required = false, arity = 1)
-        public String filter = null;
+        @Parameter(names = {"--to-parquet"}, description = "Accepted values: sam2bam, sam2cram, bam2fastq", required = false)
+        public boolean toParquet;
 
-        @Parameter(names = {"--index"}, description = "", required = false)
-        public boolean index = false;
-
-        @Parameter(names = {"--convert"}, description = "Accepted values: sam2bam, sam2cram, bam2fastq", required = false)
-        public boolean convert = false;
-
-        @Parameter(names = {"--to-fastq"}, description = "", required = false)
-        public boolean toFastq = false;
-
-        @Parameter(names = {"-x", "--compression"}, description = "For the command: 'to-parquet'. Accepted values: snappy, deflate, bzip2, xz. Default: snappy", required = false, arity = 1)
+        @Parameter(names = {"-x", "--compression"}, description = "Only for commands 'to-avro' and 'to-parquet'. Values: snappy, deflate, bzip2, xz", required = false, arity = 1)
         public String compression = "snappy";
 
     }
 
-    @Parameters(commandNames = {"load-hbase"}, commandDescription = "Load")
+    @Parameters(commandNames = {"load"}, commandDescription = "Load avro gVCF/VCF files into different NoSQL, only HBase implemented so far")
     public class LoadVariantCommandOptions {
 
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
 
-        @Parameter(names = {"-i", "--input"}, description = "Avro input files", required = true, arity = 1)
+        @Parameter(names = {"-i", "--input"}, description = "GA4GH Avro input file", required = true, arity = 1)
         public String input = null;
 
-        @Parameter(names = {"-C", "--credentials"}, description = "", required = false, arity = 1)
+        @Parameter(names = {"-d", "--database"}, description = "Database to load data, values: hbase", required = false, arity = 1)
+        public String database = "hbase";
+
+        @Parameter(names = {"-r", "--regions"}, description = "Database to load data, values: hbase", required = false, arity = 1)
+        public String regions = null;
+
+        @Parameter(names = {"-e", "--expand"}, description = "Expand and insert gVCF non-variant regions", required = false, arity = 1)
+        public boolean includeNonVariants;
+
+        @Parameter(names = {"-C", "--credentials"}, description = "Database credentials: username, password, host, port", required = false, arity = 1)
         public String credentials;
 
     }
 
+    @Deprecated
     @Parameters(commandNames = {"convert"}, commandDescription = "Convert between different formats")
     public class ConvertCommandOptions {
 
@@ -383,56 +386,23 @@ public class CliOptionsParser {
 
         @Parameter(names = {"-p", "--to-avro"}, description = "Serialize data from  GA4GH Avro format [true]", required = false)
         public boolean fromAvro = false;
+
         @Parameter(names = {"-p", "--to-parquet"}, description = "Save data in ga4gh using the parquet format (for Hadoop only)", required = false)
         public boolean toParquet = false;
-    }
-
-
-    @Parameters(commandNames = {"load-parquet"}, commandDescription = "Load")
-    public class LoadHiveCommandOptions {
-
-        @ParametersDelegate
-        public CommonCommandOptions commonOptions = commonCommandOptions;
-
-        @Parameter(names = {"-i", "--input"}, description = "Avro or Parquet input files", required = true, arity = 1)
-        public String input = null;
-
-        @Parameter(names = {"-o", "--output"}, description = "", required = false, arity = 1)
-        public String output = null;
-
-        @Parameter(names = {"-C", "--credentials"}, description = "", required = false, arity = 1)
-        public String credentials;
-    }
-
-    @Parameters(commandNames = {"index"}, commandDescription = "Description")
-    public class IndexCommandOptions {
-
-        @ParametersDelegate
-        public CommonCommandOptions commonOptions = commonCommandOptions;
-
-
-        @Parameter(names = {"-i", "--input"}, description = "", required = true, arity = 1)
-        public String input = null;
-
-        @Parameter(names = {"-o", "--output"}, description = "", required = false, arity = 1)
-        public String output = null;
-
-        @Parameter(names = {"--index-file"}, description = "", required = false)
-        public String referenceGenomeFile;
-
     }
 
 
     public void printUsage(){
         if(getCommand().isEmpty()) {
             System.err.println("");
-            System.err.println("Program: OpenCGA (OpenCB)");
-            System.err.println("Version: 0.6.0");
+            System.err.println("Program:     HPG BigData (OpenCB)");
+            System.err.println("Version:     0.2.0");
+            System.err.println("Description: Tools for working with NGS data in a Hadoop cluster");
             System.err.println("");
-            System.err.println("Usage:   hpg-bigdata.sh [-h|--help] [--version] <command> <subcommand> [options]");
+            System.err.println("Usage:       hpg-bigdata.sh [-h|--help] [--version] <command> <subcommand> [options]");
             System.err.println("");
             System.err.println("Commands:");
-            printCommandUsage(jcommander);
+            printMainUsage();
             System.err.println("");
         } else {
             String parsedCommand = getCommand();
@@ -455,16 +425,21 @@ public class CliOptionsParser {
         }
     }
 
-    private void printCommandUsage(JCommander commander) {
-        int gap = 10;
-        int leftGap = 1;
-        for (String s : commander.getCommands().keySet()) {
-            if (gap < s.length() + leftGap) {
-                gap = s.length() + leftGap;
-            }
+    private void printMainUsage() {
+        // TODO This is a nasty hack. By some unknown reason JCommander only prints the description from first command
+        Map<String, String> commandDescription = new HashMap<>();
+        commandDescription.put("sequence", "Implements different tools for working with Fastq files");
+        commandDescription.put("alignment", "Implements different tools for working with SAM/BAM files");
+        commandDescription.put("variant", "Implements different tools for working with gVCF/VCF files");
+
+        for (String s : jcommander.getCommands().keySet()) {
+            System.err.printf("%12s  %s\n", s, commandDescription.get(s));
         }
+    }
+
+    private void printCommandUsage(JCommander commander) {
         for (Map.Entry<String, JCommander> entry : commander.getCommands().entrySet()) {
-            System.err.printf("%" + gap + "s    %s\n", entry.getKey(), commander.getCommandDescription(entry.getKey()));
+            System.err.printf("%12s  %s\n", entry.getKey(), commander.getCommandDescription(entry.getKey()));
         }
     }
 

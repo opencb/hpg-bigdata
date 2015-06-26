@@ -33,6 +33,7 @@ import org.opencb.hpg.bigdata.core.utils.PathUtils;
 /**
  * Created by imedina on 15/03/15.
  */
+@Deprecated
 public class BamCommandExecutor extends CommandExecutor {
 
 	private CliOptionsParser.AlignmentCommandOptions alignmentCommandOptions;
