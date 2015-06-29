@@ -37,19 +37,13 @@ public class SequenceCommandExecutor extends CommandExecutor {
 	private CliOptionsParser.SequenceCommandOptions sequenceCommandOptions;
 
 	public SequenceCommandExecutor(CliOptionsParser.SequenceCommandOptions sequenceCommandOptions) {
-//		super(fastqCommandOptions.logLevel, fastqCommandOptions.verbose, fastqCommandOptions.conf);
-
 		this.sequenceCommandOptions = sequenceCommandOptions;
 	}
 
-
 	/**
-	 * Parse specific 'fastq' command options
+	 * Parse specific 'sequence' command options
 	 */
 	public void execute() {
-//		logger.info("Executing {} CLI options", "fastq");
-
-
 		String subCommand = sequenceCommandOptions.getParsedSubCommand();
 
         switch (subCommand) {
@@ -60,62 +54,33 @@ public class SequenceCommandExecutor extends CommandExecutor {
 				stats();
 				break;
 			case "align":
-				System.out.println("Sub-command align: Not yet implemented!!");
+				System.out.println("Sub-command 'align': Not yet implemented for the command 'sequence' !");
 				break;
 			default:
 				break;
         }
-
-//		if (fastqCommandOptions.stats) {
-//			stats(fastqCommandOptions.input, outHdfsDirname, fastqCommandOptions.kmers);
-//		} else if (fastqCommandOptions.kmers > 0) {
-//			kmers(fastqCommandOptions.input, outHdfsDirname, fastqCommandOptions.kmers);
-//		} else {
-//			logger.error("Error: FastQ command not yet implemented");
-//			System.exit(-1);
-//		}
-//
-//		// post-processing
-//		Path outFile = new Path(outHdfsDirname + "/part-r-00000");
-//
-//		try {
-//			if (!fs.exists(outFile)) {
-//				System.out.println("out file = " + outFile.getName() + " does not exist !!");
-//			} else {
-//				String outRawFileName =  fastqCommandOptions.output + "/raw.json";
-//				fs.copyToLocalFile(outFile, new Path(outRawFileName));
-//
-//				//Utils.parseStatsFile(outRawFileName, out);
-//			}
-//			fs.delete(new Path(outHdfsDirname), true);
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
 	}
-
 
 	private void convert() {
-		CliOptionsParser.ConvertSequenceCommandOptions convertSequenceCommandOptions = sequenceCommandOptions.convertSequenceCommandOptions;
+        CliOptionsParser.ConvertSequenceCommandOptions convertSequenceCommandOptions = sequenceCommandOptions.convertSequenceCommandOptions;
 
-		// get input parameters
-		String input = convertSequenceCommandOptions.input;
-		String output = convertSequenceCommandOptions.output;
-		String codecName = convertSequenceCommandOptions.compression;
+        // get input parameters
+        String input = convertSequenceCommandOptions.input;
+        String output = convertSequenceCommandOptions.output;
+        String codecName = convertSequenceCommandOptions.compression;
 
-		// sanity check
-		if (codecName.equals("null")) {
-			codecName = null;
-		}
+        // sanity check
+        if (codecName.equals("null")) {
+            codecName = null;
+        }
 
-		// run MapReduce job to convert to GA4GH/Avro model
-		try {
-			Fastq2AvroMR.run(input, output, codecName);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		System.out.println("Done!!");
-	}
+        // run MapReduce job to convert to GA4GH/Avro model
+        try {
+            Fastq2AvroMR.run(input, output, codecName);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
 	private void stats() {
 		CliOptionsParser.StatsSequenceCommandOptions statsSequenceCommandOptions = sequenceCommandOptions.statsSequenceCommandOptions;

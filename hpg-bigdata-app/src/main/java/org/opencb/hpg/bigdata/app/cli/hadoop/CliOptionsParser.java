@@ -59,13 +59,14 @@ public class CliOptionsParser {
         JCommander sequenceSubCommands = jcommander.getCommands().get("sequence");
         sequenceSubCommands.addCommand("convert", sequenceCommandOptions.convertSequenceCommandOptions);
         sequenceSubCommands.addCommand("stats", sequenceCommandOptions.statsSequenceCommandOptions);
-        sequenceSubCommands.addCommand("align", sequenceCommandOptions.alignSequenceCommandOptions);
+        //sequenceSubCommands.addCommand("align", sequenceCommandOptions.alignSequenceCommandOptions);
 
         alignmentCommandOptions = new AlignmentCommandOptions();
         jcommander.addCommand("alignment", sequenceCommandOptions);
         JCommander alignmentSubCommands = jcommander.getCommands().get("alignment");
         alignmentSubCommands.addCommand("convert", alignmentCommandOptions.convertAlignmentCommandOptions);
         alignmentSubCommands.addCommand("stats", alignmentCommandOptions.statsAlignmentCommandOptions);
+        alignmentSubCommands.addCommand("depth", alignmentCommandOptions.depthAlignmentCommandOptions);
 
         variantCommandOptions = new VariantCommandOptions();
         jcommander.addCommand("variant", sequenceCommandOptions);
@@ -226,8 +227,6 @@ public class CliOptionsParser {
 
     }
 
-
-
     /*
      * Alignment (BAM) CLI options
      */
@@ -236,10 +235,12 @@ public class CliOptionsParser {
 
         ConvertAlignmentCommandOptions convertAlignmentCommandOptions;
         StatsAlignmentCommandOptions statsAlignmentCommandOptions;
+        DepthAlignmentCommandOptions depthAlignmentCommandOptions;
 
         public AlignmentCommandOptions() {
             this.convertAlignmentCommandOptions = new ConvertAlignmentCommandOptions();
             this.statsAlignmentCommandOptions = new StatsAlignmentCommandOptions();
+            this.depthAlignmentCommandOptions = new DepthAlignmentCommandOptions();
         }
     }
 
@@ -249,54 +250,56 @@ public class CliOptionsParser {
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
 
-        @Parameter(names = {"-i", "--input"}, description = "HDFS input file (the BAM/SAM file must be stored in GA4GH/Avro model)", required = true, arity = 1)
+        @Parameter(names = {"-i", "--input"}, description = "HDFS input file in BAM format", required = true, arity = 1)
         public String input = null;
 
-        @Parameter(names = {"-o", "--output"}, description = "Local output directory to save results, summary, images...", required = false, arity = 1)
+        @Parameter(names = {"-o", "--output"}, description = "HDFS output file to store the BAM alignments according to the GA4GH/Avro model", required = true, arity = 1)
         public String output = null;
 
-        @Deprecated
-        @Parameter(names = {"--command"}, description = "Accepted values: stats, sort, depth, to-parquet", required = false, arity = 1)
-        public String command = null;
-
-        @Deprecated
-        @Parameter(names = {"--convert"}, description = "Accepted values: sam2bam, sam2cram, bam2fastq", required = false)
-        public boolean convert;
-
-        @Parameter(names = {"--to-avro"}, description = "", required = false)
-        public boolean toAvro;
-
-        @Parameter(names = {"--to-parquet"}, description = "", required = false)
-        public boolean toParquet;
-
-        @Parameter(names = {"--to-fastq"}, description = "", required = false)
-        public boolean toFastq;
-
-        @Parameter(names = {"-x", "--compression"}, description = "For the command: 'to-parquet'. Accepted values: snappy, deflate, bzip2, xz. Default: snappy", required = false, arity = 1)
+        @Parameter(names = {"-x", "--compression"}, description = "Accepted values: snappy, deflate, bzip2, xz, null. Default: snappy", required = false, arity = 1)
         public String compression = "snappy";
 
+        //@Parameter(names = {"--to-avro"}, description = "", required = false)
+        //public boolean toAvro;
+
+        @Parameter(names = {"--to-parquet"}, description = "To save the output file in Parquet format", required = false)
+        public boolean toParquet;
+
+        //@Parameter(names = {"--to-fastq"}, description = "", required = false)
+        //public boolean toFastq;
     }
 
-    @Parameters(commandNames = {"stats"}, commandDescription = "Create new user for OpenCGA-Catalog")
+    @Parameters(commandNames = {"stats"}, commandDescription = "Compute some stats for a file containing alignments according to the GA4GH/Avro model")
     class StatsAlignmentCommandOptions {
 
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
 
-        @Parameter(names = {"-i", "--input"}, description = "HDFS input file (the FastQ file must be stored in GA4GH/Avro model)", required = true, arity = 1)
+        @Parameter(names = {"-i", "--input"}, description = "HDFS input file containing alignments stored according to the GA4GH/Avro model)", required = true, arity = 1)
         public String input = null;
 
-        @Parameter(names = {"-o", "--output"}, description = "Local output directory to save results, summary, images...", required = false, arity = 1)
+        @Parameter(names = {"-o", "--output"}, description = "Local output directory to save stats results in JSON format ", required = true, arity = 1)
         public String output = null;
 
-        @Parameter(names = {"-s", "--stats"}, description = "Run statistics", required = false)
-        public boolean stats = false;
-
-        @Parameter(names = {"-f", "--filter"}, description = "", required = false, arity = 1)
-        public String filter = null;
-
+        //@Parameter(names = {"-f", "--filter"}, description = "", required = false, arity = 1)
+        //public String filter = null;
     }
 
+    @Parameters(commandNames = {"depth"}, commandDescription = "Compute the depth (or coverage) for a given file containing alignments according to the GA4GH/Avro model")
+    class DepthAlignmentCommandOptions {
+
+        @ParametersDelegate
+        public CommonCommandOptions commonOptions = commonCommandOptions;
+
+        @Parameter(names = {"-i", "--input"}, description = "HDFS input file containing alignments stored according to the GA4GH/Avro model)", required = true, arity = 1)
+        public String input = null;
+
+        @Parameter(names = {"-o", "--output"}, description = "Local output directory to save the depth in a text file", required = true, arity = 1)
+        public String output = null;
+
+        //@Parameter(names = {"-f", "--filter"}, description = "", required = false, arity = 1)
+        //public String filter = null;
+    }
 
     /*
      * Variant (VCF) CLI options

@@ -78,7 +78,7 @@ public class BigDataMain {
 //                                cliOptionsParser.printUsage();
 //                            } else {
 //                            }
-                            commandExecutor = new BamCommandExecutor(cliOptionsParser.getAlignmentCommandOptions());
+                            commandExecutor = new AlignmentCommandExecutor(cliOptionsParser.getAlignmentCommandOptions());
                             break;
                         case "variant":
 //                            if (cliOptionsParser.getVariantCommandOptions().commonOptions.help) {
