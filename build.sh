@@ -24,6 +24,7 @@ else
     cp hpg-bigdata-core/native/libhpgbigdata.so build/libs/
 fi
 
+tar zxvf build/libs/avro-1.7.7.tgz -C build/libs/
 cp README.md build/
 cp LICENSE build/
 
