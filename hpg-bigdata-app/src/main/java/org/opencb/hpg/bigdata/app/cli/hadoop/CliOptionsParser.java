@@ -331,11 +331,14 @@ public class CliOptionsParser {
         @Parameter(names = {"--to-avro"}, description = "Accepted values: sam2bam, sam2cram, bam2fastq", required = false)
         public boolean toAvro;
 
-        @Parameter(names = {"--to-parquet"}, description = "Accepted values: sam2bam, sam2cram, bam2fastq", required = false)
-        public boolean toParquet;
+        @Parameter(names = {"--from-avro"}, description = "Converts Avro format into JSON", required = false)
+        public boolean fromAvro;
 
         @Parameter(names = {"-x", "--compression"}, description = "Only for commands 'to-avro' and 'to-parquet'. Values: snappy, deflate, bzip2, xz", required = false, arity = 1)
         public String compression = "snappy";
+
+        @Parameter(names = {"--to-parquet"}, description = "Accepted values: sam2bam, sam2cram, bam2fastq", required = false)
+        public boolean toParquet;
 
     }
 

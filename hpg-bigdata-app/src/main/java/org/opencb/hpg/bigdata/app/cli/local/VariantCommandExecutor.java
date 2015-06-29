@@ -67,64 +67,72 @@ public class VariantCommandExecutor extends CommandExecutor {
     private void convert() throws Exception {
         String input = variantCommandOptions.convertVariantCommandOptions.input;
         String output = variantCommandOptions.convertVariantCommandOptions.output;
-        String compression = variantCommandOptions.convertVariantCommandOptions.compression;
 
         // Checking input file
         FileUtils.checkFile(Paths.get(input));
 
-        // Creating reader
-        VcfBlockIterator iterator = (StringUtils.equals("-", input))
-                ? new VcfBlockIterator(new BufferedInputStream(System.in), new FullVcfCodec())
-                : new VcfBlockIterator(Paths.get(input).toFile(), new FullVcfCodec());
+        // Two options available: toAvro and fromAvro
+        if(variantCommandOptions.convertVariantCommandOptions.toAvro) {
+            String compression = variantCommandOptions.convertVariantCommandOptions.compression;
 
-        DataReader<CharBuffer> vcfDataReader = new DataReader<CharBuffer>() {
-            @Override
-            public List<CharBuffer> read(int size) {
-                return (iterator.hasNext() ? iterator.next(size) : Collections.<CharBuffer>emptyList());
-            }
+            // Creating reader
+            VcfBlockIterator iterator = (StringUtils.equals("-", input))
+                    ? new VcfBlockIterator(new BufferedInputStream(System.in), new FullVcfCodec())
+                    : new VcfBlockIterator(Paths.get(input).toFile(), new FullVcfCodec());
 
-            @Override
-            public boolean close() {
-                try {
-                    iterator.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    return false;
+            DataReader<CharBuffer> vcfDataReader = new DataReader<CharBuffer>() {
+                @Override
+                public List<CharBuffer> read(int size) {
+                    return (iterator.hasNext() ? iterator.next(size) : Collections.<CharBuffer>emptyList());
                 }
-                return true;
+
+                @Override
+                public boolean close() {
+                    try {
+                        iterator.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        return false;
+                    }
+                    return true;
+                }
+            };
+
+            // Creating file writer. If 'output' parameter is passed and it is different from
+            // STDOUT then a file is created if parent folder exist, otherwise STDOUT is used.
+            OutputStream os;
+            if (output != null && !output.isEmpty() && !output.equalsIgnoreCase("STDOUT")) {
+                FileUtils.checkDirectory(Paths.get(output).getParent(), true);
+                os = new FileOutputStream(output);
+            } else {
+                os = System.out;
             }
-        };
+            AvroFileWriter<Variant> avroFileWriter = new AvroFileWriter<>(Variant.getClassSchema(), compression, os);
 
-        // Creating file writer. If 'output' parameter is passed and it is different from
-        // STDOUT then a file is created if parent folder exist, otherwise STDOUT is used.
-        OutputStream os;
-        if (output != null && !output.isEmpty() && !output.equalsIgnoreCase("STDOUT")) {
-            FileUtils.checkDirectory(Paths.get(output).getParent(), true);
-            os = new FileOutputStream(output);
+            // main loop
+            int numTasks = Math.max(variantCommandOptions.convertVariantCommandOptions.numThtreads, 1);
+            int batchSize = 1024 * 1024;  //Batch size in bytes
+            int capacity = numTasks + 1;
+            VariantConverterContext variantConverterContext = new VariantConverterContext();
+            ParallelTaskRunner.Config config = new ParallelTaskRunner.Config(numTasks, batchSize, capacity, false);
+            ParallelTaskRunner<CharBuffer, ByteBuffer> runner =
+                    new ParallelTaskRunner<>(
+                            vcfDataReader,
+                            () -> new VariantAvroEncoderTask(variantConverterContext, iterator.getHeader(), iterator.getVersion()),
+                            avroFileWriter, config);
+            long start = System.currentTimeMillis();
+            runner.run();
+            logger.debug("Time " + (System.currentTimeMillis() - start) / 1000.0 + "s");
+
+            // close
+            iterator.close();
+            avroFileWriter.close();
+            os.close();
         } else {
-            os = System.out;
+            if (variantCommandOptions.convertVariantCommandOptions.fromAvro) {
+                logger.info("NOT IMPLEMENTED YET");
+            }
         }
-        AvroFileWriter<Variant> avroFileWriter = new AvroFileWriter<>(Variant.getClassSchema(), compression, os);
-
-        // main loop
-        int numTasks = Integer.getInteger("convert.vcf2avro.parallel", 4);
-        int batchSize = 1024 * 1024;  //Batch size in bytes
-        int capacity = numTasks + 1;
-        VariantConverterContext variantConverterContext = new VariantConverterContext();
-        ParallelTaskRunner.Config config = new ParallelTaskRunner.Config(numTasks, batchSize, capacity, false);
-        ParallelTaskRunner<CharBuffer, ByteBuffer> runner =
-                new ParallelTaskRunner<>(
-                        vcfDataReader,
-                        () -> new VariantAvroEncoderTask(variantConverterContext, iterator.getHeader(), iterator.getVersion()),
-                        avroFileWriter, config);
-        long start = System.currentTimeMillis();
-        runner.run();
-        logger.debug("Time " + (System.currentTimeMillis() - start) / 1000.0 + "s");
-
-        // close
-        iterator.close();
-        avroFileWriter.close();
-        os.close();
     }
 
 }

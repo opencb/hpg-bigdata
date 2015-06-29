@@ -48,9 +48,15 @@ public class AlignmentCommandExecutor extends CommandExecutor {
 
         switch (subCommand) {
             case "convert":
+                init(alignmentCommandOptions.convertAlignmentCommandOptions.commonOptions.logLevel,
+                        alignmentCommandOptions.convertAlignmentCommandOptions.commonOptions.verbose,
+                        alignmentCommandOptions.convertAlignmentCommandOptions.commonOptions.conf);
                 convert();
                 break;
             case "stats":
+                init(alignmentCommandOptions.statsAlignmentCommandOptions.commonOptions.logLevel,
+                        alignmentCommandOptions.statsAlignmentCommandOptions.commonOptions.verbose,
+                        alignmentCommandOptions.statsAlignmentCommandOptions.commonOptions.conf);
                 stats();
                 break;
             case "depth":
@@ -65,23 +71,21 @@ public class AlignmentCommandExecutor extends CommandExecutor {
     }
 
     private void convert() {
-        CliOptionsParser.ConvertAlignmentCommandOptions convertAlignmentCommandOptions = alignmentCommandOptions.convertAlignmentCommandOptions;
-
-        // get input parameters
-        String input = convertAlignmentCommandOptions.input;
-        String output = convertAlignmentCommandOptions.output;
-        String codecName = convertAlignmentCommandOptions.compression;
+        String input = alignmentCommandOptions.convertAlignmentCommandOptions.input;
+        String output = alignmentCommandOptions.convertAlignmentCommandOptions.output;
+        String compressionCodecName = alignmentCommandOptions.convertAlignmentCommandOptions.compression;
 
         // sanity check
-        if (codecName.equals("null")) {
-            codecName = null;
+        if (compressionCodecName.equals("null")) {
+            compressionCodecName = null;
         }
 
         // run MapReduce job to convert to GA4GH/Avro/Parquet model
         try {
-            Bam2AvroMR.run(input, output, codecName);
-            if (convertAlignmentCommandOptions.toParquet) {
-                new ParquetMR(ReadAlignment.getClassSchema()).run(output + "/part-r-00000.avro", output + "/to-parquet", codecName);
+            Bam2AvroMR.run(input, output, compressionCodecName);
+            // Parquet runs from Avro file
+            if (alignmentCommandOptions.convertAlignmentCommandOptions.toParquet) {
+                new ParquetMR(ReadAlignment.getClassSchema()).run(output + "/part-r-00000.avro", output + "/to-parquet", compressionCodecName);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -89,11 +93,8 @@ public class AlignmentCommandExecutor extends CommandExecutor {
     }
 
     private void stats() {
-        CliOptionsParser.StatsAlignmentCommandOptions statsAlignmentCommandOptions = alignmentCommandOptions.statsAlignmentCommandOptions;
-
-        // get input parameters
-        String input = statsAlignmentCommandOptions.input;
-        String output = statsAlignmentCommandOptions.output;
+        String input = alignmentCommandOptions.statsAlignmentCommandOptions.input;
+        String output = alignmentCommandOptions.statsAlignmentCommandOptions.output;
 
         // prepare the HDFS output folder
         FileSystem fs = null;
@@ -131,11 +132,8 @@ public class AlignmentCommandExecutor extends CommandExecutor {
     }
 
     private void depth() {
-        CliOptionsParser.DepthAlignmentCommandOptions depthAlignmentCommandOptions = alignmentCommandOptions.depthAlignmentCommandOptions;
-
-        // get input parameters
-        String input = depthAlignmentCommandOptions.input;
-        String output = depthAlignmentCommandOptions.output;
+        String input = alignmentCommandOptions.depthAlignmentCommandOptions.input;
+        String output = alignmentCommandOptions.depthAlignmentCommandOptions.output;
 
         // prepare the HDFS output folder
         FileSystem fs = null;

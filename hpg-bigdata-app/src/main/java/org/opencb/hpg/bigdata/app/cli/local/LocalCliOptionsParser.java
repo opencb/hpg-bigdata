@@ -304,15 +304,17 @@ public class LocalCliOptionsParser {
         @Parameter(names = {"--to-avro"}, description = "Whether output must be in avro format", required = false)
         public boolean toAvro;
 
-        @Parameter(names = {"--from-avro"}, description = "Accepted values: sam2bam, sam2cram, bam2fastq", required = false)
+        @Parameter(names = {"--from-avro"}, description = "Converts Avro format into JSON", required = false)
         public boolean fromAvro;
 
         @Parameter(names = {"-x", "--compression"}, description = "Only for commands 'to-avro' and 'to-parquet'. Values: snappy, deflate, bzip2, xz", required = false, arity = 1)
         public String compression = "snappy";
 
-        @Parameter(names = {"--to-parquet"}, description = "Whether output must be in parquet format", required = false)
-        public boolean toParquet;
+        @Parameter(names = {"-t", "--num-threads"}, description = "Number of threads to use, this must be less than the number of cores", required = false)
+        public int numThtreads = 2;
 
+//        @Parameter(names = {"--to-parquet"}, description = "Whether output must be in parquet format", required = false)
+//        public boolean toParquet;
     }
 
 

@@ -26,14 +26,24 @@ public class CompressionUtils {
     }
 
     public static CompressionCodecName getParquetCodec(String name) {
-        if (name == null) {
+        if (name == null || name.equalsIgnoreCase("null")) {
             return CompressionCodecName.UNCOMPRESSED;
-        } else if (name.equalsIgnoreCase("gzip")) {
-            return CompressionCodecName.GZIP;
-        } else if (name.equalsIgnoreCase("lzo")) {
-            return CompressionCodecName.LZO;
         }
-
-        return CompressionCodecName.SNAPPY;
+        CompressionCodecName compressionCodecName;
+        switch (name) {
+            case "snappy":
+                compressionCodecName = CompressionCodecName.SNAPPY;
+                break;
+            case "gzip":
+                compressionCodecName = CompressionCodecName.GZIP;
+                break;
+            case "lzo":
+                compressionCodecName = CompressionCodecName.LZO;
+                break;
+            default:
+                compressionCodecName = CompressionCodecName.SNAPPY;
+                break;
+        }
+        return compressionCodecName;
     }
 }
