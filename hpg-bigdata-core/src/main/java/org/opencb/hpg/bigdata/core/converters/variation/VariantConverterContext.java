@@ -30,7 +30,7 @@ import org.ga4gh.models.CallSet;
 public class VariantConverterContext {
 	
 //	public final AtomicReferenceArray<CallSet> callsetArray;
-	public final ConcurrentHashMap<CharSequence, CallSet> callSetMap = new ConcurrentHashMap<CharSequence, CallSet>();
+	public final ConcurrentHashMap<CharSequence, CallSet> callSetMap = new ConcurrentHashMap<>();
 	
 	public VariantConverterContext() {
 		
