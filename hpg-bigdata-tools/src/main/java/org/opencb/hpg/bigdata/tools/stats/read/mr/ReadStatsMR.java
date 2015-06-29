@@ -37,20 +37,21 @@ import org.opencb.biodata.tools.sequence.tasks.SequenceStatsCalculator;
 import org.opencb.hpg.bigdata.tools.io.ReadStatsWritable;
 
 public class ReadStatsMR {
-	
+
 	public static class ReadStatsMapper extends Mapper<AvroKey<Read>, NullWritable, LongWritable, ReadStatsWritable> {
 		
-		private static int kvalue = 0;
 		int newKey;
 		int numRecords;
 		final int MAX_NUM_AVRO_RECORDS = 1000;
 
-		public  void setup(Context context) {
+        private static int kvalue = 0;
+
+		public void setup(Context context) {
 			Configuration conf = context.getConfiguration();
 			kvalue = Integer.parseInt(conf.get("kvalue"));
 			newKey = 0;
 			numRecords = 0;
-		}
+        }
 		
 		@Override
 		public void map(AvroKey<Read> key, NullWritable value, Context context) throws IOException, InterruptedException {
@@ -67,15 +68,20 @@ public class ReadStatsMR {
 	}
 
 	public static class ReadStatsCombiner extends Reducer<LongWritable, ReadStatsWritable, LongWritable, ReadStatsWritable> {
-
+/*
+        // to find out why setup is not called !!!
         private static int kvalue = 0;
 
         public  void setup(Mapper.Context context) {
             Configuration conf = context.getConfiguration();
             kvalue = Integer.parseInt(conf.get("kvalue"));
+            System.out.println("****** =============> combiner setup kvalue = " + kvalue);
         }
-
+*/
+        @Override
 		public void reduce(LongWritable key, Iterable<ReadStatsWritable> values, Context context) throws IOException, InterruptedException {
+            // todo: set kvalue once in the setup function
+            int kvalue = Integer.parseInt(context.getConfiguration().get("kvalue"));
             SequenceStats stats = new SequenceStats(kvalue);
             SequenceStatsCalculator calculator = new SequenceStatsCalculator();
 			for (ReadStatsWritable value : values) {
@@ -86,15 +92,20 @@ public class ReadStatsMR {
 	}
 
 	public static class ReadStatsReducer extends Reducer<LongWritable, ReadStatsWritable, Text, NullWritable> {
-
+/*
+        // to find out why setup is not called !!!
         private static int kvalue = 0;
 
         public  void setup(Mapper.Context context) {
             Configuration conf = context.getConfiguration();
             kvalue = Integer.parseInt(conf.get("kvalue"));
+            System.out.println("****** =============> reducer setup kvalue = " + kvalue);
         }
-
+*/
+        @Override
 		public void reduce(LongWritable key, Iterable<ReadStatsWritable> values, Context context) throws IOException, InterruptedException {
+            // todo: set kvalue once in the setup function
+            int kvalue = Integer.parseInt(context.getConfiguration().get("kvalue"));
             SequenceStats stats = new SequenceStats(kvalue);
             SequenceStatsCalculator calculator = new SequenceStatsCalculator();
 			for (ReadStatsWritable value : values) {

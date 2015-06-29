@@ -22,7 +22,9 @@ import java.util.Date;
 import com.beust.jcommander.JCommander;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
+import org.opencb.hpg.bigdata.tools.converters.mr.Fastq2AvroMR;
 import org.opencb.hpg.bigdata.tools.stats.read.mr.ReadKmersMR;
 import org.opencb.hpg.bigdata.tools.stats.read.mr.ReadStatsMR;
 import org.opencb.hpg.bigdata.core.utils.PathUtils;
@@ -47,30 +49,18 @@ public class SequenceCommandExecutor extends CommandExecutor {
 	public void execute() {
 //		logger.info("Executing {} CLI options", "fastq");
 
-		// prepare the HDFS output folder
-		FileSystem fs = null;
-		Configuration conf = new Configuration();
-		try {
-			fs = FileSystem.get(conf);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		String outHdfsDirname = new String("" + new Date().getTime());
 
 		String subCommand = sequenceCommandOptions.getParsedSubCommand();
 
-
-
         switch (subCommand) {
             case "convert":
-                System.out.println("convert");
 				convert();
                 break;
 			case "stats":
-				System.out.println("stats");
+				stats();
 				break;
 			case "align":
-				System.out.println("align");
+				System.out.println("Sub-command align: Not yet implemented!!");
 				break;
 			default:
 				break;
@@ -107,25 +97,70 @@ public class SequenceCommandExecutor extends CommandExecutor {
 	private void convert() {
 		CliOptionsParser.ConvertSequenceCommandOptions convertSequenceCommandOptions = sequenceCommandOptions.convertSequenceCommandOptions;
 
-	}
+		// get input parameters
+		String input = convertSequenceCommandOptions.input;
+		String output = convertSequenceCommandOptions.output;
+		String codecName = convertSequenceCommandOptions.compression;
 
-	private void stats(String input, String output, int kvalue) {
-		// clean paths
-		String in = PathUtils.clean(input);
-		String out = PathUtils.clean(output);
-
-		if (!PathUtils.isHdfs(input)) {
-			logger.error("To run fastq stats, input files '{}' must be stored in the HDFS/Haddop. Use the command 'convert fastq2sa' to import your file.", input);
-			System.exit(-1);
+		// sanity check
+		if (codecName.equals("null")) {
+			codecName = null;
 		}
 
+		// run MapReduce job to convert to GA4GH/Avro model
 		try {
-			ReadStatsMR.run(in, out, kvalue);
+			Fastq2AvroMR.run(input, output, codecName);
 		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		System.out.println("Done!!");
+	}
+
+	private void stats() {
+		CliOptionsParser.StatsSequenceCommandOptions statsSequenceCommandOptions = sequenceCommandOptions.statsSequenceCommandOptions;
+
+		// get input parameters
+		String input = statsSequenceCommandOptions.input;
+		String output = statsSequenceCommandOptions.output;
+		int kvalue = statsSequenceCommandOptions.kmers;
+
+		// prepare the HDFS output folder
+		FileSystem fs = null;
+		Configuration conf = new Configuration();
+		try {
+			fs = FileSystem.get(conf);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		String outHdfsDirname = new String("" + new Date().getTime());
+
+		// run MapReduce job to compute stats
+		try {
+			ReadStatsMR.run(input, outHdfsDirname, kvalue);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		// post-processing
+		Path outFile = new Path(outHdfsDirname + "/part-r-00000");
+
+		try {
+			if (!fs.exists(outFile)) {
+            	logger.error("Stats results file not found: {}", outFile.getName());
+			} else {
+				String outRawFileName =  output + "/stats.json";
+				fs.copyToLocalFile(outFile, new Path(outRawFileName));
+
+				//Utils.parseStatsFile(outRawFileName, out);
+			}
+			fs.delete(new Path(outHdfsDirname), true);
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
+    @Deprecated
 	private void kmers(String input, String output, int kvalue) {
 		// clean paths
 		String in = PathUtils.clean(input);

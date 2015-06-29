@@ -174,20 +174,20 @@ public class CliOptionsParser {
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
 
-        @Parameter(names = {"-i", "--input"}, description = "HDFS input file (the FastQ file must be stored in GA4GH/Avro model)", required = true, arity = 1)
+        @Parameter(names = {"-i", "--input"}, description = "HDFS input file in FastQ format", required = true, arity = 1)
         public String input = null;
 
-        @Parameter(names = {"-o", "--output"}, description = "Local output directory to save results, summary, images...", required = false, arity = 1)
+        @Parameter(names = {"-o", "--output"}, description = "HDFS output file to store the FastQ sequences according to the GA4GH/Avro model", required = true, arity = 1)
         public String output = null;
 
-        @Parameter(names = {"-s", "--stats"}, description = "Run statistics", required = false)
-        public boolean stats = false;
+        @Parameter(names = {"-x", "--compression"}, description = "Accepted values: snappy, deflate, bzip2, xz, null. Default: snappy", required = false, arity = 1)
+        public String compression = "snappy";
 
-        @Parameter(names = {"-f", "--filter"}, description = "", required = false, arity = 1)
-        public String filter = null;
+        //@Parameter(names = {"--to-avro"}, description = "", required = false)
+        //public boolean toAvro = true;
 
-        @Parameter(names = {"-k", "--kmers"}, description = "Compute k-mers (according to the indicated length)", required = false, arity = 1)
-        public Integer kmers = 0;
+        //@Parameter(names = {"--to-fastq"}, description = "", required = false)
+        //public boolean toFastq;
     }
 
     @Parameters(commandNames = {"stats"}, commandDescription = "Calculates different stats from sequencing data")
@@ -196,17 +196,14 @@ public class CliOptionsParser {
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
 
-        @Parameter(names = {"-i", "--input"}, description = "HDFS input file (the FastQ file must be stored in GA4GH/Avro model)", required = true, arity = 1)
+        @Parameter(names = {"-i", "--input"}, description = "HDFS input file containing the FastQ sequences stored according to the GA4GH/Avro model)", required = true, arity = 1)
         public String input = null;
 
-        @Parameter(names = {"-o", "--output"}, description = "Local output directory to save results, summary, images...", required = false, arity = 1)
+        @Parameter(names = {"-o", "--output"}, description = "Local output directory to save stats results in JSON format ", required = true, arity = 1)
         public String output = null;
 
-        @Parameter(names = {"-s", "--stats"}, description = "Run statistics", required = false)
-        public boolean stats = false;
-
-        @Parameter(names = {"-f", "--filter"}, description = "", required = false, arity = 1)
-        public String filter = null;
+        //@Parameter(names = {"-f", "--filter"}, description = "", required = false, arity = 1)
+        //public String filter = null;
 
         @Parameter(names = {"-k", "--kmers"}, description = "Compute k-mers (according to the indicated length)", required = false, arity = 1)
         public Integer kmers = 0;
