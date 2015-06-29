@@ -69,18 +69,10 @@ public class VariantCommandExecutor extends CommandExecutor {
         String output = variantCommandOptions.convertVariantCommandOptions.output;
         String compression = variantCommandOptions.convertVariantCommandOptions.compression;
 
-        if (output == null || output.isEmpty()) {
-            output = Paths.get(input).getParent().toString();
-        }
-
+        // Checking input file
         FileUtils.checkFile(Paths.get(input));
-//        FileUtils.checkDirectory(Paths.get(output), true);
 
-        // clean paths
-//        String in = PathUtils.clean(input);
-//        String out = PathUtils.clean(output);
-
-        // reader
+        // Creating reader
         VcfBlockIterator iterator = (StringUtils.equals("-", input))
                 ? new VcfBlockIterator(new BufferedInputStream(System.in), new FullVcfCodec())
                 : new VcfBlockIterator(Paths.get(input).toFile(), new FullVcfCodec());
@@ -103,8 +95,15 @@ public class VariantCommandExecutor extends CommandExecutor {
             }
         };
 
-        // writer
-        OutputStream os = new FileOutputStream(output);
+        // Creating file writer. If 'output' parameter is passed and it is different from
+        // STDOUT then a file is created if parent folder exist, otherwise STDOUT is used.
+        OutputStream os;
+        if (output != null && !output.isEmpty() && !output.equalsIgnoreCase("STDOUT")) {
+            FileUtils.checkDirectory(Paths.get(output).getParent(), true);
+            os = new FileOutputStream(output);
+        } else {
+            os = System.out;
+        }
         AvroFileWriter<Variant> avroFileWriter = new AvroFileWriter<>(Variant.getClassSchema(), compression, os);
 
         // main loop
@@ -120,7 +119,7 @@ public class VariantCommandExecutor extends CommandExecutor {
                         avroFileWriter, config);
         long start = System.currentTimeMillis();
         runner.run();
-        System.out.println("Time " + (System.currentTimeMillis() - start) / 1000.0 + "s");
+        logger.debug("Time " + (System.currentTimeMillis() - start) / 1000.0 + "s");
 
         // close
         iterator.close();

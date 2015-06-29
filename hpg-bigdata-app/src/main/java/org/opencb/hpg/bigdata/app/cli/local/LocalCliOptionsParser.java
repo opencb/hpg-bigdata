@@ -295,20 +295,23 @@ public class LocalCliOptionsParser {
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
 
-        @Parameter(names = {"-i", "--input"}, description = "HDFS input file (the BAM/SAM file must be stored in GA4GH/Avro model)", required = true, arity = 1)
-        public String input = null;
+        @Parameter(names = {"-i", "--input"}, description = "Input file in VCF/gVCF format", required = true, arity = 1)
+        public String input;
 
-        @Parameter(names = {"-o", "--output"}, description = "Local output directory to save results, summary, images...", required = false, arity = 1)
-        public String output = null;
+        @Parameter(names = {"-o", "--output"}, description = "File where to store output", required = false, arity = 1)
+        public String output = "STDOUT";
 
-        @Parameter(names = {"--to-avro"}, description = "Accepted values: sam2bam, sam2cram, bam2fastq", required = false)
+        @Parameter(names = {"--to-avro"}, description = "Whether output must be in avro format", required = false)
         public boolean toAvro;
 
-        @Parameter(names = {"--to-parquet"}, description = "Accepted values: sam2bam, sam2cram, bam2fastq", required = false)
-        public boolean toParquet;
+        @Parameter(names = {"--from-avro"}, description = "Accepted values: sam2bam, sam2cram, bam2fastq", required = false)
+        public boolean fromAvro;
 
         @Parameter(names = {"-x", "--compression"}, description = "Only for commands 'to-avro' and 'to-parquet'. Values: snappy, deflate, bzip2, xz", required = false, arity = 1)
         public String compression = "snappy";
+
+        @Parameter(names = {"--to-parquet"}, description = "Whether output must be in parquet format", required = false)
+        public boolean toParquet;
 
     }
 

@@ -21,16 +21,28 @@ import org.apache.avro.file.CodecFactory;
 public class AvroUtils {
 	
 	public static CodecFactory getCodec(String name) {
-		if (name == null) {
+		if (name == null || name.equalsIgnoreCase("null")) {
 			return CodecFactory.nullCodec();
-		} else if (name.equalsIgnoreCase("bzip2")) {
-			return CodecFactory.bzip2Codec();
-		} else if (name.equalsIgnoreCase("snappy")) {
-			return CodecFactory.snappyCodec();
 		}
-		
-		return CodecFactory.deflateCodec(CodecFactory.DEFAULT_DEFLATE_LEVEL);
+		CodecFactory codecFactory;
+		switch (name) {
+			case "snappy":
+				codecFactory = CodecFactory.snappyCodec();
+				break;
+			case "deflate":
+				codecFactory = CodecFactory.deflateCodec(CodecFactory.DEFAULT_DEFLATE_LEVEL);
+				break;
+			case "bzip2":
+				codecFactory = CodecFactory.bzip2Codec();
+				break;
+			case "xz":
+				codecFactory = CodecFactory.xzCodec(CodecFactory.DEFAULT_XZ_LEVEL);
+				break;
+			default:
+				codecFactory = CodecFactory.deflateCodec(CodecFactory.DEFAULT_DEFLATE_LEVEL);
+				break;
+		}
+		return codecFactory;
 	}
-
 
 }
