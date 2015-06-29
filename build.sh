@@ -12,7 +12,7 @@ cd ../..
 PLATFORM=`uname -s`
 
 ## Copy other files into build folder.
-mkdir -p build/libs
+#mkdir -p build/libs
 
 if [[ "Darwin" == "$PLATFORM" ]]; then
 	cp hpg-bigdata-core/native/third-party/htslib/libhts.*dylib build/libs/

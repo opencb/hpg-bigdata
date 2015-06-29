@@ -21,11 +21,6 @@ import htsjdk.samtools.SAMFileReader;
 import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SAMSequenceRecord;
 import htsjdk.samtools.seekablestream.SeekableStream;
-
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-
 import org.apache.avro.mapred.AvroKey;
 import org.apache.avro.mapred.AvroValue;
 import org.apache.avro.mapreduce.AvroJob;
@@ -48,13 +43,17 @@ import org.seqdoop.hadoop_bam.AnySAMInputFormat;
 import org.seqdoop.hadoop_bam.SAMRecordWritable;
 import org.seqdoop.hadoop_bam.util.WrapSeekable;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+
 public class Bam2AvroMR {
 
 	public static class Bam2GaMapper extends Mapper<LongWritable, SAMRecordWritable, ChunkKey, AvroValue<ReadAlignment>> {
 		@Override
 		public void map(LongWritable key, SAMRecordWritable value, Context context) throws IOException, InterruptedException {
 			ChunkKey newKey;
-			
+
 			SAMRecord sam = value.get();
 			if (sam.getReadUnmappedFlag()) {
 				// do nothing
@@ -81,7 +80,7 @@ public class Bam2AvroMR {
 			}
 		}
 	}
-	
+
 	public static int run(String input, String output, String codecName) throws Exception {
 		Configuration conf = new Configuration();
 
@@ -96,11 +95,14 @@ public class Bam2AvroMR {
 			conf.set("" + i, sr.getSequenceName());
 			i++;
 		}
-		
+
 		Job job = Job.getInstance(conf, "Bam2AvroMR");
 		job.setJarByClass(Bam2AvroMR.class);
 
-		// We call setOutputSchema first so we can override the configuration
+        // Avro problem fix
+        job.getConfiguration().set("mapreduce.job.user.classpath.first", "true");
+
+        // We call setOutputSchema first so we can override the configuration
 		// parameters it sets
 		AvroJob.setOutputKeySchema(job, ReadAlignment.getClassSchema());
 		job.setOutputValueClass(NullWritable.class);
