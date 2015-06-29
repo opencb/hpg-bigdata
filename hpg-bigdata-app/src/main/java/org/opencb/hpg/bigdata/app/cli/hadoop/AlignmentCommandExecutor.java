@@ -19,8 +19,10 @@ package org.opencb.hpg.bigdata.app.cli.hadoop;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.ga4gh.models.ReadAlignment;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
 import org.opencb.hpg.bigdata.tools.converters.mr.Bam2AvroMR;
+import org.opencb.hpg.bigdata.tools.io.parquet.ParquetMR;
 import org.opencb.hpg.bigdata.tools.stats.alignment.mr.ReadAlignmentDepthMR;
 import org.opencb.hpg.bigdata.tools.stats.alignment.mr.ReadAlignmentStatsMR;
 
@@ -75,9 +77,12 @@ public class AlignmentCommandExecutor extends CommandExecutor {
             codecName = null;
         }
 
-        // run MapReduce job to convert to GA4GH/Avro model
+        // run MapReduce job to convert to GA4GH/Avro/Parquet model
         try {
             Bam2AvroMR.run(input, output, codecName);
+            if (convertAlignmentCommandOptions.toParquet) {
+                new ParquetMR(ReadAlignment.getClassSchema()).run(output + "/part-r-00000.avro", output + "/to-parquet", codecName);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
