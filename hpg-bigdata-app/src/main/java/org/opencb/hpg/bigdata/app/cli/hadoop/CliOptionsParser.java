@@ -169,7 +169,7 @@ public class CliOptionsParser {
         }
     }
 
-    @Parameters(commandNames = {"convert"}, commandDescription = "Converts BAM files to different big data formats such as Avro and Parquet")
+    @Parameters(commandNames = {"convert"}, commandDescription = "Converts FastQ files to different big data formats such as Avro")
     class ConvertSequenceCommandOptions {
 
         @ParametersDelegate
