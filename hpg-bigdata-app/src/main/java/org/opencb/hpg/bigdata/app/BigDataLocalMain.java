@@ -2,7 +2,9 @@ package org.opencb.hpg.bigdata.app;
 
 import com.beust.jcommander.ParameterException;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
+import org.opencb.hpg.bigdata.app.cli.local.AlignmentCommandExecutor;
 import org.opencb.hpg.bigdata.app.cli.local.LocalCliOptionsParser;
+import org.opencb.hpg.bigdata.app.cli.local.SequenceCommandExecutor;
 import org.opencb.hpg.bigdata.app.cli.local.VariantCommandExecutor;
 
 /**
@@ -58,10 +60,10 @@ public class BigDataLocalMain {
                 } else {
                     switch (parsedCommand) {
                         case "sequence":
-//                    commandExecutor = new SequenceCommandExecutor(cliOptionsParser.getSequenceCommandOptions());
+                            commandExecutor = new SequenceCommandExecutor(localCliOptionsParser.getSequenceCommandOptions());
                             break;
                         case "alignment":
-//                    commandExecutor = new BamCommandExecutor(cliOptionsParser.getAlignmentCommandOptions());
+                            commandExecutor = new AlignmentCommandExecutor(localCliOptionsParser.getAlignmentCommandOptions());
                             break;
                         case "variant":
                             commandExecutor = new VariantCommandExecutor(localCliOptionsParser.getVariantCommandOptions());

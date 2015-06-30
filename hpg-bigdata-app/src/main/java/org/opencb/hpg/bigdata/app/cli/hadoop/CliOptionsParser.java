@@ -230,7 +230,7 @@ public class CliOptionsParser {
     /*
      * Alignment (BAM) CLI options
      */
-    @Parameters(commandNames = {"alignment"}, commandDescription = "Implements different tools for working with SAM/BAM files")
+    @Parameters(commandNames = {"alignment"}, commandDescription = "Implements different tools for working with BAM files")
     public class AlignmentCommandOptions extends CommandOptions {
 
         ConvertAlignmentCommandOptions convertAlignmentCommandOptions;
