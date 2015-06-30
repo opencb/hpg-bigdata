@@ -353,8 +353,11 @@ public class CliOptionsParser {
         @Parameter(names = {"-r", "--regions"}, description = "Database to load data, values: hbase", required = false, arity = 1)
         public String regions = null;
 
-        @Parameter(names = {"-e", "--expand"}, description = "Expand and insert gVCF non-variant regions", required = false, arity = 1)
-        public boolean includeNonVariants;
+        @Parameter(names = {"-g", "--genome"}, description = "Load whole genome from gVCF - including non-variant regions", required = false, arity = 1)
+        public boolean includeNonVariants = false;
+        
+        @Parameter(names = {"-e", "--expand"}, description = "Expand non-variant gVCF regions to one entry per base", required = false, arity = 1)
+        public boolean expand = false;
 
         @Parameter(names = {"-C", "--credentials"}, description = "Database credentials: username, password, host, port", required = false, arity = 1)
         public String credentials;

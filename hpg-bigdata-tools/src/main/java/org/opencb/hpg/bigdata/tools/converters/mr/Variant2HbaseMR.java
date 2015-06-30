@@ -30,7 +30,6 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
-import org.apache.hadoop.util.Tool;
 import org.ga4gh.models.Call;
 import org.ga4gh.models.Variant;
 import org.opencb.hpg.bigdata.core.utils.HBaseUtils;
@@ -41,12 +40,16 @@ import org.slf4j.LoggerFactory;
  * @author Matthias Haimel mh719+git@cam.ac.uk
  *
  */
-public class Variant2HbaseMR extends Mapper<AvroKey<Variant>, NullWritable, ImmutableBytesWritable, Put> implements Tool {
-    public final static byte[] COLUMN_FAMILY = Bytes.toBytes("d");
+public class Variant2HbaseMR extends Mapper<AvroKey<Variant>, NullWritable, ImmutableBytesWritable, Put>{
+    private static final String VARIANT_2_HBASE_EXPAND_REGIONS = "VARIANT_2_HBASE.EXPAND_REGIONS";
+    private static final String VARIANT_2_HBASE_NON_VAR = "VARIANT_2_HBASE.NON_VARIANT";
+
+	public final static byte[] COLUMN_FAMILY = Bytes.toBytes("d");
 	
     private final static Logger log = LoggerFactory.getLogger(Variant2HbaseMR.class);
 	private Configuration config;
 	private boolean expandRegions = false;
+	private boolean nonVariant = false;
 
 	public Variant2HbaseMR() {
 		super();
@@ -59,15 +62,23 @@ public class Variant2HbaseMR extends Mapper<AvroKey<Variant>, NullWritable, Immu
 	public void setExpandRegions(boolean expandRegions) {
 		this.expandRegions = expandRegions;
 	}
-	
 	public boolean isExpandRegions() {
 		return expandRegions;
 	}
-
+	public boolean isNonVariant() {
+		return nonVariant;
+	}
+	public void setNonVariant(boolean nonVariant) {
+		this.nonVariant = nonVariant;
+	}
+	
 	@Override
 	protected void setup(
 			Mapper<AvroKey<Variant>, NullWritable, ImmutableBytesWritable, Put>.Context context)
 			throws IOException, InterruptedException {
+		Configuration conf = context.getConfiguration();
+		setExpandRegions(conf.getBoolean(VARIANT_2_HBASE_EXPAND_REGIONS, isExpandRegions()));
+		setNonVariant(conf.getBoolean(VARIANT_2_HBASE_NON_VAR, isNonVariant()));
 		super.setup(context);
 	}
 	
@@ -76,8 +87,8 @@ public class Variant2HbaseMR extends Mapper<AvroKey<Variant>, NullWritable, Immu
 			throws IOException, InterruptedException {
 		Variant variant = key.datum();
 			
-		if(isReference(variant)){ // is a variant (not just coverage info)
-			String refplaceholder = "?"; // TODO require lookup service to expand
+		if(isReference(variant) && this.isNonVariant()){ // is just reference or non-call
+			String refplaceholder = "#"; // TODO require lookup service to expand
 			Long start = variant.getStart();
 			Long endPos = start + 1;
 			List<Call> calls = variant.getCalls();
@@ -104,7 +115,7 @@ public class Variant2HbaseMR extends Mapper<AvroKey<Variant>, NullWritable, Immu
 					store(context,calls,idStr);
 				}
 			}
-		} else {
+		} else { // is a variant (not just coverage info)
 			int altCnt = variant.getAlternateBases().size();
 			if(altCnt > 1){
 				context.getCounter("VCF","biallelic_COUNT").increment(1);
@@ -174,119 +185,105 @@ public class Variant2HbaseMR extends Mapper<AvroKey<Variant>, NullWritable, Immu
         		);   // json     			
 	}
 
-	@Override
 	public void setConf(Configuration conf) {
 		this.config = conf;
 	}
 
-	@Override
 	public Configuration getConf() {
 		return this.config;
 	}
 	
-	public static int run(String inputFile, URI uri) throws Exception{
-		Configuration conf = new Configuration();
-		String inputfile = inputFile;
-		String server = null;
-		Integer port = 60000;
-		String tablename = null;
-		
-		if(null == uri)
-			throw new IllegalArgumentException("No Server output specified!");
+	public static class Builder{
+		private URI uri;
+		private String inputfile;
+		private boolean expand = false;
+		private boolean non_var = false;
 
-		server = uri.getHost();
-		if(StringUtils.isBlank(server))
-			throw new IllegalArgumentException("No Server host name specified in URI: " + uri);
-		
-		if(uri.getPort() > 0){ // if port is specified
-			port = uri.getPort();
-		}
-		
-		// Extract table name from Path
-		if(StringUtils.isBlank(uri.getPath()) || StringUtils.equals(uri.getPath().trim(), "/")){
-			throw new IllegalArgumentException("No Table name specified in URI: " + uri);
-		}		
-		tablename = uri.getPath();
-		tablename = tablename.startsWith("/")?tablename.substring(1):tablename; // Remove leading /
-
-		String master = String.join(":", server,port.toString());
-		
-		getLog().info(String.format("Loading data into server '%s' using table '%s' ", master,tablename));
-
-		conf.set("hbase.zookeeper.quorum", server);
-		conf.set("hbase.master", master);
-		
-		Job job = Job.getInstance(conf, "Variant2HBase");
-		job.setJarByClass(Variant2HbaseMR.class);
-
-		conf = HBaseConfiguration.addHbaseResources(conf);
-
-		// input
-		AvroJob.setInputKeySchema(job, Variant.getClassSchema());
-		FileInputFormat.setInputPaths(job, new Path(inputfile));
-		job.setInputFormatClass(AvroKeyInputFormat.class);
-		
-		job.setNumReduceTasks(0); 
-
-		// output
-		TableMapReduceUtil.initTableReducerJob(tablename, null, job);
-		
-		// mapper
-		job.setMapperClass(Variant2HbaseMR.class);
-
-		// create table if needed
-		createTableIfNeeded(tablename, conf);
-		
-		return (job.waitForCompletion(true) ? 0 : 1);		
-	}
-
-	@Override
-	public int run(String[] args) throws Exception {
-//		getLog().info(String.format("Configuration: %s ", getConf()));
-//        setConf(new Configuration());
-		String tablename = "test_table";
-		String inputfile = null;
-		String output = null;
-		for(int i = 0; i < args.length; ++i){
-			if(args[i] == "-t")
-				tablename = args[++i];
-			if(args[i] == "-i")
-				inputfile = args[++i];
-			if(args[i] == "-o")
-				output = args[++i];
+		public Builder(String inputfile, URI uri) {
+			this.inputfile = inputfile;
+			this.uri = uri;
 		}
 
-//	    setConf(HBaseConfiguration.addHbaseResources(getConf()));
-
-	    Job job = Job.getInstance(getConf());
-	    job.setJobName(this.getClass().getName() + "_" + tablename);
-		job.setJarByClass(this.getClass());
-
-		// input
-		AvroJob.setInputKeySchema(job, Variant.getClassSchema());
-		FileInputFormat.setInputPaths(job, new Path(inputfile));
-		job.setInputFormatClass(AvroKeyInputFormat.class);
-
-		// output -> Hbase
-//		TableMapReduceUtil.initTableReducerJob(tablename, null, job);
-		job.setNumReduceTasks(0); // Write to table directory
-		if(StringUtils.isNotBlank(output)){
-			Configuration conf = getConf();
-			conf.set("hbase.zookeeper.quorum", output);
-			conf.set("hbase.master", output+":60000");
-			setConf(conf);
+		public Builder setUri(URI uri) {
+			this.uri = uri;
+			return this;
 		}
-	    
-		// mapper
-		job.setMapperClass(Variant2HbaseMR.class);
+
+		public Builder setInputfile(String inputfile) {
+			this.inputfile = inputfile;
+			return this;
+		}
+
+		public Builder setExpand(boolean expand) {
+			this.expand = expand;
+			return this;
+		}
+
+		public Builder setNonVar(boolean non_var) {
+			this.non_var = non_var;
+			return this;
+		}
 		
-		// create Table if needed
-//		createTableIfNeeded(tablename);
-		long start = System.currentTimeMillis();
-		boolean completed = job.waitForCompletion(true);
-		long end = System.currentTimeMillis();
-		getLog().info(String.format("Loading run for %s ms!", (end-start)));
-		return completed?0:1;
+		public Job build(boolean createTableIfNeeded) throws IOException{
+			Configuration conf = new Configuration();
+			String inputfile = this.inputfile;
+			String server = null;
+			Integer port = 60000;
+			String tablename = null;
+			
+			if(null == uri)
+				throw new IllegalArgumentException("No Server output specified!");
+
+			server = uri.getHost();
+			if(StringUtils.isBlank(server))
+				throw new IllegalArgumentException("No Server host name specified in URI: " + uri);
+			
+			if(uri.getPort() > 0){ // if port is specified
+				port = uri.getPort();
+			}
+			
+			// Extract table name from Path
+			if(StringUtils.isBlank(uri.getPath()) || StringUtils.equals(uri.getPath().trim(), "/")){
+				throw new IllegalArgumentException("No Table name specified in URI: " + uri);
+			}		
+			tablename = uri.getPath();
+			tablename = tablename.startsWith("/")?tablename.substring(1):tablename; // Remove leading /
+
+			String master = String.join(":", server,port.toString());
+			
+			getLog().info(String.format("Loading data into server '%s' using table '%s' ", master,tablename));
+
+			conf.set("hbase.zookeeper.quorum", server);
+			conf.set("hbase.master", master);
+
+			// SET additional parameters
+			conf.setBoolean(VARIANT_2_HBASE_EXPAND_REGIONS, this.expand);
+			conf.setBoolean(VARIANT_2_HBASE_NON_VAR, this.non_var);
+			
+			Job job = Job.getInstance(conf, "Variant2HBase");
+			job.setJarByClass(Variant2HbaseMR.class);
+
+			conf = HBaseConfiguration.addHbaseResources(conf);
+
+			// input
+			AvroJob.setInputKeySchema(job, Variant.getClassSchema());
+			FileInputFormat.setInputPaths(job, new Path(inputfile));
+			job.setInputFormatClass(AvroKeyInputFormat.class);
+			
+			job.setNumReduceTasks(0); 
+
+			// output
+			TableMapReduceUtil.initTableReducerJob(tablename, null, job);
+			
+			// mapper
+			job.setMapperClass(Variant2HbaseMR.class);
+
+			if(createTableIfNeeded){
+				// create table if needed
+				createTableIfNeeded(tablename, conf);
+			}
+			return job;
+		}
 	}
 
 	/**

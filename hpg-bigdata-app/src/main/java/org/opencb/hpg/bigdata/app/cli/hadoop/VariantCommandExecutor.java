@@ -16,8 +16,14 @@
 
 package org.opencb.hpg.bigdata.app.cli.hadoop;
 
+import java.net.URI;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.hadoop.mapreduce.Job;
 import org.ga4gh.models.Variant;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
+import org.opencb.hpg.bigdata.tools.converters.mr.Variant2HbaseMR;
+import org.opencb.hpg.bigdata.tools.converters.mr.Variant2HbaseMR.Builder;
 import org.opencb.hpg.bigdata.tools.converters.mr.Vcf2AvroMR;
 import org.opencb.hpg.bigdata.tools.io.parquet.ParquetMR;
 
@@ -45,10 +51,39 @@ public class VariantCommandExecutor extends CommandExecutor {
                         variantCommandOptions.convertVariantCommandOptions.commonOptions.conf);
                 convert();
                 break;
+            case "load":
+                init(variantCommandOptions.loadVariantCommandOptions.commonOptions.logLevel,
+                        variantCommandOptions.loadVariantCommandOptions.commonOptions.verbose,
+                        variantCommandOptions.loadVariantCommandOptions.commonOptions.conf);
+                load();
+                break;
+            	
         }
     }
 
-    private void convert() throws Exception {
+    private void load() throws Exception {
+        String input = variantCommandOptions.loadVariantCommandOptions.input;
+        String db = variantCommandOptions.loadVariantCommandOptions.database;
+        boolean nonVar = variantCommandOptions.loadVariantCommandOptions.includeNonVariants;
+        boolean expand = variantCommandOptions.loadVariantCommandOptions.expand;
+        
+        URI server = null;
+    	// new URI("//who1:60000/VariantExpanded");
+    	if(StringUtils.isNotBlank(db)){
+    		server = new URI(db);    		
+		} 
+    	Builder builder = new Variant2HbaseMR.Builder(input,server);
+    	builder.setExpand(expand);
+    	builder.setNonVar(nonVar);
+    	Job job = builder.build(true);
+    	
+		boolean fine = job.waitForCompletion(true);
+		if(!fine)
+			throw new IllegalStateException("Variant 2 HBase failed!");
+	}
+
+
+	private void convert() throws Exception {
         String input = variantCommandOptions.convertVariantCommandOptions.input;
         String output = variantCommandOptions.convertVariantCommandOptions.output;
         String compression = variantCommandOptions.convertVariantCommandOptions.compression;
