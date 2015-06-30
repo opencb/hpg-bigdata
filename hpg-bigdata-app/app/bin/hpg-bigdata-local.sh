@@ -4,7 +4,7 @@
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 ## Parallel threads for vcf2ga conversion using linux
-parallel="-Dconvert.vcf2avro.parallel=4"
+#parallel="-Dconvert.vcf2avro.parallel=4"
 
 # If a specific java binary isn't specified search for the standard 'java' binary
 if [ -z "$JAVACMD" ] ; then
@@ -29,4 +29,4 @@ else
 	export LD_LIBRARY_PATH=${DIR}/../libs/
 fi
 
-$JAVACMD $parallel -classpath ${DIR}/../libs/*.jar org.opencb.hpg.bigdata.app.BigDataLocalMain $@
+$JAVACMD -classpath ${DIR}/../libs/*.jar org.opencb.hpg.bigdata.app.BigDataLocalMain $@

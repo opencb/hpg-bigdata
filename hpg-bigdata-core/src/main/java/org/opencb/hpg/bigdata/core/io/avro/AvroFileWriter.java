@@ -35,7 +35,6 @@ import org.slf4j.LoggerFactory;
  * Created by hpccoll1 on 02/04/15.
  */
 public class AvroFileWriter <T> implements DataWriter<ByteBuffer> {
-    protected Logger logger = LoggerFactory.getLogger(this.getClass().toString());
 
     private final String codecName;
     private final Schema schema;
@@ -43,6 +42,8 @@ public class AvroFileWriter <T> implements DataWriter<ByteBuffer> {
     private final DataFileWriter<T> writer;
     private final DatumWriter<T> datumWriter;
     private int numWrites = 0;
+
+    protected Logger logger = LoggerFactory.getLogger(this.getClass().toString());
 
     public AvroFileWriter(Schema schema, String codecName, OutputStream outputStream) {
         this.schema = schema;
@@ -69,8 +70,8 @@ public class AvroFileWriter <T> implements DataWriter<ByteBuffer> {
     @Override
     public boolean write(List<ByteBuffer> batch) {
         for (ByteBuffer byteBuffer : batch) {
-            if (numWrites++%1000 == 0) {
-                logger.info("Written {} elements", numWrites);
+            if (numWrites++ % 1000 == 0) {
+                logger.debug("Written {} elements", numWrites);
             }
             try {
                 writer.appendEncoded(byteBuffer);

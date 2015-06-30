@@ -12,7 +12,7 @@ cd ../..
 PLATFORM=`uname -s`
 
 ## Copy other files into build folder.
-mkdir -p build/libs
+#mkdir -p build/libs
 
 if [[ "Darwin" == "$PLATFORM" ]]; then
 	cp hpg-bigdata-core/native/third-party/htslib/libhts.*dylib build/libs/
@@ -24,6 +24,7 @@ else
     cp hpg-bigdata-core/native/libhpgbigdata.so build/libs/
 fi
 
+tar zxvf build/libs/avro-1.7.7.tgz -C build/libs/
 cp README.md build/
 cp LICENSE build/
 

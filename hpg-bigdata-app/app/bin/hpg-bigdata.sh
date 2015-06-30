@@ -19,5 +19,8 @@ native=${DIR}/../native
 
 export LD_LIBRARY_PATH=${DIR}/../libs/
 
-echo "Executing: $HADOOPCMD jar ${DIR}/../libs/*.jar $@"
+export HADOOP_CLASSPATH="${DIR}/../libs/avro/avro-1.7.7.jar:${DIR}/../libs/avro/avro-mapred-1.7.7-hadoop2.jar"
+export HADOOP_USER_CLASSPATH_FIRST=true
+
+#echo "Executing: $HADOOPCMD jar ${DIR}/../libs/*.jar -libjars ${LIBJARS} $@"
 $HADOOPCMD jar ${DIR}/../libs/*.jar $@

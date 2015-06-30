@@ -38,7 +38,28 @@ public abstract class CommandExecutor {
 
     }
 
+    public CommandExecutor(String logLevel) {
+        this(logLevel, false, null);
+    }
+
     public CommandExecutor(String logLevel, boolean verbose, String configFile) {
+        this.logLevel = logLevel;
+        this.verbose = verbose;
+        this.configFile = configFile;
+
+        /**
+         * System property 'app.home' is set up by cellbase.sh. If by any reason this is null
+         * then CELLBASE_HOME environment variable is used instead.
+         */
+        this.appHome = System.getProperty("app.home", "/opt/hpg-bigdata");
+
+        if(logLevel != null && !logLevel.isEmpty()) {
+            // We must call to this method
+            setLogLevel(logLevel);
+        }
+    }
+
+    protected void init(String logLevel, boolean verbose, String configFile) {
         this.logLevel = logLevel;
         this.verbose = verbose;
         this.configFile = configFile;

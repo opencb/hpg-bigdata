@@ -132,6 +132,9 @@ public class Vcf2AvroMR {
         Job job = Job.getInstance(conf, "Vcf2AvroMR");
         job.setJarByClass(Vcf2AvroMR.class);
 
+        // Avro problem fix
+        job.getConfiguration().set("mapreduce.job.user.classpath.first", "true");
+
         // We call setOutputSchema first so we can override the configuration
         // parameters it sets
         AvroJob.setOutputKeySchema(job, Variant.getClassSchema());
