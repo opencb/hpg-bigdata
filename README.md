@@ -69,55 +69,13 @@ For command line options invoke:
     imedina@ivory:~$ ./hpg-bigdata-local.sh -h
 
 
-##### _convert_ command
-The command **convert** al lows you to save Fastq, SAM, BAM, VCF,... files as Avro files according to the GA4GH models. You can specify a compression method, e.g., deflate, snappy, bzip2.
-The source files (Fastq, SAM, BAM...) have to be located in the local file system, on the other hand, destination files can be saved both in the local file system and in the Hadoop file system (HDFS), in the latter case, you must use the notation **hdfs://**
-  
-  Some examples using the test files in the folder data:
-   
-    $ ./hpg-bigdata-local.sh convert -c fastq2avro -i ../data/test.fq -o ../data/test.fq.avro -x snappy
-    $ ./hpg-bigdata.sh convert -c fastq2avro -i hdfs://../data/test.fq -o hdfs://test.fq.hdfs.avro -x snappy
-    
-    $ ./hpg-bigdata-local.sh convert -c sam2avro -i ../data/test.sam -o ../data/test.sam.avro -x bzip2
-    $ ./hpg-bigdata.sh convert -c sam2avro -i hdfs://../data/test.sam -o hdfs://test.sam.hdfs.avro -x bzip2
-    
-    $ ./hpg-bigdata-local.sh convert -c bam2avro -i ../data/test.bam -o ../data/test.bam.avro -x deflate
-    $ ./hpg-bigdata.sh convert -c bam2avro -i hdfs://../data/test.bam -o hdfs://test.bam.hdfs.avro -x deflate
+As you can see there are three commands implemnted, each of them with different subcommands.
 
-    $ ./hpg-bigdata-local.sh convert -c vcf2avro -i ../data/test.vcf -o test.vcf.avro -x snappy
-    $ ./hpg-bigdata.sh convert -c vcf2avro -i hdfs://../data/test.vcf -o hdfs://test.vcf.gz.hdfs.avro -x snappy
+ * **_sequence_** : to process FastQ sequence files
+ * **_alignment_**: to process BAM alignment files
+ * **_variant_**  : to process VCF variant files
 
-  In addition, by using the command **convert**, you can save the Avro files as the original formats (Fastq, SAM, BAM...). In this case, the Avro files can be located both in the local file system and in the HDFS. 
-  
-  Some examples:
-   
-    $ ./hpg-bigdata-local.sh convert -c avro2fastq -i ../data/test.fq.avro -o ../data/test.fq.avro.fq
-    $ ./hpg-bigdata.sh convert -c avro2fastq -i hdfs://../datat/est.fq.hdfs.avro -o ../data/test.fq.hdfs.avro.fq
-    
-    $ ./hpg-bigdata-local.sh convert -c avro2sam -i ../data/test.sam.avro -o ../data/test.sam.avro.sam
-    $ ./hpg-bigdata.sh convert -c avro2sam -i hdfs://../data/test.sam.hdfs.avro -o ../data/test.sam.hdfs.avro.sam
-    
-    $ ./hpg-bigdata-local.sh convert -c avro2bam -i ../data/test.bam.avro -o ../data/test.sam.avro.bam
-    $ ./hpg-bigdata.sh convert -c avro2bam -i hdfs://../data/test.bam.hdfs.avro -o ../data/test.bam.hdfs.avro.bam
-   
-
-##### _fastq_ command
-  The command **fastq** allows you to compute some statistical values for a given Fastq file that must be stored in the Haddop/HDFS environment, and according to the GA4GH Avro models (Check the command **convert**)
-  
-  Some examples:
-   
-    $ ./hpg-bigdata.sh fastq --stats -i hdfs://test.fq.ga -o /tmp/stats-test.fq
-    $ ./hpg-bigdata.sh fastq --kmers 7 -i hdfs://test.fq.ga -o /tmp/kmers-test.fq
-    $ ./hpg-bigdata.sh fastq --stats --kmers 7 -i hdfs://test.fq.ga -o /tmp/stats-kmers-test.fq
-
-##### _bam_ command
-  The command **bam** allows you to compute some statistical values and the coverage or depth for a given BAM file that must be stored in the Haddop/HDFS environment, and according to the GA4GH Avro models (Check the command **convert**).
-
-  Some examples:
-
-    $ ./hpg-bigdata.sh bam --command stats -i hdfs:///test.bam.avro/part-r-00000.avro -o /tmp/bam-stats
-    $ ./hpg-bigdata.sh bam --command depth -i hdfs:///test.bam.avro/part-r-00000.avro -o /tmp/bam-stats
-
+You can find more detailed documentation and tutorials at: https://github.com/opencb/hpg-bigdata/wiki.
 
 # Supporters
 JetBrains is supporting this open source project with:
