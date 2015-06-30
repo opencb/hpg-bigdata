@@ -87,6 +87,7 @@ import org.opencb.hpg.bigdata.core.utils.ReadUtils;
 /**
  * Created by imedina on 16/03/15.
  */
+@Deprecated
 public class ConvertCommandExecutor extends CommandExecutor {
 
     @Deprecated
