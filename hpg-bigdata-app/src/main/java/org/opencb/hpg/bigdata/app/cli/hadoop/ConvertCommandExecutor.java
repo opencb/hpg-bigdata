@@ -40,6 +40,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.file.Paths;
@@ -510,12 +511,13 @@ public class ConvertCommandExecutor extends CommandExecutor {
 
 
     private void variant2hbase(String input, String output) throws Exception {
-		List<String> args = new ArrayList<String>(Arrays.asList(new String[]{"-i",input,"-t","VariantLoadAll"}));
-		if(StringUtils.isNotBlank(output)){
-			args.add("-o");
-			args.add(output);
+    	URI server = null;
+    	// new URI("//who1:60000/VariantExpanded");
+    	if(StringUtils.isNotBlank(output)){
+    		server = new URI(output);    		
 		}
-		int run = Variant2HbaseMR.run(args.toArray(new String[0]), null);
+ 
+		int run = Variant2HbaseMR.run(input,server);
 		if(run != 0)
 			throw new IllegalStateException(String.format("Variant 2 HBase finished with %s !", run));
 	}

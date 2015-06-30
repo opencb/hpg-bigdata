@@ -104,7 +104,7 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
 			try(FeatureReader<VariantContext> freader = AbstractFeatureReader.getFeatureReader(
 					file.getAbsolutePath(),
 					new FullVcfCodec(),
-					true);){
+					false);){
 				VCFHeader header = (VCFHeader) freader.getHeader();
 				
 				int gtSize = header.getGenotypeSamples().size();

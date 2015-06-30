@@ -4,6 +4,7 @@
 package org.opencb.hpg.bigdata.tools.converters.mr;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
@@ -45,6 +46,7 @@ public class Variant2HbaseMR extends Mapper<AvroKey<Variant>, NullWritable, Immu
 	
     private final static Logger log = LoggerFactory.getLogger(Variant2HbaseMR.class);
 	private Configuration config;
+	private boolean expandRegions = false;
 
 	public Variant2HbaseMR() {
 		super();
@@ -54,6 +56,14 @@ public class Variant2HbaseMR extends Mapper<AvroKey<Variant>, NullWritable, Immu
 		return log;
 	}
 	
+	public void setExpandRegions(boolean expandRegions) {
+		this.expandRegions = expandRegions;
+	}
+	
+	public boolean isExpandRegions() {
+		return expandRegions;
+	}
+
 	@Override
 	protected void setup(
 			Mapper<AvroKey<Variant>, NullWritable, ImmutableBytesWritable, Put>.Context context)
@@ -68,23 +78,33 @@ public class Variant2HbaseMR extends Mapper<AvroKey<Variant>, NullWritable, Immu
 			
 		if(isReference(variant)){ // is a variant (not just coverage info)
 			String refplaceholder = "?"; // TODO require lookup service to expand
-			Map<CharSequence, List<CharSequence>> info = variant.getInfo();
-			List<CharSequence> endLst = info.get("END"); // Get End position
-			
-			if(null == endLst || endLst.isEmpty()){
-				context.getCounter("VCF","REF_END_EMPTY").increment(1);
-				return;
-			}
-			String endStr = endLst.get(0).toString();
-			Long endPos = Long.valueOf(endStr);
 			Long start = variant.getStart();
-			for(long pos = start; pos < endPos; ++pos){
-				// For each position -> store 
-				String idStr = HBaseUtils.buildRefernceStorageId(variant.getReferenceName(),pos,refplaceholder);
-				store(context,variant.getCalls(),idStr);
+			Long endPos = start + 1;
+			List<Call> calls = variant.getCalls();
+			boolean nocall = calls.isEmpty();
+			if(isExpandRegions()){
+				context.getCounter("VCF","REG_EXPAND"+(nocall?"_NOCALL":"")).increment(1);
+				Map<CharSequence, List<CharSequence>> info = variant.getInfo();
+				List<CharSequence> endLst = info.get("END"); // Get End position
+				
+				if(null == endLst || endLst.isEmpty()){
+					// Region of size 1
+					context.getCounter("VCF","REF_END_EMPTY"+(nocall?"_NOCALL":"")).increment(1);
+				} else {
+					String endStr = endLst.get(0).toString();
+					endPos = Long.valueOf(endStr);
+				}
+			}
+			String counterName = "REG_EXPAND_CNT"+(nocall?"_NOCALL":"");
+			context.getCounter("VCF",counterName).increment((endPos - start));
+			if( ! nocall){ // only if calls
+				for(long pos = start; pos < endPos; ++pos){
+					// For each position -> store 
+					String idStr = HBaseUtils.buildRefernceStorageId(variant.getReferenceName(),pos,refplaceholder);
+					store(context,calls,idStr);
+				}
 			}
 		} else {
-//		if(true){ // all
 			int altCnt = variant.getAlternateBases().size();
 			if(altCnt > 1){
 				context.getCounter("VCF","biallelic_COUNT").increment(1);
@@ -164,23 +184,37 @@ public class Variant2HbaseMR extends Mapper<AvroKey<Variant>, NullWritable, Immu
 		return this.config;
 	}
 	
-	public static int run(String[] args,String other) throws Exception{
+	public static int run(String inputFile, URI uri) throws Exception{
 		Configuration conf = new Configuration();
-		String tablename = "test_table";
-		String inputfile = null;
-		String output = null;
-		for(int i = 0; i < args.length; ++i){
-			if(args[i] == "-t")
-				tablename = args[++i];
-			if(args[i] == "-i")
-				inputfile = args[++i];
-			if(args[i] == "-o")
-				output = args[++i];
+		String inputfile = inputFile;
+		String server = null;
+		Integer port = 60000;
+		String tablename = null;
+		
+		if(null == uri)
+			throw new IllegalArgumentException("No Server output specified!");
+
+		server = uri.getHost();
+		if(StringUtils.isBlank(server))
+			throw new IllegalArgumentException("No Server host name specified in URI: " + uri);
+		
+		if(uri.getPort() > 0){ // if port is specified
+			port = uri.getPort();
 		}
 		
+		// Extract table name from Path
+		if(StringUtils.isBlank(uri.getPath()) || StringUtils.equals(uri.getPath().trim(), "/")){
+			throw new IllegalArgumentException("No Table name specified in URI: " + uri);
+		}		
+		tablename = uri.getPath();
+		tablename = tablename.startsWith("/")?tablename.substring(1):tablename; // Remove leading /
 
-		conf.set("hbase.zookeeper.quorum", "who1");
-		conf.set("hbase.master", "who1:60000");
+		String master = String.join(":", server,port.toString());
+		
+		getLog().info(String.format("Loading data into server '%s' using table '%s' ", master,tablename));
+
+		conf.set("hbase.zookeeper.quorum", server);
+		conf.set("hbase.master", master);
 		
 		Job job = Job.getInstance(conf, "Variant2HBase");
 		job.setJarByClass(Variant2HbaseMR.class);
@@ -208,8 +242,8 @@ public class Variant2HbaseMR extends Mapper<AvroKey<Variant>, NullWritable, Immu
 
 	@Override
 	public int run(String[] args) throws Exception {
-		getLog().info(String.format("Configuration: %s ", getConf()));
-        setConf(new Configuration());
+//		getLog().info(String.format("Configuration: %s ", getConf()));
+//        setConf(new Configuration());
 		String tablename = "test_table";
 		String inputfile = null;
 		String output = null;
