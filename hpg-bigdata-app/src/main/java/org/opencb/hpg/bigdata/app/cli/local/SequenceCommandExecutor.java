@@ -110,7 +110,6 @@ public class SequenceCommandExecutor extends CommandExecutor {
     }
 
 	private void stats() {
-
 		LocalCliOptionsParser.StatsSequenceCommandOptions statsSequenceCommandOptions = sequenceCommandOptions.statsSequenceCommandOptions;
 
 		// get input parameters

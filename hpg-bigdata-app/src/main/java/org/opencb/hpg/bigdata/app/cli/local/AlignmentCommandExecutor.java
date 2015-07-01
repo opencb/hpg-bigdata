@@ -26,13 +26,20 @@ import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.ga4gh.models.LinearAlignment;
 import org.ga4gh.models.ReadAlignment;
+import org.opencb.biodata.tools.alignment.tasks.AlignmentStats;
+import org.opencb.biodata.tools.alignment.tasks.AlignmentStatsCalculator;
+import org.opencb.biodata.tools.alignment.tasks.RegionDepth;
+import org.opencb.biodata.tools.alignment.tasks.RegionDepthCalculator;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
 import org.opencb.hpg.bigdata.app.cli.hadoop.CliOptionsParser;
 import org.opencb.hpg.bigdata.core.NativeSupport;
 import org.opencb.hpg.bigdata.core.converters.SAMRecord2ReadAlignmentConverter;
 import org.opencb.hpg.bigdata.core.utils.PathUtils;
 import org.opencb.hpg.bigdata.tools.converters.mr.Bam2AvroMR;
+import org.opencb.hpg.bigdata.tools.converters.mr.ChunkKey;
+import org.opencb.hpg.bigdata.tools.io.RegionDepthWritable;
 import org.opencb.hpg.bigdata.tools.io.parquet.ParquetMR;
 import org.opencb.hpg.bigdata.tools.stats.alignment.mr.ReadAlignmentDepthMR;
 import org.opencb.hpg.bigdata.tools.stats.alignment.mr.ReadAlignmentStatsMR;
@@ -160,83 +167,75 @@ public class AlignmentCommandExecutor extends CommandExecutor {
             e.printStackTrace();
         }
     }
-/*
+
     private void stats() {
+		// get input parameters
         String input = alignmentCommandOptions.statsAlignmentCommandOptions.input;
         String output = alignmentCommandOptions.statsAlignmentCommandOptions.output;
 
-        // prepare the HDFS output folder
-        FileSystem fs = null;
-        Configuration conf = new Configuration();
-        try {
-            fs = FileSystem.get(conf);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        String outHdfsDirname = new String("" + new Date().getTime());
+		try {
+			// reader
+			InputStream is = new FileInputStream(input);
+			DataFileStream<ReadAlignment> reader = new DataFileStream<>(is, new SpecificDatumReader<>(ReadAlignment.class));
 
-        // run MapReduce job to compute stats
-        try {
-            ReadAlignmentStatsMR.run(input, outHdfsDirname);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+            AlignmentStats stats;
+            AlignmentStats totalStats = new AlignmentStats();
+            AlignmentStatsCalculator calculator = new AlignmentStatsCalculator();
 
-        // post-processing
-        Path outFile = new Path(outHdfsDirname + "/part-r-00000");
-
-        try {
-            if (!fs.exists(outFile)) {
-                logger.error("Stats results file not found: {}", outFile.getName());
-            } else {
-                String outRawFileName =  output + "/stats.json";
-                fs.copyToLocalFile(outFile, new Path(outRawFileName));
-
-                //Utils.parseStatsFile(outRawFileName, out);
+            // main loop
+			for (ReadAlignment readAlignment : reader) {
+                stats = calculator.compute(readAlignment);
+                calculator.update(stats, totalStats);
             }
-            fs.delete(new Path(outHdfsDirname), true);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+
+            // close reader
+            reader.close();
+            is.close();
+
+            // write results
+            PrintWriter writer = new PrintWriter(new File(output + "/stats.json"));
+            writer.write(totalStats.toJSON());
+            writer.close();
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
     }
 
     private void depth() {
-        String input = alignmentCommandOptions.depthAlignmentCommandOptions.input;
-        String output = alignmentCommandOptions.depthAlignmentCommandOptions.output;
+        /*
+        // get input parameters
+        String input = alignmentCommandOptions.statsAlignmentCommandOptions.input;
+        String output = alignmentCommandOptions.statsAlignmentCommandOptions.output;
 
-        // prepare the HDFS output folder
-        FileSystem fs = null;
-        Configuration conf = new Configuration();
         try {
-            fs = FileSystem.get(conf);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        String outHdfsDirname = new String("" + new Date().getTime());
+            // reader
+            InputStream is = new FileInputStream(input);
+            DataFileStream<ReadAlignment> reader = new DataFileStream<>(is, new SpecificDatumReader<>(ReadAlignment.class));
 
-        // run MapReduce job to compute stats
-        try {
-            ReadAlignmentDepthMR.run(input, outHdfsDirname);
+            RegionDepth regionDepth;
+            RegionDepth summaryRegionDepth;
+            RegionDepthCalculator calculator = new RegionDepthCalculator();
+
+            // main loop
+            for (ReadAlignment readAlignment : reader) {
+                if (readAlignment.getAlignment() != null) {
+                    regionDepth = calculator.compute(readAlignment);
+                }
+            }
+
+            // close reader
+            reader.close();
+            is.close();
+
+            // write results
+            PrintWriter writer = new PrintWriter(new File(output + "/stats.json"));
+            writer.write(totalStats.toJSON());
+            writer.close();
+
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        // post-processing
-        Path outFile = new Path(outHdfsDirname + "/part-r-00000");
-
-        try {
-            if (!fs.exists(outFile)) {
-                logger.error("Stats results file not found: {}", outFile.getName());
-            } else {
-                String outRawFileName =  output + "/depth.txt";
-                fs.copyToLocalFile(outFile, new Path(outRawFileName));
-
-                //Utils.parseStatsFile(outRawFileName, out);
-            }
-            fs.delete(new Path(outHdfsDirname), true);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        */
     }
-    */
 }

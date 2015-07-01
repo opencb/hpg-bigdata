@@ -61,7 +61,7 @@ public class LocalCliOptionsParser {
         jcommander.addCommand("alignment", sequenceCommandOptions);
         JCommander alignmentSubCommands = jcommander.getCommands().get("alignment");
         alignmentSubCommands.addCommand("convert", alignmentCommandOptions.convertAlignmentCommandOptions);
-        //alignmentSubCommands.addCommand("stats", alignmentCommandOptions.statsAlignmentCommandOptions);
+        alignmentSubCommands.addCommand("stats", alignmentCommandOptions.statsAlignmentCommandOptions);
 
         variantCommandOptions = new VariantCommandOptions();
         jcommander.addCommand("variant", sequenceCommandOptions);
@@ -209,13 +209,13 @@ public class LocalCliOptionsParser {
     public class AlignmentCommandOptions extends CommandOptions {
 
         ConvertAlignmentCommandOptions convertAlignmentCommandOptions;
-        //StatsAlignmentCommandOptions statsAlignmentCommandOptions;
-        //DepthAlignmentCommandOptions depthAlignmentCommandOptions;
+        StatsAlignmentCommandOptions statsAlignmentCommandOptions;
+        DepthAlignmentCommandOptions depthAlignmentCommandOptions;
 
         public AlignmentCommandOptions() {
             this.convertAlignmentCommandOptions = new ConvertAlignmentCommandOptions();
-            //this.statsAlignmentCommandOptions = new StatsAlignmentCommandOptions();
-            //this.depthAlignmentCommandOptions = new DepthAlignmentCommandOptions();
+            this.statsAlignmentCommandOptions = new StatsAlignmentCommandOptions();
+            this.depthAlignmentCommandOptions = new DepthAlignmentCommandOptions();
         }
     }
 
@@ -240,7 +240,7 @@ public class LocalCliOptionsParser {
         @Parameter(names = {"--to-bam"}, description = "Convert back to BAM fomat. In this case, the input file has to be saved in the GA4GH/Avro model, and the output file will be in BAM format", required = false)
         public boolean toBam;
     }
-/*
+
     @Parameters(commandNames = {"stats"}, commandDescription = "Compute some stats for a file containing alignments according to the GA4GH/Avro model")
     class StatsAlignmentCommandOptions {
 
@@ -272,7 +272,7 @@ public class LocalCliOptionsParser {
         //@Parameter(names = {"-f", "--filter"}, description = "", required = false, arity = 1)
         //public String filter = null;
     }
-*/
+
 
     /*
      * Variant (VCF) CLI options
