@@ -55,7 +55,7 @@ public class LocalCliOptionsParser {
         jcommander.addCommand("sequence", sequenceCommandOptions);
         JCommander sequenceSubCommands = jcommander.getCommands().get("sequence");
         sequenceSubCommands.addCommand("convert", sequenceCommandOptions.convertSequenceCommandOptions);
-        //sequenceSubCommands.addCommand("stats", sequenceCommandOptions.statsSequenceCommandOptions);
+        sequenceSubCommands.addCommand("stats", sequenceCommandOptions.statsSequenceCommandOptions);
 
         alignmentCommandOptions = new AlignmentCommandOptions();
         jcommander.addCommand("alignment", sequenceCommandOptions);
@@ -152,11 +152,11 @@ public class LocalCliOptionsParser {
     public class SequenceCommandOptions extends CommandOptions {
 
         ConvertSequenceCommandOptions convertSequenceCommandOptions;
-        //StatsSequenceCommandOptions statsSequenceCommandOptions;
+        StatsSequenceCommandOptions statsSequenceCommandOptions;
 
         public SequenceCommandOptions() {
             this.convertSequenceCommandOptions = new ConvertSequenceCommandOptions();
-            //this.statsSequenceCommandOptions = new StatsSequenceCommandOptions();
+            this.statsSequenceCommandOptions = new StatsSequenceCommandOptions();
         }
     }
 

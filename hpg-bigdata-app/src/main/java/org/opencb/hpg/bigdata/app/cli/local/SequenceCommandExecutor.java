@@ -16,18 +16,32 @@
 
 package org.opencb.hpg.bigdata.app.cli.local;
 
+import htsjdk.samtools.*;
 import htsjdk.samtools.fastq.FastqReader;
+import htsjdk.samtools.util.LineReader;
+import htsjdk.samtools.util.StringLineReader;
+import org.apache.avro.file.DataFileStream;
+import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.Text;
+import org.ga4gh.models.ReadAlignment;
 import org.opencb.biodata.models.sequence.Read;
+import org.opencb.biodata.tools.sequence.tasks.SequenceStats;
+import org.opencb.biodata.tools.sequence.tasks.SequenceStatsCalculator;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
 import org.opencb.hpg.bigdata.app.cli.hadoop.CliOptionsParser;
 import org.opencb.hpg.bigdata.core.converters.FastqRecord2ReadConverter;
+import org.opencb.hpg.bigdata.core.converters.SAMRecord2ReadAlignmentConverter;
 import org.opencb.hpg.bigdata.core.io.avro.AvroWriter;
 import org.opencb.hpg.bigdata.core.utils.AvroUtils;
 import org.opencb.hpg.bigdata.core.utils.PathUtils;
 import org.opencb.hpg.bigdata.tools.converters.mr.Fastq2AvroMR;
+import org.opencb.hpg.bigdata.tools.io.ReadStatsWritable;
 import org.opencb.hpg.bigdata.tools.stats.read.mr.ReadKmersMR;
 import org.opencb.hpg.bigdata.tools.stats.read.mr.ReadStatsMR;
 
@@ -96,7 +110,7 @@ public class SequenceCommandExecutor extends CommandExecutor {
     }
 
 	private void stats() {
-		/*
+
 		LocalCliOptionsParser.StatsSequenceCommandOptions statsSequenceCommandOptions = sequenceCommandOptions.statsSequenceCommandOptions;
 
 		// get input parameters
@@ -104,39 +118,32 @@ public class SequenceCommandExecutor extends CommandExecutor {
 		String output = statsSequenceCommandOptions.output;
 		int kvalue = statsSequenceCommandOptions.kmers;
 
-		// prepare the HDFS output folder
-		FileSystem fs = null;
-		Configuration conf = new Configuration();
 		try {
-			fs = FileSystem.get(conf);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		String outHdfsDirname = new String("" + new Date().getTime());
+			// reader
+			InputStream is = new FileInputStream(input);
+			DataFileStream<Read> reader = new DataFileStream<>(is, new SpecificDatumReader<>(Read.class));
 
-		// run MapReduce job to compute stats
-		try {
-			ReadStatsMR.run(input, outHdfsDirname, kvalue);
+            SequenceStats stats;
+            SequenceStats totalStats = new SequenceStats(kvalue);
+            SequenceStatsCalculator calculator = new SequenceStatsCalculator();
+
+            // main loop
+			for (Read read : reader) {
+                stats = calculator.compute(read, kvalue);
+                calculator.update(stats, totalStats);
+            }
+
+            // close reader
+            reader.close();
+            is.close();
+
+            // write results
+            PrintWriter writer = new PrintWriter(new File(output + "/stats.json"));
+            writer.write(totalStats.toJSON());
+            writer.close();
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
-		// post-processing
-		Path outFile = new Path(outHdfsDirname + "/part-r-00000");
-
-		try {
-			if (!fs.exists(outFile)) {
-            	logger.error("Stats results file not found: {}", outFile.getName());
-			} else {
-				String outRawFileName =  output + "/stats.json";
-				fs.copyToLocalFile(outFile, new Path(outRawFileName));
-
-				//Utils.parseStatsFile(outRawFileName, out);
-			}
-			fs.delete(new Path(outHdfsDirname), true);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		*/
 	}
 }
