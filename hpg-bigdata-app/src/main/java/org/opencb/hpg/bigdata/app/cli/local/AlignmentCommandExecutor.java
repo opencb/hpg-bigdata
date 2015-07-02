@@ -26,6 +26,7 @@ import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapreduce.Reducer;
 import org.ga4gh.models.LinearAlignment;
 import org.ga4gh.models.ReadAlignment;
 import org.opencb.biodata.tools.alignment.tasks.AlignmentStats;
@@ -46,6 +47,7 @@ import org.opencb.hpg.bigdata.tools.stats.alignment.mr.ReadAlignmentStatsMR;
 
 import java.io.*;
 import java.util.Date;
+import java.util.HashMap;
 
 /**
  * Created by imedina on 16/03/15.
@@ -73,7 +75,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
                         alignmentCommandOptions.convertAlignmentCommandOptions.commonOptions.conf);
                 convert();
                 break;
-/*
+
             case "stats":
                 init(alignmentCommandOptions.statsAlignmentCommandOptions.commonOptions.logLevel,
                         alignmentCommandOptions.statsAlignmentCommandOptions.commonOptions.verbose,
@@ -81,8 +83,12 @@ public class AlignmentCommandExecutor extends CommandExecutor {
                 stats();
                 break;
             case "depth":
+                init(alignmentCommandOptions.depthAlignmentCommandOptions.commonOptions.logLevel,
+                        alignmentCommandOptions.depthAlignmentCommandOptions.commonOptions.verbose,
+                        alignmentCommandOptions.depthAlignmentCommandOptions.commonOptions.conf);
                 depth();
                 break;
+            /*
             case "align":
                 System.out.println("Sub-command 'align': Not yet implemented for the command 'alignment' !");
                 break;
@@ -203,39 +209,95 @@ public class AlignmentCommandExecutor extends CommandExecutor {
     }
 
     private void depth() {
-        /*
         // get input parameters
-        String input = alignmentCommandOptions.statsAlignmentCommandOptions.input;
-        String output = alignmentCommandOptions.statsAlignmentCommandOptions.output;
+        String input = alignmentCommandOptions.depthAlignmentCommandOptions.input;
+        String output = alignmentCommandOptions.depthAlignmentCommandOptions.output;
+
+        HashMap<String, Integer> regionLength = new HashMap<>();
 
         try {
+            // header management
+            BufferedReader br = new BufferedReader(new FileReader(input + BAM_HEADER_SUFFIX));
+            String line, fieldName, fieldLength;
+            String[] fields;
+            String[] subfields;
+            while ((line = br.readLine()) != null) {
+                if (line.startsWith("@SQ")) {
+                    fields = line.split("\t");
+                    subfields = fields[1].split(":");
+                    fieldName = subfields[1];
+                    subfields = fields[2].split(":");
+                    fieldLength = subfields[1];
+
+                    regionLength.put(fieldName, Integer.parseInt(fieldLength));
+                }
+            }
+            br.close();
+
             // reader
             InputStream is = new FileInputStream(input);
             DataFileStream<ReadAlignment> reader = new DataFileStream<>(is, new SpecificDatumReader<>(ReadAlignment.class));
 
+            // writer
+            PrintWriter writer = new PrintWriter(new File(output + "/depth.txt"));
+
+            String chromName = "";
+            int[] chromDepth;
+
             RegionDepth regionDepth;
-            RegionDepth summaryRegionDepth;
             RegionDepthCalculator calculator = new RegionDepthCalculator();
 
+            int pos;
+            long prevPos = 0L;
+
             // main loop
+            chromDepth = null;
             for (ReadAlignment readAlignment : reader) {
                 if (readAlignment.getAlignment() != null) {
                     regionDepth = calculator.compute(readAlignment);
+                    if (chromDepth == null) {
+                        chromName = regionDepth.chrom;
+                        chromDepth = new int[regionLength.get(regionDepth.chrom)];
+                    }
+                    if (!chromName.equals(regionDepth.chrom)) {
+                        // write depth
+                        int length = chromDepth.length;
+                        for(int i = 0; i < length; i++) {
+                            writer.write(chromName + "\t" + (i + 1) + "\t" + chromDepth[i] + "\n");
+                        }
+
+                        // init
+                        prevPos = 0L;
+                        chromName = regionDepth.chrom;
+                        chromDepth = new int[regionLength.get(regionDepth.chrom)];
+                    }
+                    if (prevPos > regionDepth.position) {
+                        System.out.println("Error: the input file (" + input + ") is not sorted (reads out of order).");
+                        System.exit(-1);
+                    }
+
+                    pos = (int) regionDepth.position;
+                    for (int i: regionDepth.array) {
+                        chromDepth[pos] += regionDepth.array[i];
+                        pos++;
+                    }
+                    prevPos = regionDepth.position;
+                }
+            }
+            // write depth
+            int length = chromDepth.length;
+            for(int i = 0; i < length; i++) {
+                if (chromDepth[i] > 0) {
+                    writer.write(chromName + "\t" + (i + 1) + "\t" + chromDepth[i] + "\n");
                 }
             }
 
-            // close reader
+            // close
             reader.close();
             is.close();
-
-            // write results
-            PrintWriter writer = new PrintWriter(new File(output + "/stats.json"));
-            writer.write(totalStats.toJSON());
             writer.close();
-
         } catch (Exception e) {
             e.printStackTrace();
         }
-        */
     }
 }

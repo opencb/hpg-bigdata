@@ -62,6 +62,7 @@ public class LocalCliOptionsParser {
         JCommander alignmentSubCommands = jcommander.getCommands().get("alignment");
         alignmentSubCommands.addCommand("convert", alignmentCommandOptions.convertAlignmentCommandOptions);
         alignmentSubCommands.addCommand("stats", alignmentCommandOptions.statsAlignmentCommandOptions);
+        alignmentSubCommands.addCommand("depth", alignmentCommandOptions.depthAlignmentCommandOptions);
 
         variantCommandOptions = new VariantCommandOptions();
         jcommander.addCommand("variant", sequenceCommandOptions);
@@ -247,7 +248,7 @@ public class LocalCliOptionsParser {
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
 
-        @Parameter(names = {"-i", "--input"}, description = "HDFS input file containing alignments stored according to the GA4GH/Avro model)", required = true, arity = 1)
+        @Parameter(names = {"-i", "--input"}, description = "Local input file containing alignments stored according to the GA4GH/Avro model)", required = true, arity = 1)
         public String input = null;
 
         @Parameter(names = {"-o", "--output"}, description = "Local output directory to save stats results in JSON format ", required = true, arity = 1)
@@ -263,7 +264,7 @@ public class LocalCliOptionsParser {
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
 
-        @Parameter(names = {"-i", "--input"}, description = "HDFS input file containing alignments stored according to the GA4GH/Avro model)", required = true, arity = 1)
+        @Parameter(names = {"-i", "--input"}, description = "Local input file containing alignments stored according to the GA4GH/Avro model. This file must be sorted", required = true, arity = 1)
         public String input = null;
 
         @Parameter(names = {"-o", "--output"}, description = "Local output directory to save the depth in a text file", required = true, arity = 1)
