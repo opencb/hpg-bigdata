@@ -16,12 +16,10 @@ Roadmap is available at [GitHub milestones](https://github.com/opencb/hpg-bigdat
 HPG BigData is versioned following the rules from [Semantic versioning](http://semver.org/).
 
 ### Maintainers
-We recommend to contact HPG BigData developers by writing to OpenCB mailing list opencb@googlegroups.com. The main developers and maintainers are:
+We recommend to contact HPG BigData developers by writing to OpenCB mailing list opencb@googlegroups.com. The main maintainers and developers are:
 * Ignacio Medina (im411@cam.ac.uk) (_Founder and Project Leader_)
 * Joaquín Tárraga (jtarraga@cipf.es)
 * Jacobo Coll (jacobo.coll-moragon@genomicsengland.co.uk)
-
-##### Other Contributors
 * Matthias Haimel (mh719@cam.ac.uk)
 * Jose M. Mut (jmmut@ebi.ac.uk)
 
@@ -65,8 +63,8 @@ HPG BigData is an open-source and free project, you can download **_develop_** b
 For command line options invoke:
 
     imedina@ivory:~$ cd build/bin
-    imedina@ivory:~$ ./hpg-bigdata.sh -h
-    imedina@ivory:~$ ./hpg-bigdata-local.sh -h
+    imedina@ivory:~$ ./hpg-bigdata.sh
+    imedina@ivory:~$ ./hpg-bigdata-local.sh
 
 
 As you can see there are three commands implemnted, each of them with different subcommands.

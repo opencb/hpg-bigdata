@@ -16,6 +16,7 @@
 
 package org.opencb.hpg.bigdata.app.cli.local;
 
+import java.nio.file.Path;
 import org.apache.commons.lang.StringUtils;
 import org.ga4gh.models.Variant;
 import org.opencb.commons.io.DataReader;
@@ -102,7 +103,10 @@ public class VariantCommandExecutor extends CommandExecutor {
             // STDOUT then a file is created if parent folder exist, otherwise STDOUT is used.
             OutputStream os;
             if (output != null && !output.isEmpty() && !output.equalsIgnoreCase("STDOUT")) {
-                FileUtils.checkDirectory(Paths.get(output).getParent(), true);
+                Path parent = Paths.get(output).getParent();
+                if (parent != null) { // null if output is a file in the current directory
+                    FileUtils.checkDirectory(parent, true);
+                }
                 os = new FileOutputStream(output);
             } else {
                 os = System.out;

@@ -42,10 +42,6 @@ public class CliOptionsParser {
     // NGS variant command and subcommmands
     private VariantCommandOptions variantCommandOptions;
 
-    private ConvertCommandOptions convertCommandOptions;
-//    private AlignSequenceCommandOptions alignSequenceCommandOptions;
-//    private IndexCommandOptions indexCommandOptions;
-
 
     public CliOptionsParser() {
         generalOptions = new GeneralOptions();
@@ -365,35 +361,6 @@ public class CliOptionsParser {
 
     }
 
-    @Deprecated
-    @Parameters(commandNames = {"convert"}, commandDescription = "Convert between different formats")
-    public class ConvertCommandOptions {
-
-        @ParametersDelegate
-        public CommonCommandOptions commonOptions = commonCommandOptions;
-
-        @Parameter(names = {"-i", "--input"}, description = "", required = true, arity = 1)
-        public String input = null;
-
-        @Parameter(names = {"-o", "--output"}, description = "", required = false, arity = 1)
-        public String output = null;
-
-        @Parameter(names = {"-c", "--conversion"}, description = "Accepted values: fastq2avro, avro2fastq, sam2avro, avro2sam, bam2avro, avro2bam, vcf2avro", required = true, arity = 1)
-        public ConvertCommandExecutor.Conversion conversion;
-
-        @Parameter(names = {"-x", "--compression"}, description = "Accepted values: snappy, deflate, bzip2, xz. [snappy]", required = false, arity = 1)
-        public String compression = "snappy";
-
-        @Parameter(names = {"-p", "--to-avro"}, description = "Serialize data to GA4GH Avro format [true]", required = false)
-        public boolean toAvro = true;
-
-        @Parameter(names = {"-p", "--to-avro"}, description = "Serialize data from  GA4GH Avro format [true]", required = false)
-        public boolean fromAvro = false;
-
-        @Parameter(names = {"-p", "--to-parquet"}, description = "Save data in ga4gh using the parquet format (for Hadoop only)", required = false)
-        public boolean toParquet = false;
-    }
-
 
     public void printUsage(){
         if(getCommand().isEmpty()) {
@@ -470,12 +437,8 @@ public class CliOptionsParser {
         return commandOptions;
     }
 
-//    public IndexCommandOptions getIndexCommandOptions() {
-//        return indexCommandOptions;
-//    }
-
-    public ConvertCommandOptions getConvertCommandOptions() {
-        return convertCommandOptions;
+    public CommonCommandOptions getCommonCommandOptions() {
+        return commonCommandOptions;
     }
 
     public SequenceCommandOptions getSequenceCommandOptions() {
@@ -484,14 +447,6 @@ public class CliOptionsParser {
 
     public AlignmentCommandOptions getAlignmentCommandOptions() {
         return alignmentCommandOptions;
-    }
-
-//    public ConvertSequenceCommandOptions getConvertSequenceCommandOptions() {
-//        return convertSequenceCommandOptions;
-//    }
-
-    public CommonCommandOptions getCommonCommandOptions() {
-        return commonCommandOptions;
     }
 
     public VariantCommandOptions getVariantCommandOptions() {
