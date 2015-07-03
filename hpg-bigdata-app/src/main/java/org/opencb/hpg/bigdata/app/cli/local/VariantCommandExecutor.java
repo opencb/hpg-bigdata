@@ -103,7 +103,7 @@ public class VariantCommandExecutor extends CommandExecutor {
             // STDOUT then a file is created if parent folder exist, otherwise STDOUT is used.
             OutputStream os;
             if (output != null && !output.isEmpty() && !output.equalsIgnoreCase("STDOUT")) {
-                Path parent = Paths.get(output).getParent();
+                Path parent = Paths.get(output).toAbsolutePath().getParent();
                 if (parent != null) { // null if output is a file in the current directory
                     FileUtils.checkDirectory(parent, true);
                 }
