@@ -21,32 +21,16 @@ import htsjdk.samtools.util.LineReader;
 import htsjdk.samtools.util.StringLineReader;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.specific.SpecificDatumReader;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapreduce.Reducer;
-import org.ga4gh.models.LinearAlignment;
 import org.ga4gh.models.ReadAlignment;
 import org.opencb.biodata.tools.alignment.tasks.AlignmentStats;
 import org.opencb.biodata.tools.alignment.tasks.AlignmentStatsCalculator;
 import org.opencb.biodata.tools.alignment.tasks.RegionDepth;
 import org.opencb.biodata.tools.alignment.tasks.RegionDepthCalculator;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
-import org.opencb.hpg.bigdata.app.cli.hadoop.CliOptionsParser;
 import org.opencb.hpg.bigdata.core.NativeSupport;
 import org.opencb.hpg.bigdata.core.converters.SAMRecord2ReadAlignmentConverter;
-import org.opencb.hpg.bigdata.core.utils.PathUtils;
-import org.opencb.hpg.bigdata.tools.converters.mr.Bam2AvroMR;
-import org.opencb.hpg.bigdata.tools.converters.mr.ChunkKey;
-import org.opencb.hpg.bigdata.tools.io.RegionDepthWritable;
-import org.opencb.hpg.bigdata.tools.io.parquet.ParquetMR;
-import org.opencb.hpg.bigdata.tools.stats.alignment.mr.ReadAlignmentDepthMR;
-import org.opencb.hpg.bigdata.tools.stats.alignment.mr.ReadAlignmentStatsMR;
 
 import java.io.*;
-import java.util.Date;
 import java.util.HashMap;
 
 /**

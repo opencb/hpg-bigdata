@@ -55,22 +55,22 @@
             <version>1.131</version>
         </dependency>
 
-		<dependency>
-			<groupId>org.apache.avro</groupId>
-			<artifactId>avro</artifactId>
-			<version>1.7.7</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.slf4j</groupId>
+        <dependency>
+            <groupId>org.apache.avro</groupId>
+            <artifactId>avro</artifactId>
+            <version>1.7.7</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
                     <artifactId>slf4j-api</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.avro</groupId>
-			<artifactId>avro-ipc</artifactId>
-			<version>1.7.7</version>
-		</dependency>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.avro</groupId>
+            <artifactId>avro-ipc</artifactId>
+            <version>1.7.7</version>
+        </dependency>
 
 		<dependency>
 			<groupId>org.opencb.biodata</groupId>
@@ -96,6 +96,7 @@
 
 	<build>
 		<plugins>
+
 			<!-- <plugin> <artifactId>maven-assembly-plugin</artifactId> <configuration> 
 				<archive> <manifest> <mainClass></mainClass> </manifest> </archive> <descriptorRefs> 
 				<descriptorRef> jar-with-dependencies </descriptorRef> </descriptorRefs> 
