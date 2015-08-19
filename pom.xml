@@ -16,227 +16,255 @@
   -->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-	<groupId>org.opencb.hpg</groupId>
-	<artifactId>hpg-bigdata</artifactId>
-	<version>0.5-SNAPSHOT</version>
-	<packaging>pom</packaging>
+    <groupId>org.opencb.hpg</groupId>
+    <artifactId>hpg-bigdata</artifactId>
+    <version>0.5-SNAPSHOT</version>
+    <packaging>pom</packaging>
 
-	<modules>
-		<module>hpg-bigdata-app</module>
-		<module>hpg-bigdata-core</module>
+    <modules>
+        <module>hpg-bigdata-app</module>
+        <module>hpg-bigdata-core</module>
         <module>hpg-bigdata-tools</module>
     </modules>
 
-	<name>HPG Big data project</name>
-	<description>HPG Big data project aims to manage genomic big data in a Hadoop-based cluster</description>
-	<url>https://github.com/opencb/hpg-bigdata</url>
+    <name>HPG Big data project</name>
+    <description>HPG Big data project aims to manage genomic big data in a Hadoop-based cluster</description>
+    <url>https://github.com/opencb/hpg-bigdata</url>
 
-	<properties>
-		<hpg.version>0.5-SNAPSHOT</hpg.version>
-		<ga4gh.version>0.5.1</ga4gh.version>
-		<biodata.version>0.4-SNAPSHOT</biodata.version>
-		<datastore.version>0.4-SNAPSHOT</datastore.version>
-		<commons-lib.version>3.0-SNAPSHOT</commons-lib.version>
-		<hadoop.version>2.6.0</hadoop.version>
-		<hbase.version>1.0.1</hbase.version>
-		<compileSource>1.8</compileSource>
-		<build.dir>build</build.dir>
-	</properties>
+    <properties>
+        <hpg.version>0.5-SNAPSHOT</hpg.version>
+        <ga4gh.version>0.5.1</ga4gh.version>
+        <biodata.version>0.4-SNAPSHOT</biodata.version>
+        <datastore.version>0.4-SNAPSHOT</datastore.version>
+        <commons-lib.version>3.0-SNAPSHOT</commons-lib.version>
+        <hadoop.version>2.6.0</hadoop.version>
+        <hbase.version>1.0.1</hbase.version>
+        <compileSource>1.8</compileSource>
+        <build.dir>build</build.dir>
+    </properties>
 
-	<scm>
-		<url>https://github.com/opencb/cellbase</url>
-		<connection>scm:git:git://github.com/opencb/cellbase.git</connection>
-		<developerConnection>scm:git:git@github.com:opencb/cellbase.git</developerConnection>
-	</scm>
+    <scm>
+        <url>https://github.com/opencb/cellbase</url>
+        <connection>scm:git:git://github.com/opencb/cellbase.git</connection>
+        <developerConnection>scm:git:git@github.com:opencb/cellbase.git</developerConnection>
+    </scm>
 
-	<licenses>
-		<license>
-			<name>Apache License, Version 2</name>
-			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-		</license>
-	</licenses>
+    <licenses>
+        <license>
+            <name>Apache License, Version 2</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
 
-	<developers>
-		<developer>
-			<id>imedina</id>
-			<name>Nacho</name>
-			<email>igmecas@gmail.com</email>
-		</developer>
-		<developer>
-			<id>jtarraga</id>
-			<name>Joaquin</name>
-			<email>joaquintarraga@gmail.com</email>
-		</developer>
-		<developer>
-			<id>jcoll</id>
-			<name>Jacobo</name>
-			<email>jacobo167@gmail.com</email>
-		</developer>
-		<developer>
-			<id>mh11</id>
-			<name>Matthias</name>
-			<email>mh719+git@cam.ac.uk</email>
-		</developer>
-	</developers>
+    <developers>
+        <developer>
+            <id>imedina</id>
+            <name>Nacho</name>
+            <email>igmecas@gmail.com</email>
+        </developer>
+        <developer>
+            <id>jtarraga</id>
+            <name>Joaquin</name>
+            <email>joaquintarraga@gmail.com</email>
+        </developer>
+        <developer>
+            <id>jcoll</id>
+            <name>Jacobo</name>
+            <email>jacobo167@gmail.com</email>
+        </developer>
+        <developer>
+            <id>mh11</id>
+            <name>Matthias</name>
+            <email>mh719+git@cam.ac.uk</email>
+        </developer>
+    </developers>
 
-	<mailingLists>
-		<mailingList>
-			<name>OpenCB Mailing List</name>
-			<archive>https://groups.google.com/forum/#!forum/opencb</archive>
-			<post>opencb@googlegroups.com</post>
-		</mailingList>
-	</mailingLists>
+    <mailingLists>
+        <mailingList>
+            <name>OpenCB Mailing List</name>
+            <archive>https://groups.google.com/forum/#!forum/opencb</archive>
+            <post>opencb@googlegroups.com</post>
+        </mailingList>
+    </mailingLists>
 
-	<dependencyManagement>
-		<dependencies>
-			<!-- Intra-module dependencies -->
-			<dependency>
-				<groupId>org.opencb.hpg</groupId>
-				<artifactId>hpg-bigdata-core</artifactId>
-				<version>${hpg.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.opencb.hpg</groupId>
-				<artifactId>hpg-bigdata-tools</artifactId>
-				<version>${hpg.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.opencb.ga4gh</groupId>
-				<artifactId>ga4gh</artifactId>
-				<version>${ga4gh.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.opencb.commons</groupId>
-				<artifactId>commons-lib</artifactId>
-				<version>${commons-lib.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.apache.hbase</groupId>
-				<artifactId>hbase-common</artifactId>
-				<version>${hbase.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.apache.hbase</groupId>
-				<artifactId>hbase-client</artifactId>
-				<version>${hbase.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.apache.hbase</groupId>
-				<artifactId>hbase-server</artifactId>
-				<version>${hbase.version}</version>
-<!-- 				<exclusions> -->
-<!-- 					<exclusion> -->
-<!-- 						<groupId>org.apache.hadoop</groupId> -->
-<!-- 						<artifactId>hadoop-client</artifactId> -->
-<!-- 					</exclusion> -->
-<!-- 				</exclusions> -->
-			</dependency>
-			<dependency>
-				<groupId>org.apache.hadoop</groupId>
-				<artifactId>hadoop-client</artifactId>
-				<version>${hadoop.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.apache.hadoop</groupId>
-				<artifactId>hadoop-common</artifactId>
-				<version>${hadoop.version}</version>
-			</dependency>
+    <dependencyManagement>
+        <dependencies>
+            <!-- Intra-module dependencies -->
+            <dependency>
+                <groupId>org.opencb.hpg</groupId>
+                <artifactId>hpg-bigdata-core</artifactId>
+                <version>${hpg.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.opencb.hpg</groupId>
+                <artifactId>hpg-bigdata-tools</artifactId>
+                <version>${hpg.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.opencb.ga4gh</groupId>
+                <artifactId>ga4gh</artifactId>
+                <version>${ga4gh.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.opencb.commons</groupId>
+                <artifactId>commons-lib</artifactId>
+                <version>${commons-lib.version}</version>
+            </dependency>
 
-			<!-- General dependencies -->
-			<dependency>
-				<groupId>com.google.guava</groupId>
-				<artifactId>guava</artifactId>
-				<version>18.0</version>
-			</dependency>
-			<dependency>
-				<groupId>org.slf4j</groupId>
-				<artifactId>slf4j-api</artifactId>
-				<version>1.7.12</version>
-			</dependency>
-			<dependency>
-				<groupId>org.slf4j</groupId>
-				<artifactId>slf4j-simple</artifactId>
-				<version>1.7.12</version>
-			</dependency>
-			<dependency>
-				<groupId>com.fasterxml.jackson.core</groupId>
-				<artifactId>jackson-databind</artifactId>
-				<version>2.5.1</version>
-			</dependency>
-			<dependency>
-				<groupId>junit</groupId>
-				<artifactId>junit</artifactId>
-				<version>4.12</version>
-				<scope>test</scope>
-			</dependency>
-<!-- 			<dependency> -->
-<!-- 				<groupId>jdk.tools</groupId> -->
-<!-- 				<artifactId>jdk.tools</artifactId> -->
-<!-- 				<version>${compileSource}</version> -->
-<!-- 				<scope>system</scope> -->
-<!-- 				<systemPath>${java.home}/lib/tools.jar</systemPath> -->
-<!-- 			</dependency> -->
-		</dependencies>
-	</dependencyManagement>
 
-	<build>
-		<sourceDirectory>src/main/java</sourceDirectory>
-		<testSourceDirectory>src/test/java</testSourceDirectory>
+            <dependency>
+                <groupId>org.apache.hbase</groupId>
+                <artifactId>hbase-common</artifactId>
+                <version>${hbase.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.hbase</groupId>
+                <artifactId>hbase-client</artifactId>
+                <version>${hbase.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.hbase</groupId>
+                <artifactId>hbase-server</artifactId>
+                <version>${hbase.version}</version>
+                <!-- 				<exclusions> -->
+                <!-- 					<exclusion> -->
+                <!-- 						<groupId>org.apache.hadoop</groupId> -->
+                <!-- 						<artifactId>hadoop-client</artifactId> -->
+                <!-- 					</exclusion> -->
+                <!-- 				</exclusions> -->
+            </dependency>
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-client</artifactId>
+                <version>${hadoop.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-common</artifactId>
+                <version>${hadoop.version}</version>
+            </dependency>
 
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.2</version>
-				<configuration>
-					<source>${compileSource}</source>
-					<target>${compileSource}</target>
-					<showDeprecation>true</showDeprecation>
-					<showWarnings>true</showWarnings>
-					<encoding>UTF-8</encoding>
-				</configuration>
-			</plugin>
-			<!-- 
-			<plugin>
-				<artifactId>maven-assembly-plugin</artifactId>
-				<configuration>
-					<archive>
-						<manifest>
-							<mainClass></mainClass>
-						</manifest>
-					</archive>
-					<descriptorRefs>
-						<descriptorRef>
-							jar-with-dependencies
-						</descriptorRef>
-					</descriptorRefs>
-				</configuration>
-				<executions>
-					<execution>
-						<id>make-assembly</id>
-						<phase>package</phase>
-						<goals>
-							<goal>single</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			 -->
-		</plugins>
-	</build>
+            <!-- General dependencies -->
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>18.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>1.7.12</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-simple</artifactId>
+                <version>1.7.12</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>2.5.1</version>
+            </dependency>
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>4.12</version>
+                <scope>test</scope>
+            </dependency>
+            <!-- 			<dependency> -->
+            <!-- 				<groupId>jdk.tools</groupId> -->
+            <!-- 				<artifactId>jdk.tools</artifactId> -->
+            <!-- 				<version>${compileSource}</version> -->
+            <!-- 				<scope>system</scope> -->
+            <!-- 				<systemPath>${java.home}/lib/tools.jar</systemPath> -->
+            <!-- 			</dependency> -->
+        </dependencies>
+    </dependencyManagement>
 
-	<distributionManagement>
-		<repository>
-			<id>ossrh</id>
-			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-		</repository>
-		<snapshotRepository>
-			<id>ossrh</id>
-			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
-		</snapshotRepository>
-	</distributionManagement>
+    <build>
+        <sourceDirectory>src/main/java</sourceDirectory>
+        <testSourceDirectory>src/test/java</testSourceDirectory>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.2</version>
+                <configuration>
+                    <source>${compileSource}</source>
+                    <target>${compileSource}</target>
+                    <showDeprecation>true</showDeprecation>
+                    <showWarnings>true</showWarnings>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+            <!--<plugin>-->
+                <!--<groupId>org.apache.maven.plugins</groupId>-->
+                <!--<artifactId>maven-shade-plugin</artifactId>-->
+                <!--<version>2.4</version>-->
+                <!--<executions>-->
+                    <!--<execution>-->
+                        <!--<phase>package</phase>-->
+                        <!--<goals>-->
+                            <!--<goal>shade</goal>-->
+                        <!--</goals>-->
+                        <!--<configuration>-->
+                            <!--<artifactSet>-->
+                                <!--<includes>-->
+                                    <!--<include>org.apache.avro:avro</include>-->
+                                <!--</includes>-->
+                            <!--</artifactSet>-->
+                            <!--<relocations>-->
+                                <!--<relocation>-->
+                                    <!--<pattern>org.apache.avro</pattern>-->
+                                    <!--<shadedPattern>org.opencb.shaded.org.apache.avros</shadedPattern>-->
+                                <!--</relocation>-->
+                            <!--</relocations>-->
+                        <!--</configuration>-->
+                    <!--</execution>-->
+                <!--</executions>-->
+            <!--</plugin>-->
+            <!--
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass></mainClass>
+                        </manifest>
+                    </archive>
+                    <descriptorRefs>
+                        <descriptorRef>
+                            jar-with-dependencies
+                        </descriptorRef>
+                    </descriptorRefs>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+             -->
+        </plugins>
+    </build>
+
+    <distributionManagement>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
 
 </project>

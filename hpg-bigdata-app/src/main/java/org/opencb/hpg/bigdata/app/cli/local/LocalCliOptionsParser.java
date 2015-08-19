@@ -55,13 +55,14 @@ public class LocalCliOptionsParser {
         jcommander.addCommand("sequence", sequenceCommandOptions);
         JCommander sequenceSubCommands = jcommander.getCommands().get("sequence");
         sequenceSubCommands.addCommand("convert", sequenceCommandOptions.convertSequenceCommandOptions);
-        //sequenceSubCommands.addCommand("stats", sequenceCommandOptions.statsSequenceCommandOptions);
+        sequenceSubCommands.addCommand("stats", sequenceCommandOptions.statsSequenceCommandOptions);
 
         alignmentCommandOptions = new AlignmentCommandOptions();
         jcommander.addCommand("alignment", sequenceCommandOptions);
         JCommander alignmentSubCommands = jcommander.getCommands().get("alignment");
         alignmentSubCommands.addCommand("convert", alignmentCommandOptions.convertAlignmentCommandOptions);
-        //alignmentSubCommands.addCommand("stats", alignmentCommandOptions.statsAlignmentCommandOptions);
+        alignmentSubCommands.addCommand("stats", alignmentCommandOptions.statsAlignmentCommandOptions);
+        alignmentSubCommands.addCommand("depth", alignmentCommandOptions.depthAlignmentCommandOptions);
 
         variantCommandOptions = new VariantCommandOptions();
         jcommander.addCommand("variant", sequenceCommandOptions);
@@ -152,11 +153,11 @@ public class LocalCliOptionsParser {
     public class SequenceCommandOptions extends CommandOptions {
 
         ConvertSequenceCommandOptions convertSequenceCommandOptions;
-        //StatsSequenceCommandOptions statsSequenceCommandOptions;
+        StatsSequenceCommandOptions statsSequenceCommandOptions;
 
         public SequenceCommandOptions() {
             this.convertSequenceCommandOptions = new ConvertSequenceCommandOptions();
-            //this.statsSequenceCommandOptions = new StatsSequenceCommandOptions();
+            this.statsSequenceCommandOptions = new StatsSequenceCommandOptions();
         }
     }
 
@@ -209,13 +210,13 @@ public class LocalCliOptionsParser {
     public class AlignmentCommandOptions extends CommandOptions {
 
         ConvertAlignmentCommandOptions convertAlignmentCommandOptions;
-        //StatsAlignmentCommandOptions statsAlignmentCommandOptions;
-        //DepthAlignmentCommandOptions depthAlignmentCommandOptions;
+        StatsAlignmentCommandOptions statsAlignmentCommandOptions;
+        DepthAlignmentCommandOptions depthAlignmentCommandOptions;
 
         public AlignmentCommandOptions() {
             this.convertAlignmentCommandOptions = new ConvertAlignmentCommandOptions();
-            //this.statsAlignmentCommandOptions = new StatsAlignmentCommandOptions();
-            //this.depthAlignmentCommandOptions = new DepthAlignmentCommandOptions();
+            this.statsAlignmentCommandOptions = new StatsAlignmentCommandOptions();
+            this.depthAlignmentCommandOptions = new DepthAlignmentCommandOptions();
         }
     }
 
@@ -240,14 +241,14 @@ public class LocalCliOptionsParser {
         @Parameter(names = {"--to-bam"}, description = "Convert back to BAM fomat. In this case, the input file has to be saved in the GA4GH/Avro model, and the output file will be in BAM format", required = false)
         public boolean toBam;
     }
-/*
+
     @Parameters(commandNames = {"stats"}, commandDescription = "Compute some stats for a file containing alignments according to the GA4GH/Avro model")
     class StatsAlignmentCommandOptions {
 
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
 
-        @Parameter(names = {"-i", "--input"}, description = "HDFS input file containing alignments stored according to the GA4GH/Avro model)", required = true, arity = 1)
+        @Parameter(names = {"-i", "--input"}, description = "Local input file containing alignments stored according to the GA4GH/Avro model)", required = true, arity = 1)
         public String input = null;
 
         @Parameter(names = {"-o", "--output"}, description = "Local output directory to save stats results in JSON format ", required = true, arity = 1)
@@ -263,7 +264,7 @@ public class LocalCliOptionsParser {
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
 
-        @Parameter(names = {"-i", "--input"}, description = "HDFS input file containing alignments stored according to the GA4GH/Avro model)", required = true, arity = 1)
+        @Parameter(names = {"-i", "--input"}, description = "Local input file containing alignments stored according to the GA4GH/Avro model. This file must be sorted", required = true, arity = 1)
         public String input = null;
 
         @Parameter(names = {"-o", "--output"}, description = "Local output directory to save the depth in a text file", required = true, arity = 1)
@@ -272,7 +273,7 @@ public class LocalCliOptionsParser {
         //@Parameter(names = {"-f", "--filter"}, description = "", required = false, arity = 1)
         //public String filter = null;
     }
-*/
+
 
     /*
      * Variant (VCF) CLI options
