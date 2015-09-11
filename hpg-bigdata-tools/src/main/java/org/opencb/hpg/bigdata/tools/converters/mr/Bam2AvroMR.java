@@ -82,7 +82,10 @@ public class Bam2AvroMR {
 	}
 
 	public static int run(String input, String output, String codecName) throws Exception {
-		Configuration conf = new Configuration();
+		return run(input, output, codecName, new Configuration());
+	}
+
+	public static int run(String input, String output, String codecName, Configuration conf) throws Exception {
 
 		// read header, and save sequence index/name in conf
 		final Path p = new Path(input);
@@ -130,7 +133,7 @@ public class Bam2AvroMR {
 
 		// write header
 		Path headerPath = new Path(output + "/part-r-00000.avro.header");
-		FileSystem fs = FileSystem.get(new Configuration());
+		FileSystem fs = FileSystem.get(conf);
 		BufferedWriter br = new BufferedWriter(new OutputStreamWriter(fs.create(headerPath, true)));
 		br.write(header.getTextHeader());
 		br.close();

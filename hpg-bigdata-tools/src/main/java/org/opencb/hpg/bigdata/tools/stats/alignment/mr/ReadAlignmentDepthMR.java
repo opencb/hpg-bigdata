@@ -18,7 +18,6 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -30,10 +29,7 @@ import org.ga4gh.models.LinearAlignment;
 import org.ga4gh.models.ReadAlignment;
 import org.opencb.biodata.tools.alignment.tasks.RegionDepth;
 import org.opencb.biodata.tools.alignment.tasks.RegionDepthCalculator;
-import org.opencb.biodata.tools.sequence.tasks.SequenceStats;
-import org.opencb.biodata.tools.sequence.tasks.SequenceStatsCalculator;
 import org.opencb.hpg.bigdata.tools.converters.mr.ChunkKey;
-import org.opencb.hpg.bigdata.tools.io.ReadStatsWritable;
 import org.opencb.hpg.bigdata.tools.io.RegionDepthWritable;
 
 public class ReadAlignmentDepthMR {
@@ -190,7 +186,10 @@ public class ReadAlignmentDepthMR {
 	}
 
 	public static int run(String input, String output) throws Exception {
-		Configuration conf = new Configuration();
+		return run(input, output, new Configuration());
+	}
+
+	public static int run(String input, String output, Configuration conf) throws Exception {
 
 		{
 			// read header, and save sequence name/length in config 
@@ -215,7 +214,7 @@ public class ReadAlignmentDepthMR {
 
 		conf.set("summary.depth.json", output + ".summary.depth.json");
 		
-		Job job = Job.getInstance(conf, "ReadAlignmentDepthMR");		
+		Job job = Job.getInstance(conf, "ReadAlignmentDepthMR");
 		job.setJarByClass(ReadAlignmentDepthMR.class);
 
 		// input
