@@ -20,6 +20,7 @@
 #include <stdlib.h>
 
 #include "samtools/bam.h"
+#include "bam2ga.h"
 
 //--------------------------------------------------------------------//
 // JSON schemas
@@ -68,6 +69,9 @@ avro_value_t read_alignment;
 // position
 avro_value_iface_t *iface_position;
 avro_value_t position;
+
+//
+unsigned char adjust_qualities;
 
 //--------------------------------------------------------------------//
 // init schemas
@@ -372,41 +376,43 @@ void add_read_alignment2(avro_file_writer_t db, const bam1_t *bam1, const bam_he
 		// quality
 		avro_value_append(&field, &element, NULL);
 
-		int adjusted_qual;
-
-		if (qual[i] <= 1) {
-			adjusted_qual = qual[i];
-		} else {
-			int qual_range = qual[i] / 5;
-			switch (qual_range) {
-				case 0:
-				case 1:
-					adjusted_qual = 6;
-					break;
-				case 2:
-				case 3:
-					adjusted_qual = 15;
-					break;
-				case 4:
-					adjusted_qual = 22;
-					break;
-				case 5:
-					adjusted_qual = 27;
-					break;
-				case 6:
-					adjusted_qual = 33;
-					break;
-				case 7:
-					adjusted_qual = 37;
-					break;
-				case 8:
-				default:
-					adjusted_qual = 40;
-					break;
+		if (adjust_qualities) {
+			int adjusted_qual;
+			if (qual[i] <= 1) {
+				adjusted_qual = qual[i];
+			} else {
+				int qual_range = qual[i] / 5;
+				switch (qual_range) {
+					case 0:
+					case 1:
+						adjusted_qual = 6;
+						break;
+					case 2:
+					case 3:
+						adjusted_qual = 15;
+						break;
+					case 4:
+						adjusted_qual = 22;
+						break;
+					case 5:
+						adjusted_qual = 27;
+						break;
+					case 6:
+						adjusted_qual = 33;
+						break;
+					case 7:
+						adjusted_qual = 37;
+						break;
+					case 8:
+					default:
+						adjusted_qual = 40;
+						break;
+				}
 			}
+			avro_value_set_int(&element, adjusted_qual);
+		} else {
+			avro_value_set_int(&element, qual[i]); //Do not add ASCII offset ( + 33)
 		}
-		avro_value_set_int(&element, adjusted_qual);
-//		avro_value_set_int(&element, qual[i]); //Do not add ASCII offset ( + 33)
 	}
 	//avro_value_get_by_name(&read_alignment, "alignedSequence", &field, NULL);
 	avro_value_get_by_index(&read_alignment, 12, &field, NULL);
@@ -1322,7 +1328,7 @@ void add_read_alignment(avro_file_writer_t db, const bam1_t *bam1, const bam_hea
 	avro_datum_decref(read_alignment);
 }
 
-void bam2ga(const char *bam_filename, const char *avro_filename, const char *codec_name) {
+void bam2ga(const char *bam_filename, const char *avro_filename, const char *codec_name, unsigned char _adjust_qualities) {
 	int rval;
 	avro_file_reader_t dbreader;
 	avro_file_writer_t db;
@@ -1334,6 +1340,8 @@ void bam2ga(const char *bam_filename, const char *avro_filename, const char *cod
 
 	// delete the output filename if it exists
 	remove(avro_filename);
+
+	adjust_qualities = _adjust_qualities;
 
 	// create a new output filename
 	rval = avro_file_writer_create_with_codec

@@ -13,7 +13,7 @@ extern "C" {
  * Signature: (Ljava/lang/String;Ljava/lang/String;)V
  */
 JNIEXPORT void JNICALL Java_org_opencb_hpg_bigdata_core_NativeSupport_bam2ga
-  (JNIEnv *, jobject, jstring, jstring, jstring);
+  (JNIEnv *, jobject, jstring, jstring, jstring, jboolean);
 
 #ifdef __cplusplus
 }

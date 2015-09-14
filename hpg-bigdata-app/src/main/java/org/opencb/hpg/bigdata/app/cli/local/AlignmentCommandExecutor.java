@@ -147,7 +147,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
         System.out.println("\tjava.libary.path = " + System.getProperty("java.library.path"));
         System.loadLibrary("hpgbigdata");
         System.out.println("...done!");
-        new NativeSupport().bam2ga(input, output, compressionCodecName == null ? "snappy" : compressionCodecName);
+        new NativeSupport().bam2ga(input, output, compressionCodecName == null ? "snappy" : compressionCodecName, alignmentCommandOptions.convertAlignmentCommandOptions.adjustQuality);
 
         try {
             // header management: saved it in a separate file

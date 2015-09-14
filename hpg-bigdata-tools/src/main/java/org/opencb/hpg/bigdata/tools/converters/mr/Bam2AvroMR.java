@@ -49,10 +49,13 @@ import java.io.OutputStreamWriter;
 
 public class Bam2AvroMR {
 
+	public static final String ADJUST_QUALITY = "adjustQuality";
+
 	public static class Bam2GaMapper extends Mapper<LongWritable, SAMRecordWritable, ChunkKey, AvroValue<ReadAlignment>> {
 		@Override
 		public void map(LongWritable key, SAMRecordWritable value, Context context) throws IOException, InterruptedException {
 			ChunkKey newKey;
+			boolean adjustQuality = context.getConfiguration().getBoolean(ADJUST_QUALITY, false);
 
 			SAMRecord sam = value.get();
 			if (sam.getReadUnmappedFlag()) {
@@ -63,7 +66,7 @@ public class Bam2AvroMR {
 				long end_chunk = sam.getAlignmentEnd() / RegionDepth.CHUNK_SIZE;
 				newKey = new ChunkKey(sam.getReferenceName(), start_chunk);
 
-				SAMRecord2ReadAlignmentConverter converter = new SAMRecord2ReadAlignmentConverter();
+				SAMRecord2ReadAlignmentConverter converter = new SAMRecord2ReadAlignmentConverter(adjustQuality);
 				ReadAlignment readAlignment = converter.forward(sam);
 
 				//context.write(newKey, value);
@@ -81,11 +84,11 @@ public class Bam2AvroMR {
 		}
 	}
 
-	public static int run(String input, String output, String codecName) throws Exception {
-		return run(input, output, codecName, new Configuration());
+	public static int run(String input, String output, String codecName, boolean adjustQuality) throws Exception {
+		return run(input, output, codecName, adjustQuality, new Configuration());
 	}
 
-	public static int run(String input, String output, String codecName, Configuration conf) throws Exception {
+	public static int run(String input, String output, String codecName, boolean adjustQuality, Configuration conf) throws Exception {
 
 		// read header, and save sequence index/name in conf
 		final Path p = new Path(input);
@@ -104,6 +107,7 @@ public class Bam2AvroMR {
 
         // Avro problem fix
         job.getConfiguration().set("mapreduce.job.user.classpath.first", "true");
+		job.getConfiguration().set(ADJUST_QUALITY, Boolean.toString(adjustQuality));
 
         // We call setOutputSchema first so we can override the configuration
 		// parameters it sets
