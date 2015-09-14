@@ -159,4 +159,57 @@ public class ReadAlignmentUtils {
 		
 		return res.toString();
 	}
+
+	/**
+	 * Adjusts the quality value for optimized 8-level mapping quality scores.
+	 *
+	 * Quality range -> Mapped quality
+	 * 1     ->  1
+	 * 2-9   ->  6
+	 * 10-19 ->  15
+	 * 20-24 ->  22
+	 * 25-29 ->  27
+	 * 30-34 ->  33
+	 * 35-39 ->  27
+	 * >=40  ->  40
+	 *
+	 * Read more: http://www.illumina.com/documents/products/technotes/technote_understanding_quality_scores.pdf
+	 *
+	 */
+	public static int adjustQuality(int qual) {
+		final int adjustedQuality;
+
+		if (qual <= 1) {
+			adjustedQuality = qual;
+		} else {
+			int qualRange = qual / 5;
+			switch (qualRange) {
+				case 0:
+				case 1:
+					adjustedQuality = 6;
+					break;
+				case 2:
+				case 3:
+					adjustedQuality = 15;
+					break;
+				case 4:
+					adjustedQuality = 22;
+					break;
+				case 5:
+					adjustedQuality = 27;
+					break;
+				case 6:
+					adjustedQuality = 33;
+					break;
+				case 7:
+					adjustedQuality = 37;
+					break;
+				case 8:
+				default:
+					adjustedQuality = 40;
+					break;
+			}
+		}
+		return adjustedQuality;
+	}
 }
