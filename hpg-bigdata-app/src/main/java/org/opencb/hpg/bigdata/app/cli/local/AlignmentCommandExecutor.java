@@ -118,12 +118,16 @@ public class AlignmentCommandExecutor extends CommandExecutor {
                 SAMFileWriter writer = new SAMFileWriterFactory().makeBAMWriter(header, false, new File(output));
 
                 // main loop
+                int reads = 0;
                 SAMRecord samRecord;
                 SAMRecord2ReadAlignmentConverter converter = new SAMRecord2ReadAlignmentConverter();
                 for (ReadAlignment readAlignment : reader) {
                     samRecord = converter.backward(readAlignment);
                     samRecord.setHeader(header);
                     writer.addAlignment(samRecord);
+                    if (++reads % 100_000 == 0) {
+                        System.out.println("Converted " + reads + " reads");
+                    }
                 }
 
                 // close

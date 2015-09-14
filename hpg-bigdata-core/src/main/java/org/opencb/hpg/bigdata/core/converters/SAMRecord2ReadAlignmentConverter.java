@@ -195,17 +195,14 @@ public class SAMRecord2ReadAlignmentConverter implements Converter<SAMRecord, Re
 		final String[] fields = new String[1000];
 		final int numFields = StringUtil.split(samLine, fields, '\t');
 		if (numFields < NUM_REQUIRED_FIELDS) {
-			System.out.println("Not enough fields");
-			System.exit(-1);
+			throw new IllegalArgumentException("Not enough fields");
 		}
 		if (numFields == fields.length) {
-			System.out.println("Too many fields in SAM text record.");
-			System.exit(-1);
+			throw new IllegalArgumentException("Too many fields in SAM text record.");
 		}
 		for (int i = 0; i < numFields; ++i) {
-			if (fields[i].length() == 0) {
-				System.out.println("Empty field at position " + i + " (zero-based)");
-				System.exit(-1);
+			if (fields[i].isEmpty()) {
+				throw new IllegalArgumentException("Empty field at position " + i + " (zero-based)");
 			}
 		}
 
@@ -230,15 +227,14 @@ public class SAMRecord2ReadAlignmentConverter implements Converter<SAMRecord, Re
 		} else {
 			out.setBaseQualities(SAMRecord.NULL_QUALS);
 		}
-		
+
 		TextTagCodec tagCodec = new TextTagCodec();
 		for (int i = NUM_REQUIRED_FIELDS; i < numFields; ++i) {
 			Map.Entry<String, Object> entry = null;
 			try {
 				entry = tagCodec.decode(fields[i]);
 			} catch (SAMFormatException e) {
-				System.out.println(e.toString());
-				System.exit(-1);
+				throw new IllegalArgumentException("Unable to decode field \"" + fields[i] + "\"", e);
 			}
 			if (entry != null) {
 				if (entry.getValue() instanceof TagValueAndUnsignedArrayFlag) {
