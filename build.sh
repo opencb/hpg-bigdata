@@ -3,11 +3,11 @@ set -e
 mkdir -p build
 cp -r hpg-bigdata-app/app/* build/
 
-mvn -T 2 clean install -DskipTests
-
 cd hpg-bigdata-core/native
 ./build.sh
 cd ../..
+
+mvn -T 2 clean install -DskipTests
 
 PLATFORM=`uname -s`
 

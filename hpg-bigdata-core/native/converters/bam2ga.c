@@ -371,7 +371,42 @@ void add_read_alignment2(avro_file_writer_t db, const bam1_t *bam1, const bam_he
 
 		// quality
 		avro_value_append(&field, &element, NULL);
-		avro_value_set_int(&element, qual[i] + 33);
+
+		int adjusted_qual;
+
+		if (qual[i] <= 1) {
+			adjusted_qual = qual[i];
+		} else {
+			int qual_range = qual[i] / 5;
+			switch (qual_range) {
+				case 0:
+				case 1:
+					adjusted_qual = 6;
+					break;
+				case 2:
+				case 3:
+					adjusted_qual = 15;
+					break;
+				case 4:
+					adjusted_qual = 22;
+					break;
+				case 5:
+					adjusted_qual = 27;
+					break;
+				case 6:
+					adjusted_qual = 33;
+					break;
+				case 7:
+					adjusted_qual = 37;
+					break;
+				case 8:
+				default:
+					adjusted_qual = 40;
+					break;
+			}
+		}
+		avro_value_set_int(&element, adjusted_qual);
+//		avro_value_set_int(&element, qual[i]); //Do not add ASCII offset ( + 33)
 	}
 	//avro_value_get_by_name(&read_alignment, "alignedSequence", &field, NULL);
 	avro_value_get_by_index(&read_alignment, 12, &field, NULL);
