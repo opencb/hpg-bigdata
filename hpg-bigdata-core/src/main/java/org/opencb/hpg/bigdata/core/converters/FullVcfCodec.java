@@ -129,6 +129,9 @@ public class FullVcfCodec extends VCFCodec {
                             gb.PL(decodeInts(genotypeValues.get(i)));
                         } else if (gtKey.equals(VCFConstants.GENOTYPE_LIKELIHOODS_KEY)) {
                             gb.PL(GenotypeLikelihoods.fromGLField(genotypeValues.get(i)).getAsPLs());
+                            GenotypeLikelihoods glField = GenotypeLikelihoods.fromGLField(genotypeValues.get(i));
+							gb.PL(glField.getAsPLs());
+							gb.attribute(gtKey,genotypeValues.get(i));
                         } else if (gtKey.equals(VCFConstants.DEPTH_KEY)) {
                             gb.DP(Integer.valueOf(genotypeValues.get(i)));
                         } else {
