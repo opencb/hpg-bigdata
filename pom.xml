@@ -37,7 +37,7 @@
     <properties>
         <hpg.version>0.5-SNAPSHOT</hpg.version>
         <ga4gh.version>0.5.1</ga4gh.version>
-        <biodata.version>0.4-SNAPSHOT</biodata.version>
+        <biodata.version>0.6.0-SNAPSHOT</biodata.version>
         <datastore.version>0.4-SNAPSHOT</datastore.version>
         <commons-lib.version>3.0-SNAPSHOT</commons-lib.version>
         <hadoop.version>2.6.0</hadoop.version>
@@ -113,7 +113,21 @@
                 <artifactId>commons-lib</artifactId>
                 <version>${commons-lib.version}</version>
             </dependency>
-
+			<dependency>
+				<groupId>org.opencb.biodata</groupId>
+				<artifactId>biodata-tools</artifactId>
+				<version>${biodata.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.opencb.biodata</groupId>
+				<artifactId>biodata-models</artifactId>
+				<version>${biodata.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.opencb.biodata</groupId>
+				<artifactId>biodata-formats</artifactId>
+				<version>${biodata.version}</version>
+			</dependency>
 
             <dependency>
                 <groupId>org.apache.hbase</groupId>

@@ -16,9 +16,19 @@
 
 package org.opencb.hpg.bigdata.app.cli.local;
 
+import java.io.BufferedInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.List;
+
 import org.apache.commons.lang.StringUtils;
-import org.ga4gh.models.Variant;
+import org.opencb.biodata.models.variant.avro.Variant;
 import org.opencb.commons.io.DataReader;
 import org.opencb.commons.run.ParallelTaskRunner;
 import org.opencb.commons.utils.FileUtils;
@@ -28,16 +38,6 @@ import org.opencb.hpg.bigdata.core.converters.variation.VariantAvroEncoderTask;
 import org.opencb.hpg.bigdata.core.converters.variation.VariantConverterContext;
 import org.opencb.hpg.bigdata.core.io.VcfBlockIterator;
 import org.opencb.hpg.bigdata.core.io.avro.AvroFileWriter;
-
-import java.io.BufferedInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Created by imedina on 25/06/15.
@@ -122,7 +122,7 @@ public class VariantCommandExecutor extends CommandExecutor {
             ParallelTaskRunner<CharBuffer, ByteBuffer> runner =
                     new ParallelTaskRunner<>(
                             vcfDataReader,
-                            () -> new VariantAvroEncoderTask(variantConverterContext, iterator.getHeader(), iterator.getVersion()),
+                            () -> new VariantAvroEncoderTask(iterator.getHeader(), iterator.getVersion()),
                             avroFileWriter, config);
             long start = System.currentTimeMillis();
             runner.run();

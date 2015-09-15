@@ -36,8 +36,15 @@
 		</dependency>
 		<dependency>
 			<groupId>org.opencb.biodata</groupId>
+			<artifactId>biodata-tools</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.opencb.biodata</groupId>
 			<artifactId>biodata-models</artifactId>
-			<version>0.5-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>org.opencb.biodata</groupId>
+			<artifactId>biodata-formats</artifactId>
 		</dependency>
         <dependency>
             <groupId>org.opencb.commons</groupId>
@@ -71,23 +78,6 @@
             <artifactId>avro-ipc</artifactId>
             <version>1.7.7</version>
         </dependency>
-
-		<dependency>
-			<groupId>org.opencb.biodata</groupId>
-			<artifactId>biodata-tools</artifactId>
-			<version>0.5-SNAPSHOT</version>
-		</dependency>
-		<dependency>
-			<groupId>org.opencb.biodata</groupId>
-			<artifactId>biodata-models</artifactId>
-			<version>0.5-SNAPSHOT</version>
-		</dependency>
-		<dependency>
-			<groupId>org.opencb.biodata</groupId>
-			<artifactId>biodata-formats</artifactId>
-			<version>0.5-SNAPSHOT</version>
-		</dependency>
-
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>

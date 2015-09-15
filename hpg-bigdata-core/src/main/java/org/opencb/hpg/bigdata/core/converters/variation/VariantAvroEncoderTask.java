@@ -19,15 +19,6 @@ package org.opencb.hpg.bigdata.core.converters.variation;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFHeader;
 import htsjdk.variant.vcf.VCFHeaderVersion;
-import org.ga4gh.models.CallSet;
-import org.ga4gh.models.Variant;
-import org.ga4gh.models.VariantSet;
-import org.opencb.commons.run.ParallelTaskRunner;
-import org.opencb.hpg.bigdata.core.converters.FullVcfCodec;
-import org.opencb.hpg.bigdata.core.io.avro.AvroEncoder;
-import org.opencb.hpg.bigdata.core.utils.VariantContextBlockIterator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -38,17 +29,26 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.opencb.biodata.models.variant.avro.Variant;
+import org.opencb.biodata.models.variant.avro.VariantContextToVariantConverter;
+import org.opencb.commons.run.ParallelTaskRunner;
+import org.opencb.hpg.bigdata.core.converters.FullVcfCodec;
+import org.opencb.hpg.bigdata.core.io.avro.AvroEncoder;
+import org.opencb.hpg.bigdata.core.utils.VariantContextBlockIterator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Created by hpccoll1 on 10/04/15.
  */
 public class VariantAvroEncoderTask implements ParallelTaskRunner.Task<CharBuffer, ByteBuffer> {
     protected Logger logger = LoggerFactory.getLogger(this.getClass().toString());
 
-    private final VariantConverterContext variantConverterContext;
+//    private final VariantConverterContext variantConverterContext;
 
     private final VCFHeader header;
     private final AvroEncoder<Variant> encoder;
-    private final VariantContext2VariantConverter converter;
+    private final VariantContextToVariantConverter converter;
     private final VariantContextBlockIterator variantContextBlockIterator;
     private final FullVcfCodec codec;
 
@@ -59,12 +59,11 @@ public class VariantAvroEncoderTask implements ParallelTaskRunner.Task<CharBuffe
 
     int failConvert = 0;
 
-    public VariantAvroEncoderTask(VariantConverterContext variantConverterContext, VCFHeader header, VCFHeaderVersion version) {
-        this.variantConverterContext = variantConverterContext;
+    public VariantAvroEncoderTask(VCFHeader header, VCFHeaderVersion version) {
         this.header = header;
         codec = new FullVcfCodec();
         codec.setVCFHeader(this.header, version);
-        converter = new VariantContext2VariantConverter();
+        converter = new VariantContextToVariantConverter();
         encoder = new AvroEncoder<>(Variant.getClassSchema());
         variantContextBlockIterator = new VariantContextBlockIterator(codec);
     }
@@ -73,26 +72,7 @@ public class VariantAvroEncoderTask implements ParallelTaskRunner.Task<CharBuffe
     @Override
     public void pre() {
         int gtSize = header.getGenotypeSamples().size();
-
-
-        VariantSet vs = new VariantSet();
-//        vs.setId(file.getName());
-//        vs.setDatasetId(file.getName());
-//        vs.setReferenceSetId("test");
-        vs.setId("test"); //TODO
-        vs.setDatasetId("test");
-        vs.setReferenceSetId("test");
-
         List<String> genotypeSamples = header.getGenotypeSamples();
-        Genotype2CallSet gtConverter = new Genotype2CallSet();
-        for(int gtPos = 0; gtPos < gtSize; ++gtPos){
-            CallSet cs = gtConverter.forward(genotypeSamples.get(gtPos));
-            cs.getVariantSetIds().add(vs.getId());
-            variantConverterContext.getCallSetMap().put(cs.getName(), cs);
-//                callWriter.write(cs);
-        }
-
-        converter.setContext(variantConverterContext);
     }
 
     @Override
@@ -108,11 +88,11 @@ public class VariantAvroEncoderTask implements ParallelTaskRunner.Task<CharBuffe
         parseTime.addAndGet(System.nanoTime() - start);
 
 
-        // Convert to GA4GH Variants
+        // Convert to Variants
         start = System.nanoTime();
         for (VariantContext variantContext : variantContexts) {
             try {
-                convertedList.add(converter.forward(variantContext));
+                convertedList.add(converter.convert(variantContext));
             } catch (Exception e) {
                 e.printStackTrace();
                 failConvert++;
