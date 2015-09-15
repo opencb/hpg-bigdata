@@ -16,15 +16,14 @@
 
 package org.opencb.hpg.bigdata.tools.converters.mr;
 
-import htsjdk.samtools.SAMFileHeader;
-import htsjdk.samtools.SAMFileReader;
-import htsjdk.samtools.SAMRecord;
-import htsjdk.samtools.SAMSequenceRecord;
+import htsjdk.samtools.*;
 import htsjdk.samtools.seekablestream.SeekableStream;
+import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.mapred.AvroKey;
 import org.apache.avro.mapred.AvroValue;
 import org.apache.avro.mapreduce.AvroJob;
 import org.apache.avro.mapreduce.AvroKeyOutputFormat;
+import org.apache.avro.mapreduce.AvroOutputFormatBase;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -51,26 +50,36 @@ public class Bam2AvroMR {
 
 	public static final String ADJUST_QUALITY = "adjustQuality";
 
-	public static class Bam2GaMapper extends Mapper<LongWritable, SAMRecordWritable, ChunkKey, AvroValue<ReadAlignment>> {
+	public static class Bam2GaMapper extends Mapper<LongWritable, SAMRecordWritable, AvroKey<ReadAlignment>, NullWritable> {
+
+		private SAMRecord2ReadAlignmentConverter samRecord2ReadAlignmentConverter;
+
+		@Override
+		protected void setup(Context context) throws IOException, InterruptedException {
+			super.setup(context);
+			boolean adjustQuality = context.getConfiguration().getBoolean(ADJUST_QUALITY, false);
+			samRecord2ReadAlignmentConverter = new SAMRecord2ReadAlignmentConverter(adjustQuality);
+		}
+
 		@Override
 		public void map(LongWritable key, SAMRecordWritable value, Context context) throws IOException, InterruptedException {
-			ChunkKey newKey;
-			boolean adjustQuality = context.getConfiguration().getBoolean(ADJUST_QUALITY, false);
+//			ChunkKey newKey;
 
 			SAMRecord sam = value.get();
 			if (sam.getReadUnmappedFlag()) {
 				// do nothing
 				// newKey = new ChunkKey(new String("*"), (long) 0);
 			} else {
-				long start_chunk = sam.getAlignmentStart() / RegionDepth.CHUNK_SIZE;
-				long end_chunk = sam.getAlignmentEnd() / RegionDepth.CHUNK_SIZE;
-				newKey = new ChunkKey(sam.getReferenceName(), start_chunk);
+//				long start_chunk = sam.getAlignmentStart() / RegionDepth.CHUNK_SIZE;
+//				long end_chunk = sam.getAlignmentEnd() / RegionDepth.CHUNK_SIZE;
+//				newKey = new ChunkKey(sam.getReferenceName(), start_chunk);
 
-				SAMRecord2ReadAlignmentConverter converter = new SAMRecord2ReadAlignmentConverter(adjustQuality);
+				SAMRecord2ReadAlignmentConverter converter = samRecord2ReadAlignmentConverter;
 				ReadAlignment readAlignment = converter.forward(sam);
+				AvroKey<ReadAlignment> newKey = new AvroKey<>(readAlignment);
 
 				//context.write(newKey, value);
-				context.write(newKey, new AvroValue<>(readAlignment));
+				context.write(newKey, NullWritable.get());
 			}
 		}
 	}
@@ -92,8 +101,8 @@ public class Bam2AvroMR {
 
 		// read header, and save sequence index/name in conf
 		final Path p = new Path(input);
-		final SeekableStream sam = WrapSeekable.openPath(conf, p);
-		final SAMFileReader reader = new SAMFileReader(sam, false);
+		final SeekableStream seekableStream = WrapSeekable.openPath(conf, p);
+		final SamReader reader = SamReaderFactory.make().open(SamInputResource.of(seekableStream));
 		final SAMFileHeader header = reader.getFileHeader();
 		int i = 0;
 		SAMSequenceRecord sr;
@@ -127,11 +136,11 @@ public class Bam2AvroMR {
 		}
         job.setOutputFormatClass(AvroKeyOutputFormat.class);
 
-        job.setMapOutputKeyClass(ChunkKey.class);
-        job.setMapOutputValueClass(AvroValue.class);
+		job.setMapOutputKeyClass(AvroKey.class);
+		job.setMapOutputValueClass(Void.class);
 
 		job.setMapperClass(Bam2GaMapper.class);
-		job.setReducerClass(Bam2GaReducer.class);
+		job.setNumReduceTasks(0);
 
 		job.waitForCompletion(true);
 
