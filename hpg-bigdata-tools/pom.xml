@@ -13,13 +13,6 @@
 	<version>${hpg.version}</version>
 
 	<dependencies>
-
-		<dependency>
-			<groupId>com.google.protobuf</groupId>
-			<artifactId>protobuf-java</artifactId>
-			<version>2.5.0</version>
-		</dependency>
-
 		<dependency>
 			<groupId>org.opencb.hpg</groupId>
 			<artifactId>hpg-bigdata-core</artifactId>
@@ -40,11 +33,6 @@
 					<artifactId>htsjdk</artifactId>
 				</exclusion>
 			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>com.github.samtools</groupId>
-			<artifactId>htsjdk</artifactId>
-			<version>1.131</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.avro</groupId>

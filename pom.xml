@@ -160,6 +160,11 @@
                 <artifactId>hadoop-common</artifactId>
                 <version>${hadoop.version}</version>
             </dependency>
+			<dependency>
+				<groupId>com.google.protobuf</groupId>
+				<artifactId>protobuf-java</artifactId>
+				<version>3.0.0-beta-1</version>
+			</dependency>
 
             <!-- General dependencies -->
             <dependency>
