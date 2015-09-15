@@ -62,7 +62,7 @@ public class SequenceCommandExecutor extends CommandExecutor {
 	/**
 	 * Parse specific 'sequence' command options
 	 */
-	public void execute() {
+	public void execute() throws IOException {
 		String subCommand = sequenceCommandOptions.getParsedSubCommand();
 
         switch (subCommand) {
@@ -77,7 +77,7 @@ public class SequenceCommandExecutor extends CommandExecutor {
         }
 	}
 
-	private void convert() {
+	private void convert() throws IOException {
 		LocalCliOptionsParser.ConvertSequenceCommandOptions convertSequenceCommandOptions = sequenceCommandOptions.convertSequenceCommandOptions;
 
 		// get input parameters
@@ -105,11 +105,11 @@ public class SequenceCommandExecutor extends CommandExecutor {
 			writer.close();
 			os.close();
 		} catch (Exception e) {
-			e.printStackTrace();
+			throw e;
 		}
-    }
+	}
 
-	private void stats() {
+	private void stats() throws IOException {
 		LocalCliOptionsParser.StatsSequenceCommandOptions statsSequenceCommandOptions = sequenceCommandOptions.statsSequenceCommandOptions;
 
 		// get input parameters
@@ -142,7 +142,7 @@ public class SequenceCommandExecutor extends CommandExecutor {
             writer.close();
 
 		} catch (Exception e) {
-			e.printStackTrace();
+			throw e;
 		}
 	}
 }

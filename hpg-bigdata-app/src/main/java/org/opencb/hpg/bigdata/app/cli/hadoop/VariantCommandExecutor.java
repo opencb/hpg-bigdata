@@ -72,11 +72,7 @@ public class VariantCommandExecutor extends CommandExecutor {
 //            }
 
         } else {
-            try {
-                Vcf2AvroMR.run(input, output, compression);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            Vcf2AvroMR.run(input, output, compression);
         }
     }
 

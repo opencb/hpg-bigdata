@@ -53,10 +53,11 @@ public abstract class CommandExecutor {
          */
         this.appHome = System.getProperty("app.home", "/opt/hpg-bigdata");
 
-        if(logLevel != null && !logLevel.isEmpty()) {
-            // We must call to this method
-            setLogLevel(logLevel);
+        if (logLevel == null || logLevel.isEmpty()) {
+            logLevel = "info";
         }
+        // We must call to this method
+        setLogLevel(logLevel);
     }
 
     protected void init(String logLevel, boolean verbose, String configFile) {
@@ -70,10 +71,11 @@ public abstract class CommandExecutor {
          */
         this.appHome = System.getProperty("app.home", "/opt/hpg-bigdata");
 
-        if(logLevel != null && !logLevel.isEmpty()) {
-            // We must call to this method
-            setLogLevel(logLevel);
+        if (logLevel == null || logLevel.isEmpty()) {
+            logLevel = "info";
         }
+        // We must call to this method
+        setLogLevel(logLevel);
     }
 
     public abstract void execute() throws Exception;

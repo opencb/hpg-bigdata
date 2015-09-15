@@ -43,7 +43,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
     /**
      * Parse specific 'alignment' command options
      */
-    public void execute() {
+    public void execute() throws Exception {
         String subCommand = alignmentCommandOptions.getParsedSubCommand();
 
         switch (subCommand) {
@@ -70,7 +70,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
         }
     }
 
-    private void convert() {
+    private void convert() throws Exception {
         String input = alignmentCommandOptions.convertAlignmentCommandOptions.input;
         String output = alignmentCommandOptions.convertAlignmentCommandOptions.output;
         String compressionCodecName = alignmentCommandOptions.convertAlignmentCommandOptions.compression;
@@ -88,30 +88,22 @@ public class AlignmentCommandExecutor extends CommandExecutor {
                 new ParquetMR(ReadAlignment.getClassSchema()).run(output + "/part-r-00000.avro", output + "/to-parquet", compressionCodecName);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            throw e;
         }
     }
 
-    private void stats() {
+    private void stats() throws Exception {
         String input = alignmentCommandOptions.statsAlignmentCommandOptions.input;
         String output = alignmentCommandOptions.statsAlignmentCommandOptions.output;
 
         // prepare the HDFS output folder
-        FileSystem fs = null;
         Configuration conf = new Configuration();
-        try {
-            fs = FileSystem.get(conf);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        String outHdfsDirname = new String("" + new Date().getTime());
+        FileSystem fs = FileSystem.get(conf);
+
+        String outHdfsDirname = Long.toString(new Date().getTime());
 
         // run MapReduce job to compute stats
-        try {
-            ReadAlignmentStatsMR.run(input, outHdfsDirname);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        ReadAlignmentStatsMR.run(input, outHdfsDirname);
 
         // post-processing
         Path outFile = new Path(outHdfsDirname + "/part-r-00000");
@@ -127,30 +119,22 @@ public class AlignmentCommandExecutor extends CommandExecutor {
             }
             fs.delete(new Path(outHdfsDirname), true);
         } catch (IOException e) {
-            e.printStackTrace();
+            throw e;
         }
     }
 
-    private void depth() {
+    private void depth() throws Exception {
         String input = alignmentCommandOptions.depthAlignmentCommandOptions.input;
         String output = alignmentCommandOptions.depthAlignmentCommandOptions.output;
 
         // prepare the HDFS output folder
-        FileSystem fs = null;
         Configuration conf = new Configuration();
-        try {
-            fs = FileSystem.get(conf);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        String outHdfsDirname = new String("" + new Date().getTime());
+        FileSystem fs = FileSystem.get(conf);
+
+        String outHdfsDirname = Long.toString(new Date().getTime());
 
         // run MapReduce job to compute stats
-        try {
-            ReadAlignmentDepthMR.run(input, outHdfsDirname);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        ReadAlignmentDepthMR.run(input, outHdfsDirname);
 
         // post-processing
         Path outFile = new Path(outHdfsDirname + "/part-r-00000");
@@ -166,7 +150,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
             }
             fs.delete(new Path(outHdfsDirname), true);
         } catch (IOException e) {
-            e.printStackTrace();
+            throw e;
         }
     }
 }
