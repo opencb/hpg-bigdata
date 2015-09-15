@@ -44,6 +44,11 @@ public class VariantCommandExecutor extends CommandExecutor {
                         variantCommandOptions.convertVariantCommandOptions.commonOptions.verbose,
                         variantCommandOptions.convertVariantCommandOptions.commonOptions.conf);
                 convert();
+            case "index":
+                init(variantCommandOptions.indexVariantCommandOptions.commonOptions.logLevel,
+                        variantCommandOptions.indexVariantCommandOptions.commonOptions.verbose,
+                        variantCommandOptions.indexVariantCommandOptions.commonOptions.conf);
+                index();
                 break;
         }
     }
@@ -78,6 +83,10 @@ public class VariantCommandExecutor extends CommandExecutor {
                 e.printStackTrace();
             }
         }
+    }
+
+    private void index() throws Exception {
+        System.out.println("Hello guys!!");
     }
 
 }
