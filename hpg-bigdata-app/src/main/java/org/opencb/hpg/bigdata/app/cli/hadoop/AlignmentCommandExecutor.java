@@ -82,7 +82,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
 
         // run MapReduce job to convert to GA4GH/Avro/Parquet model
         try {
-            Bam2AvroMR.run(input, output, compressionCodecName);
+            Bam2AvroMR.run(input, output, compressionCodecName, alignmentCommandOptions.convertAlignmentCommandOptions.adjustQuality);
             // Parquet runs from Avro file
             if (alignmentCommandOptions.convertAlignmentCommandOptions.toParquet) {
                 new ParquetMR(ReadAlignment.getClassSchema()).run(output + "/part-r-00000.avro", output + "/to-parquet", compressionCodecName);

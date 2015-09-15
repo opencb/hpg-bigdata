@@ -24,10 +24,7 @@ import htsjdk.samtools.TagValueAndUnsignedArrayFlag;
 import htsjdk.samtools.TextTagCodec;
 import htsjdk.samtools.util.StringUtil;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.ga4gh.models.CigarOperation;
 import org.ga4gh.models.CigarUnit;
@@ -53,6 +50,15 @@ public class SAMRecord2ReadAlignmentConverter implements Converter<SAMRecord, Re
 	private static final int QUAL_COL = 10;
 
 	private static final int NUM_REQUIRED_FIELDS = 11;
+	private final boolean adjustQuality;
+
+	public SAMRecord2ReadAlignmentConverter() {
+		adjustQuality = true;
+	}
+
+	public SAMRecord2ReadAlignmentConverter(boolean adjustQuality) {
+		this.adjustQuality = adjustQuality;
+	}
 
 
 	@Override
@@ -95,7 +101,7 @@ public class SAMRecord2ReadAlignmentConverter implements Converter<SAMRecord, Re
 
 		// alignment
 		Position position = new Position();
-		position.setPosition((long) in.getAlignmentStart());
+		position.setPosition((long) in.getAlignmentStart() - 1); //from 1-based to 0-based
 		position.setReferenceName(in.getReferenceName());
 		position.setSequenceId("");
 		position.setStrand(in.getReadNegativeStrandFlag() ? Strand.NEG_STRAND : Strand.POS_STRAND);
@@ -148,10 +154,18 @@ public class SAMRecord2ReadAlignmentConverter implements Converter<SAMRecord, Re
 		CharSequence alignedSequence = in.getReadString();
 
 		// aligned quality
-		int size = in.getBaseQualityString().length();		
-		List<Integer> alignedQuality = new ArrayList<Integer>(size);
-		for(int i=0 ; i < size; i++) {
-			alignedQuality.add((int) in.getBaseQualityString().charAt(i));
+		byte[] baseQualities = in.getBaseQualities();
+		int size = baseQualities.length;
+		List<Integer> alignedQuality = new ArrayList<>(size);
+		if (adjustQuality) {
+			for (byte baseQuality : baseQualities) {
+				int adjustedQuality = ReadAlignmentUtils.adjustQuality(baseQuality);
+				alignedQuality.add(adjustedQuality);
+			}
+		} else {
+			for (byte baseQuality : baseQualities) {
+				alignedQuality.add((int) baseQuality);
+			}
 		}
 
 		// next mate position
@@ -170,9 +184,9 @@ public class SAMRecord2ReadAlignmentConverter implements Converter<SAMRecord, Re
 		for (SAMTagAndValue tv : attributes) {
 			List<CharSequence> list = new ArrayList<CharSequence>();
 			if (tv.value instanceof String) {
-				list.add("Z");	
+				list.add("Z");
 			} else if (tv.value instanceof Float) {
-				list.add("f");	
+				list.add("f");
 			} else {
 				list.add("i");
 			}
@@ -180,7 +194,7 @@ public class SAMRecord2ReadAlignmentConverter implements Converter<SAMRecord, Re
 			info.put(tv.tag, list);
 		}
 
-		ReadAlignment out = new ReadAlignment(id, readGroupId, fragmentName, properPlacement, duplicateFragment, numberReads, 
+		ReadAlignment out = new ReadAlignment(id, readGroupId, fragmentName, properPlacement, duplicateFragment, numberReads,
 				fragmentLength, readNumber, failedVendorQualityChecks, alignment, secondaryAlignment,
 				supplementaryAlignment, alignedSequence, alignedQuality, nextMatePosition, info);
 
@@ -195,17 +209,14 @@ public class SAMRecord2ReadAlignmentConverter implements Converter<SAMRecord, Re
 		final String[] fields = new String[1000];
 		final int numFields = StringUtil.split(samLine, fields, '\t');
 		if (numFields < NUM_REQUIRED_FIELDS) {
-			System.out.println("Not enough fields");
-			System.exit(-1);
+			throw new IllegalArgumentException("Not enough fields");
 		}
 		if (numFields == fields.length) {
-			System.out.println("Too many fields in SAM text record.");
-			System.exit(-1);
+			throw new IllegalArgumentException("Too many fields in SAM text record.");
 		}
 		for (int i = 0; i < numFields; ++i) {
-			if (fields[i].length() == 0) {
-				System.out.println("Empty field at position " + i + " (zero-based)");
-				System.exit(-1);
+			if (fields[i].isEmpty()) {
+				throw new IllegalArgumentException("Empty field at position " + i + " (zero-based)");
 			}
 		}
 
@@ -230,15 +241,14 @@ public class SAMRecord2ReadAlignmentConverter implements Converter<SAMRecord, Re
 		} else {
 			out.setBaseQualities(SAMRecord.NULL_QUALS);
 		}
-		
+
 		TextTagCodec tagCodec = new TextTagCodec();
 		for (int i = NUM_REQUIRED_FIELDS; i < numFields; ++i) {
 			Map.Entry<String, Object> entry = null;
 			try {
 				entry = tagCodec.decode(fields[i]);
 			} catch (SAMFormatException e) {
-				System.out.println(e.toString());
-				System.exit(-1);
+				throw new IllegalArgumentException("Unable to decode field \"" + fields[i] + "\"", e);
 			}
 			if (entry != null) {
 				if (entry.getValue() instanceof TagValueAndUnsignedArrayFlag) {

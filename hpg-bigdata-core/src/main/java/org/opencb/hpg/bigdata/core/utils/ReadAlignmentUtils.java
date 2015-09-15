@@ -25,13 +25,13 @@ public class ReadAlignmentUtils {
 	private static final String FIELD_SEPARATOR = "\t";
 
 	public static String getSamString(ReadAlignment ra) {
-		String res = new String();
+		StringBuilder res = new StringBuilder();
 
 		LinearAlignment la = (LinearAlignment) ra.getAlignment();
 
 		// id
-		res = ra.getId().toString();
-		res += FIELD_SEPARATOR;
+		res.append(ra.getId().toString());
+		res.append(FIELD_SEPARATOR);
 
 		// flags
 		int flags = 0;
@@ -58,98 +58,158 @@ public class ReadAlignmentUtils {
 		if (ra.getSecondaryAlignment()) flags |= 0x100;
 		if (ra.getFailedVendorQualityChecks()) flags |= 0x200;
 		if (ra.getDuplicateFragment()) flags |= 0x400;
-		res += ("" + flags);
-		res += FIELD_SEPARATOR;
+		res.append(flags);
+		res.append(FIELD_SEPARATOR);
 
-		// chromosome
-		res += (la.getPosition().getReferenceName().toString());
-		res += FIELD_SEPARATOR;
+		if (la == null) {
+			res.append("*").append(FIELD_SEPARATOR);        // chromosome
+			res.append("0").append(FIELD_SEPARATOR);        // position
+			res.append("0").append(FIELD_SEPARATOR);        // mapping quality
+			res.append(ra.getAlignedSequence().length()).append("M").append(FIELD_SEPARATOR);    // cigar
+		} else {
+			// chromosome
+			res.append(la.getPosition().getReferenceName());
+			res.append(FIELD_SEPARATOR);
 
-		// position
-		res += ("" + la.getPosition().getPosition());
-		res += FIELD_SEPARATOR;
+			// position
+			res.append(la.getPosition().getPosition() + 1);	//0-based to 1-based
+			res.append(FIELD_SEPARATOR);
 
-		// mapping quality
-		res += ("" + la.getMappingQuality());
-		res += FIELD_SEPARATOR;
+			// mapping quality
+			res.append(la.getMappingQuality());
+			res.append(FIELD_SEPARATOR);
 
-		// cigar
-		for(CigarUnit e: la.getCigar()) {
-			res += ("" + e.getOperationLength());
-			switch (e.getOperation()) {
-			case ALIGNMENT_MATCH:
-				res += "M";
-				break;
-			case INSERT:
-				res += "I";
-				break;
-			case DELETE:
-				res += "D";
-				break;
-			case SKIP:
-				res += "N";
-				break;
-			case CLIP_SOFT:
-				res += "S";
-				break;
-			case CLIP_HARD:
-				res += "H";
-				break;
-			case PAD:
-				res += "P";
-				break;
-			case SEQUENCE_MATCH:
-				res += "=";
-				break;
-			case SEQUENCE_MISMATCH:
-				res += "X";
-				break;
+			// cigar
+			for (CigarUnit e : la.getCigar()) {
+				res.append(e.getOperationLength());
+				switch (e.getOperation()) {
+					case ALIGNMENT_MATCH:
+						res.append("M");
+						break;
+					case INSERT:
+						res.append("I");
+						break;
+					case DELETE:
+						res.append("D");
+						break;
+					case SKIP:
+						res.append("N");
+						break;
+					case CLIP_SOFT:
+						res.append("S");
+						break;
+					case CLIP_HARD:
+						res.append("H");
+						break;
+					case PAD:
+						res.append("P");
+						break;
+					case SEQUENCE_MATCH:
+						res.append("=");
+						break;
+					case SEQUENCE_MISMATCH:
+						res.append("X");
+						break;
+				}
 			}
+			res.append(FIELD_SEPARATOR);
 		}
-		res += FIELD_SEPARATOR;
 
-		// mate chromosome 
+		// mate chromosome
 		if (ra.getNextMatePosition() != null) {
-			if (ra.getNextMatePosition().getReferenceName().equals(la.getPosition().getReferenceName())) {
-				res += "=";
+			if (la != null && ra.getNextMatePosition().getReferenceName().equals(la.getPosition().getReferenceName())) {
+				res.append("=");
 			} else {
-				res += ra.getNextMatePosition().getReferenceName().toString();
+				res.append(ra.getNextMatePosition().getReferenceName());
 			}
 		} else {
-			res += "";
+			res.append("*");
 		}
-		res += FIELD_SEPARATOR;
+		res.append(FIELD_SEPARATOR);
 
 		// mate position
 		if (ra.getNextMatePosition() != null) {
-			res += ("" + ra.getNextMatePosition().getPosition());
+			res.append(ra.getNextMatePosition().getPosition());
 		} else {
-			res += ("" + 0);
+			res.append(0);
 		}
-		res += FIELD_SEPARATOR;
+		res.append(FIELD_SEPARATOR);
 
 		// tlen
-		res += ("" + ra.getFragmentLength());
-		res += FIELD_SEPARATOR;
+		res.append(ra.getFragmentLength());
+		res.append(FIELD_SEPARATOR);
 
 		// sequence
-		res += ra.getAlignedSequence().toString();
-		res += FIELD_SEPARATOR;
+		res.append(ra.getAlignedSequence().toString());
+		res.append(FIELD_SEPARATOR);
 
 		// quality
 		for(int v: ra.getAlignedQuality()) {
-			res += (""  + (char) v);
+			res.append((char) (v + 33));	//Add ASCII offset
 		}
 
 		// optional fields
 		for (CharSequence key: ra.getInfo().keySet()) {
-			res += FIELD_SEPARATOR;
-			res += key.toString();
-			for(CharSequence val: ra.getInfo().get(key)) {
-				res += (":" + val.toString());
+			res.append(FIELD_SEPARATOR);
+			res.append(key.toString());
+			for (CharSequence val : ra.getInfo().get(key)) {
+				res.append((":" + val.toString()));
 			}
 		}
 		
-		return res;
+		return res.toString();
+	}
+
+	/**
+	 * Adjusts the quality value for optimized 8-level mapping quality scores.
+	 *
+	 * Quality range -> Mapped quality
+	 * 1     ->  1
+	 * 2-9   ->  6
+	 * 10-19 ->  15
+	 * 20-24 ->  22
+	 * 25-29 ->  27
+	 * 30-34 ->  33
+	 * 35-39 ->  27
+	 * >=40  ->  40
+	 *
+	 * Read more: http://www.illumina.com/documents/products/technotes/technote_understanding_quality_scores.pdf
+	 *
+	 */
+	public static int adjustQuality(int qual) {
+		final int adjustedQuality;
+
+		if (qual <= 1) {
+			adjustedQuality = qual;
+		} else {
+			int qualRange = qual / 5;
+			switch (qualRange) {
+				case 0:
+				case 1:
+					adjustedQuality = 6;
+					break;
+				case 2:
+				case 3:
+					adjustedQuality = 15;
+					break;
+				case 4:
+					adjustedQuality = 22;
+					break;
+				case 5:
+					adjustedQuality = 27;
+					break;
+				case 6:
+					adjustedQuality = 33;
+					break;
+				case 7:
+					adjustedQuality = 37;
+					break;
+				case 8:
+				default:
+					adjustedQuality = 40;
+					break;
+			}
+		}
+		return adjustedQuality;
 	}
 }

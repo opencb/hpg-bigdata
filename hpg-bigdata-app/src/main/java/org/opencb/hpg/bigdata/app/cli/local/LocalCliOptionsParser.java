@@ -238,8 +238,11 @@ public class LocalCliOptionsParser {
         //@Parameter(names = {"--to-avro"}, description = "", required = false)
         //public boolean toAvro;
 
-        @Parameter(names = {"--to-bam"}, description = "Convert back to BAM fomat. In this case, the input file has to be saved in the GA4GH/Avro model, and the output file will be in BAM format", required = false)
+        @Parameter(names = {"--to-bam"}, description = "Convert back to BAM format. In this case, the input file has to be saved in the GA4GH/Avro model, and the output file will be in BAM format", required = false)
         public boolean toBam;
+
+        @Parameter(names = {"--adjust-quality"}, description = "Compress quality field using 8 quality levels. Will loss information.", required = false)
+        public boolean adjustQuality;
     }
 
     @Parameters(commandNames = {"stats"}, commandDescription = "Compute some stats for a file containing alignments according to the GA4GH/Avro model")

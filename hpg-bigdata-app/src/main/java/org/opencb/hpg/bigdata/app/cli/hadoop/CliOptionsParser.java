@@ -263,6 +263,9 @@ public class CliOptionsParser {
 
         //@Parameter(names = {"--to-fastq"}, description = "", required = false)
         //public boolean toFastq;
+
+        @Parameter(names = {"--adjust-quality"}, description = "Compress quality field using 8 quality levels. Will loss information.", required = false)
+        public boolean adjustQuality;
     }
 
     @Parameters(commandNames = {"stats"}, commandDescription = "Compute some stats for a file containing alignments according to the GA4GH/Avro model")
