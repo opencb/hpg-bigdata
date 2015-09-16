@@ -34,6 +34,8 @@ import org.opencb.hpg.bigdata.tools.io.RegionDepthWritable;
 
 public class ReadAlignmentDepthMR {
 
+	public static final String OUTPUT_SUMMARY_JSON = "summary.depth.json";
+
 	public static class ReadAlignmentDepthMapper extends Mapper<AvroKey<ReadAlignment>, NullWritable, ChunkKey, RegionDepthWritable> {
 
 		@Override
@@ -45,7 +47,7 @@ public class ReadAlignmentDepthMR {
 			RegionDepthWritable newValue;
 
 			if (la == null) {
-				newKey = new ChunkKey(new String("*"), (long) 0);
+				newKey = new ChunkKey("*", 0L);
 				newValue = new RegionDepthWritable(new RegionDepth("*", 0, 0, 0));
 			} else {
 				long start_chunk = la.getPosition().getPosition() / RegionDepth.CHUNK_SIZE;
@@ -70,6 +72,7 @@ public class ReadAlignmentDepthMR {
 
 	public static class ReadAlignmentDepthCombiner extends Reducer<ChunkKey, RegionDepthWritable, ChunkKey, RegionDepthWritable> {
 
+		@Override
 		public void reduce(ChunkKey key, Iterable<RegionDepthWritable> values, Context context) throws IOException, InterruptedException {
             RegionDepth regionDepth;
             if (key.getName().equals("*")) {
@@ -90,16 +93,18 @@ public class ReadAlignmentDepthMR {
 		public HashMap<String, HashMap<Long, RegionDepth>> regions = null;
 		public HashMap<String, Long> accDepth = null;
 
+		@Override
 		public void setup(Context context) throws IOException, InterruptedException {
 			regions = new HashMap<>();
 			accDepth = new HashMap<>();
 		}
 
+		@Override
 		public void cleanup(Context context) throws IOException, InterruptedException {
 			double accLen = 0, accDep = 0;
 				
 			FileSystem fs = FileSystem.get(context.getConfiguration());
-			FSDataOutputStream out = fs.create(new Path(context.getConfiguration().get("summary.depth.json")));
+			FSDataOutputStream out = fs.create(new Path(context.getConfiguration().get(OUTPUT_SUMMARY_JSON)));
 			out.writeChars("{ \"chroms\": [");
 			int size = accDepth.size();
 			int i = 0;
@@ -120,6 +125,7 @@ public class ReadAlignmentDepthMR {
 			//System.out.println("Depth = " + (accDep / accLen));
 		}
 
+		@Override
 		public void reduce(ChunkKey key, Iterable<RegionDepthWritable> values, Context context) throws IOException, InterruptedException {
 			if (context.getConfiguration().get(key.getName()) == null) {
 				System.out.println("skipping unknown key (name, chunk) = (" + key.getName() + ", " + key.getChunk() + ")");
@@ -212,7 +218,7 @@ public class ReadAlignmentDepthMR {
 			}
 		}
 
-		conf.set("summary.depth.json", output + ".summary.depth.json");
+		conf.set(OUTPUT_SUMMARY_JSON, output + ".summary.json");
 		
 		Job job = Job.getInstance(conf, "ReadAlignmentDepthMR");
 		job.setJarByClass(ReadAlignmentDepthMR.class);

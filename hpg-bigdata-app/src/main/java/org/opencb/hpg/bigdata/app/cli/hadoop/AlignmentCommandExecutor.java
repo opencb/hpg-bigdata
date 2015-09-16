@@ -85,7 +85,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
             Bam2AvroMR.run(input, output, compressionCodecName, alignmentCommandOptions.convertAlignmentCommandOptions.adjustQuality);
             // Parquet runs from Avro file
             if (alignmentCommandOptions.convertAlignmentCommandOptions.toParquet) {
-                new ParquetMR(ReadAlignment.getClassSchema()).run(output + "/part-r-00000.avro", output + "/to-parquet", compressionCodecName);
+                new ParquetMR(ReadAlignment.getClassSchema()).run(output, output + ".parquet", compressionCodecName);
             }
         } catch (Exception e) {
             throw e;
@@ -131,26 +131,29 @@ public class AlignmentCommandExecutor extends CommandExecutor {
         Configuration conf = new Configuration();
         FileSystem fs = FileSystem.get(conf);
 
-        String outHdfsDirname = Long.toString(new Date().getTime());
-
         // run MapReduce job to compute stats
-        ReadAlignmentDepthMR.run(input, outHdfsDirname);
+        ReadAlignmentDepthMR.run(input, output);
 
-        // post-processing
-        Path outFile = new Path(outHdfsDirname + "/part-r-00000");
-
-        try {
-            if (!fs.exists(outFile)) {
-                logger.error("Stats results file not found: {}", outFile.getName());
-            } else {
-                String outRawFileName =  output + "/depth.txt";
-                fs.copyToLocalFile(outFile, new Path(outRawFileName));
-
-                //Utils.parseStatsFile(outRawFileName, out);
-            }
-            fs.delete(new Path(outHdfsDirname), true);
-        } catch (IOException e) {
-            throw e;
-        }
+//        String tmpOutDirName = output + "_" + Long.toString(new Date().getTime());
+//
+//        // run MapReduce job to compute stats
+//        ReadAlignmentDepthMR.run(input, tmpOutDirName);
+//
+//        // post-processing
+//        Path depthOutFile = new Path(tmpOutDirName + "/part-r-00000");
+//
+//        try {
+//            if (!fs.exists(depthOutFile)) {
+//                logger.error("Stats results file not found: {}", depthOutFile.getName());
+//            } else {
+//                String outRawFileName =  output + ".depth.txt";
+//                fs.copyToLocalFile(depthOutFile, new Path(outRawFileName));
+//
+//                //Utils.parseStatsFile(outRawFileName, out);
+//            }
+//            fs.delete(new Path(tmpOutDirName), true);
+//        } catch (IOException e) {
+//            throw e;
+//        }
     }
 }
