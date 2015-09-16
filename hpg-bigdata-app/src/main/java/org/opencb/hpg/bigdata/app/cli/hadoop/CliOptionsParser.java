@@ -68,7 +68,7 @@ public class CliOptionsParser {
         jcommander.addCommand("variant", sequenceCommandOptions);
         JCommander variantSubCommands = jcommander.getCommands().get("variant");
         variantSubCommands.addCommand("convert", variantCommandOptions.convertVariantCommandOptions);
-        variantSubCommands.addCommand("load", variantCommandOptions.loadVariantCommandOptions);
+        variantSubCommands.addCommand("index", variantCommandOptions.indexVariantCommandOptions);
 
 //        convertCommandOptions = new ConvertCommandOptions();
     }
@@ -307,11 +307,11 @@ public class CliOptionsParser {
     public class VariantCommandOptions extends CommandOptions {
 
         ConvertVariantCommandOptions convertVariantCommandOptions;
-        LoadVariantCommandOptions loadVariantCommandOptions;
+        IndexVariantCommandOptions indexVariantCommandOptions;
 
         public VariantCommandOptions() {
             this.convertVariantCommandOptions = new ConvertVariantCommandOptions();
-            this.loadVariantCommandOptions = new LoadVariantCommandOptions();
+            this.indexVariantCommandOptions = new IndexVariantCommandOptions();
         }
     }
 
@@ -341,8 +341,8 @@ public class CliOptionsParser {
 
     }
 
-    @Parameters(commandNames = {"load"}, commandDescription = "Load avro gVCF/VCF files into different NoSQL, only HBase implemented so far")
-    public class LoadVariantCommandOptions {
+    @Parameters(commandNames = {"index"}, commandDescription = "Load avro gVCF/VCF files into different NoSQL, only HBase implemented so far")
+    public class IndexVariantCommandOptions {
 
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
@@ -350,16 +350,16 @@ public class CliOptionsParser {
         @Parameter(names = {"-i", "--input"}, description = "GA4GH Avro input file", required = true, arity = 1)
         public String input = null;
 
-        @Parameter(names = {"-d", "--database"}, description = "Database to load data, values: hbase", required = false, arity = 1)
+        @Parameter(names = {"-t", "--type"}, description = "Type can be: vcf, bed, or gff", arity = 1)
+        public String type = "vcf";
+
+        @Parameter(names = {"-se", "--storage-engine"}, description = "Database to load data, values: hbase, hive or impala", arity = 1)
         public String database = "hbase";
 
-        @Parameter(names = {"-r", "--regions"}, description = "Database to load data, values: hbase", required = false, arity = 1)
+        @Parameter(names = {"-r", "--regions"}, description = "Database to load data, values: hbase", arity = 1)
         public String regions = null;
 
-        @Parameter(names = {"-e", "--expand"}, description = "Expand and insert gVCF non-variant regions", required = false, arity = 1)
-        public boolean includeNonVariants;
-
-        @Parameter(names = {"-C", "--credentials"}, description = "Database credentials: username, password, host, port", required = false, arity = 1)
+        @Parameter(names = {"--credentials"}, description = "Database credentials: username, password, host, port", arity = 1)
         public String credentials;
 
     }

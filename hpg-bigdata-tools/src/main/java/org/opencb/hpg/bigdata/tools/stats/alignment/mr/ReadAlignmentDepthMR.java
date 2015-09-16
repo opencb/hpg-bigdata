@@ -8,6 +8,7 @@ import htsjdk.samtools.util.StringLineReader;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 
 import org.apache.avro.mapred.AvroKey;
 import org.apache.avro.mapreduce.AvroJob;
@@ -40,7 +41,7 @@ public class ReadAlignmentDepthMR {
 
 		@Override
 		public void map(AvroKey<ReadAlignment> key, NullWritable value, Context context) throws IOException, InterruptedException {
-			ReadAlignment ra = (ReadAlignment) key.datum();
+			ReadAlignment ra = key.datum();
 			LinearAlignment la = (LinearAlignment) ra.getAlignment();
 
 			ChunkKey newKey;
@@ -48,25 +49,20 @@ public class ReadAlignmentDepthMR {
 
 			if (la == null) {
 				newKey = new ChunkKey("*", 0L);
+				// unmapped read
 				newValue = new RegionDepthWritable(new RegionDepth("*", 0, 0, 0));
-			} else {
-				long start_chunk = la.getPosition().getPosition() / RegionDepth.CHUNK_SIZE;
-				long end_chunk = (la.getPosition().getPosition() + ra.getAlignedSequence().length())  / RegionDepth.CHUNK_SIZE;
-				if (start_chunk != end_chunk) {
-					//System.out.println("-----------> chunks (start, end) = (" + start_chunk + ", " + end_chunk + ")");
-					//System.exit(-1);
-				}
-				newKey = new ChunkKey(la.getPosition().getReferenceName().toString(), start_chunk);
-
-				RegionDepthCalculator calculator = new RegionDepthCalculator();
-				RegionDepth regionDepth = calculator.compute(ra);
-				newValue = new RegionDepthWritable(regionDepth);
-				//newValue = new RegionDepthWritable(newKey.getName(), la.getPosition().getPosition(), start_chunk, ra.getAlignedSequence().length());
-				//newValue.update(la.getPosition().getPosition(), la.getCigar());
-
-				//System.out.println("map : " + newKey.toString() + ", chrom. length = " + context.getConfiguration().get(newKey.getName()));
+				context.write(newKey, newValue);
+				return;
 			}
-			context.write(newKey, newValue);
+
+			RegionDepthCalculator calculator = new RegionDepthCalculator();
+			List<RegionDepth> regions = calculator.computeAsList(ra);
+
+			for (RegionDepth region: regions) {
+				newKey = new ChunkKey(region.chrom, region.chunk);
+				newValue = new RegionDepthWritable(region);
+				context.write(newKey, newValue);
+			}
 		}
 	}
 
@@ -81,7 +77,7 @@ public class ReadAlignmentDepthMR {
                 regionDepth = new RegionDepth(key.getName(), key.getChunk() * RegionDepth.CHUNK_SIZE, key.getChunk(), RegionDepth.CHUNK_SIZE);
                 RegionDepthCalculator calculator = new RegionDepthCalculator();
                 for (RegionDepthWritable value : values) {
-                    calculator.update(value.getRegionDepth(), regionDepth);
+                    calculator.updateChunk(value.getRegionDepth(), key.getChunk(), regionDepth);
                 }
             }
 			context.write(key, new RegionDepthWritable(regionDepth));
@@ -90,13 +86,11 @@ public class ReadAlignmentDepthMR {
 
 	public static class ReadAlignmentDepthReducer extends Reducer<ChunkKey, RegionDepthWritable, Text, NullWritable> {
 
-		public HashMap<String, HashMap<Long, RegionDepth>> regions = null;
-		public HashMap<String, Long> accDepth = null;
+		public HashMap<String, Long> chromAccDepth = null;
 
 		@Override
 		public void setup(Context context) throws IOException, InterruptedException {
-			regions = new HashMap<>();
-			accDepth = new HashMap<>();
+			chromAccDepth = new HashMap<>();
 		}
 
 		@Override
@@ -104,19 +98,21 @@ public class ReadAlignmentDepthMR {
 			double accLen = 0, accDep = 0;
 				
 			FileSystem fs = FileSystem.get(context.getConfiguration());
-			FSDataOutputStream out = fs.create(new Path(context.getConfiguration().get(OUTPUT_SUMMARY_JSON)));
+
+			Path outPath = new Path(context.getConfiguration().get(OUTPUT_SUMMARY_JSON));
+			FSDataOutputStream out = fs.create(outPath);
 			out.writeChars("{ \"chroms\": [");
-			int size = accDepth.size();
+			int size = chromAccDepth.size();
 			int i = 0;
-			for(String name : accDepth.keySet()) {
-				out.writeChars("{\"name\": \"" + name + "\", \"length\": " + context.getConfiguration().get(name) + ", \"acc\": " + accDepth.get(name) + ", \"depth\": " + (1.0f * accDepth.get(name) / Integer.parseInt(context.getConfiguration().get(name))) + "}");
+			for(String name : chromAccDepth.keySet()) {
+				out.writeChars("{\"name\": \"" + name + "\", \"length\": " + context.getConfiguration().get(name) + ", \"acc\": " + chromAccDepth.get(name) + ", \"depth\": " + (1.0f * chromAccDepth.get(name) / Integer.parseInt(context.getConfiguration().get(name))) + "}");
 				if (++i < size ) {
 					out.writeChars(", ");
 				}
-				//out.writeChars(name + "\t" + context.getConfiguration().get(name) + "\t" + accDepth.get(name) + "\t" + (1.0f * accDepth.get(name) / Integer.parseInt(context.getConfiguration().get(name))) + "\n");
-				//System.out.println("name : " + name + ", length : " + context.getConfiguration().get(name) + ", accDepth = " + accDepth.get(name) + ", depth = " + (1.0f * accDepth.get(name) / Integer.parseInt(context.getConfiguration().get(name))));
+				//out.writeChars(name + "\t" + context.getConfiguration().get(name) + "\t" + chromDepth.get(name) + "\t" + (1.0f * chromDepth.get(name) / Integer.parseInt(context.getConfiguration().get(name))) + "\n");
+				//System.out.println("name : " + name + ", length : " + context.getConfiguration().get(name) + ", chromDepth = " + chromDepth.get(name) + ", depth = " + (1.0f * chromDepth.get(name) / Integer.parseInt(context.getConfiguration().get(name))));
 				accLen += Integer.parseInt(context.getConfiguration().get(name));
-				accDep += accDepth.get(name);
+				accDep += chromAccDepth.get(name);
 			}
 			out.writeChars("], \"depth\": " + (accDep / accLen));
 			out.writeChars("}");
@@ -131,63 +127,23 @@ public class ReadAlignmentDepthMR {
 				System.out.println("skipping unknown key (name, chunk) = (" + key.getName() + ", " + key.getChunk() + ")");
 				return;
 			}
-
-			int size = RegionDepth.CHUNK_SIZE;
-			int chromLength = Integer.parseInt(context.getConfiguration().get(key.getName()));
-			if ( chromLength / size == key.getChunk()) {
-				size = chromLength % size;
-			}
-			RegionDepth currRegionDepth = new RegionDepth(key.getName(), key.getChunk() * RegionDepth.CHUNK_SIZE, key.getChunk(), size);
-
-			long chunk;
-			RegionDepth pending = null;
-			HashMap<Long, RegionDepth> map = null;
-
-			RegionDepth regionDepth;
+			
+			RegionDepth regionDepth = new RegionDepth(key.getName(), key.getChunk() * RegionDepth.CHUNK_SIZE, key.getChunk(), RegionDepth.CHUNK_SIZE);
 			RegionDepthCalculator calculator = new RegionDepthCalculator();
-
-			for (RegionDepthWritable value: values) {
-				regionDepth = value.getRegionDepth();
-				if (regionDepth.size > 0) {
-
-					calculator.update(value.getRegionDepth(), currRegionDepth);
-
-					if (regionDepth.size > RegionDepth.CHUNK_SIZE) {
-						// we must split the current RegionDepth and add a pending RegionDepth
-						long endChunk = (regionDepth.position + regionDepth.size) / RegionDepth.CHUNK_SIZE;
-						for (chunk = regionDepth.chunk + 1 ; chunk < endChunk ; chunk++) {
-							if ((map = regions.get(currRegionDepth.chrom)) == null) {
-								// no pending regions for this chrom, create it
-								map = new HashMap<>();
-								regions.put(currRegionDepth.chrom, map);
-							}
-							if ((pending = map.get(chunk)) == null) {
-								// there are not pending regions on this chunk
-								pending = new RegionDepth(key.getName(), chunk * RegionDepth.CHUNK_SIZE, chunk, RegionDepth.CHUNK_SIZE);
-								map.put(chunk, pending);
-							}
-							calculator.updateChunk(regionDepth, chunk, pending);
-						}
-					}
-				}
+			for (RegionDepthWritable value : values) {
+				calculator.updateChunk(value.getRegionDepth(), key.getChunk(), regionDepth);
 			}
 
-			// if there are pending regions, then merge them into the current region
-			chunk = currRegionDepth.chunk;
-			if ((map = regions.get(currRegionDepth.chrom)) != null) {
-				if ((pending = map.get(chunk)) != null) {
-					calculator.update(pending, currRegionDepth);
-					map.remove(chunk);
-				}
-			}
-
+			// accumulator to compute chromosome depth (further processing in cleanup)
 			long acc = 0;
-			for (int i = 0; i < size; i++) {
-				acc += currRegionDepth.array[i];
+			for (int i = 0; i < RegionDepth.CHUNK_SIZE; i++) {
+				acc += regionDepth.array[i];
 			}
-			accDepth.put(key.getName(), (accDepth.get(key.getName()) == null ? acc : acc + accDepth.get(key.getName())));
-			//System.out.println("name = " + key.getName() + " chunk = " + key.getChunk() + " -> acc. depth = " + accDepth.get(key.getName()) + ", lengh = " + context.getConfiguration().get(key.getName()));
-			context.write(new Text(currRegionDepth.toString()), NullWritable.get());
+			chromAccDepth.put(key.getName(), (chromAccDepth.get(key.getName()) == null ? acc : acc + chromAccDepth.get(key.getName())));
+
+			//System.out.println("name = " + key.getName() + " chunk = " + key.getChunk() + " -> acc. depth = " + chromDepth.get(key.getName()) + ", lengh = " + context.getConfiguration().get(key.getName()));
+			//context.write(new Text(regionDepth.toString()), NullWritable.get());
+			context.write(new Text(regionDepth.toFormat()), NullWritable.get());
 		}
 	}
 
