@@ -1,4 +1,4 @@
-package org.opencb.hpg.bigdata.tools.converters.mr;
+package org.opencb.hpg.bigdata.tools.variant;
 
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFHeader;
@@ -26,6 +26,7 @@ import org.opencb.hpg.bigdata.core.converters.variation.Genotype2CallSet;
 import org.opencb.hpg.bigdata.core.converters.variation.VariantContext2VariantConverter;
 import org.opencb.hpg.bigdata.core.converters.variation.VariantConverterContext;
 import org.opencb.hpg.bigdata.core.io.VcfBlockIterator;
+import org.opencb.hpg.bigdata.tools.utils.ChunkKey;
 import org.opencb.hpg.bigdata.tools.utils.CompressionUtils;
 import org.seqdoop.hadoop_bam.VCFInputFormat;
 import org.seqdoop.hadoop_bam.VariantContextWritable;

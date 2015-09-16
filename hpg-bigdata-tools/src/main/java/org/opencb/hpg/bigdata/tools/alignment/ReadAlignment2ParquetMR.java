@@ -1,4 +1,4 @@
-package org.opencb.hpg.bigdata.tools.converters.mr;
+package org.opencb.hpg.bigdata.tools.alignment;
 
 import org.apache.avro.mapreduce.AvroKeyInputFormat;
 import org.apache.hadoop.conf.Configuration;

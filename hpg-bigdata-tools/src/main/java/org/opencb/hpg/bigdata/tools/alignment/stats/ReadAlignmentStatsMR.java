@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.opencb.hpg.bigdata.tools.stats.alignment.mr;
+package org.opencb.hpg.bigdata.tools.alignment.stats;
 
 import java.io.IOException;
 
@@ -34,10 +34,8 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.ga4gh.models.ReadAlignment;
 import org.opencb.biodata.tools.alignment.tasks.AlignmentStats;
 import org.opencb.biodata.tools.alignment.tasks.AlignmentStatsCalculator;
-import org.opencb.biodata.tools.sequence.tasks.SequenceStats;
-import org.opencb.biodata.tools.sequence.tasks.SequenceStatsCalculator;
-import org.opencb.hpg.bigdata.tools.io.ReadAlignmentStatsWritable;
-import org.opencb.hpg.bigdata.tools.io.ReadStatsWritable;
+import org.opencb.hpg.bigdata.tools.sequence.stats.ReadAlignmentStatsWritable;
+import org.opencb.hpg.bigdata.tools.sequence.stats.ReadStatsWritable;
 
 public class ReadAlignmentStatsMR {
 

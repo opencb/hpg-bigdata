@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.opencb.hpg.bigdata.tools.converters.mr;
+package org.opencb.hpg.bigdata.tools.variant;
 
 import java.io.IOException;
 import java.util.List;

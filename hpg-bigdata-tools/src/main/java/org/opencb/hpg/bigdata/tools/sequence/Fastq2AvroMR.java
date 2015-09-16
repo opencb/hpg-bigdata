@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.opencb.hpg.bigdata.tools.converters.mr;
+package org.opencb.hpg.bigdata.tools.sequence;
 
 import java.io.IOException;
 

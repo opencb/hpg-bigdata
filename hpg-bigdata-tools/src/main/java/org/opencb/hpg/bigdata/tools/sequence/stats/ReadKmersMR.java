@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.opencb.hpg.bigdata.tools.stats.read.mr;
+package org.opencb.hpg.bigdata.tools.sequence.stats;
 
 import java.io.IOException;
 
@@ -34,7 +34,6 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.opencb.biodata.models.sequence.Read;
 import org.opencb.biodata.tools.sequence.tasks.SequenceKmers;
 import org.opencb.biodata.tools.sequence.tasks.SequenceKmersCalculator;
-import org.opencb.hpg.bigdata.tools.io.ReadKmersWritable;
 
 public class ReadKmersMR {
 

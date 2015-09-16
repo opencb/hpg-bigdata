@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.opencb.hpg.bigdata.tools.io;
+package org.opencb.hpg.bigdata.tools.alignment;
 
 import java.io.DataInput;
 import java.io.DataOutput;

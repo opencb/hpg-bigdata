@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-package org.opencb.hpg.bigdata.tools.stats.alignment.mr;
+package org.opencb.hpg.bigdata.tools.alignment.stats;
 
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.PrintWriter;
 
 import org.apache.avro.mapred.AvroKey;
 import org.apache.avro.mapred.AvroValue;
@@ -39,7 +37,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.ga4gh.models.LinearAlignment;
 import org.ga4gh.models.ReadAlignment;
-import org.opencb.hpg.bigdata.tools.converters.mr.ChunkKey;
+import org.opencb.hpg.bigdata.tools.utils.ChunkKey;
 
 public class ReadAlignmentSortMR {
 	

@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-package org.opencb.hpg.bigdata.tools.converters.mr;
+package org.opencb.hpg.bigdata.tools.alignment;
 
 import htsjdk.samtools.*;
 import htsjdk.samtools.seekablestream.SeekableStream;
-import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.mapred.AvroKey;
 import org.apache.avro.mapred.AvroValue;
 import org.apache.avro.mapreduce.AvroJob;
 import org.apache.avro.mapreduce.AvroKeyOutputFormat;
-import org.apache.avro.mapreduce.AvroOutputFormatBase;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -35,8 +33,8 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.ga4gh.models.ReadAlignment;
-import org.opencb.biodata.tools.alignment.tasks.RegionDepth;
 import org.opencb.hpg.bigdata.core.converters.SAMRecord2ReadAlignmentConverter;
+import org.opencb.hpg.bigdata.tools.utils.ChunkKey;
 import org.opencb.hpg.bigdata.tools.utils.CompressionUtils;
 import org.seqdoop.hadoop_bam.AnySAMInputFormat;
 import org.seqdoop.hadoop_bam.SAMRecordWritable;

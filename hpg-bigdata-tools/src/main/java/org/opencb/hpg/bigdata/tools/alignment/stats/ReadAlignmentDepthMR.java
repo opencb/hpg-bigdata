@@ -1,4 +1,4 @@
-package org.opencb.hpg.bigdata.tools.stats.alignment.mr;
+package org.opencb.hpg.bigdata.tools.alignment.stats;
 
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMSequenceRecord;
@@ -30,8 +30,8 @@ import org.ga4gh.models.LinearAlignment;
 import org.ga4gh.models.ReadAlignment;
 import org.opencb.biodata.tools.alignment.tasks.RegionDepth;
 import org.opencb.biodata.tools.alignment.tasks.RegionDepthCalculator;
-import org.opencb.hpg.bigdata.tools.converters.mr.ChunkKey;
-import org.opencb.hpg.bigdata.tools.io.RegionDepthWritable;
+import org.opencb.hpg.bigdata.tools.utils.ChunkKey;
+import org.opencb.hpg.bigdata.tools.alignment.RegionDepthWritable;
 
 public class ReadAlignmentDepthMR {
 

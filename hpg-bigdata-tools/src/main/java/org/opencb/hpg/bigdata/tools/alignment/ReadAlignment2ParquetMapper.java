@@ -1,4 +1,4 @@
-package org.opencb.hpg.bigdata.tools.converters.mr;
+package org.opencb.hpg.bigdata.tools.alignment;
 
 import java.io.IOException;
 

@@ -1,4 +1,4 @@
-package org.opencb.hpg.bigdata.tools.converters.mr;
+package org.opencb.hpg.bigdata.tools.sequence;
 
 /**
  * Created by jtarraga on 21/05/15.

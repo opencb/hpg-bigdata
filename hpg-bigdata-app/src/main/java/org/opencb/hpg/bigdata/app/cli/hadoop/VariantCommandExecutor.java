@@ -18,7 +18,7 @@ package org.opencb.hpg.bigdata.app.cli.hadoop;
 
 import org.ga4gh.models.Variant;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
-import org.opencb.hpg.bigdata.tools.converters.mr.Vcf2AvroMR;
+import org.opencb.hpg.bigdata.tools.variant.Vcf2AvroMR;
 import org.opencb.hpg.bigdata.tools.io.parquet.ParquetMR;
 
 /**

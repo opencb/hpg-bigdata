@@ -38,8 +38,8 @@
         <hpg.version>0.5-SNAPSHOT</hpg.version>
         <ga4gh.version>0.5.1</ga4gh.version>
         <biodata.version>0.6.0-SNAPSHOT</biodata.version>
-        <datastore.version>0.4-SNAPSHOT</datastore.version>
-        <commons-lib.version>3.0-SNAPSHOT</commons-lib.version>
+        <datastore.version>0.5.0-SNAPSHOT</datastore.version>
+        <commons-lib.version>3.1.0-SNAPSHOT</commons-lib.version>
         <hadoop.version>2.6.0</hadoop.version>
         <hbase.version>1.0.1</hbase.version>
         <compileSource>1.8</compileSource>
@@ -166,7 +166,7 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
-                <version>2.5.1</version>
+                <version>2.5.4</version>
             </dependency>
             <dependency>
                 <groupId>junit</groupId>
