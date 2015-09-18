@@ -24,6 +24,14 @@ import org.ga4gh.models.Strand;
 public class ReadAlignmentUtils {
 	private static final String FIELD_SEPARATOR = "\t";
 
+	public static String getQualityString(ReadAlignment ra) {
+		StringBuilder res = new StringBuilder();
+		for (int v : ra.getAlignedQuality()) {
+			res.append((char) (v + 33));    //Add ASCII offset
+		}
+		return res.toString();
+	}
+
 	public static String getSamString(ReadAlignment ra) {
 		StringBuilder res = new StringBuilder();
 
@@ -144,9 +152,7 @@ public class ReadAlignmentUtils {
 		res.append(FIELD_SEPARATOR);
 
 		// quality
-		for(int v: ra.getAlignedQuality()) {
-			res.append((char) (v + 33));	//Add ASCII offset
-		}
+		res.append(getQualityString(ra));
 
 		// optional fields
 		for (CharSequence key: ra.getInfo().keySet()) {

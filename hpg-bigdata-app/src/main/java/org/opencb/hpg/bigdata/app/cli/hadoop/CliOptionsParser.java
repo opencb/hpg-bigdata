@@ -63,6 +63,7 @@ public class CliOptionsParser {
         alignmentSubCommands.addCommand("convert", alignmentCommandOptions.convertAlignmentCommandOptions);
         alignmentSubCommands.addCommand("stats", alignmentCommandOptions.statsAlignmentCommandOptions);
         alignmentSubCommands.addCommand("depth", alignmentCommandOptions.depthAlignmentCommandOptions);
+        alignmentSubCommands.addCommand("bam2fq", alignmentCommandOptions.bam2fqAlignmentCommandOptions);
 
         variantCommandOptions = new VariantCommandOptions();
         jcommander.addCommand("variant", sequenceCommandOptions);
@@ -232,11 +233,13 @@ public class CliOptionsParser {
         ConvertAlignmentCommandOptions convertAlignmentCommandOptions;
         StatsAlignmentCommandOptions statsAlignmentCommandOptions;
         DepthAlignmentCommandOptions depthAlignmentCommandOptions;
+        Bam2FqAlignmentCommandOptions bam2fqAlignmentCommandOptions;
 
         public AlignmentCommandOptions() {
             this.convertAlignmentCommandOptions = new ConvertAlignmentCommandOptions();
             this.statsAlignmentCommandOptions = new StatsAlignmentCommandOptions();
             this.depthAlignmentCommandOptions = new DepthAlignmentCommandOptions();
+            this.bam2fqAlignmentCommandOptions = new Bam2FqAlignmentCommandOptions();
         }
     }
 
@@ -298,6 +301,22 @@ public class CliOptionsParser {
 
         //@Parameter(names = {"-f", "--filter"}, description = "", required = false, arity = 1)
         //public String filter = null;
+    }
+
+    @Parameters(commandNames = {"bam2fq"}, commandDescription = "Bam to Fastq (using Avro models)")
+    class Bam2FqAlignmentCommandOptions {
+
+        @ParametersDelegate
+        public CommonCommandOptions commonOptions = commonCommandOptions;
+
+        @Parameter(names = {"-i", "--input"}, description = "HDFS input file containing alignments stored according to the GA4GH/Avro model)", required = true, arity = 1)
+        public String input = null;
+
+        @Parameter(names = {"-o", "--output"}, description = "HDFS output directory to save the FastQ sequences using Avro model", required = true, arity = 1)
+        public String output = null;
+
+        @Parameter(names = {"-x", "--compression"}, description = "Compression algorithm. Values: snappy, deflate, bzip2, xz", required = false, arity = 1)
+        public String compression = "snappy";
     }
 
     /*

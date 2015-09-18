@@ -23,6 +23,7 @@ import org.ga4gh.models.ReadAlignment;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
 import org.opencb.hpg.bigdata.tools.converters.mr.Bam2AvroMR;
 import org.opencb.hpg.bigdata.tools.io.parquet.ParquetMR;
+import org.opencb.hpg.bigdata.tools.stats.alignment.mr.ReadAlignment2FqMR;
 import org.opencb.hpg.bigdata.tools.stats.alignment.mr.ReadAlignmentDepthMR;
 import org.opencb.hpg.bigdata.tools.stats.alignment.mr.ReadAlignmentStatsMR;
 
@@ -60,7 +61,16 @@ public class AlignmentCommandExecutor extends CommandExecutor {
                 stats();
                 break;
             case "depth":
+                init(alignmentCommandOptions.depthAlignmentCommandOptions.commonOptions.logLevel,
+                        alignmentCommandOptions.depthAlignmentCommandOptions.commonOptions.verbose,
+                        alignmentCommandOptions.depthAlignmentCommandOptions.commonOptions.conf);
                 depth();
+                break;
+            case "bam2fq":
+                init(alignmentCommandOptions.bam2fqAlignmentCommandOptions.commonOptions.logLevel,
+                        alignmentCommandOptions.bam2fqAlignmentCommandOptions.commonOptions.verbose,
+                        alignmentCommandOptions.bam2fqAlignmentCommandOptions.commonOptions.conf);
+                bam2fq();
                 break;
             case "align":
                 System.out.println("Sub-command 'align': Not yet implemented for the command 'alignment' !");
@@ -156,4 +166,40 @@ public class AlignmentCommandExecutor extends CommandExecutor {
 //            throw e;
 //        }
     }
+
+    private void bam2fq() throws Exception {
+        String input = alignmentCommandOptions.bam2fqAlignmentCommandOptions.input;
+        String output = alignmentCommandOptions.bam2fqAlignmentCommandOptions.output;
+        String compression = alignmentCommandOptions.bam2fqAlignmentCommandOptions.compression;
+
+        // prepare the HDFS output folder
+//        Configuration conf = new Configuration();
+//        FileSystem fs = FileSystem.get(conf);
+
+        // run MapReduce job to compute stats
+        ReadAlignment2FqMR.run(input, output, compression);
+
+//        String tmpOutDirName = output + "_" + Long.toString(new Date().getTime());
+//
+//        // run MapReduce job to compute stats
+//        ReadAlignmentDepthMR.run(input, tmpOutDirName);
+//
+//        // post-processing
+//        Path depthOutFile = new Path(tmpOutDirName + "/part-r-00000");
+//
+//        try {
+//            if (!fs.exists(depthOutFile)) {
+//                logger.error("Stats results file not found: {}", depthOutFile.getName());
+//            } else {
+//                String outRawFileName =  output + ".depth.txt";
+//                fs.copyToLocalFile(depthOutFile, new Path(outRawFileName));
+//
+//                //Utils.parseStatsFile(outRawFileName, out);
+//            }
+//            fs.delete(new Path(tmpOutDirName), true);
+//        } catch (IOException e) {
+//            throw e;
+//        }
+    }
+
 }
