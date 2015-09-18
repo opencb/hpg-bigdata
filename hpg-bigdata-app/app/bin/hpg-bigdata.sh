@@ -15,6 +15,7 @@ if [ -z "$HADOOPCMD" ] ; then
   fi
 fi
 
+version=${hpg.version}
 native=${DIR}/../native
 
 export LD_LIBRARY_PATH=${DIR}/../libs/
@@ -23,4 +24,4 @@ export HADOOP_CLASSPATH="${DIR}/../libs/avro/avro-1.7.7.jar:${DIR}/../libs/avro/
 export HADOOP_USER_CLASSPATH_FIRST=true
 
 #echo "Executing: $HADOOPCMD jar ${DIR}/../libs/*.jar -libjars ${LIBJARS} $@"
-$HADOOPCMD jar ${DIR}/../libs/*.jar $@
+$HADOOPCMD jar ${DIR}/../libs/hpg-bigdata-app-${version}-jar-with-dependencies.jar $@

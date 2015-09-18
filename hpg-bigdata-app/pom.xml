@@ -29,6 +29,10 @@
     <artifactId>hpg-bigdata-app</artifactId>
     <version>${hpg.version}</version>
 
+    <properties>
+        <build.dir>${project.basedir}/../build</build.dir>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.opencb.hpg</groupId>
@@ -51,22 +55,24 @@
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
             </resource>
+            <resource>
+                <directory>${project.basedir}/app/bin</directory>
+                <filtering>true</filtering>
+                <targetPath>${project.basedir}/target/bin</targetPath>
+            </resource>
         </resources>
 
         <plugins>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <configuration>
-                    <outputDirectory>../build/libs</outputDirectory>
                     <archive>
                         <manifest>
                             <mainClass>org.opencb.hpg.bigdata.app.BigDataMain</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
-                        <descriptorRef>
-                            jar-with-dependencies
-                        </descriptorRef>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
                 </configuration>
                 <executions>
@@ -79,32 +85,95 @@
                     </execution>
                 </executions>
             </plugin>
-            <!-- 		<plugin>
-                            <groupId>org.codehaus.mojo</groupId>
-                            <artifactId>appassembler-maven-plugin</artifactId>
-                            <version>1.9</version>
-                            <executions>
-                                <execution>
-                                    <phase>install</phase>
-                                    <goals>
-                                        <goal>assemble</goal>
-                                    </goals>
-                                </execution>
-                            </executions>
-                            <configuration>
-                                <repositoryName>libs</repositoryName>
-                                <repositoryLayout>flat</repositoryLayout>
-                                <useWildcardClassPath>true</useWildcardClassPath>
-                                <extraJvmArguments>-Xms128m -Xmx4096m</extraJvmArguments>
-                                <programs>
-                                    <program>
-                                        <name>bigdata.sh</name>
-                                        <mainClass>org.opencb.hpg.bigdata.app.BigDataMain</mainClass>
-                                    </program>
-                                </programs>
-                            </configuration>
-                        </plugin>
-                         -->
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.8</version>
+                <executions>
+                    <execution>
+                        <id>clean-libs</id>
+                        <phase>clean</phase>
+                        <configuration>
+                            <target>
+                                <echo>Preparing ${build.dir} folder</echo>
+                                <exec executable="rm">
+                                    <arg value="-rf"/>
+                                    <arg value="${build.dir}"/>
+                                </exec>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>install-app</id>
+                        <phase>install</phase>
+                        <configuration>
+                            <target>
+                                <echo>Preparing ${build.dir} folder</echo>
+                                <exec executable="rm">
+                                    <arg value="-rf"/>
+                                    <arg value="${build.dir}"/>
+                                </exec>
+                                <exec executable="mkdir">
+                                    <arg value="${build.dir}"/>
+                                </exec>
+
+                                <echo>Copying app files</echo>
+                                <exec executable="cp">
+                                    <arg value="-r"/>
+                                    <arg value="${project.basedir}/target/bin"/>
+                                    <arg value="${project.basedir}/app/data"/>
+                                    <arg value="${project.basedir}/app/examples"/>
+                                    <arg value="${project.basedir}/app/libs"/>
+                                    <arg value="${project.basedir}/../README.md"/>
+                                    <arg value="${project.basedir}/../LICENSE"/>
+                                    <arg value="${build.dir}"/>
+                                </exec>
+
+                                <echo>Setting execution permissions to shell scripts</echo>
+                                <exec executable="chmod">
+                                    <arg value="+x"/>
+                                    <arg value="${build.dir}/bin/hpg-bigdata.sh"/>
+                                    <arg value="${build.dir}/bin/hpg-bigdata-local.sh"/>
+                                </exec>
+
+                                <echo>Building native code</echo>
+                                <exec executable="../hpg-bigdata-core/native/build.sh">
+                                </exec>
+
+                                <echo>Copying to ${build.dir}</echo>
+                                <exec executable="cp">
+                                    <arg value="-r"/>
+                                    <arg value="${project.basedir}/target/hpg-bigdata-app-${hpg.version}-jar-with-dependencies.jar"/>
+                                    <arg value="${project.basedir}/../hpg-bigdata-core/native/libhpgbigdata.so"/>
+                                    <arg value="${project.basedir}/../hpg-bigdata-core/native/libhpgbigdata.dylib"/>
+                                    <arg value="${project.basedir}/../hpg-bigdata-core/native/third-party/htslib/libhts.so"/>
+                                    <arg value="${project.basedir}/../hpg-bigdata-core/native/third-party/htslib/libhts.so.1"/>
+                                    <arg value="${project.basedir}/../hpg-bigdata-core/native/third-party/htslib/libhts.dylib"/>
+                                    <arg value="${project.basedir}/../hpg-bigdata-core/native/third-party/htslib/libhts.1.dylib"/>
+                                    <arg value="${project.basedir}/../hpg-bigdata-core/native/third-party/avro-c-1.7.7/build/src/libavro.so"/>
+                                    <arg value="${project.basedir}/../hpg-bigdata-core/native/third-party/avro-c-1.7.7/build/src/libavro.so.22.0.0"/>
+                                    <arg value="${project.basedir}/../hpg-bigdata-core/native/third-party/avro-c-1.7.7/build/src/libavro.dylib"/>
+                                    <arg value="${project.basedir}/../hpg-bigdata-core/native/third-party/avro-c-1.7.7/build/src/libavro.22.0.0.dylib"/>
+                                    <arg value="${build.dir}/libs"/>
+                                </exec>
+
+                                <echo>Uncompressing avro lib</echo>
+                                <exec executable="tar">
+                                    <arg value="zxvf"/>
+                                    <arg value="${build.dir}/libs/avro-1.7.7.tgz"/>
+                                    <arg value="-C"/>
+                                    <arg value="${build.dir}/libs"/>
+                                </exec>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
