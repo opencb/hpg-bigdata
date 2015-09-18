@@ -21,11 +21,7 @@ package org.opencb.hpg.bigdata.core.converters;
 
 import htsjdk.tribble.TribbleException;
 import htsjdk.tribble.util.ParsingUtils;
-import htsjdk.variant.variantcontext.Allele;
-import htsjdk.variant.variantcontext.Genotype;
-import htsjdk.variant.variantcontext.GenotypeBuilder;
-import htsjdk.variant.variantcontext.GenotypeLikelihoods;
-import htsjdk.variant.variantcontext.LazyGenotypesContext;
+import htsjdk.variant.variantcontext.*;
 import htsjdk.variant.variantcontext.LazyGenotypesContext.LazyData;
 import htsjdk.variant.vcf.VCFCodec;
 import htsjdk.variant.vcf.VCFConstants;

@@ -30,8 +30,8 @@
         <module>hpg-bigdata-tools</module>
     </modules>
 
-    <name>HPG Big data project</name>
-    <description>HPG Big data project aims to manage genomic big data in a Hadoop-based cluster</description>
+    <name>HPG BigData project</name>
+    <description>HPG BigData project aims to provide tools for processing genomic big data in a Hadoop cluster</description>
     <url>https://github.com/opencb/hpg-bigdata</url>
 
     <properties>
@@ -42,6 +42,8 @@
         <commons-lib.version>3.1.0-SNAPSHOT</commons-lib.version>
         <hadoop.version>2.6.0</hadoop.version>
         <hbase.version>1.0.1</hbase.version>
+        <avro.version>1.7.7</avro.version>
+        <parquet.version>1.8.1</parquet.version>
         <compileSource>1.8</compileSource>
         <build.dir>build</build.dir>
     </properties>
@@ -114,45 +116,7 @@
                 <version>${commons-lib.version}</version>
             </dependency>
 
-
-            <dependency>
-                <groupId>org.apache.hbase</groupId>
-                <artifactId>hbase-common</artifactId>
-                <version>${hbase.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.hbase</groupId>
-                <artifactId>hbase-client</artifactId>
-                <version>${hbase.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.hbase</groupId>
-                <artifactId>hbase-server</artifactId>
-                <version>${hbase.version}</version>
-                <!-- 				<exclusions> -->
-                <!-- 					<exclusion> -->
-                <!-- 						<groupId>org.apache.hadoop</groupId> -->
-                <!-- 						<artifactId>hadoop-client</artifactId> -->
-                <!-- 					</exclusion> -->
-                <!-- 				</exclusions> -->
-            </dependency>
-            <dependency>
-                <groupId>org.apache.hadoop</groupId>
-                <artifactId>hadoop-client</artifactId>
-                <version>${hadoop.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.hadoop</groupId>
-                <artifactId>hadoop-common</artifactId>
-                <version>${hadoop.version}</version>
-            </dependency>
-
             <!-- General dependencies -->
-            <dependency>
-                <groupId>com.google.guava</groupId>
-                <artifactId>guava</artifactId>
-                <version>18.0</version>
-            </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
@@ -174,13 +138,6 @@
                 <version>4.12</version>
                 <scope>test</scope>
             </dependency>
-            <!-- 			<dependency> -->
-            <!-- 				<groupId>jdk.tools</groupId> -->
-            <!-- 				<artifactId>jdk.tools</artifactId> -->
-            <!-- 				<version>${compileSource}</version> -->
-            <!-- 				<scope>system</scope> -->
-            <!-- 				<systemPath>${java.home}/lib/tools.jar</systemPath> -->
-            <!-- 			</dependency> -->
         </dependencies>
     </dependencyManagement>
 
