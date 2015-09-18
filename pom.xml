@@ -21,7 +21,7 @@
 
     <groupId>org.opencb.hpg</groupId>
     <artifactId>hpg-bigdata</artifactId>
-    <version>0.5-SNAPSHOT</version>
+    <version>0.6-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <modules>
@@ -35,7 +35,7 @@
     <url>https://github.com/opencb/hpg-bigdata</url>
 
     <properties>
-        <hpg.version>0.5-SNAPSHOT</hpg.version>
+        <hpg.version>0.6-SNAPSHOT</hpg.version>
         <ga4gh.version>0.5.1</ga4gh.version>
         <biodata.version>0.6.0-SNAPSHOT</biodata.version>
         <datastore.version>0.5.0-SNAPSHOT</datastore.version>

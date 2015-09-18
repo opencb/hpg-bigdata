@@ -5,8 +5,8 @@
     <parent>
         <groupId>org.opencb.hpg</groupId>
         <artifactId>hpg-bigdata</artifactId>
-        <version>0.5-SNAPSHOT</version>
-        <relativePath>..</relativePath>
+        <version>0.6-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
