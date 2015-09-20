@@ -66,34 +66,17 @@ public class BigDataMain {
                 } else {
                     switch (parsedCommand) {
                         case "sequence":
-                            //                        if (cliOptionsParser.getFastqCommandOptions().help) {
-                            //                            cliOptionsParser.printUsage();
-                            //                        } else {
-                            //                            commandExecutor = new FastqCommandExecutor(cliOptionsParser.getFastqCommandOptions());
-                            //                        }
                             commandExecutor = new SequenceCommandExecutor(cliOptionsParser.getSequenceCommandOptions());
                             break;
                         case "alignment":
-//                            if (cliOptionsParser.getAlignmentCommandOptions().help) {
-//                                cliOptionsParser.printUsage();
-//                            } else {
-//                            }
                             commandExecutor = new AlignmentCommandExecutor(cliOptionsParser.getAlignmentCommandOptions());
                             break;
                         case "variant":
-//                            if (cliOptionsParser.getVariantCommandOptions().commonOptions.help) {
-//                                cliOptionsParser.printUsage();
-//                            } else {
-//                            }
                             commandExecutor = new VariantCommandExecutor(cliOptionsParser.getVariantCommandOptions());
                             break;
-                        //                    case "variant":
-                        //                        if (cliOptionsParser.getAlignmentCommandOptions().help) {
-                        //                            cliOptionsParser.printUsage();
-                        //                        } else {
-                        //                            commandExecutor = new AlignmentCommandExecutor(cliOptionsParser.getAlignmentCommandOptions());
-                        //                        }
-                        //                        break;
+                        case "feature":
+                            System.out.printf("Not yet implemented: not valid command: '" + parsedCommand + "'");
+                            break;
                         default:
                             System.out.printf("ERROR: not valid command: '" + parsedCommand + "'");
                             cliOptionsParser.printUsage();
