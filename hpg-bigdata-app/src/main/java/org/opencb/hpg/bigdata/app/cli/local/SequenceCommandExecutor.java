@@ -16,37 +16,18 @@
 
 package org.opencb.hpg.bigdata.app.cli.local;
 
-import htsjdk.samtools.*;
 import htsjdk.samtools.fastq.FastqReader;
-import htsjdk.samtools.util.LineReader;
-import htsjdk.samtools.util.StringLineReader;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.specific.SpecificDatumReader;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.io.Text;
-import org.ga4gh.models.ReadAlignment;
 import org.opencb.biodata.models.sequence.Read;
 import org.opencb.biodata.tools.sequence.tasks.SequenceStats;
 import org.opencb.biodata.tools.sequence.tasks.SequenceStatsCalculator;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
-import org.opencb.hpg.bigdata.app.cli.hadoop.CliOptionsParser;
 import org.opencb.hpg.bigdata.core.converters.FastqRecord2ReadConverter;
-import org.opencb.hpg.bigdata.core.converters.SAMRecord2ReadAlignmentConverter;
 import org.opencb.hpg.bigdata.core.io.avro.AvroWriter;
 import org.opencb.hpg.bigdata.core.utils.AvroUtils;
-import org.opencb.hpg.bigdata.core.utils.PathUtils;
-import org.opencb.hpg.bigdata.tools.converters.mr.Fastq2AvroMR;
-import org.opencb.hpg.bigdata.tools.io.ReadStatsWritable;
-import org.opencb.hpg.bigdata.tools.stats.read.mr.ReadKmersMR;
-import org.opencb.hpg.bigdata.tools.stats.read.mr.ReadStatsMR;
 
 import java.io.*;
-import java.util.Date;
 
 /**
  * Created by imedina on 03/02/15.
@@ -62,7 +43,7 @@ public class SequenceCommandExecutor extends CommandExecutor {
 	/**
 	 * Parse specific 'sequence' command options
 	 */
-	public void execute() {
+	public void execute() throws IOException {
 		String subCommand = sequenceCommandOptions.getParsedSubCommand();
 
         switch (subCommand) {
@@ -77,7 +58,7 @@ public class SequenceCommandExecutor extends CommandExecutor {
         }
 	}
 
-	private void convert() {
+	private void convert() throws IOException {
 		LocalCliOptionsParser.ConvertSequenceCommandOptions convertSequenceCommandOptions = sequenceCommandOptions.convertSequenceCommandOptions;
 
 		// get input parameters
@@ -105,11 +86,11 @@ public class SequenceCommandExecutor extends CommandExecutor {
 			writer.close();
 			os.close();
 		} catch (Exception e) {
-			e.printStackTrace();
+			throw e;
 		}
-    }
+	}
 
-	private void stats() {
+	private void stats() throws IOException {
 		LocalCliOptionsParser.StatsSequenceCommandOptions statsSequenceCommandOptions = sequenceCommandOptions.statsSequenceCommandOptions;
 
 		// get input parameters
@@ -142,7 +123,7 @@ public class SequenceCommandExecutor extends CommandExecutor {
             writer.close();
 
 		} catch (Exception e) {
-			e.printStackTrace();
+			throw e;
 		}
 	}
 }

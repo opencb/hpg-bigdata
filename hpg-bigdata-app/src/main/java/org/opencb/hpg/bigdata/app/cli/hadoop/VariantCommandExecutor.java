@@ -22,9 +22,8 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.mapreduce.Job;
 import org.ga4gh.models.Variant;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
-import org.opencb.hpg.bigdata.tools.converters.mr.Variant2HbaseMR;
-import org.opencb.hpg.bigdata.tools.converters.mr.Variant2HbaseMR.Builder;
-import org.opencb.hpg.bigdata.tools.converters.mr.Vcf2AvroMR;
+import org.opencb.hpg.bigdata.tools.variant.Variant2HbaseMR;
+import org.opencb.hpg.bigdata.tools.variant.Vcf2AvroMR;
 import org.opencb.hpg.bigdata.tools.io.parquet.ParquetMR;
 
 /**
@@ -50,36 +49,36 @@ public class VariantCommandExecutor extends CommandExecutor {
                         variantCommandOptions.convertVariantCommandOptions.commonOptions.verbose,
                         variantCommandOptions.convertVariantCommandOptions.commonOptions.conf);
                 convert();
-                break;
-            case "load":
-                init(variantCommandOptions.loadVariantCommandOptions.commonOptions.logLevel,
-                        variantCommandOptions.loadVariantCommandOptions.commonOptions.verbose,
-                        variantCommandOptions.loadVariantCommandOptions.commonOptions.conf);
-                load();
+            case "index":
+                init(variantCommandOptions.indexVariantCommandOptions.commonOptions.logLevel,
+                        variantCommandOptions.indexVariantCommandOptions.commonOptions.verbose,
+                        variantCommandOptions.indexVariantCommandOptions.commonOptions.conf);
+                index();
                 break;
             	
         }
     }
 
-    private void load() throws Exception {
-        String input = variantCommandOptions.loadVariantCommandOptions.input;
-        String db = variantCommandOptions.loadVariantCommandOptions.database;
-        boolean nonVar = variantCommandOptions.loadVariantCommandOptions.includeNonVariants;
-        boolean expand = variantCommandOptions.loadVariantCommandOptions.expand;
+    private void index() throws Exception {
+        String input = variantCommandOptions.indexVariantCommandOptions.input;
+        String db = variantCommandOptions.indexVariantCommandOptions.database;
+        boolean nonVar = variantCommandOptions.indexVariantCommandOptions.includeNonVariants;
+        boolean expand = variantCommandOptions.indexVariantCommandOptions.expand;
         
         URI server = null;
     	// new URI("//who1:60000/VariantExpanded");
     	if(StringUtils.isNotBlank(db)){
     		server = new URI(db);    		
 		} 
-    	Builder builder = new Variant2HbaseMR.Builder(input,server);
+    	Variant2HbaseMR.Builder builder = new Variant2HbaseMR.Builder(input,server);
     	builder.setExpand(expand);
     	builder.setNonVar(nonVar);
     	Job job = builder.build(true);
     	
 		boolean fine = job.waitForCompletion(true);
-		if(!fine)
-			throw new IllegalStateException("Variant 2 HBase failed!");
+		if(!fine) {
+            throw new IllegalStateException("Variant 2 HBase failed!");
+        }
 	}
 
 
@@ -107,11 +106,7 @@ public class VariantCommandExecutor extends CommandExecutor {
 //            }
 
         } else {
-            try {
-                Vcf2AvroMR.run(input, output, compression);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            Vcf2AvroMR.run(input, output, compression);
         }
     }
 

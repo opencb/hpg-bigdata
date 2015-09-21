@@ -596,7 +596,7 @@ toc: function (toclevels) {
   }
 
   function tocEntries(el, toclevels) {
-    var result = new Array;
+    var result = [];
     var re = new RegExp('[hH]([2-'+(toclevels+1)+'])');
     // Function that scans the DOM tree for header elements (the DOM2
     // nodeIterator API would be a better technique but not supported by all
@@ -611,7 +611,7 @@ toc: function (toclevels) {
           iterate(i);
         }
       }
-    }
+    };
     iterate(el);
     return result;
   }
@@ -744,7 +744,7 @@ install: function(toclevels) {
     window.onload = reinstallAndRemoveTimer;
 }
 
-}
+};
 asciidoc.install(2);
 /*]]>*/
 </script>

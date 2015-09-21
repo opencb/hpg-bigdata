@@ -7,16 +7,16 @@ import org.opencb.commons.utils.CryptoUtils;
  */
 public class HBaseUtils {
     public static final int SV_THRESHOLD = 50; // TODO update as needed
-    public final static String ROWKEY_SEPARATOR = "_";
+    public static final String ROWKEY_SEPARATOR = "_";
 
-    public static String buildRefernceStorageId(CharSequence chr,Long start, CharSequence refBases) {
-    	return buildStorageId(chr, start, refBases, refBases);
+    public static String buildRefernceStorageId(CharSequence chr, Long start, CharSequence refBases) {
+        return buildStorageId(chr, start, refBases, refBases);
     }
 
-    public static String buildStorageId(CharSequence chr,Long start, CharSequence refBases, CharSequence altBases) {
+    public static String buildStorageId(CharSequence chr, Long start, CharSequence refBases, CharSequence altBases) {
         StringBuilder builder = new StringBuilder();
 
-        builder.append(buildStoragePosition(chr,start));
+        builder.append(buildStoragePosition(chr, start));
 
         builder.append(ROWKEY_SEPARATOR);
 
@@ -37,7 +37,7 @@ public class HBaseUtils {
         return builder.toString();
     }
 
-    public static String buildStoragePosition(CharSequence chr,Long pos) {
+    public static String buildStoragePosition(CharSequence chr, Long pos) {
         String chrom = chr.toString();
         // check for chr at chromosome name and remove it (maybe expect it to be done before.
         if (chrom.length() > 2) {

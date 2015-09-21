@@ -56,44 +56,27 @@ public class BigDataMain {
         } else {    // correct command exist
             CommandExecutor commandExecutor = null;
             // Check if any command or subcommand -h options are present
-            if(cliOptionsParser.getCommandOptions().help || cliOptionsParser.getCommonCommandOptions().help) {
+            if (cliOptionsParser.getCommandOptions().help || cliOptionsParser.getCommonCommandOptions().help) {
                 cliOptionsParser.printUsage();
             } else {
                 // get the subcommand and printUsage if empty
                 String parsedSubCommand = cliOptionsParser.getSubCommand();
-                if(parsedSubCommand == null || parsedSubCommand.isEmpty()) {
+                if (parsedSubCommand == null || parsedSubCommand.isEmpty()) {
                     cliOptionsParser.printUsage();
                 } else {
                     switch (parsedCommand) {
                         case "sequence":
-                            //                        if (cliOptionsParser.getFastqCommandOptions().help) {
-                            //                            cliOptionsParser.printUsage();
-                            //                        } else {
-                            //                            commandExecutor = new FastqCommandExecutor(cliOptionsParser.getFastqCommandOptions());
-                            //                        }
                             commandExecutor = new SequenceCommandExecutor(cliOptionsParser.getSequenceCommandOptions());
                             break;
                         case "alignment":
-//                            if (cliOptionsParser.getAlignmentCommandOptions().help) {
-//                                cliOptionsParser.printUsage();
-//                            } else {
-//                            }
                             commandExecutor = new AlignmentCommandExecutor(cliOptionsParser.getAlignmentCommandOptions());
                             break;
                         case "variant":
-//                            if (cliOptionsParser.getVariantCommandOptions().commonOptions.help) {
-//                                cliOptionsParser.printUsage();
-//                            } else {
-//                            }
                             commandExecutor = new VariantCommandExecutor(cliOptionsParser.getVariantCommandOptions());
                             break;
-                        //                    case "variant":
-                        //                        if (cliOptionsParser.getAlignmentCommandOptions().help) {
-                        //                            cliOptionsParser.printUsage();
-                        //                        } else {
-                        //                            commandExecutor = new AlignmentCommandExecutor(cliOptionsParser.getAlignmentCommandOptions());
-                        //                        }
-                        //                        break;
+                        case "feature":
+                            System.out.printf("Not yet implemented: not valid command: '" + parsedCommand + "'");
+                            break;
                         default:
                             System.out.printf("ERROR: not valid command: '" + parsedCommand + "'");
                             cliOptionsParser.printUsage();

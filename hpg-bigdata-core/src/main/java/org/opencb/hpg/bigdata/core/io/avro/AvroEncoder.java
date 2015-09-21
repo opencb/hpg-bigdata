@@ -33,14 +33,16 @@ import java.util.List;
  */
 public class AvroEncoder<T> {
 
-    final DatumWriter<T> datumWriter;
-    final Encoder encoder;
-    final ByteArrayOutputStream byteArrayOutputStream;
+    private final DatumWriter<T> datumWriter;
+    private final Encoder encoder;
+    private final ByteArrayOutputStream byteArrayOutputStream;
     private int encodeFails = 0;
+
+    public static final int SIZE = 1000000;
 
     public AvroEncoder(Schema schema) {
         this.datumWriter = new GenericDatumWriter<>(schema);
-        this.byteArrayOutputStream = new ByteArrayOutputStream(1000000);    //Initialize with 1MB
+        this.byteArrayOutputStream = new ByteArrayOutputStream(SIZE);    //Initialize with 1MB
         this.encoder = EncoderFactory.get().binaryEncoder(byteArrayOutputStream, null);
     }
 

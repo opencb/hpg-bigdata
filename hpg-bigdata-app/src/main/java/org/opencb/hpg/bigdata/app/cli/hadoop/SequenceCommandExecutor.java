@@ -19,14 +19,13 @@ package org.opencb.hpg.bigdata.app.cli.hadoop;
 import java.io.IOException;
 import java.util.Date;
 
-import com.beust.jcommander.JCommander;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
-import org.opencb.hpg.bigdata.tools.converters.mr.Fastq2AvroMR;
-import org.opencb.hpg.bigdata.tools.stats.read.mr.ReadKmersMR;
-import org.opencb.hpg.bigdata.tools.stats.read.mr.ReadStatsMR;
+import org.opencb.hpg.bigdata.tools.sequence.Fastq2AvroMR;
+import org.opencb.hpg.bigdata.tools.sequence.stats.ReadKmersMR;
+import org.opencb.hpg.bigdata.tools.sequence.stats.ReadStatsMR;
 import org.opencb.hpg.bigdata.core.utils.PathUtils;
 
 /**
@@ -43,7 +42,7 @@ public class SequenceCommandExecutor extends CommandExecutor {
 	/**
 	 * Parse specific 'sequence' command options
 	 */
-	public void execute() {
+	public void execute() throws Exception {
 		String subCommand = sequenceCommandOptions.getParsedSubCommand();
 
         switch (subCommand) {
@@ -61,7 +60,7 @@ public class SequenceCommandExecutor extends CommandExecutor {
         }
 	}
 
-	private void convert() {
+	private void convert() throws Exception {
         CliOptionsParser.ConvertSequenceCommandOptions convertSequenceCommandOptions = sequenceCommandOptions.convertSequenceCommandOptions;
 
         // get input parameters
@@ -78,11 +77,11 @@ public class SequenceCommandExecutor extends CommandExecutor {
         try {
             Fastq2AvroMR.run(input, output, codecName);
         } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+			throw e;
+		}
+	}
 
-	private void stats() {
+	private void stats() throws Exception {
 		CliOptionsParser.StatsSequenceCommandOptions statsSequenceCommandOptions = sequenceCommandOptions.statsSequenceCommandOptions;
 
 		// get input parameters
@@ -91,21 +90,13 @@ public class SequenceCommandExecutor extends CommandExecutor {
 		int kvalue = statsSequenceCommandOptions.kmers;
 
 		// prepare the HDFS output folder
-		FileSystem fs = null;
 		Configuration conf = new Configuration();
-		try {
-			fs = FileSystem.get(conf);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		String outHdfsDirname = new String("" + new Date().getTime());
+		FileSystem fs = FileSystem.get(conf);
+
+		String outHdfsDirname = Long.toString(new Date().getTime());
 
 		// run MapReduce job to compute stats
-		try {
-			ReadStatsMR.run(input, outHdfsDirname, kvalue);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		ReadStatsMR.run(input, outHdfsDirname, kvalue);
 
 		// post-processing
 		Path outFile = new Path(outHdfsDirname + "/part-r-00000");
@@ -121,25 +112,24 @@ public class SequenceCommandExecutor extends CommandExecutor {
 			}
 			fs.delete(new Path(outHdfsDirname), true);
 		} catch (IOException e) {
-			e.printStackTrace();
+			throw e;
 		}
 	}
 
     @Deprecated
-	private void kmers(String input, String output, int kvalue) {
+	private void kmers(String input, String output, int kvalue) throws Exception {
 		// clean paths
 		String in = PathUtils.clean(input);
 		String out = PathUtils.clean(output);
 
 		if (!PathUtils.isHdfs(input)) {
-			logger.error("To run fastq kmers, input files '{}' must be stored in the HDFS/Haddop. Use the command 'convert fastq2sa' to import your file.", input);
-			System.exit(-1);
+			throw new IOException("To run fastq kmers, input files '" + input + "' must be stored in the HDFS/Haddop. Use the command 'convert fastq2sa' to import your file.");
 		}
 
 		try {
 			ReadKmersMR.run(in, out, kvalue);
 		} catch (Exception e) {
-			e.printStackTrace();
+			throw e;
 		}
 	}	
 }

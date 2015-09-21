@@ -2,12 +2,18 @@
 
 PLATFORM=`uname -s`
 
+PRG="$0"
+PRGDIR=`dirname "$PRG"`
+BASEDIR=`cd "$PRGDIR" >/dev/null; pwd`
+cd $BASEDIR
+
 echo
 echo "Building library avro-c-1.7.7"
 cd third-party/avro-c-1.7.7/
 if [ ! -d "build" ]; then
   mkdir build
 fi
+
 cd build
 cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo
 make

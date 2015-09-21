@@ -18,10 +18,14 @@ package org.opencb.hpg.bigdata.core.utils;
 
 import org.opencb.biodata.models.sequence.Read;
 
-public class ReadUtils {
+public final class ReadUtils {
 
-	public static String getFastqString(Read read) {
-		return "@" + read.getId().toString() + "\n" + read.getSequence().toString() + "\n+\n" + read.getQuality().toString() + "\n";
-	}
+    private ReadUtils() {
+    }
+
+    public static String getFastqString(Read read) {
+        return "@" + read.getId().toString() + "\n" + read.getSequence().toString()
+                + "\n+\n" + read.getQuality().toString() + "\n";
+    }
 
 }

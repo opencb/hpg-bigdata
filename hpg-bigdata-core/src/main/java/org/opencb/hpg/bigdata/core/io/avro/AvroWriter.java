@@ -26,22 +26,22 @@ import org.apache.avro.io.DatumWriter;
 import org.apache.avro.specific.SpecificDatumWriter;
 
 public class AvroWriter<T> {
-	
-	private DatumWriter<T> datumWriter;
-	private DataFileWriter<T> writer;
-		
-	public AvroWriter(Schema schema, CodecFactory codec, OutputStream os) throws IOException {
-		datumWriter = new SpecificDatumWriter<T>();
-		writer = new DataFileWriter<>(datumWriter);
-		writer.setCodec(codec);
-		writer.create(schema, os);
-	}
-	
-	public void write(T obj) throws IOException {
-		writer.append(obj);
-	}
-	
-	public void close() throws IOException {
-		writer.close();
-	}
+
+    private DatumWriter<T> datumWriter;
+    private DataFileWriter<T> writer;
+
+    public AvroWriter(Schema schema, CodecFactory codec, OutputStream os) throws IOException {
+        datumWriter = new SpecificDatumWriter<T>();
+        writer = new DataFileWriter<>(datumWriter);
+        writer.setCodec(codec);
+        writer.create(schema, os);
+    }
+
+    public void write(T obj) throws IOException {
+        writer.append(obj);
+    }
+
+    public void close() throws IOException {
+        writer.close();
+    }
 }

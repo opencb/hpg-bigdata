@@ -32,6 +32,7 @@ import org.opencb.hpg.bigdata.core.converters.SAMRecord2ReadAlignmentConverter;
 
 import java.io.*;
 import java.util.HashMap;
+import java.util.IllegalFormatException;
 
 /**
  * Created by imedina on 16/03/15.
@@ -49,7 +50,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
     /**
      * Parse specific 'alignment' command options
      */
-    public void execute() {
+    public void execute() throws IOException {
         String subCommand = alignmentCommandOptions.getParsedSubCommand();
 
         switch (subCommand) {
@@ -82,7 +83,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
         }
     }
 
-    private void convert() {
+    private void convert() throws IOException {
         String input = alignmentCommandOptions.convertAlignmentCommandOptions.input;
         String output = alignmentCommandOptions.convertAlignmentCommandOptions.output;
         String compressionCodecName = alignmentCommandOptions.convertAlignmentCommandOptions.compression;
@@ -95,74 +96,70 @@ public class AlignmentCommandExecutor extends CommandExecutor {
         if (alignmentCommandOptions.convertAlignmentCommandOptions.toBam) {
             // conversion: GA4GH/Avro model -> BAM
 
-            try {
-                // header management: read it from a separate file
-                File file = new File(input + BAM_HEADER_SUFFIX);
-                FileInputStream fis = new FileInputStream(file);
-                byte[] data = new byte[(int) file.length()];
-                fis.read(data);
-                fis.close();
+            // header management: read it from a separate file
+            File file = new File(input + BAM_HEADER_SUFFIX);
+            FileInputStream fis = new FileInputStream(file);
+            byte[] data = new byte[(int) file.length()];
+            fis.read(data);
+            fis.close();
 
-                InputStream is = new FileInputStream(input);
+            InputStream is = new FileInputStream(input);
 
-                String textHeader = new String(data);
+            String textHeader = new String(data);
 
-                LineReader lineReader = new StringLineReader(textHeader);
-                SAMFileHeader header = new SAMTextHeaderCodec().decode(lineReader, textHeader);
+            LineReader lineReader = new StringLineReader(textHeader);
+            SAMFileHeader header = new SAMTextHeaderCodec().decode(lineReader, textHeader);
 
-                // reader
-                DataFileStream<ReadAlignment> reader = new DataFileStream<ReadAlignment>(is, new SpecificDatumReader<ReadAlignment>(ReadAlignment.class));
+            // reader
+            DataFileStream<ReadAlignment> reader = new DataFileStream<ReadAlignment>(is, new SpecificDatumReader<ReadAlignment>(ReadAlignment.class));
 
-                // writer
-                OutputStream os = new FileOutputStream(new File(output));
-                SAMFileWriter writer = new SAMFileWriterFactory().makeBAMWriter(header, false, new File(output));
+            // writer
+            OutputStream os = new FileOutputStream(new File(output));
+            SAMFileWriter writer = new SAMFileWriterFactory().makeBAMWriter(header, false, new File(output));
 
-                // main loop
-                int reads = 0;
-                SAMRecord samRecord;
-                SAMRecord2ReadAlignmentConverter converter = new SAMRecord2ReadAlignmentConverter();
-                for (ReadAlignment readAlignment : reader) {
-                    samRecord = converter.backward(readAlignment);
-                    samRecord.setHeader(header);
-                    writer.addAlignment(samRecord);
-                    if (++reads % 100_000 == 0) {
-                        System.out.println("Converted " + reads + " reads");
-                    }
+            // main loop
+            int reads = 0;
+            SAMRecord samRecord;
+            SAMRecord2ReadAlignmentConverter converter = new SAMRecord2ReadAlignmentConverter();
+            for (ReadAlignment readAlignment : reader) {
+                samRecord = converter.backward(readAlignment);
+                samRecord.setHeader(header);
+                writer.addAlignment(samRecord);
+                if (++reads % 100_000 == 0) {
+                    System.out.println("Converted " + reads + " reads");
                 }
-
-                // close
-                reader.close();
-                writer.close();
-                os.close();
-                is.close();
-            } catch (Exception e) {
-                e.printStackTrace();
             }
 
-            return;
-        }
+            // close
+            reader.close();
+            writer.close();
+            os.close();
+            is.close();
 
-        // conversion: BAM -> GA4GH/Avro model
-        System.out.println("Loading library hpgbigdata...");
-        System.out.println("\tjava.libary.path = " + System.getProperty("java.library.path"));
-        System.loadLibrary("hpgbigdata");
-        System.out.println("...done!");
-        new NativeSupport().bam2ga(input, output, compressionCodecName == null ? "snappy" : compressionCodecName, alignmentCommandOptions.convertAlignmentCommandOptions.adjustQuality);
+        } else {
 
-        try {
-            // header management: saved it in a separate file
-            SamReader reader = SamReaderFactory.makeDefault().open(new File(input));
-            SAMFileHeader header = reader.getFileHeader();
-            PrintWriter pwriter = null;
-            pwriter = new PrintWriter(new FileWriter(output + BAM_HEADER_SUFFIX));
-            pwriter.write(header.getTextHeader());
-            pwriter.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+            // conversion: BAM -> GA4GH/Avro model
+            System.out.println("Loading library hpgbigdata...");
+            System.out.println("\tjava.libary.path = " + System.getProperty("java.library.path"));
+            System.loadLibrary("hpgbigdata");
+            System.out.println("...done!");
+            new NativeSupport().bam2ga(input, output, compressionCodecName == null ? "snappy" : compressionCodecName, alignmentCommandOptions.convertAlignmentCommandOptions.adjustQuality);
+
+            try {
+                // header management: saved it in a separate file
+                SamReader reader = SamReaderFactory.makeDefault().open(new File(input));
+                SAMFileHeader header = reader.getFileHeader();
+                PrintWriter pwriter = null;
+                pwriter = new PrintWriter(new FileWriter(output + BAM_HEADER_SUFFIX));
+                pwriter.write(header.getTextHeader());
+                pwriter.close();
+            } catch (IOException e) {
+                throw e;
+            }
         }
     }
 
-    private void stats() {
+    private void stats() throws IOException {
 		// get input parameters
         String input = alignmentCommandOptions.statsAlignmentCommandOptions.input;
         String output = alignmentCommandOptions.statsAlignmentCommandOptions.output;
@@ -192,11 +189,11 @@ public class AlignmentCommandExecutor extends CommandExecutor {
             writer.close();
 
 		} catch (Exception e) {
-			e.printStackTrace();
-		}
+            throw e;
+        }
     }
 
-    private void depth() {
+    private void depth() throws IOException {
         // get input parameters
         String input = alignmentCommandOptions.depthAlignmentCommandOptions.input;
         String output = alignmentCommandOptions.depthAlignmentCommandOptions.output;
@@ -260,8 +257,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
                         chromDepth = new int[regionLength.get(regionDepth.chrom)];
                     }
                     if (prevPos > regionDepth.position) {
-                        System.out.println("Error: the input file (" + input + ") is not sorted (reads out of order).");
-                        System.exit(-1);
+                        throw new IOException("Error: the input file (" + input + ") is not sorted (reads out of order).");
                     }
 
                     pos = (int) regionDepth.position;
@@ -285,7 +281,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
             is.close();
             writer.close();
         } catch (Exception e) {
-            e.printStackTrace();
+            throw e;
         }
     }
 }
