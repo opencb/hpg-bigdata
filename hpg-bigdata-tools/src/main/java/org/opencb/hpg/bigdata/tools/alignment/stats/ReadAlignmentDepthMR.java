@@ -51,172 +51,177 @@ import org.opencb.hpg.bigdata.tools.alignment.RegionDepthWritable;
 
 public class ReadAlignmentDepthMR {
 
-	public static final String OUTPUT_SUMMARY_JSON = "summary.depth.json";
+    public static final String OUTPUT_SUMMARY_JSON = "summary.depth.json";
 
-	public static class ReadAlignmentDepthMapper extends Mapper<AvroKey<ReadAlignment>, NullWritable, ChunkKey, RegionDepthWritable> {
+    public static class ReadAlignmentDepthMapper extends
+            Mapper<AvroKey<ReadAlignment>, NullWritable, ChunkKey, RegionDepthWritable> {
 
-		@Override
-		public void map(AvroKey<ReadAlignment> key, NullWritable value, Context context) throws IOException, InterruptedException {
-			ReadAlignment ra = key.datum();
-			LinearAlignment la = (LinearAlignment) ra.getAlignment();
+        @Override
+        public void map(AvroKey<ReadAlignment> key, NullWritable value, Context context) throws
+                IOException, InterruptedException {
+            ReadAlignment ra = key.datum();
+            LinearAlignment la = (LinearAlignment) ra.getAlignment();
 
-			ChunkKey newKey;
-			RegionDepthWritable newValue;
+            ChunkKey newKey;
+            RegionDepthWritable newValue;
 
-			if (la == null) {
-				newKey = new ChunkKey("*", 0L);
-				// unmapped read
-				newValue = new RegionDepthWritable(new RegionDepth("*", 0, 0, 0));
-				context.write(newKey, newValue);
-				return;
-			}
+            if (la == null) {
+                newKey = new ChunkKey("*", 0L);
+                // unmapped read
+                newValue = new RegionDepthWritable(new RegionDepth("*", 0, 0, 0));
+                context.write(newKey, newValue);
+                return;
+            }
 
-			RegionDepthCalculator calculator = new RegionDepthCalculator();
-			List<RegionDepth> regions = calculator.computeAsList(ra);
+            RegionDepthCalculator calculator = new RegionDepthCalculator();
+            List<RegionDepth> regions = calculator.computeAsList(ra);
 
-			for (RegionDepth region: regions) {
-				newKey = new ChunkKey(region.chrom, region.chunk);
-				newValue = new RegionDepthWritable(region);
-				context.write(newKey, newValue);
-			}
-		}
-	}
+            for (RegionDepth region: regions) {
+                newKey = new ChunkKey(region.chrom, region.chunk);
+                newValue = new RegionDepthWritable(region);
+                context.write(newKey, newValue);
+            }
+        }
+    }
 
-	public static class ReadAlignmentDepthCombiner extends Reducer<ChunkKey, RegionDepthWritable, ChunkKey, RegionDepthWritable> {
+    public static class ReadAlignmentDepthCombiner extends
+            Reducer<ChunkKey, RegionDepthWritable, ChunkKey, RegionDepthWritable> {
 
-		@Override
-		public void reduce(ChunkKey key, Iterable<RegionDepthWritable> values, Context context) throws IOException, InterruptedException {
+        @Override
+        public void reduce(ChunkKey key, Iterable<RegionDepthWritable> values, Context context) throws
+                IOException, InterruptedException {
             RegionDepth regionDepth;
             if (key.getName().equals("*")) {
                 regionDepth = new RegionDepth("*", 0, 0, 0);
             } else {
-                regionDepth = new RegionDepth(key.getName(), key.getChunk() * RegionDepth.CHUNK_SIZE, key.getChunk(), RegionDepth.CHUNK_SIZE);
+                regionDepth = new RegionDepth(key.getName(), key.getChunk() * RegionDepth.CHUNK_SIZE, key.getChunk(),
+                        RegionDepth.CHUNK_SIZE);
                 RegionDepthCalculator calculator = new RegionDepthCalculator();
                 for (RegionDepthWritable value : values) {
                     calculator.updateChunk(value.getRegionDepth(), key.getChunk(), regionDepth);
                 }
             }
-			context.write(key, new RegionDepthWritable(regionDepth));
-		}
-	}
+            context.write(key, new RegionDepthWritable(regionDepth));
+        }
+    }
 
-	public static class ReadAlignmentDepthReducer extends Reducer<ChunkKey, RegionDepthWritable, Text, NullWritable> {
+    public static class ReadAlignmentDepthReducer extends Reducer<ChunkKey, RegionDepthWritable, Text, NullWritable> {
 
-		public HashMap<String, Long> chromAccDepth = null;
+        private HashMap<String, Long> chromAccDepth = null;
 
-		@Override
-		public void setup(Context context) throws IOException, InterruptedException {
-			chromAccDepth = new HashMap<>();
-		}
+        @Override
+        public void setup(Context context) throws IOException, InterruptedException {
+            chromAccDepth = new HashMap<>();
+        }
 
-		@Override
-		public void cleanup(Context context) throws IOException, InterruptedException {
-			double accLen = 0, accDep = 0;
-				
-			FileSystem fs = FileSystem.get(context.getConfiguration());
+        @Override
+        public void cleanup(Context context) throws IOException, InterruptedException {
+            double accLen = 0, accDep = 0;
 
-			Path outPath = new Path(context.getConfiguration().get(OUTPUT_SUMMARY_JSON));
-			FSDataOutputStream out = fs.create(outPath);
-			out.writeChars("{ \"chroms\": [");
-			int size = chromAccDepth.size();
-			int i = 0;
-			for(String name : chromAccDepth.keySet()) {
-				out.writeChars("{\"name\": \"" + name + "\", \"length\": " + context.getConfiguration().get(name) + ", \"acc\": " + chromAccDepth.get(name) + ", \"depth\": " + (1.0f * chromAccDepth.get(name) / Integer.parseInt(context.getConfiguration().get(name))) + "}");
-				if (++i < size ) {
-					out.writeChars(", ");
-				}
-				//out.writeChars(name + "\t" + context.getConfiguration().get(name) + "\t" + chromDepth.get(name) + "\t" + (1.0f * chromDepth.get(name) / Integer.parseInt(context.getConfiguration().get(name))) + "\n");
-				//System.out.println("name : " + name + ", length : " + context.getConfiguration().get(name) + ", chromDepth = " + chromDepth.get(name) + ", depth = " + (1.0f * chromDepth.get(name) / Integer.parseInt(context.getConfiguration().get(name))));
-				accLen += Integer.parseInt(context.getConfiguration().get(name));
-				accDep += chromAccDepth.get(name);
-			}
-			out.writeChars("], \"depth\": " + (accDep / accLen));
-			out.writeChars("}");
-			out.close();
+            FileSystem fs = FileSystem.get(context.getConfiguration());
+            Path outPath = new Path(context.getConfiguration().get(OUTPUT_SUMMARY_JSON));
+            FSDataOutputStream out = fs.create(outPath);
+            out.writeChars("{ \"chroms\": [");
+            int size = chromAccDepth.size();
+            int i = 0;
+            for (String name : chromAccDepth.keySet()) {
+                out.writeChars("{\"name\": \"" + name + "\", \"length\": "
+                        + context.getConfiguration().get(name) + ", \"acc\": "
+                        + chromAccDepth.get(name) + ", \"depth\": "
+                        + (1.0f * chromAccDepth.get(name) / Integer.parseInt(context.getConfiguration().get(name)))
+                        + "}");
 
-			//System.out.println("Depth = " + (accDep / accLen));
-		}
+                if (++i < size) {
+                    out.writeChars(", ");
+                }
+                accLen += Integer.parseInt(context.getConfiguration().get(name));
+                accDep += chromAccDepth.get(name);
+            }
 
-		@Override
-		public void reduce(ChunkKey key, Iterable<RegionDepthWritable> values, Context context) throws IOException, InterruptedException {
-			if (context.getConfiguration().get(key.getName()) == null) {
-				System.out.println("skipping unknown key (name, chunk) = (" + key.getName() + ", " + key.getChunk() + ")");
-				return;
-			}
-			
-			RegionDepth regionDepth = new RegionDepth(key.getName(), key.getChunk() * RegionDepth.CHUNK_SIZE, key.getChunk(), RegionDepth.CHUNK_SIZE);
-			RegionDepthCalculator calculator = new RegionDepthCalculator();
-			for (RegionDepthWritable value : values) {
-				calculator.updateChunk(value.getRegionDepth(), key.getChunk(), regionDepth);
-			}
+            out.writeChars("], \"depth\": " + (accDep / accLen));
+            out.writeChars("}");
+            out.close();
+        }
 
-			// accumulator to compute chromosome depth (further processing in cleanup)
-			long acc = 0;
-			for (int i = 0; i < RegionDepth.CHUNK_SIZE; i++) {
-				acc += regionDepth.array[i];
-			}
-			chromAccDepth.put(key.getName(), (chromAccDepth.get(key.getName()) == null ? acc : acc + chromAccDepth.get(key.getName())));
+        @Override
+        public void reduce(ChunkKey key, Iterable<RegionDepthWritable> values, Context context) throws
+                IOException, InterruptedException {
+            if (context.getConfiguration().get(key.getName()) == null) {
+                System.out.println("Skip unknown key (name, chunk) = (" + key.getName() + ", " + key.getChunk() + ")");
+                return;
+            }
 
-			//System.out.println("name = " + key.getName() + " chunk = " + key.getChunk() + " -> acc. depth = " + chromDepth.get(key.getName()) + ", lengh = " + context.getConfiguration().get(key.getName()));
-			//context.write(new Text(regionDepth.toString()), NullWritable.get());
-			context.write(new Text(regionDepth.toFormat()), NullWritable.get());
-		}
-	}
+            RegionDepth regionDepth = new RegionDepth(key.getName(), key.getChunk() * RegionDepth.CHUNK_SIZE,
+                    key.getChunk(), RegionDepth.CHUNK_SIZE);
+            RegionDepthCalculator calculator = new RegionDepthCalculator();
+            for (RegionDepthWritable value : values) {
+                calculator.updateChunk(value.getRegionDepth(), key.getChunk(), regionDepth);
+            }
 
-	public static int run(String input, String output) throws Exception {
-		return run(input, output, new Configuration());
-	}
+            // accumulator to compute chromosome depth (further processing in cleanup)
+            long acc = 0;
+            for (int i = 0; i < RegionDepth.CHUNK_SIZE; i++) {
+                acc += regionDepth.array[i];
+            }
+            chromAccDepth.put(key.getName(), (chromAccDepth.get(key.getName()) == null
+                    ? acc
+                    : acc + chromAccDepth.get(key.getName())));
 
-	public static int run(String input, String output, Configuration conf) throws Exception {
+            context.write(new Text(regionDepth.toFormat()), NullWritable.get());
+        }
+    }
 
-		{
-			// read header, and save sequence name/length in config 
-			byte[] data = null;
-			Path headerPath = new Path(input + ".header");
-			FileSystem hdfs = FileSystem.get(conf);
-			FSDataInputStream dis = hdfs.open(headerPath);
-			FileStatus status = hdfs.getFileStatus(headerPath);
-			data = new byte[(int) status.getLen()];
-			dis.read(data, 0, (int) status.getLen());
-			dis.close();
+    public static int run(String input, String output) throws Exception {
+        return run(input, output, new Configuration());
+    }
 
-			String textHeader = new String(data);
-			LineReader lineReader = new StringLineReader(textHeader);
-			SAMFileHeader header = new SAMTextHeaderCodec().decode(lineReader, textHeader);
-			int i = 0;
-			SAMSequenceRecord sr;
-			while ((sr = header.getSequence(i++)) != null) {
-				conf.setInt(sr.getSequenceName(), sr.getSequenceLength());
-			}
-		}
+    public static int run(String input, String output, Configuration conf) throws Exception {
+        // read header, and save sequence name/length in config
+        byte[] data = null;
+        Path headerPath = new Path(input + ".header");
+        FileSystem hdfs = FileSystem.get(conf);
+        FSDataInputStream dis = hdfs.open(headerPath);
+        FileStatus status = hdfs.getFileStatus(headerPath);
+        data = new byte[(int) status.getLen()];
+        dis.read(data, 0, (int) status.getLen());
+        dis.close();
 
-		conf.set(OUTPUT_SUMMARY_JSON, output + ".summary.json");
-		
-		Job job = Job.getInstance(conf, "ReadAlignmentDepthMR");
-		job.setJarByClass(ReadAlignmentDepthMR.class);
+        String textHeader = new String(data);
+        LineReader lineReader = new StringLineReader(textHeader);
+        SAMFileHeader header = new SAMTextHeaderCodec().decode(lineReader, textHeader);
+        int i = 0;
+        SAMSequenceRecord sr;
+        while ((sr = header.getSequence(i++)) != null) {
+            conf.setInt(sr.getSequenceName(), sr.getSequenceLength());
+        }
 
-		// input
-		AvroJob.setInputKeySchema(job, ReadAlignment.SCHEMA$);
-		FileInputFormat.setInputPaths(job, new Path(input));
-		job.setInputFormatClass(AvroKeyInputFormat.class);
+        conf.set(OUTPUT_SUMMARY_JSON, output + ".summary.json");
 
-		// output
-		FileOutputFormat.setOutputPath(job, new Path(output));
-		job.setOutputKeyClass(RegionDepthWritable.class);
-		job.setOutputValueClass(NullWritable.class);
+        Job job = Job.getInstance(conf, "ReadAlignmentDepthMR");
+        job.setJarByClass(ReadAlignmentDepthMR.class);
 
-		// mapper
-		job.setMapperClass(ReadAlignmentDepthMapper.class);
-		job.setMapOutputKeyClass(ChunkKey.class);
-		job.setMapOutputValueClass(RegionDepthWritable.class);
+        // input
+        AvroJob.setInputKeySchema(job, ReadAlignment.SCHEMA$);
+        FileInputFormat.setInputPaths(job, new Path(input));
+        job.setInputFormatClass(AvroKeyInputFormat.class);
+
+        // output
+        FileOutputFormat.setOutputPath(job, new Path(output));
+        job.setOutputKeyClass(RegionDepthWritable.class);
+        job.setOutputValueClass(NullWritable.class);
+
+        // mapper
+        job.setMapperClass(ReadAlignmentDepthMapper.class);
+        job.setMapOutputKeyClass(ChunkKey.class);
+        job.setMapOutputValueClass(RegionDepthWritable.class);
 
         // combiner
         job.setCombinerClass(ReadAlignmentDepthCombiner.class);
 
         // reducer
-		job.setReducerClass(ReadAlignmentDepthReducer.class);
-		job.setNumReduceTasks(1);
+        job.setReducerClass(ReadAlignmentDepthReducer.class);
+        job.setNumReduceTasks(1);
 
-		return (job.waitForCompletion(true) ? 0 : 1);
-	}
+        return (job.waitForCompletion(true) ? 0 : 1);
+    }
 }

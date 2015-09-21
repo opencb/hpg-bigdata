@@ -72,18 +72,17 @@ public class Vcf2AvroMR {
 
     private static VariantConverterContext variantConverterContext;
 
-    public static class Vcf2AvroMapper extends Mapper<LongWritable, VariantContextWritable, ChunkKey, AvroValue<Variant>> {
+    public static class Vcf2AvroMapper extends
+            Mapper<LongWritable, VariantContextWritable, ChunkKey, AvroValue<Variant>> {
 
         private VariantContext2VariantConverter converter = new VariantContext2VariantConverter();
         private VCFHeader header;
 
         @Override
         protected void setup(Mapper.Context context) throws IOException, InterruptedException {
-
             byte[] variantHeaders = context.getConfiguration().get(VARIANT_HEADER).getBytes();
-            VcfBlockIterator iterator = new VcfBlockIterator(new ByteArrayInputStream(variantHeaders), new FullVcfCodec());
-            header = iterator.getHeader();
-
+            VcfBlockIterator iter = new VcfBlockIterator(new ByteArrayInputStream(variantHeaders), new FullVcfCodec());
+            header = iter.getHeader();
 
             int gtSize = header.getGenotypeSamples().size();
 
@@ -99,7 +98,7 @@ public class Vcf2AvroMR {
 
             List<String> genotypeSamples = header.getGenotypeSamples();
             Genotype2CallSet gtConverter = new Genotype2CallSet();
-            for(int gtPos = 0; gtPos < gtSize; ++gtPos){
+            for (int gtPos = 0; gtPos < gtSize; ++gtPos) {
                 CallSet cs = gtConverter.forward(genotypeSamples.get(gtPos));
                 cs.getVariantSetIds().add(vs.getId());
                 variantConverterContext.getCallSetMap().put(cs.getName(), cs);
@@ -111,13 +110,14 @@ public class Vcf2AvroMR {
 
 
         @Override
-        public void map(LongWritable key, VariantContextWritable value, Context context) throws IOException, InterruptedException {
+        public void map(LongWritable key, VariantContextWritable value, Context context) throws
+                IOException, InterruptedException {
             ChunkKey newKey;
 
             VariantContext variantContext = value.get();
-            long start_chunk = variantContext.getStart() / RegionDepth.CHUNK_SIZE;
-            long end_chunk = variantContext.getEnd() / RegionDepth.CHUNK_SIZE;
-            newKey = new ChunkKey(variantContext.getContig(), start_chunk);
+            long startChunk = variantContext.getStart() / RegionDepth.CHUNK_SIZE;
+            long endChunk = variantContext.getEnd() / RegionDepth.CHUNK_SIZE;
+            newKey = new ChunkKey(variantContext.getContig(), startChunk);
             Variant variant = converter.forward(variantContext);
             context.write(newKey, new AvroValue<>(variant));
         }
@@ -125,7 +125,8 @@ public class Vcf2AvroMR {
 
     public static class Vcf2AvroReducer extends Reducer<ChunkKey, AvroValue<Variant>, AvroKey<Variant>, NullWritable> {
         @Override
-        public void reduce(ChunkKey key, Iterable<AvroValue<Variant>> values, Context context) throws IOException, InterruptedException {
+        public void reduce(ChunkKey key, Iterable<AvroValue<Variant>> values, Context context) throws
+                IOException, InterruptedException {
             for (AvroValue<Variant> value : values) {
                 context.write(new AvroKey<>(value.datum()), NullWritable.get());
             }
@@ -173,16 +174,15 @@ public class Vcf2AvroMR {
         job.setMapOutputKeyClass(ChunkKey.class);
         job.setMapOutputValueClass(AvroValue.class);
 
-
 /*
-		job.setOutputFormatClass(AvroParquetOutputFormat.class);
-		AvroParquetOutputFormat.setOutputPath(job, outputPath);
-		AvroParquetOutputFormat.setSchema(job, schema);
-		AvroParquetOutputFormat.setCompression(job, CompressionCodecName.SNAPPY);
-		AvroParquetOutputFormat.setCompressOutput(job, true);
+        job.setOutputFormatClass(AvroParquetOutputFormat.class);
+        AvroParquetOutputFormat.setOutputPath(job, outputPath);
+        AvroParquetOutputFormat.setSchema(job, schema);
+        AvroParquetOutputFormat.setCompression(job, CompressionCodecName.SNAPPY);
+        AvroParquetOutputFormat.setCompressOutput(job, true);
 
-		// set a large block size to ensure a single row group.  see discussion
-		AvroParquetOutputFormat.setBlockSize(job, 500 * 1024 * 1024);
+        // set a large block size to ensure a single row group.  see discussion
+        AvroParquetOutputFormat.setBlockSize(job, 500 * 1024 * 1024);
 */
 
         job.setMapperClass(Vcf2AvroMapper.class);
@@ -190,4 +190,5 @@ public class Vcf2AvroMR {
 
         return (job.waitForCompletion(true) ? 0 : 1);
     }
+
 }

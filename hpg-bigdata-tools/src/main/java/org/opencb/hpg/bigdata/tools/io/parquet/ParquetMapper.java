@@ -27,6 +27,7 @@ import java.io.IOException;
  * Created by hpccoll1 on 05/05/15.
  */
 public class ParquetMapper extends Mapper<AvroKey<GenericRecord>, NullWritable, Void, GenericRecord> {
+
     @Override
     protected void map(AvroKey<GenericRecord> key, NullWritable value, Context context)
             throws IOException, InterruptedException {

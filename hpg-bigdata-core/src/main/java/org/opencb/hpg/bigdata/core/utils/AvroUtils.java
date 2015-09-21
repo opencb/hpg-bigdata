@@ -18,31 +18,34 @@ package org.opencb.hpg.bigdata.core.utils;
 
 import org.apache.avro.file.CodecFactory;
 
-public class AvroUtils {
-	
-	public static CodecFactory getCodec(String name) {
-		if (name == null || name.equalsIgnoreCase("null")) {
-			return CodecFactory.nullCodec();
-		}
-		CodecFactory codecFactory;
-		switch (name) {
-			case "snappy":
-				codecFactory = CodecFactory.snappyCodec();
-				break;
-			case "deflate":
-				codecFactory = CodecFactory.deflateCodec(CodecFactory.DEFAULT_DEFLATE_LEVEL);
-				break;
-			case "bzip2":
-				codecFactory = CodecFactory.bzip2Codec();
-				break;
-			case "xz":
-				codecFactory = CodecFactory.xzCodec(CodecFactory.DEFAULT_XZ_LEVEL);
-				break;
-			default:
-				codecFactory = CodecFactory.deflateCodec(CodecFactory.DEFAULT_DEFLATE_LEVEL);
-				break;
-		}
-		return codecFactory;
-	}
+public final class AvroUtils {
+
+    private AvroUtils() {
+    }
+
+    public static CodecFactory getCodec(String name) {
+        if (name == null || name.equalsIgnoreCase("null")) {
+            return CodecFactory.nullCodec();
+        }
+        CodecFactory codecFactory;
+        switch (name) {
+            case "snappy":
+                codecFactory = CodecFactory.snappyCodec();
+                break;
+            case "deflate":
+                codecFactory = CodecFactory.deflateCodec(CodecFactory.DEFAULT_DEFLATE_LEVEL);
+                break;
+            case "bzip2":
+                codecFactory = CodecFactory.bzip2Codec();
+                break;
+            case "xz":
+                codecFactory = CodecFactory.xzCodec(CodecFactory.DEFAULT_XZ_LEVEL);
+                break;
+            default:
+                codecFactory = CodecFactory.deflateCodec(CodecFactory.DEFAULT_DEFLATE_LEVEL);
+                break;
+        }
+        return codecFactory;
+    }
 
 }

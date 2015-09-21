@@ -42,6 +42,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * Created by hpccoll1 on 10/04/15.
  */
 public class VariantAvroEncoderTask implements ParallelTaskRunner.Task<CharBuffer, ByteBuffer> {
+
     protected Logger logger = LoggerFactory.getLogger(this.getClass().toString());
 
     private final VariantConverterContext variantConverterContext;
@@ -52,14 +53,15 @@ public class VariantAvroEncoderTask implements ParallelTaskRunner.Task<CharBuffe
     private final VariantContextBlockIterator variantContextBlockIterator;
     private final FullVcfCodec codec;
 
-    static AtomicLong parseTime = new AtomicLong(0);
-    static AtomicLong convertTime = new AtomicLong(0);
-    static AtomicLong encodeTime = new AtomicLong(0);
-    static AtomicBoolean postDone = new AtomicBoolean(false);
+    private static AtomicLong parseTime = new AtomicLong(0);
+    private static AtomicLong convertTime = new AtomicLong(0);
+    private static AtomicLong encodeTime = new AtomicLong(0);
+    private static AtomicBoolean postDone = new AtomicBoolean(false);
 
-    int failConvert = 0;
+    private int failConvert = 0;
 
-    public VariantAvroEncoderTask(VariantConverterContext variantConverterContext, VCFHeader header, VCFHeaderVersion version) {
+    public VariantAvroEncoderTask(VariantConverterContext variantConverterContext,
+                                  VCFHeader header, VCFHeaderVersion version) {
         this.variantConverterContext = variantConverterContext;
         this.header = header;
         codec = new FullVcfCodec();
@@ -74,7 +76,6 @@ public class VariantAvroEncoderTask implements ParallelTaskRunner.Task<CharBuffe
     public void pre() {
         int gtSize = header.getGenotypeSamples().size();
 
-
         VariantSet vs = new VariantSet();
 //        vs.setId(file.getName());
 //        vs.setDatasetId(file.getName());
@@ -85,7 +86,7 @@ public class VariantAvroEncoderTask implements ParallelTaskRunner.Task<CharBuffe
 
         List<String> genotypeSamples = header.getGenotypeSamples();
         Genotype2CallSet gtConverter = new Genotype2CallSet();
-        for(int gtPos = 0; gtPos < gtSize; ++gtPos){
+        for (int gtPos = 0; gtPos < gtSize; ++gtPos) {
             CallSet cs = gtConverter.forward(genotypeSamples.get(gtPos));
             cs.getVariantSetIds().add(vs.getId());
             variantConverterContext.getCallSetMap().put(cs.getName(), cs);
@@ -100,13 +101,10 @@ public class VariantAvroEncoderTask implements ParallelTaskRunner.Task<CharBuffe
         List<Variant> convertedList = new ArrayList<>(charBufferList.size());
         List<ByteBuffer> encoded;
 
-        long start;
-
         //Parse from CharBuffer to VariantContext
-        start = System.nanoTime();
+        long start = System.nanoTime();
         List<VariantContext> variantContexts = variantContextBlockIterator.convert(charBufferList);
         parseTime.addAndGet(System.nanoTime() - start);
-
 
         // Convert to GA4GH Variants
         start = System.nanoTime();
@@ -119,14 +117,16 @@ public class VariantAvroEncoderTask implements ParallelTaskRunner.Task<CharBuffe
             }
         }
         convertTime.addAndGet(System.nanoTime() - start);
-        logger.debug("[" + Thread.currentThread().getName() + "] Processed " + variantContexts.size() + " variants into " + convertedList.size() + " avro variants");
+        logger.debug("[" + Thread.currentThread().getName() + "] Processed " + variantContexts.size()
+                + " variants into " + convertedList.size() + " avro variants");
 
         //Encode with Avro
         try {
             start = System.nanoTime();
             encoded = encoder.encode(convertedList);
             encodeTime.addAndGet(System.nanoTime() - start);
-            logger.debug("[" + Thread.currentThread().getName() + "] Processed " + convertedList.size() + " avro variants into " + encoded.size() + " encoded variants");
+            logger.debug("[" + Thread.currentThread().getName() + "] Processed " + convertedList.size()
+                    + " avro variants into " + encoded.size() + " encoded variants");
             return encoded;
         } catch (IOException e) {
             e.printStackTrace();

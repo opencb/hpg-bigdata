@@ -25,7 +25,10 @@ import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 /**
  * Created by hpccoll1 on 15/05/15.
  */
-public class CompressionUtils {
+public final class CompressionUtils {
+
+    private CompressionUtils() {
+    }
 
     public static Class<? extends org.apache.hadoop.io.compress.CompressionCodec> getHadoopCodec(String name) {
         if (name == null) {

@@ -38,54 +38,55 @@ import org.opencb.hpg.bigdata.tools.utils.CompressionUtils;
 import org.seqdoop.hadoop_bam.SequencedFragment;
 
 public class Fastq2AvroMR {
-	
-	public static class Fastq2GaMapper extends Mapper<Text, SequencedFragment, LongWritable, AvroValue<Read>> {
 
-		public void map(Text key, SequencedFragment value, Context context) throws IOException, InterruptedException {
-			Read read = new Read(key.toString(), value.getSequence().toString(), value.getQuality().toString());
-			context.write(new LongWritable(1), new AvroValue<>(read));
-		}
-	}
+    public static class Fastq2GaMapper extends Mapper<Text, SequencedFragment, LongWritable, AvroValue<Read>> {
 
-	public static class Fastq2GaReducer extends Reducer<LongWritable, AvroValue<Read>, AvroKey<Read>, NullWritable> {
+        public void map(Text key, SequencedFragment value, Context context) throws IOException, InterruptedException {
+            Read read = new Read(key.toString(), value.getSequence().toString(), value.getQuality().toString());
+            context.write(new LongWritable(1), new AvroValue<>(read));
+        }
+    }
 
-		public void reduce(LongWritable key, Iterable<AvroValue<Read>> values, Context context) throws IOException, InterruptedException {
-			for (AvroValue<Read> value : values) {
-				context.write(new AvroKey<>(value.datum()), NullWritable.get());
-			}
-		}
-	}
-	
-	public static int run(String input, String output, String codecName) throws Exception {
-		Configuration conf = new Configuration();
+    public static class Fastq2GaReducer extends Reducer<LongWritable, AvroValue<Read>, AvroKey<Read>, NullWritable> {
 
-		Job job = Job.getInstance(conf, "Fastq2AvroMR");
-		job.setJarByClass(Fastq2AvroMR.class);
+        public void reduce(LongWritable key, Iterable<AvroValue<Read>> values, Context context)
+                throws IOException, InterruptedException {
+            for (AvroValue<Read> value : values) {
+                context.write(new AvroKey<>(value.datum()), NullWritable.get());
+            }
+        }
+    }
 
-		// We call setOutputSchema first so we can override the configuration
-		// parameters it sets
-		AvroJob.setOutputKeySchema(job, Read.SCHEMA$);
-		job.setOutputValueClass(NullWritable.class);
-		AvroJob.setMapOutputValueSchema(job, Read.SCHEMA$);
+    public static int run(String input, String output, String codecName) throws Exception {
+        Configuration conf = new Configuration();
 
-		// point to input data
-		FileInputFormat.setInputPaths(job, new Path(input));
-		job.setInputFormatClass(FastqInputFormatMODIF.class);
-		
-		// set the output format
-		FileOutputFormat.setOutputPath(job, new Path(output));
-		if (codecName != null) {
-			FileOutputFormat.setCompressOutput(job, true);
-			FileOutputFormat.setOutputCompressorClass(job, CompressionUtils.getHadoopCodec(codecName));
-		}
-		job.setOutputFormatClass(AvroKeyOutputFormat.class);
+        Job job = Job.getInstance(conf, "Fastq2AvroMR");
+        job.setJarByClass(Fastq2AvroMR.class);
 
-		job.setMapOutputKeyClass(LongWritable.class);
-		job.setMapOutputValueClass(AvroValue.class);
+        // We call setOutputSchema first so we can override the configuration
+        // parameters it sets
+        AvroJob.setOutputKeySchema(job, Read.SCHEMA$);
+        job.setOutputValueClass(NullWritable.class);
+        AvroJob.setMapOutputValueSchema(job, Read.SCHEMA$);
 
-		job.setMapperClass(Fastq2GaMapper.class);
-		job.setReducerClass(Fastq2GaReducer.class);
+        // point to input data
+        FileInputFormat.setInputPaths(job, new Path(input));
+        job.setInputFormatClass(FastqInputFormatMODIF.class);
 
-		return (job.waitForCompletion(true) ? 0 : 1);
-	}
+        // set the output format
+        FileOutputFormat.setOutputPath(job, new Path(output));
+        if (codecName != null) {
+            FileOutputFormat.setCompressOutput(job, true);
+            FileOutputFormat.setOutputCompressorClass(job, CompressionUtils.getHadoopCodec(codecName));
+        }
+        job.setOutputFormatClass(AvroKeyOutputFormat.class);
+
+        job.setMapOutputKeyClass(LongWritable.class);
+        job.setMapOutputValueClass(AvroValue.class);
+
+        job.setMapperClass(Fastq2GaMapper.class);
+        job.setReducerClass(Fastq2GaReducer.class);
+
+        return (job.waitForCompletion(true) ? 0 : 1);
+    }
 }

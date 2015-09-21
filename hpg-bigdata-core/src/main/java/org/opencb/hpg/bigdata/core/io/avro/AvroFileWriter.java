@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Created by hpccoll1 on 02/04/15.
  */
-public class AvroFileWriter <T> implements DataWriter<ByteBuffer> {
+public class AvroFileWriter<T> implements DataWriter<ByteBuffer> {
 
     private final String codecName;
     private final Schema schema;
@@ -85,7 +85,7 @@ public class AvroFileWriter <T> implements DataWriter<ByteBuffer> {
     }
 
     @Override
-    public boolean close(){
+    public boolean close() {
         try {
             writer.close();
         } catch (IOException e) {

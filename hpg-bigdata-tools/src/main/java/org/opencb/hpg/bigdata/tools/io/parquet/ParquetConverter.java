@@ -70,19 +70,18 @@ public class ParquetConverter<T extends IndexedRecord> {
         ParquetWriter<IndexedRecord> parquetWriter = new ParquetWriter<>(new org.apache.hadoop.fs.Path(outputFile),
                 writeSupport, compressionCodecName, blockSize, pageSize);
 
-
         int numRecords = 0;
         T resuse = null;
 
         while (dataFileStream.hasNext()) {
             resuse = dataFileStream.next(resuse);
             parquetWriter.write(resuse);
-            if (numRecords%1000 == 0) {
+            if (numRecords % 1000 == 0) {
                 System.out.println(numRecords);
             }
             numRecords++;
         }
         parquetWriter.close();
-
     }
+
 }

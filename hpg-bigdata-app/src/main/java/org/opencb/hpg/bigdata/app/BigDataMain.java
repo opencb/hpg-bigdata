@@ -56,12 +56,12 @@ public class BigDataMain {
         } else {    // correct command exist
             CommandExecutor commandExecutor = null;
             // Check if any command or subcommand -h options are present
-            if(cliOptionsParser.getCommandOptions().help || cliOptionsParser.getCommonCommandOptions().help) {
+            if (cliOptionsParser.getCommandOptions().help || cliOptionsParser.getCommonCommandOptions().help) {
                 cliOptionsParser.printUsage();
             } else {
                 // get the subcommand and printUsage if empty
                 String parsedSubCommand = cliOptionsParser.getSubCommand();
-                if(parsedSubCommand == null || parsedSubCommand.isEmpty()) {
+                if (parsedSubCommand == null || parsedSubCommand.isEmpty()) {
                     cliOptionsParser.printUsage();
                 } else {
                     switch (parsedCommand) {

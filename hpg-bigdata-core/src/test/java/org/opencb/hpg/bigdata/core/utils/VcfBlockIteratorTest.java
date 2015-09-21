@@ -68,7 +68,7 @@ public class VcfBlockIteratorTest {
 		int cnt = 0;
 		try(
 			InputStream in = getStream();
-			VcfBlockIterator iter = new VcfBlockIterator(in, new FullVcfCodec());){
+			VcfBlockIterator iter = new VcfBlockIterator(in, new FullVcfCodec())){
 			for(List<CharBuffer> s : iter){
 				cnt += s.size();
 			}

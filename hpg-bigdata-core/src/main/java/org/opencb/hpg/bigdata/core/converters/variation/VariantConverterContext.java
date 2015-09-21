@@ -15,7 +15,7 @@
  */
 
 /**
- * 
+ *
  */
 package org.opencb.hpg.bigdata.core.converters.variation;
 
@@ -28,16 +28,15 @@ import org.ga4gh.models.CallSet;
  *
  */
 public class VariantConverterContext {
-	
-//	public final AtomicReferenceArray<CallSet> callsetArray;
-	public final ConcurrentHashMap<CharSequence, CallSet> callSetMap = new ConcurrentHashMap<>();
-	
-	public VariantConverterContext() {
-		
-	}
 
-	public ConcurrentHashMap<CharSequence, CallSet> getCallSetMap() {
-		return callSetMap;
-	}
-	
+    // public final AtomicReferenceArray<CallSet> callsetArray;
+    private final ConcurrentHashMap<CharSequence, CallSet> callSetMap = new ConcurrentHashMap<>();
+
+    public VariantConverterContext() {
+    }
+
+    public ConcurrentHashMap<CharSequence, CallSet> getCallSetMap() {
+        return callSetMap;
+    }
+
 }
