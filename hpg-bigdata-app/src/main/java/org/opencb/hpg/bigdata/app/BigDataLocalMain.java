@@ -61,7 +61,7 @@ public class BigDataLocalMain {
                 System.exit(0);
             }
             if (localCliOptionsParser.getGeneralOptions().version) {
-//                printVersion();
+                localCliOptionsParser.printUsage();
             }
         } else {    // correct command exist
             CommandExecutor commandExecutor = null;

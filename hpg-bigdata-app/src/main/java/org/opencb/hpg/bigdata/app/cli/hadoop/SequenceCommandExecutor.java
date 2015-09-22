@@ -33,35 +33,36 @@ import org.opencb.hpg.bigdata.core.utils.PathUtils;
  */
 public class SequenceCommandExecutor extends CommandExecutor {
 
-	private CliOptionsParser.SequenceCommandOptions sequenceCommandOptions;
+    private CliOptionsParser.SequenceCommandOptions sequenceCommandOptions;
 
-	public SequenceCommandExecutor(CliOptionsParser.SequenceCommandOptions sequenceCommandOptions) {
-		this.sequenceCommandOptions = sequenceCommandOptions;
-	}
+    public SequenceCommandExecutor(CliOptionsParser.SequenceCommandOptions sequenceCommandOptions) {
+        this.sequenceCommandOptions = sequenceCommandOptions;
+    }
 
-	/**
-	 * Parse specific 'sequence' command options
-	 */
-	public void execute() throws Exception {
-		String subCommand = sequenceCommandOptions.getParsedSubCommand();
+    /*
+     * Parse specific 'sequence' command options
+     */
+    public void execute() throws Exception {
+        String subCommand = sequenceCommandOptions.getParsedSubCommand();
 
         switch (subCommand) {
             case "convert":
-				convert();
+                convert();
                 break;
-			case "stats":
-				stats();
-				break;
-			case "align":
-				System.out.println("Sub-command 'align': Not yet implemented for the command 'sequence' !");
-				break;
-			default:
-				break;
+            case "stats":
+                stats();
+                break;
+            case "align":
+                System.out.println("Sub-command 'align': Not yet implemented for the command 'sequence' !");
+                break;
+            default:
+                break;
         }
-	}
+    }
 
-	private void convert() throws Exception {
-        CliOptionsParser.ConvertSequenceCommandOptions convertSequenceCommandOptions = sequenceCommandOptions.convertSequenceCommandOptions;
+    private void convert() throws Exception {
+        CliOptionsParser.ConvertSequenceCommandOptions
+                convertSequenceCommandOptions = sequenceCommandOptions.convertSequenceCommandOptions;
 
         // get input parameters
         String input = convertSequenceCommandOptions.input;
@@ -77,59 +78,60 @@ public class SequenceCommandExecutor extends CommandExecutor {
         try {
             Fastq2AvroMR.run(input, output, codecName);
         } catch (Exception e) {
-			throw e;
-		}
-	}
+            throw e;
+        }
+    }
 
-	private void stats() throws Exception {
-		CliOptionsParser.StatsSequenceCommandOptions statsSequenceCommandOptions = sequenceCommandOptions.statsSequenceCommandOptions;
+    private void stats() throws Exception {
+        CliOptionsParser.StatsSequenceCommandOptions statsSequenceCommandOptions = sequenceCommandOptions.statsSequenceCommandOptions;
 
-		// get input parameters
-		String input = statsSequenceCommandOptions.input;
-		String output = statsSequenceCommandOptions.output;
-		int kvalue = statsSequenceCommandOptions.kmers;
+        // get input parameters
+        String input = statsSequenceCommandOptions.input;
+        String output = statsSequenceCommandOptions.output;
+        int kvalue = statsSequenceCommandOptions.kmers;
 
-		// prepare the HDFS output folder
-		Configuration conf = new Configuration();
-		FileSystem fs = FileSystem.get(conf);
+        // prepare the HDFS output folder
+        Configuration conf = new Configuration();
+        FileSystem fs = FileSystem.get(conf);
 
-		String outHdfsDirname = Long.toString(new Date().getTime());
+        String outHdfsDirname = Long.toString(new Date().getTime());
 
-		// run MapReduce job to compute stats
-		ReadStatsMR.run(input, outHdfsDirname, kvalue);
+        // run MapReduce job to compute stats
+        ReadStatsMR.run(input, outHdfsDirname, kvalue);
 
-		// post-processing
-		Path outFile = new Path(outHdfsDirname + "/part-r-00000");
+        // post-processing
+        Path outFile = new Path(outHdfsDirname + "/part-r-00000");
 
-		try {
-			if (!fs.exists(outFile)) {
-            	logger.error("Stats results file not found: {}", outFile.getName());
-			} else {
-				String outRawFileName =  output + "/stats.json";
-				fs.copyToLocalFile(outFile, new Path(outRawFileName));
+        try {
+            if (!fs.exists(outFile)) {
+                logger.error("Stats results file not found: {}", outFile.getName());
+            } else {
+                String outRawFileName =  output + "/stats.json";
+                fs.copyToLocalFile(outFile, new Path(outRawFileName));
 
-				//Utils.parseStatsFile(outRawFileName, out);
-			}
-			fs.delete(new Path(outHdfsDirname), true);
-		} catch (IOException e) {
-			throw e;
-		}
-	}
+                //Utils.parseStatsFile(outRawFileName, out);
+            }
+            fs.delete(new Path(outHdfsDirname), true);
+        } catch (IOException e) {
+            throw e;
+        }
+    }
 
     @Deprecated
-	private void kmers(String input, String output, int kvalue) throws Exception {
-		// clean paths
-		String in = PathUtils.clean(input);
-		String out = PathUtils.clean(output);
+    private void kmers(String input, String output, int kvalue) throws Exception {
+        // clean paths
+        String in = PathUtils.clean(input);
+        String out = PathUtils.clean(output);
 
-		if (!PathUtils.isHdfs(input)) {
-			throw new IOException("To run fastq kmers, input files '" + input + "' must be stored in the HDFS/Haddop. Use the command 'convert fastq2sa' to import your file.");
-		}
+        if (!PathUtils.isHdfs(input)) {
+            throw new IOException("To run fastq kmers, input files '" + input
+                    + "' must be stored in the HDFS/Haddop. Use the command 'convert fastq2sa' to import your file.");
+        }
 
-		try {
-			ReadKmersMR.run(in, out, kvalue);
-		} catch (Exception e) {
-			throw e;
-		}
-	}	
+        try {
+            ReadKmersMR.run(in, out, kvalue);
+        } catch (Exception e) {
+            throw e;
+        }
+    }
 }

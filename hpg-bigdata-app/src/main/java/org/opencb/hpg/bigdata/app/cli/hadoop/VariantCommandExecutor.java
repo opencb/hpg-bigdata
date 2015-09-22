@@ -29,8 +29,7 @@ public class VariantCommandExecutor extends CommandExecutor {
     private CliOptionsParser.VariantCommandOptions variantCommandOptions;
 
     public VariantCommandExecutor(CliOptionsParser.VariantCommandOptions variantCommandOptions) {
-//		super(fastqCommandOptions.logLevel, fastqCommandOptions.verbose, fastqCommandOptions.conf);
-
+//      super(fastqCommandOptions.logLevel, fastqCommandOptions.verbose, fastqCommandOptions.conf);
         this.variantCommandOptions = variantCommandOptions;
     }
 
@@ -49,6 +48,8 @@ public class VariantCommandExecutor extends CommandExecutor {
                         variantCommandOptions.indexVariantCommandOptions.commonOptions.verbose,
                         variantCommandOptions.indexVariantCommandOptions.commonOptions.conf);
                 index();
+                break;
+            default:
                 break;
         }
     }

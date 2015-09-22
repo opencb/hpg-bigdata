@@ -47,7 +47,7 @@ public class VariantCommandExecutor extends CommandExecutor {
     private LocalCliOptionsParser.VariantCommandOptions variantCommandOptions;
 
     public VariantCommandExecutor(LocalCliOptionsParser.VariantCommandOptions variantCommandOptions) {
-//		super(variantCommandOptions.c, fastqCommandOptions.verbose, fastqCommandOptions.conf);
+//      super(variantCommandOptions.c, fastqCommandOptions.verbose, fastqCommandOptions.conf);
         this.variantCommandOptions = variantCommandOptions;
     }
 
@@ -62,6 +62,8 @@ public class VariantCommandExecutor extends CommandExecutor {
                         variantCommandOptions.convertVariantCommandOptions.commonOptions.conf);
                 convert();
                 break;
+            default:
+                break;
         }
     }
 
@@ -73,7 +75,7 @@ public class VariantCommandExecutor extends CommandExecutor {
         FileUtils.checkFile(Paths.get(input));
 
         // Two options available: toAvro and fromAvro
-        if(variantCommandOptions.convertVariantCommandOptions.toAvro) {
+        if (variantCommandOptions.convertVariantCommandOptions.toAvro) {
             String compression = variantCommandOptions.convertVariantCommandOptions.compression;
 
             // Creating reader
