@@ -32,7 +32,6 @@ import org.opencb.hpg.bigdata.core.converters.SAMRecord2ReadAlignmentConverter;
 
 import java.io.*;
 import java.util.HashMap;
-import java.util.IllegalFormatException;
 
 /**
  * Created by imedina on 16/03/15.
@@ -41,13 +40,13 @@ public class AlignmentCommandExecutor extends CommandExecutor {
 
     private LocalCliOptionsParser.AlignmentCommandOptions alignmentCommandOptions;
 
-    public final static String BAM_HEADER_SUFFIX = ".header";
+    public static final String BAM_HEADER_SUFFIX = ".header";
 
     public AlignmentCommandExecutor(LocalCliOptionsParser.AlignmentCommandOptions alignmentCommandOptions) {
         this.alignmentCommandOptions = alignmentCommandOptions;
     }
 
-    /**
+    /*
      * Parse specific 'alignment' command options
      */
     public void execute() throws IOException {
@@ -60,7 +59,6 @@ public class AlignmentCommandExecutor extends CommandExecutor {
                         alignmentCommandOptions.convertAlignmentCommandOptions.commonOptions.conf);
                 convert();
                 break;
-
             case "stats":
                 init(alignmentCommandOptions.statsAlignmentCommandOptions.commonOptions.logLevel,
                         alignmentCommandOptions.statsAlignmentCommandOptions.commonOptions.verbose,
@@ -111,7 +109,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
             SAMFileHeader header = new SAMTextHeaderCodec().decode(lineReader, textHeader);
 
             // reader
-            DataFileStream<ReadAlignment> reader = new DataFileStream<ReadAlignment>(is, new SpecificDatumReader<ReadAlignment>(ReadAlignment.class));
+            DataFileStream<ReadAlignment> reader = new DataFileStream<ReadAlignment>(is, new SpecificDatumReader<>(ReadAlignment.class));
 
             // writer
             OutputStream os = new FileOutputStream(new File(output));
@@ -143,7 +141,9 @@ public class AlignmentCommandExecutor extends CommandExecutor {
             System.out.println("\tjava.libary.path = " + System.getProperty("java.library.path"));
             System.loadLibrary("hpgbigdata");
             System.out.println("...done!");
-            new NativeSupport().bam2ga(input, output, compressionCodecName == null ? "snappy" : compressionCodecName, alignmentCommandOptions.convertAlignmentCommandOptions.adjustQuality);
+            new NativeSupport().bam2ga(input, output, compressionCodecName == null
+                    ? "snappy"
+                    : compressionCodecName, alignmentCommandOptions.convertAlignmentCommandOptions.adjustQuality);
 
             try {
                 // header management: saved it in a separate file
@@ -160,21 +160,21 @@ public class AlignmentCommandExecutor extends CommandExecutor {
     }
 
     private void stats() throws IOException {
-		// get input parameters
+        // get input parameters
         String input = alignmentCommandOptions.statsAlignmentCommandOptions.input;
         String output = alignmentCommandOptions.statsAlignmentCommandOptions.output;
 
-		try {
-			// reader
-			InputStream is = new FileInputStream(input);
-			DataFileStream<ReadAlignment> reader = new DataFileStream<>(is, new SpecificDatumReader<>(ReadAlignment.class));
+        try {
+            // reader
+            InputStream is = new FileInputStream(input);
+            DataFileStream<ReadAlignment> reader = new DataFileStream<>(is, new SpecificDatumReader<>(ReadAlignment.class));
 
             AlignmentStats stats;
             AlignmentStats totalStats = new AlignmentStats();
             AlignmentStatsCalculator calculator = new AlignmentStatsCalculator();
 
             // main loop
-			for (ReadAlignment readAlignment : reader) {
+            for (ReadAlignment readAlignment : reader) {
                 stats = calculator.compute(readAlignment);
                 calculator.update(stats, totalStats);
             }
@@ -188,7 +188,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
             writer.write(totalStats.toJSON());
             writer.close();
 
-		} catch (Exception e) {
+        } catch (Exception e) {
             throw e;
         }
     }
@@ -247,7 +247,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
                     if (!chromName.equals(regionDepth.chrom)) {
                         // write depth
                         int length = chromDepth.length;
-                        for(int i = 0; i < length; i++) {
+                        for (int i = 0; i < length; i++) {
                             writer.write(chromName + "\t" + (i + 1) + "\t" + chromDepth[i] + "\n");
                         }
 
@@ -270,7 +270,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
             }
             // write depth
             int length = chromDepth.length;
-            for(int i = 0; i < length; i++) {
+            for (int i = 0; i < length; i++) {
                 if (chromDepth[i] > 0) {
                     writer.write(chromName + "\t" + (i + 1) + "\t" + chromDepth[i] + "\n");
                 }
