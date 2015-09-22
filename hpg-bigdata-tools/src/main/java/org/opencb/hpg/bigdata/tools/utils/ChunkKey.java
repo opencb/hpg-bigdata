@@ -26,14 +26,14 @@ import org.apache.hadoop.io.WritableUtils;
 public class ChunkKey implements WritableComparable<ChunkKey> {
 
     private String name;
-    private Long chunk;
+    private Integer chunk;
 
     /**
      * Constructor.
      */
     public ChunkKey() { }
 
-    public ChunkKey(String name, Long chunk) {
+    public ChunkKey(String name, Integer chunk) {
         this.name = name;
         this.chunk = chunk;
     }
@@ -52,13 +52,13 @@ public class ChunkKey implements WritableComparable<ChunkKey> {
     @Override
     public void readFields(DataInput in) throws IOException {
         name = WritableUtils.readString(in);
-        chunk = in.readLong();
+        chunk = in.readInt();
     }
 
     @Override
     public void write(DataOutput out) throws IOException {
         WritableUtils.writeString(out, name);
-        out.writeLong(chunk);
+        out.writeInt(chunk);
     }
 
     @Override
@@ -78,11 +78,11 @@ public class ChunkKey implements WritableComparable<ChunkKey> {
         this.name = name;
     }
 
-    public Long getChunk() {
+    public Integer getChunk() {
         return chunk;
     }
 
-    public void setPos(Long chunk) {
+    public void setPos(Integer chunk) {
         this.chunk = chunk;
     }
 }

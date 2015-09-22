@@ -20,6 +20,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.ga4gh.models.ReadAlignment;
+import org.opencb.biodata.models.feature.Region;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
 import org.opencb.hpg.bigdata.tools.alignment.Bam2AvroMR;
 import org.opencb.hpg.bigdata.tools.io.parquet.ParquetMR;
@@ -28,6 +29,7 @@ import org.opencb.hpg.bigdata.tools.alignment.stats.ReadAlignmentStatsMR;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Created by imedina on 16/03/15.
@@ -126,13 +128,17 @@ public class AlignmentCommandExecutor extends CommandExecutor {
     private void depth() throws Exception {
         String input = alignmentCommandOptions.depthAlignmentCommandOptions.input;
         String output = alignmentCommandOptions.depthAlignmentCommandOptions.output;
+        String regions = alignmentCommandOptions.depthAlignmentCommandOptions.regions;
+
+        // check regions before launching MR job
+        //List<Region> regs = null;
 
         // prepare the HDFS output folder
         Configuration conf = new Configuration();
         FileSystem fs = FileSystem.get(conf);
 
         // run MapReduce job to compute stats
-        ReadAlignmentDepthMR.run(input, output);
+        ReadAlignmentDepthMR.run(input, output, regions);
 
 //        String tmpOutDirName = output + "_" + Long.toString(new Date().getTime());
 //

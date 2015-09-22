@@ -44,6 +44,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.ga4gh.models.LinearAlignment;
 import org.ga4gh.models.ReadAlignment;
+import org.opencb.biodata.tools.alignment.filtering.RegionFilter;
 import org.opencb.biodata.tools.alignment.tasks.RegionDepth;
 import org.opencb.biodata.tools.alignment.tasks.RegionDepthCalculator;
 import org.opencb.hpg.bigdata.tools.utils.ChunkKey;
@@ -52,9 +53,22 @@ import org.opencb.hpg.bigdata.tools.alignment.RegionDepthWritable;
 public class ReadAlignmentDepthMR {
 
     public static final String OUTPUT_SUMMARY_JSON = "summary.depth.json";
+    public static final String REGIONS_PARAM = "regions";
 
     public static class ReadAlignmentDepthMapper extends
             Mapper<AvroKey<ReadAlignment>, NullWritable, ChunkKey, RegionDepthWritable> {
+
+        private RegionFilter regionFilter = null;
+
+        @Override
+        public void setup(Mapper.Context context) throws IOException, InterruptedException {
+            String regs = context.getConfiguration().get(REGIONS_PARAM);
+
+            if (regs != null) {
+                System.err.println(">>>>>>> mapper, regs = " + regs);
+                regionFilter = new RegionFilter(regs);
+            }
+        }
 
         @Override
         public void map(AvroKey<ReadAlignment> key, NullWritable value, Context context) throws
@@ -66,20 +80,27 @@ public class ReadAlignmentDepthMR {
             RegionDepthWritable newValue;
 
             if (la == null) {
-                newKey = new ChunkKey("*", 0L);
+                //newKey = new ChunkKey("*", 0L);
                 // unmapped read
-                newValue = new RegionDepthWritable(new RegionDepth("*", 0, 0, 0));
-                context.write(newKey, newValue);
+                //newValue = new RegionDepthWritable(new RegionDepth("*", 0, 0, 0));
+                //context.write(newKey, newValue);
                 return;
             }
 
             RegionDepthCalculator calculator = new RegionDepthCalculator();
-            List<RegionDepth> regions = calculator.computeAsList(ra);
 
-            for (RegionDepth region: regions) {
-                newKey = new ChunkKey(region.chrom, region.chunk);
-                newValue = new RegionDepthWritable(region);
-                context.write(newKey, newValue);
+            String chrom = la.getPosition().getReferenceName().toString();
+            long start = la.getPosition().getPosition();
+            long end = start + calculator.computeSizeByCigar(la.getCigar()) - 1;
+
+            if ((regionFilter == null) || regionFilter.apply(chrom, start, end)) {
+                List<RegionDepth> regions = calculator.computeAsList(ra);
+
+                for (RegionDepth region: regions) {
+                    newKey = new ChunkKey(region.chrom, region.chunk);
+                    newValue = new RegionDepthWritable(region);
+                    context.write(newKey, newValue);
+                }
             }
         }
     }
@@ -91,26 +112,34 @@ public class ReadAlignmentDepthMR {
         public void reduce(ChunkKey key, Iterable<RegionDepthWritable> values, Context context) throws
                 IOException, InterruptedException {
             RegionDepth regionDepth;
-            if (key.getName().equals("*")) {
-                regionDepth = new RegionDepth("*", 0, 0, 0);
-            } else {
+            //if (key.getName().equals("*")) {
+            //    regionDepth = new RegionDepth("*", 0, 0, 0);
+            //} else {
                 regionDepth = new RegionDepth(key.getName(), key.getChunk() * RegionDepth.CHUNK_SIZE, key.getChunk(),
                         RegionDepth.CHUNK_SIZE);
                 RegionDepthCalculator calculator = new RegionDepthCalculator();
                 for (RegionDepthWritable value : values) {
                     calculator.updateChunk(value.getRegionDepth(), key.getChunk(), regionDepth);
                 }
-            }
+            //}
             context.write(key, new RegionDepthWritable(regionDepth));
         }
     }
 
     public static class ReadAlignmentDepthReducer extends Reducer<ChunkKey, RegionDepthWritable, Text, NullWritable> {
 
+        private RegionFilter regionFilter = null;
         private HashMap<String, Long> chromAccDepth = null;
 
         @Override
         public void setup(Context context) throws IOException, InterruptedException {
+            String regs = context.getConfiguration().get(REGIONS_PARAM);
+
+            if (regs != null) {
+                System.err.println(">>>>>>> reducer, regs = " + regs);
+                regionFilter = new RegionFilter(regs);
+            }
+
             chromAccDepth = new HashMap<>();
         }
 
@@ -167,15 +196,15 @@ public class ReadAlignmentDepthMR {
                     ? acc
                     : acc + chromAccDepth.get(key.getName())));
 
-            context.write(new Text(regionDepth.toFormat()), NullWritable.get());
+            context.write(new Text(regionDepth.toFormat(regionFilter)), NullWritable.get());
         }
     }
 
-    public static int run(String input, String output) throws Exception {
-        return run(input, output, new Configuration());
+    public static int run(String input, String output, String regions) throws Exception {
+        return run(input, output, regions, new Configuration());
     }
 
-    public static int run(String input, String output, Configuration conf) throws Exception {
+    public static int run(String input, String output, String regions, Configuration conf) throws Exception {
         // read header, and save sequence name/length in config
         byte[] data = null;
         Path headerPath = new Path(input + ".header");
@@ -195,7 +224,10 @@ public class ReadAlignmentDepthMR {
             conf.setInt(sr.getSequenceName(), sr.getSequenceLength());
         }
 
-        conf.set(OUTPUT_SUMMARY_JSON, output + ".summary.json");
+        conf.set(OUTPUT_SUMMARY_JSON, output + "summary.json");
+        if (regions != null) {
+            conf.set(REGIONS_PARAM, regions);
+        }
 
         Job job = Job.getInstance(conf, "ReadAlignmentDepthMR");
         job.setJarByClass(ReadAlignmentDepthMR.class);

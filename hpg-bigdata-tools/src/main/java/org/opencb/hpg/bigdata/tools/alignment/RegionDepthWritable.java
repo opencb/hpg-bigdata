@@ -45,8 +45,8 @@ public class RegionDepthWritable implements Writable {
     @Override
     public void write(DataOutput out) throws IOException {
         out.writeUTF(regionDepth.chrom);
-        out.writeLong(regionDepth.position);
-        out.writeLong(regionDepth.chunk);
+        out.writeInt(regionDepth.position);
+        out.writeInt(regionDepth.chunk);
         out.writeInt(regionDepth.size);
         for (int i = 0; i < regionDepth.size; i++) {
             out.writeShort(regionDepth.array[i]);
@@ -58,8 +58,8 @@ public class RegionDepthWritable implements Writable {
         regionDepth = new RegionDepth();
 
         regionDepth.chrom = in.readUTF();
-        regionDepth.position = in.readLong();
-        regionDepth.chunk = in.readLong();
+        regionDepth.position = in.readInt();
+        regionDepth.chunk = in.readInt();
         regionDepth.size = in.readInt();
         regionDepth.array = (regionDepth.size > 0 ? new short[regionDepth.size] : null);
         for (int i = 0; i < regionDepth.size; i++) {
