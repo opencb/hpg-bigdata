@@ -20,7 +20,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.ga4gh.models.ReadAlignment;
-import org.opencb.biodata.models.feature.Region;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
 import org.opencb.hpg.bigdata.tools.alignment.Bam2AvroMR;
 import org.opencb.hpg.bigdata.tools.alignment.stats.ReadAlignmentDepthMR;
@@ -29,7 +28,6 @@ import org.opencb.hpg.bigdata.tools.io.parquet.ParquetMR;
 
 import java.io.IOException;
 import java.util.Date;
-import java.util.List;
 
 /**
  * Created by imedina on 16/03/15.
