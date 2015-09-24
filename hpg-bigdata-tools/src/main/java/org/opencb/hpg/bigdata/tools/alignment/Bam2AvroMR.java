@@ -149,7 +149,7 @@ public class Bam2AvroMR {
         job.waitForCompletion(true);
 
         // write header
-        Path headerPath = new Path(output + ".header");
+        Path headerPath = new Path(output + "/part-m-00000.avro.header");
         FileSystem fs = FileSystem.get(conf);
         BufferedWriter br = new BufferedWriter(new OutputStreamWriter(fs.create(headerPath, true)));
         br.write(header.getTextHeader());

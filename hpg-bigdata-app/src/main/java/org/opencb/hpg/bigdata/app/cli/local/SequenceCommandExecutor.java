@@ -34,81 +34,83 @@ import java.io.*;
  */
 public class SequenceCommandExecutor extends CommandExecutor {
 
-	private LocalCliOptionsParser.SequenceCommandOptions sequenceCommandOptions;
+    private LocalCliOptionsParser.SequenceCommandOptions sequenceCommandOptions;
 
-	public SequenceCommandExecutor(LocalCliOptionsParser.SequenceCommandOptions sequenceCommandOptions) {
-		this.sequenceCommandOptions = sequenceCommandOptions;
-	}
+    public SequenceCommandExecutor(LocalCliOptionsParser.SequenceCommandOptions sequenceCommandOptions) {
+        this.sequenceCommandOptions = sequenceCommandOptions;
+    }
 
-	/**
-	 * Parse specific 'sequence' command options
-	 */
-	public void execute() throws IOException {
-		String subCommand = sequenceCommandOptions.getParsedSubCommand();
-
+    /**
+     * Parse specific 'sequence' command options.
+     *
+     * @throws IOException Exception thrown if file does not exist
+     */
+    public void execute() throws IOException {
+        String subCommand = sequenceCommandOptions.getParsedSubCommand();
         switch (subCommand) {
             case "convert":
-				convert();
+                convert();
                 break;
-			case "stats":
-				stats();
-				break;
-			default:
-				break;
+            case "stats":
+                stats();
+                break;
+            default:
+                break;
         }
-	}
+    }
 
-	private void convert() throws IOException {
-		LocalCliOptionsParser.ConvertSequenceCommandOptions convertSequenceCommandOptions = sequenceCommandOptions.convertSequenceCommandOptions;
+    private void convert() throws IOException {
+        LocalCliOptionsParser.ConvertSequenceCommandOptions
+                convertSequenceCommandOptions = sequenceCommandOptions.convertSequenceCommandOptions;
 
-		// get input parameters
-		String input = convertSequenceCommandOptions.input;
-		String output = convertSequenceCommandOptions.output;
-		String codecName = convertSequenceCommandOptions.compression;
+        // get input parameters
+        String input = convertSequenceCommandOptions.input;
+        String output = convertSequenceCommandOptions.output;
+        String codecName = convertSequenceCommandOptions.compression;
 
-		try {
-			// reader
-			FastqReader reader = new FastqReader(new File(input));
+        try {
+            // reader
+            FastqReader reader = new FastqReader(new File(input));
 
-			// writer
-			OutputStream os = new FileOutputStream(output);
+            // writer
+            OutputStream os = new FileOutputStream(output);
 
-			AvroWriter<Read> writer = new AvroWriter<>(Read.getClassSchema(), AvroUtils.getCodec(codecName), os);
+            AvroWriter<Read> writer = new AvroWriter<>(Read.getClassSchema(), AvroUtils.getCodec(codecName), os);
 
-			// main loop
-			FastqRecord2ReadConverter converter = new FastqRecord2ReadConverter();
-			while (reader.hasNext()) {
-				writer.write(converter.forward(reader.next()));
-			}
+            // main loop
+            FastqRecord2ReadConverter converter = new FastqRecord2ReadConverter();
+            while (reader.hasNext()) {
+                writer.write(converter.forward(reader.next()));
+            }
 
-			// close
-			reader.close();
-			writer.close();
-			os.close();
-		} catch (Exception e) {
-			throw e;
-		}
-	}
+            // close
+            reader.close();
+            writer.close();
+            os.close();
+        } catch (Exception e) {
+            throw e;
+        }
+    }
 
-	private void stats() throws IOException {
-		LocalCliOptionsParser.StatsSequenceCommandOptions statsSequenceCommandOptions = sequenceCommandOptions.statsSequenceCommandOptions;
+    private void stats() throws IOException {
+        LocalCliOptionsParser.StatsSequenceCommandOptions statsSequenceCommandOptions = sequenceCommandOptions.statsSequenceCommandOptions;
 
-		// get input parameters
-		String input = statsSequenceCommandOptions.input;
-		String output = statsSequenceCommandOptions.output;
-		int kvalue = statsSequenceCommandOptions.kmers;
+        // get input parameters
+        String input = statsSequenceCommandOptions.input;
+        String output = statsSequenceCommandOptions.output;
+        int kvalue = statsSequenceCommandOptions.kmers;
 
-		try {
-			// reader
-			InputStream is = new FileInputStream(input);
-			DataFileStream<Read> reader = new DataFileStream<>(is, new SpecificDatumReader<>(Read.class));
+        try {
+            // reader
+            InputStream is = new FileInputStream(input);
+            DataFileStream<Read> reader = new DataFileStream<>(is, new SpecificDatumReader<>(Read.class));
 
             SequenceStats stats;
             SequenceStats totalStats = new SequenceStats(kvalue);
             SequenceStatsCalculator calculator = new SequenceStatsCalculator();
 
             // main loop
-			for (Read read : reader) {
+            for (Read read : reader) {
                 stats = calculator.compute(read, kvalue);
                 calculator.update(stats, totalStats);
             }
@@ -122,8 +124,8 @@ public class SequenceCommandExecutor extends CommandExecutor {
             writer.write(totalStats.toJSON());
             writer.close();
 
-		} catch (Exception e) {
-			throw e;
-		}
-	}
+        } catch (Exception e) {
+            throw e;
+        }
+    }
 }

@@ -122,8 +122,8 @@ public class Vcf2AvroMR {
             ChunkKey newKey;
 
             VariantContext variantContext = value.get();
-            long startChunk = variantContext.getStart() / RegionDepth.CHUNK_SIZE;
-            long endChunk = variantContext.getEnd() / RegionDepth.CHUNK_SIZE;
+            int startChunk = variantContext.getStart() / RegionDepth.CHUNK_SIZE;
+            int endChunk = variantContext.getEnd() / RegionDepth.CHUNK_SIZE;
             newKey = new ChunkKey(variantContext.getContig(), startChunk);
             Variant variant = converter.forward(variantContext);
             context.write(newKey, new AvroValue<>(variant));

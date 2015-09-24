@@ -22,9 +22,9 @@ import org.apache.hadoop.fs.Path;
 import org.ga4gh.models.ReadAlignment;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
 import org.opencb.hpg.bigdata.tools.alignment.Bam2AvroMR;
-import org.opencb.hpg.bigdata.tools.io.parquet.ParquetMR;
 import org.opencb.hpg.bigdata.tools.alignment.stats.ReadAlignmentDepthMR;
 import org.opencb.hpg.bigdata.tools.alignment.stats.ReadAlignmentStatsMR;
+import org.opencb.hpg.bigdata.tools.io.parquet.ParquetMR;
 
 import java.io.IOException;
 import java.util.Date;
@@ -40,12 +40,14 @@ public class AlignmentCommandExecutor extends CommandExecutor {
         this.alignmentCommandOptions = alignmentCommandOptions;
     }
 
+
     /**
-     * Parse specific 'alignment' command options
+     * Parse specific 'alignment' command options.
+     *
+     * @throws Exception Exception thrown if file does not exist
      */
     public void execute() throws Exception {
         String subCommand = alignmentCommandOptions.getParsedSubCommand();
-
         switch (subCommand) {
             case "convert":
                 init(alignmentCommandOptions.convertAlignmentCommandOptions.commonOptions.logLevel,
@@ -126,13 +128,17 @@ public class AlignmentCommandExecutor extends CommandExecutor {
     private void depth() throws Exception {
         String input = alignmentCommandOptions.depthAlignmentCommandOptions.input;
         String output = alignmentCommandOptions.depthAlignmentCommandOptions.output;
+        String regions = alignmentCommandOptions.depthAlignmentCommandOptions.regions;
+
+        // check regions before launching MR job
+        //List<Region> regs = null;
 
         // prepare the HDFS output folder
         Configuration conf = new Configuration();
         FileSystem fs = FileSystem.get(conf);
 
         // run MapReduce job to compute stats
-        ReadAlignmentDepthMR.run(input, output);
+        ReadAlignmentDepthMR.run(input, output, regions);
 
 //        String tmpOutDirName = output + "_" + Long.toString(new Date().getTime());
 //

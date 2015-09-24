@@ -38,7 +38,7 @@ public class BigDataMain {
 
         try {
             cliOptionsParser.parse(args);
-        } catch(ParameterException e) {
+        } catch (ParameterException e) {
             System.out.println(e.getMessage());
             cliOptionsParser.printUsage();
             System.exit(-1);

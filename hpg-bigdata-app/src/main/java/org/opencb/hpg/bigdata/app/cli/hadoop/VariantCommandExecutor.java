@@ -34,8 +34,7 @@ public class VariantCommandExecutor extends CommandExecutor {
     private CliOptionsParser.VariantCommandOptions variantCommandOptions;
 
     public VariantCommandExecutor(CliOptionsParser.VariantCommandOptions variantCommandOptions) {
-//		super(fastqCommandOptions.logLevel, fastqCommandOptions.verbose, fastqCommandOptions.conf);
-
+//      super(fastqCommandOptions.logLevel, fastqCommandOptions.verbose, fastqCommandOptions.conf);
         this.variantCommandOptions = variantCommandOptions;
     }
 
@@ -55,7 +54,8 @@ public class VariantCommandExecutor extends CommandExecutor {
                         variantCommandOptions.indexVariantCommandOptions.commonOptions.conf);
                 index();
                 break;
-            	
+            default:
+                break;
         }
     }
 
@@ -64,25 +64,25 @@ public class VariantCommandExecutor extends CommandExecutor {
         String db = variantCommandOptions.indexVariantCommandOptions.database;
         boolean nonVar = variantCommandOptions.indexVariantCommandOptions.includeNonVariants;
         boolean expand = variantCommandOptions.indexVariantCommandOptions.expand;
-        
+
         URI server = null;
-    	// new URI("//who1:60000/VariantExpanded");
-    	if(StringUtils.isNotBlank(db)){
-    		server = new URI(db);    		
-		} 
-    	Variant2HbaseMR.Builder builder = new Variant2HbaseMR.Builder(input,server);
-    	builder.setExpand(expand);
-    	builder.setNonVar(nonVar);
-    	Job job = builder.build(true);
-    	
-		boolean fine = job.waitForCompletion(true);
-		if(!fine) {
+        // new URI("//who1:60000/VariantExpanded");
+        if (StringUtils.isNotBlank(db)) {
+            server = new URI(db);
+        }
+        Variant2HbaseMR.Builder builder = new Variant2HbaseMR.Builder(input, server);
+        builder.setExpand(expand);
+        builder.setNonVar(nonVar);
+        Job job = builder.build(true);
+
+        boolean fine = job.waitForCompletion(true);
+        if (!fine) {
             throw new IllegalStateException("Variant 2 HBase failed!");
         }
-	}
+    }
 
 
-	private void convert() throws Exception {
+    private void convert() throws Exception {
         String input = variantCommandOptions.convertVariantCommandOptions.input;
         String output = variantCommandOptions.convertVariantCommandOptions.output;
         String compression = variantCommandOptions.convertVariantCommandOptions.compression;
