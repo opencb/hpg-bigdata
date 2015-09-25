@@ -34,7 +34,7 @@ import java.util.List;
 public class VariantContextBlockIterator {
 
     private final VCFCodec codec;
-    private boolean decodeGenotypes = true;
+    private boolean decodeGenotypes = false;
 
     public VariantContextBlockIterator(VCFCodec codec) {
         this.codec = codec;
