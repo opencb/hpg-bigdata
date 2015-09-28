@@ -143,7 +143,7 @@ public class LoadBEDAndGFF2HBase extends Configured implements Tool {
                 .addHbaseResources(conf));
         conf.set("hbase.zookeeper.quorum", "who1");
         conf.set("hbase.zookeeper.property.clientPort", "2181");
-        setConf(HBaseConfiguration.addHbaseResources(conf));
+        setConf(conf);
         Job job = Job.getInstance(conf);
 
         job.setJarByClass(LoadBEDAndGFF2HBase.class);
