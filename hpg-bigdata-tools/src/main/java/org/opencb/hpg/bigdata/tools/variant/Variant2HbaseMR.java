@@ -28,14 +28,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.Admin;
-import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -45,7 +38,7 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.ga4gh.models.Call;
 import org.ga4gh.models.Variant;
-import org.opencb.hpg.bigdata.core.utils.HBaseUtils;
+import org.opencb.hpg.bigdata.tools.utils.HBaseUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -318,41 +311,13 @@ public class Variant2HbaseMR extends Mapper<AvroKey<Variant>, NullWritable, Immu
      * Create HBase table if needed.
      *
      * @param tablename     HBase table name
+     * @param conf  Configuration
      * @throws IOException throws {@link IOException} from creating a connection / table
      */
-    public void createTableIfNeeded(String tablename) throws IOException {
-        createTableIfNeeded(tablename, getConf());
-    }
-
-    /**
-     * Create default HBase table layout with one column family using {@link COLUMN_FAMILY}.
-     *
-     * @param tablename     HBase table name
-     * @param configuration HBase configuration
-     * @throws IOException throws {@link IOException} from creating a connection / table
-     **/
-    public static void createTableIfNeeded(String tablename, Configuration configuration) throws IOException {
-        TableName tname = TableName.valueOf(tablename);
-        try (
-                Connection con = ConnectionFactory.createConnection(configuration);
-                Table table = con.getTable(tname);
-                Admin admin = con.getAdmin();
-        ) {
-            if (!exist(tname, admin)) {
-                HTableDescriptor descr = new HTableDescriptor(tname);
-                descr.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
-                getLog().info(String.format("Create table '%s' in hbase!", tablename));
-                admin.createTable(descr);
-            }
+    public static void createTableIfNeeded(String tablename, Configuration conf) throws IOException {
+        if (HBaseUtils.createTableIfNeeded(tablename, COLUMN_FAMILY, conf)) {
+            getLog().info(String.format("Create table '%s' in hbase!", tablename));
         }
     }
 
-    private static boolean exist(TableName tname, Admin admin) throws IOException {
-        for (TableName tn : admin.listTableNames()) {
-            if (tn.equals(tname)) {
-                return true;
-            }
-        }
-        return false;
-    }
 }

@@ -23,7 +23,7 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.ga4gh.models.Call;
 import org.ga4gh.models.Variant;
-import org.opencb.hpg.bigdata.core.utils.HBaseUtils;
+import org.opencb.hpg.bigdata.tools.utils.HBaseUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
