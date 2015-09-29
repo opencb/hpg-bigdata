@@ -301,6 +301,9 @@ public class LocalCliOptionsParser {
         @Parameter(names = {"-o", "--output"}, description = "File where to store output", required = false, arity = 1)
         public String output = "STDOUT";
 
+        @Parameter(names = {"-d", "--data-model"}, description = "Only for commands 'to-avro' and 'to-parquet'. Values: opencb, ga4gh", required = false, arity = 1)
+        public String dataModel = "opencb";
+
         @Parameter(names = {"--to-avro"}, description = "Whether output must be in avro format", required = false)
         public boolean toAvro;
 
