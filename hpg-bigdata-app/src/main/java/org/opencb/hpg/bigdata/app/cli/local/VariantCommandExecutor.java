@@ -158,7 +158,7 @@ public class VariantCommandExecutor extends CommandExecutor {
             builder
                 .setStudyId(file)
                 .setFileId(file);
-            Map<CharSequence, CharSequence> meta = new HashMap<CharSequence, CharSequence>();
+            Map<String, String> meta = new HashMap<>();
             meta.put("FILTER_DEFAULT", "PASS");
             meta.put("QUAL_DEFAULT", StringUtils.EMPTY);
             meta.put("INFO_DEFAULT", "END,BLOCKAVG_min30p3a");

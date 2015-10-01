@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.opencb.biodata.models.variant.avro.Variant;
-import org.opencb.biodata.models.variant.avro.VariantContextToVariantConverter;
+import org.opencb.biodata.models.variant.converter.VariantContextToVariantConverter;
 import org.opencb.commons.run.ParallelTaskRunner;
 import org.opencb.hpg.bigdata.core.converters.FullVcfCodec;
 import org.opencb.hpg.bigdata.core.io.avro.AvroEncoder;
