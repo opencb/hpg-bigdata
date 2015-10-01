@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPInputStream;
 
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang.NotImplementedException;
+import org.apache.commons.lang3.NotImplementedException;
 import org.opencb.hpg.bigdata.core.converters.FullVcfCodec;
 
 /**
@@ -133,7 +133,7 @@ public class VcfBlockIterator implements AutoCloseable, Iterator<List<CharBuffer
 
     @Override
     public void remove() {
-        throw new NotImplementedException();
+        throw new NotImplementedException("Remove not implemented");
     }
 
     @Override

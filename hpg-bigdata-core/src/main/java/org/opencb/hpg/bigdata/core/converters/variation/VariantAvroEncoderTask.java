@@ -67,6 +67,7 @@ public class VariantAvroEncoderTask implements ParallelTaskRunner.Task<CharBuffe
         converter = new VariantContextToVariantConverter();
         encoder = new AvroEncoder<>(Variant.getClassSchema());
         variantContextBlockIterator = new VariantContextBlockIterator(codec);
+        variantContextBlockIterator.setDecodeGenotypes(false);
     }
 
 

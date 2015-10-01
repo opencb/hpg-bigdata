@@ -49,9 +49,9 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.avro.file.CodecFactory;
-import org.apache.commons.lang.NotImplementedException;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.time.StopWatch;
+import org.apache.commons.lang3.NotImplementedException;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.StopWatch;
 import org.ga4gh.models.Call;
 import org.ga4gh.models.CallSet;
 import org.ga4gh.models.Variant;
@@ -447,7 +447,7 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
 
     @Override
     public VariantContext backward(Variant obj) {
-        throw new NotImplementedException();
+        throw new NotImplementedException("");
     }
 
 }
