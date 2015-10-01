@@ -1,5 +1,15 @@
-package org.opencb.hpg.bigdata.core.utils;
+package org.opencb.hpg.bigdata.tools.utils;
 
+import java.io.IOException;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.client.Table;
 import org.opencb.commons.utils.CryptoUtils;
 
 /**
@@ -54,5 +64,40 @@ public class HBaseUtils {
         builder.append(ROWKEY_SEPARATOR);
         builder.append(String.format("%012d", pos));
         return builder.toString();
+    }
+
+    /**
+     * Create default HBase table layout with one column family using {@link COLUMN_FAMILY}.
+     *
+     * @param tablename     HBase table name
+     * @param columnFamily  Column Family
+     * @param configuration HBase configuration
+     * @return boolean True if a new table was created
+     * @throws IOException throws {@link IOException} from creating a connection / table
+     **/
+    public static boolean createTableIfNeeded(String tablename, byte[] columnFamily, Configuration configuration) throws IOException {
+        TableName tname = TableName.valueOf(tablename);
+        try (
+                Connection con = ConnectionFactory.createConnection(configuration);
+                Table table = con.getTable(tname);
+                Admin admin = con.getAdmin();
+        ) {
+            if (!exist(tname, admin)) {
+                HTableDescriptor descr = new HTableDescriptor(tname);
+                descr.addFamily(new HColumnDescriptor(columnFamily));
+                admin.createTable(descr);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean exist(TableName tname, Admin admin) throws IOException {
+        for (TableName tn : admin.listTableNames()) {
+            if (tn.equals(tname)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

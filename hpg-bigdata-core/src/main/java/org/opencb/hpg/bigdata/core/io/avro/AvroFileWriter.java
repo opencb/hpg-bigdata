@@ -66,6 +66,10 @@ public class AvroFileWriter<T> implements DataWriter<ByteBuffer> {
         return true;
     }
 
+    public void writeDatum(T datum) throws IOException {
+        writer.append(datum);
+    }
+
 
     @Override
     public boolean write(List<ByteBuffer> batch) {

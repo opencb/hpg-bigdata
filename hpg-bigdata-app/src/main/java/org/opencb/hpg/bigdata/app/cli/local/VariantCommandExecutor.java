@@ -25,17 +25,20 @@ import java.nio.CharBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.opencb.biodata.models.variant.avro.Variant;
+import org.opencb.biodata.models.variant.avro.VariantFileMetadata;
+import org.opencb.biodata.models.variant.avro.VariantFileMetadata.Builder;
 import org.opencb.commons.io.DataReader;
 import org.opencb.commons.run.ParallelTaskRunner;
 import org.opencb.commons.utils.FileUtils;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
 import org.opencb.hpg.bigdata.core.converters.FullVcfCodec;
 import org.opencb.hpg.bigdata.core.converters.variation.VariantAvroEncoderTask;
-import org.opencb.hpg.bigdata.core.converters.variation.VariantConverterContext;
 import org.opencb.hpg.bigdata.core.io.VcfBlockIterator;
 import org.opencb.hpg.bigdata.core.io.avro.AvroFileWriter;
 
@@ -103,13 +106,15 @@ public class VariantCommandExecutor extends CommandExecutor {
 
             // Creating file writer. If 'output' parameter is passed and it is different from
             // STDOUT then a file is created if parent folder exist, otherwise STDOUT is used.
+            boolean isFile = false;
             OutputStream os;
             if (output != null && !output.isEmpty() && !output.equalsIgnoreCase("STDOUT")) {
                 Path parent = Paths.get(output).toAbsolutePath().getParent();
                 if (parent != null) { // null if output is a file in the current directory
-                    FileUtils.checkDirectory(parent, true);
+                    FileUtils.checkDirectory(parent, true); // Throws exception, if does not exist
                 }
                 os = new FileOutputStream(output);
+                isFile = true;
             } else {
                 os = System.out;
             }
@@ -119,7 +124,7 @@ public class VariantCommandExecutor extends CommandExecutor {
             int numTasks = Math.max(variantCommandOptions.convertVariantCommandOptions.numThtreads, 1);
             int batchSize = 1024 * 1024;  //Batch size in bytes
             int capacity = numTasks + 1;
-            VariantConverterContext variantConverterContext = new VariantConverterContext();
+//            VariantConverterContext variantConverterContext = new VariantConverterContext();
             ParallelTaskRunner.Config config = new ParallelTaskRunner.Config(numTasks, batchSize, capacity, false);
             ParallelTaskRunner<CharBuffer, ByteBuffer> runner =
                     new ParallelTaskRunner<>(
@@ -128,15 +133,43 @@ public class VariantCommandExecutor extends CommandExecutor {
                             avroFileWriter, config);
             long start = System.currentTimeMillis();
             runner.run();
+
+            if (isFile) {
+                String metaFile = output + ".meta";
+                logger.info("Write metadata into " + metaFile);
+                try (FileOutputStream out = new FileOutputStream(metaFile)) {
+                    writeStats(new AvroFileWriter<>(VariantFileMetadata.getClassSchema(), compression, out), output);
+                }
+            }
             logger.debug("Time " + (System.currentTimeMillis() - start) / 1000.0 + "s");
 
-            // close
-            iterator.close();
-            avroFileWriter.close();
-            os.close();
         } else {
             if (variantCommandOptions.convertVariantCommandOptions.fromAvro) {
                 logger.info("NOT IMPLEMENTED YET");
+            }
+        }
+    }
+
+
+    private void writeStats(AvroFileWriter<VariantFileMetadata> aw, String file) throws IOException {
+        try {
+            aw.open();
+            Builder builder = VariantFileMetadata.newBuilder();
+            builder
+                .setStudyId(file)
+                .setFileId(file);
+            Map<CharSequence, CharSequence> meta = new HashMap<CharSequence, CharSequence>();
+            meta.put("FILTER_DEFAULT", "PASS");
+            meta.put("QUAL_DEFAULT", StringUtils.EMPTY);
+            meta.put("INFO_DEFAULT", "END,BLOCKAVG_min30p3a");
+            meta.put("FORMAT_DEFAULT", "GT:GQX:DP:DPF");
+            builder.setMetadata(meta);
+            aw.writeDatum(builder.build());
+        } finally {
+            try {
+                aw.close();
+            } catch (Exception e) {
+               e.printStackTrace();
             }
         }
     }
