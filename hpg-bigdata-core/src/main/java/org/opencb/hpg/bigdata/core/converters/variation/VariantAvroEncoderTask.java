@@ -28,8 +28,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
-import org.opencb.biodata.models.variant.avro.Variant;
+import org.opencb.biodata.models.variant.Variant;
+import org.opencb.biodata.models.variant.avro.VariantAvro;
 import org.opencb.biodata.models.variant.converter.VariantContextToVariantConverter;
 import org.opencb.commons.run.ParallelTaskRunner;
 import org.opencb.hpg.bigdata.core.converters.FullVcfCodec;
@@ -48,7 +50,7 @@ public class VariantAvroEncoderTask implements ParallelTaskRunner.Task<CharBuffe
 //    private final VariantConverterContext variantConverterContext;
 
     private final VCFHeader header;
-    private final AvroEncoder<Variant> encoder;
+    private final AvroEncoder<VariantAvro> encoder;
     private final VariantContextToVariantConverter converter;
     private final VariantContextBlockIterator variantContextBlockIterator;
     private final FullVcfCodec codec;
@@ -65,7 +67,7 @@ public class VariantAvroEncoderTask implements ParallelTaskRunner.Task<CharBuffe
         codec = new FullVcfCodec();
         codec.setVCFHeader(this.header, version);
         converter = new VariantContextToVariantConverter();
-        encoder = new AvroEncoder<>(Variant.getClassSchema());
+        encoder = new AvroEncoder<>(VariantAvro.getClassSchema());
         variantContextBlockIterator = new VariantContextBlockIterator(codec);
         variantContextBlockIterator.setDecodeGenotypes(false);
     }
@@ -104,7 +106,7 @@ public class VariantAvroEncoderTask implements ParallelTaskRunner.Task<CharBuffe
         //Encode with Avro
         try {
             start = System.nanoTime();
-            encoded = encoder.encode(convertedList);
+            encoded = encoder.encode(convertedList.stream().map(Variant::getImpl).collect(Collectors.toList()));
             encodeTime.addAndGet(System.nanoTime() - start);
             logger.debug("[" + Thread.currentThread().getName() + "] Processed " + convertedList.size()
                     + " avro variants into " + encoded.size() + " encoded variants");

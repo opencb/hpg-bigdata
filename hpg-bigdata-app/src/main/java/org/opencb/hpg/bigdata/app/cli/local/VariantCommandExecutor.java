@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
-import org.opencb.biodata.models.variant.avro.Variant;
+import org.opencb.biodata.models.variant.avro.VariantAvro;
 import org.opencb.biodata.models.variant.avro.VariantFileMetadata;
 import org.opencb.biodata.models.variant.avro.VariantFileMetadata.Builder;
 import org.opencb.commons.io.DataReader;
@@ -118,7 +118,7 @@ public class VariantCommandExecutor extends CommandExecutor {
             } else {
                 os = System.out;
             }
-            AvroFileWriter<Variant> avroFileWriter = new AvroFileWriter<>(Variant.getClassSchema(), compression, os);
+            AvroFileWriter<VariantAvro> avroFileWriter = new AvroFileWriter<>(VariantAvro.getClassSchema(), compression, os);
 
             // main loop
             int numTasks = Math.max(variantCommandOptions.convertVariantCommandOptions.numThtreads, 1);
