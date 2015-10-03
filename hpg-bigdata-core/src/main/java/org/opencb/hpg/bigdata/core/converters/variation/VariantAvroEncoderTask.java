@@ -19,6 +19,15 @@ package org.opencb.hpg.bigdata.core.converters.variation;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFHeader;
 import htsjdk.variant.vcf.VCFHeaderVersion;
+import org.opencb.biodata.models.variant.Variant;
+import org.opencb.biodata.models.variant.avro.VariantAvro;
+import org.opencb.biodata.tools.variant.converter.VariantContextToVariantConverter;
+import org.opencb.commons.run.ParallelTaskRunner;
+import org.opencb.hpg.bigdata.core.converters.FullVcfCodec;
+import org.opencb.hpg.bigdata.core.io.avro.AvroEncoder;
+import org.opencb.hpg.bigdata.core.utils.VariantContextBlockIterator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -29,16 +38,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
-
-import org.opencb.biodata.models.variant.Variant;
-import org.opencb.biodata.models.variant.avro.VariantAvro;
-import org.opencb.biodata.models.variant.converter.VariantContextToVariantConverter;
-import org.opencb.commons.run.ParallelTaskRunner;
-import org.opencb.hpg.bigdata.core.converters.FullVcfCodec;
-import org.opencb.hpg.bigdata.core.io.avro.AvroEncoder;
-import org.opencb.hpg.bigdata.core.utils.VariantContextBlockIterator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Created by hpccoll1 on 10/04/15.
