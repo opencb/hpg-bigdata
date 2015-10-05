@@ -17,9 +17,13 @@
 package org.opencb.hpg.bigdata.tools.variant;
 
 import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -28,7 +32,12 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
@@ -41,15 +50,22 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
 
 /**
  * @author pawan
  *
  */
 public class LoadBEDAndGFF2HBase extends Configured implements Tool {
+
     private static String rowkeySeparator = "_";
     private static String columnFamily = null;
+    private static String fileName = null;
+    //private static String tableName = null;
     private Configuration conf = null;
+    private static String columnValue = null;;
+
     @Override
     public void setConf(Configuration conf) {
         this.conf = conf;
@@ -60,8 +76,7 @@ public class LoadBEDAndGFF2HBase extends Configured implements Tool {
         return this.conf;
     }
 
-    public static class LoadBEDAndGFF2HBaseMapper extends
-            Mapper<LongWritable, Text, ImmutableBytesWritable, Put> {
+    public static class LoadBEDAndGFF2HBaseMapper extends Mapper<LongWritable, Text, ImmutableBytesWritable, Put> {
         /*
          * (non-Javadoc)
          *
@@ -70,10 +85,13 @@ public class LoadBEDAndGFF2HBase extends Configured implements Tool {
          * .Mapper.Context)
          */
         @Override
-        protected final void setup(final Context context) throws IOException,
-                InterruptedException {
+        protected final void setup(final Context context) throws IOException, InterruptedException {
             Configuration configuration = context.getConfiguration();
+
             columnFamily = configuration.get("familyName");
+            fileName = configuration.get("filename");
+            //tableName = configuration.get("tablename");
+            columnValue = configuration.get("columnNameValue");
         }
 
         /*
@@ -83,19 +101,21 @@ public class LoadBEDAndGFF2HBase extends Configured implements Tool {
          * org.apache.hadoop.mapreduce.Mapper.Context)
          */
         @Override
-        public final void map(final LongWritable key, final Text value,
-                final Context context) throws IOException, InterruptedException {
+        public final void map(final LongWritable key, final Text value, final Context context) throws IOException, InterruptedException {
 
+            /*
+             * Create separate rowkey to identify if file has been uploaded
+             * before
+             */
+            //addMetadata(fileName, tableName, columnFamily);
             String rowkeyStr = null;
             String[] valueArray = value.toString().split("\t");
             /*
              * create rowkey string
              */
-            rowkeyStr = valueArray[0] + rowkeySeparator + valueArray[3]
-                    + rowkeySeparator + valueArray[4];
+            rowkeyStr = valueArray[0] + rowkeySeparator + valueArray[3] + rowkeySeparator + valueArray[4];
             byte[] rowkeyBytes = Bytes.toBytes(rowkeyStr);
-            ImmutableBytesWritable rowKey = new ImmutableBytesWritable(
-                    rowkeyBytes);
+            ImmutableBytesWritable rowKey = new ImmutableBytesWritable(rowkeyBytes);
             byte[] family = Bytes.toBytes(columnFamily);
 
             /*
@@ -103,8 +123,7 @@ public class LoadBEDAndGFF2HBase extends Configured implements Tool {
              * whole line
              */
             Put put = new Put(rowkeyBytes);
-            put.addColumn(family, Bytes.toBytes("ln"),
-                    Bytes.toBytes(value.toString()));
+            put.addColumn(family, Bytes.toBytes(columnValue), Bytes.toBytes(value.toString()));
             context.write(rowKey, put);
         }
 
@@ -116,8 +135,7 @@ public class LoadBEDAndGFF2HBase extends Configured implements Tool {
          * .Mapper.Context)
          */
         @Override
-        protected final void cleanup(final Context context) throws IOException,
-                InterruptedException {
+        protected final void cleanup(final Context context) throws IOException, InterruptedException {
         }
     }
 
@@ -127,44 +145,109 @@ public class LoadBEDAndGFF2HBase extends Configured implements Tool {
      * @see org.apache.hadoop.util.Tool#run(java.lang.String[])
      */
     public final int run(final String[] args) throws Exception {
-        if (args.length != 2) {
-            System.err.println("Usage: HBase MapReduce For BED and GFF Fromat "
-                    + "<input path> <Table Name>");
+        if (args.length != 5) {
+            System.err.println("Usage: HBase MapReduce For BED and GFF Fromat " + "<input path> <Table Name> <Host Name> "
+                    + "<HDFS Path> <Load Type>");
             return -1;
         }
-
         String inputfile = args[0];
         String tablename = args[1];
-        String familynameGFF = "gf";
-        String familynameBED = "bd";
+        String hostName = args[2];
+        String hdfsDirPath = args[3];
+        String loadType = args[4];
 
-        conf = getConf();
-        conf = HBaseConfiguration.create(HBaseConfiguration
-                .addHbaseResources(conf));
-        conf.set("hbase.zookeeper.quorum", "who1");
+        //conf = getConf();
+        conf = new Configuration();
+        conf = HBaseConfiguration.create(HBaseConfiguration.addHbaseResources(conf));
+        conf.set("hbase.zookeeper.quorum", hostName);
         conf.set("hbase.zookeeper.property.clientPort", "2181");
         setConf(conf);
-        Job job = Job.getInstance(conf);
 
+        String inputFilePath = getInputFilePath(inputfile, hdfsDirPath);
+
+        String fileName = null;
+        String fileNameWithOutExt = null;
+
+        fileName = inputfile.substring(inputfile.lastIndexOf('/'), inputfile.length());
+        fileNameWithOutExt = fileName.substring(1, fileName.lastIndexOf("."));
+
+        String columnValue = getColumnNameValue(fileNameWithOutExt, tablename, loadType);
+        conf.set("columnNameValue", columnValue);
+        conf.set("columnName", fileNameWithOutExt);
+
+        Job job = Job.getInstance(conf);
         job.setJarByClass(LoadBEDAndGFF2HBase.class);
         job.setJobName("Load BED and GFF data to HBase");
-
         job.setInputFormatClass(TextInputFormat.class);
         job.setMapperClass(LoadBEDAndGFF2HBaseMapper.class);
         job.setNumReduceTasks(0);
+        job.getConfiguration().set("filename", inputFilePath);
+        job.getConfiguration().set("tablename", tablename);
+        createTableIfNeeded(tablename, getColumnFamilyName(fileName));
+        job.getConfiguration().set("familyName", getColumnFamilyName(fileName));
+        TableMapReduceUtil.initTableReducerJob(tablename, null, job);
+        FileInputFormat.setInputPaths(job, new Path(inputFilePath));
+        int jobStatus;
+        if (job.waitForCompletion(true)) {
+            registerNewFile(fileNameWithOutExt, tablename, columnValue);
+            jobStatus = 0;
+        } else {
+            jobStatus = 1;
+        }
+        return jobStatus;
+        //return (job.waitForCompletion(true) ? 0 : 1);
+    }
 
-        if (inputfile.endsWith(".gff")) {
-            createTableIfNeeded(tablename, familynameGFF);
-            job.getConfiguration().set("familyName", familynameGFF);
-        } else if (inputfile.endsWith(".bed")) {
-            createTableIfNeeded(tablename, familynameBED);
-            job.getConfiguration().set("familyName", familynameBED);
+    /**
+     * @param fileNameWithoutExt
+     * @param tableName
+     * @param loadType
+     * @return
+     * @throws IOException
+     * @throws JSONException jsonException
+     */
+    private String getColumnNameValue(String fileNameWithoutExt, String tableName, String loadType) throws IOException, JSONException {
+
+        TableName tname = TableName.valueOf(tableName);
+        Connection con = ConnectionFactory.createConnection(getConf());
+        Table table = con.getTable(tname);
+        Result row = table.get(new Get(Bytes.toBytes("meta")));
+
+        if (row.isEmpty()) {
+            String returnValue = "c1";
+            return returnValue;
+        } else {
+
+            byte[] value = row.getValue(Bytes.toBytes(getColumnFamilyName(fileName)), Bytes.toBytes(fileNameWithoutExt));
+
+            String valueStr = Bytes.toString(value);
+            if (valueStr == null) {
+                valueStr = "c" + (row.rawCells().length + 1);
+            } else {
+                JSONObject obj = new JSONObject(valueStr);
+                valueStr = obj.get("columnName").toString();
+                if (loadType.equals("forceDelete")) {
+                    List<Delete> deletes = new ArrayList<Delete>();
+                    Scan s = new Scan();
+                    s.addColumn(Bytes.toBytes(getColumnFamilyName(fileName)), value);
+                    ResultScanner scanner = table.getScanner(s);
+                    try {
+                        for (Result rr = scanner.next(); rr != null; rr = scanner.next()) {
+                            Delete delete = new Delete(Bytes.toBytes(rr.toString()));
+                            delete.addColumn(Bytes.toBytes(getColumnFamilyName(fileName)), value);
+                            deletes.add(delete);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    table.delete(deletes);
+                }
+                table.close();
+                return valueStr;
+            }
+            return valueStr;
         }
 
-        TableMapReduceUtil.initTableReducerJob(tablename, null, job);
-        FileInputFormat.setInputPaths(job, new Path(inputfile));
-
-        return (job.waitForCompletion(true) ? 0 : 1);
     }
 
     /**
@@ -173,6 +256,7 @@ public class LoadBEDAndGFF2HBase extends Configured implements Tool {
      * @throws Exception
      *             if not find the configuration
      */
+
     public static void main(final String[] args) throws Exception {
         int res = 0;
         try {
@@ -182,10 +266,30 @@ public class LoadBEDAndGFF2HBase extends Configured implements Tool {
             System.exit(res);
         }
     }
+
+
     /**
-     * @param tablename table name
-     * @param columnFamily family name
-     * @throws IOException EXception
+     * @param filename
+     * @return
+     */
+    private String getColumnFamilyName(String filename) {
+        String columnFamilyName = null;
+        if (fileName.endsWith(".bed")) {
+            columnFamilyName = "bd";
+        } else if (fileName.endsWith(".gff")) {
+            columnFamilyName = "gf";
+        }
+        return columnFamilyName;
+
+    }
+
+    /**
+     * @param tablename
+     *            table name
+     * @param columnFamily
+     *            family name
+     * @throws IOException
+     *             EXception
      */
     public void createTableIfNeeded(String tablename, String columnFamily) throws IOException {
         TableName tname = TableName.valueOf(tablename);
@@ -195,8 +299,7 @@ public class LoadBEDAndGFF2HBase extends Configured implements Tool {
             if (!exist(tname, admin)) {
                 HTableDescriptor descr = new HTableDescriptor(tname);
                 descr.addFamily(new HColumnDescriptor(columnFamily));
-                System.out.println(String.format("Create table '%s' in hbase!",
-                        tablename));
+                System.out.println(String.format("Create table '%s' in hbase!", tablename));
                 admin.createTable(descr);
             }
         }
@@ -218,4 +321,57 @@ public class LoadBEDAndGFF2HBase extends Configured implements Tool {
         return false;
     }
 
+    /**
+     * @param filename
+     * @param tableName
+     * @param columnValue
+     * @throws IOException Exception
+     */
+    private void registerNewFile(String filename, String tableName, String columnValue) throws IOException {
+        JSONObject obj = new JSONObject();
+        try {
+            obj.put("columnName", columnValue);
+            obj.put("headerInformation", "headerInformation");
+            TableName tname = TableName.valueOf(tableName);
+            Connection con = ConnectionFactory.createConnection(getConf());
+            Table table = con.getTable(tname);
+            Put p = new Put(Bytes.toBytes("meta"));
+            p.addColumn(Bytes.toBytes(getColumnFamilyName(fileName)), Bytes.toBytes(filename),
+                    Bytes.toBytes(obj.toString()));
+            table.put(p);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * @param inputFile
+     * @param hdfsPath
+     * @return
+     * @throws IOException Exception
+     */
+    private String  getInputFilePath(String inputFile, String hdfsPath) throws IOException {
+        FileSystem fs = FileSystem.get(conf);
+        fileName = inputFile.substring(inputFile.lastIndexOf('/') + 1, inputFile.length());
+        try {
+            if (inputFile.startsWith("file")) {
+
+                java.nio.file.Path sourceFilepath = Paths.get(inputFile.substring(6, inputFile.length()));
+                fs.copyFromLocalFile(new Path(sourceFilepath.toString()), new Path(hdfsPath));
+                if (inputFile.endsWith(".bed")) {
+                    inputFile = hdfsPath + "/" + fileName.substring(0, fileName.lastIndexOf(".")) + ".bed";
+                } else if (inputFile.endsWith("gff")) {
+                    inputFile = hdfsPath + "/" + fileName.substring(0, fileName.lastIndexOf(".")) + ".gff";
+                }
+            } else {
+                inputFile = hdfsPath + "/" + fileName;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(1);
+        } finally {
+            fs.close();
+        }
+        return inputFile;
+    }
 }
