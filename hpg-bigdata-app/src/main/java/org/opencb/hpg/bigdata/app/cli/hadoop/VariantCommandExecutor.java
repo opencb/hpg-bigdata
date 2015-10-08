@@ -16,15 +16,22 @@
 
 package org.opencb.hpg.bigdata.app.cli.hadoop;
 
-import java.net.URI;
-
+import com.beust.jcommander.ParameterException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.mapreduce.Job;
 import org.ga4gh.models.Variant;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
+import org.opencb.hpg.bigdata.core.config.SimulatorConfiguration;
+import org.opencb.hpg.bigdata.tools.io.parquet.ParquetMR;
 import org.opencb.hpg.bigdata.tools.variant.Variant2HbaseMR;
 import org.opencb.hpg.bigdata.tools.variant.Vcf2AvroMR;
-import org.opencb.hpg.bigdata.tools.io.parquet.ParquetMR;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Created by imedina on 25/06/15.
@@ -53,6 +60,12 @@ public class VariantCommandExecutor extends CommandExecutor {
                         variantCommandOptions.indexVariantCommandOptions.commonOptions.verbose,
                         variantCommandOptions.indexVariantCommandOptions.commonOptions.conf);
                 index();
+                break;
+            case "simulate":
+                init(variantCommandOptions.simulateVariantCommandOptions.commonOptions.logLevel,
+                        variantCommandOptions.simulateVariantCommandOptions.commonOptions.verbose,
+                        variantCommandOptions.simulateVariantCommandOptions.commonOptions.conf);
+                simulate();
                 break;
             default:
                 break;
@@ -108,6 +121,25 @@ public class VariantCommandExecutor extends CommandExecutor {
         } else {
             Vcf2AvroMR.run(input, output, compression);
         }
+    }
+
+    private void simulate() throws IOException {
+
+        SimulatorConfiguration simulatorConfiguration;
+        if (variantCommandOptions.simulateVariantCommandOptions.commonOptions.conf != null) {
+            Path confPath = Paths.get(variantCommandOptions.simulateVariantCommandOptions.commonOptions.conf);
+            if (confPath.toFile().exists()) {
+                simulatorConfiguration = SimulatorConfiguration.load(new FileInputStream(confPath.toFile()));
+            } else {
+                throw new ParameterException("File not found");
+            }
+        } else {
+            simulatorConfiguration = SimulatorConfiguration.load(new FileInputStream(new File(appHome + "/simulator-conf.yml")));
+        }
+
+        System.out.println(simulatorConfiguration.toString());
+
+
     }
 
 }
