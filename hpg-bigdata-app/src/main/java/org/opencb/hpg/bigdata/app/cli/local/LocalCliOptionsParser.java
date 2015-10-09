@@ -304,17 +304,23 @@ public class LocalCliOptionsParser {
         @Parameter(names = {"-d", "--data-model"}, description = "Only for commands 'to-avro' and 'to-parquet'. Values: opencb, ga4gh", required = false, arity = 1)
         public String dataModel = "opencb";
 
-        @Parameter(names = {"--to-avro"}, description = "Whether output must be in avro format", required = false)
+        @Parameter(names = {"--to-json"}, description = "Whether output must be in protobuf format.", required = false)
+        public boolean toJson;
+
+        @Parameter(names = {"--to-avro"}, description = "Whether output must be in Avro format", required = false)
         public boolean toAvro;
+
+        @Parameter(names = {"--to-protobuf"}, description = "Whether output must be in protobuf format. This option is only available with 'opencb' model", required = false)
+        public boolean toProtoBuf;
+
+        @Parameter(names = {"-x", "--compression"}, description = "Only for commands 'to-avro' and 'to-parquet'. Values: snappy, deflate, bzip2, xz", required = false, arity = 1)
+        public String compression = "deflate";
+
+        @Parameter(names = {"-t", "--num-threads"}, description = "Number of threads to use, this must be less than the number of cores", required = false)
+        public int numThreads = 2;
 
         @Parameter(names = {"--from-avro"}, description = "Converts Avro format into JSON", required = false)
         public boolean fromAvro;
-
-        @Parameter(names = {"-x", "--compression"}, description = "Only for commands 'to-avro' and 'to-parquet'. Values: snappy, deflate, bzip2, xz", required = false, arity = 1)
-        public String compression = "snappy";
-
-        @Parameter(names = {"-t", "--num-threads"}, description = "Number of threads to use, this must be less than the number of cores", required = false)
-        public int numThtreads = 2;
 
 //        @Parameter(names = {"--to-parquet"}, description = "Whether output must be in parquet format", required = false)
 //        public boolean toParquet;
