@@ -35,9 +35,11 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.util.Tool;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
+import org.opencb.biodata.models.variant.Variant;
+import org.opencb.biodata.models.variant.VariantSourceEntry;
 import org.opencb.biodata.models.variant.avro.VariantAvro;
-import org.opencb.biodata.tools.variant.converter.VariantAvroToVcfRecord;
 import org.opencb.biodata.tools.variant.converter.VariantContextToVariantConverter;
+import org.opencb.biodata.tools.variant.converter.VariantToProtoVcfRecord;
 
 import java.nio.file.Paths;
 import java.io.IOException;
@@ -51,11 +53,11 @@ import java.util.List;
 public class Vcf2HBaseTabix extends
 Mapper<AvroKey<VariantAvro>, NullWritable, ImmutableBytesWritable, Put>  implements Tool {
 
-    public static final byte[] COLUMN_FAMILY = Bytes.toBytes("cf");
-    private static final String ROWKEY_SEPARATOR = "_";
-    private static final char PATH_SEPARATORCHAR = '/';
-    private static final String PATH_SEPARATORSTRING = "/";
-    private static final String FILE_SUFFIX = ".";
+    private final byte[] COLUMN_FAMILY = Bytes.toBytes("cf");
+    private final String ROWKEY_SEPARATOR = "_";
+    private final char PATH_SEPARATORCHAR = '/';
+    private final String PATH_SEPARATORSTRING = "/";
+    private final String FILE_SUFFIX = ".";
     private final String avroSuffix=".avro";
     private final String filePrefix="file";
     private final String META="meta";
@@ -84,27 +86,40 @@ Mapper<AvroKey<VariantAvro>, NullWritable, ImmutableBytesWritable, Put>  impleme
             throws IOException, InterruptedException {
         VariantAvro variantAvro = key.datum();
         byte[] id = Bytes.toBytes(constructRowKey(variantAvro));
-        VariantAvroToVcfRecord variantAvroToVcfRecord= new VariantAvroToVcfRecord();
+        VariantToProtoVcfRecord variantAvroToVcfRecord= new VariantToProtoVcfRecord();
         Put put = new Put(id);
-        //TODO this will be removed once the changes in the ProtoConverter is ready
-        put.addColumn(
-                COLUMN_FAMILY, Bytes.toBytes(columnValue),
-                variantAvro.getChromosome().getBytes());
-        //TODO need to uncomment as Matthias needs to change his Proto Converter as
-        // it is taking Variant currently(needs to take VariantAvro)
-        //                    put.addColumn(
-        //                            COLUMN_FAMILY, Bytes.toBytes(columnValue),
-        //                            variantAvroToVcfRecord.convert(variantAvro).toByteArray());
+        put.addColumn(COLUMN_FAMILY, Bytes.toBytes(columnValue),
+                variantAvroToVcfRecord.convert(constructVariant(key.datum())).toByteArray());
         ImmutableBytesWritable rowKey = new ImmutableBytesWritable(id);
         context.write(rowKey, put);
     }
 
+    public Variant constructVariant(VariantAvro variantAvro) {
+        Variant variant=new Variant();
+        variant.setChromosome(variantAvro.getChromosome());
+        variant.setStart(variantAvro.getStart());
+        variant.setEnd(variantAvro.getEnd());
+        variant.setReference(variantAvro.getReference());
+        variant.setAlternate(variantAvro.getAlternate());
+        List<VariantSourceEntry> variantSourceEntryList = new ArrayList<>();
+        VariantSourceEntry variantSourceEntry;
+        List<org.opencb.biodata.models.variant.avro.VariantSourceEntry> variantSourceEntryAvroList= variantAvro.getStudies();
+        for (org.opencb.biodata.models.variant.avro.VariantSourceEntry variantSourceEntryAvro :variantSourceEntryAvroList) {
+            variantSourceEntry=new VariantSourceEntry(variantSourceEntryAvro);
+            variantSourceEntryList.add(variantSourceEntry);
+        }
+        variant.setStudies(variantSourceEntryList);
+        variant.setIds(variantAvro.getIds());
+        variant.setHgvs(variantAvro.getHgvs());
+        variant.setAnnotation(variantAvro.getAnnotation());
+        return variant;
+    }
     /**
      * Rowkey construction with chromosome,Position,Reference,Alternate.
      * @param variant variant object from the mapper
      * @return returns the rowkey as string
      */
-    public static String constructRowKey(VariantAvro variant) {
+    public String constructRowKey(VariantAvro variant) {
         int pos= variant.getStart();
         int position = 0;
         if ((variant.getLength()) == 1) {
@@ -148,8 +163,8 @@ Mapper<AvroKey<VariantAvro>, NullWritable, ImmutableBytesWritable, Put>  impleme
         String hdfsPath = args[3];
         String loadType = args[4];
 
-        String fileName=null;
-        String fileNameWithOutExt=null;
+        String fileName = null;
+        String fileNameWithOutExt = null;
         //conf = getConf();
         //setting the configuration for zookeeper
         conf = new Configuration();
@@ -167,9 +182,9 @@ Mapper<AvroKey<VariantAvro>, NullWritable, ImmutableBytesWritable, Put>  impleme
         FileSystem fs = FileSystem.get(conf);
 
         /*checks the file type , if the file type is local then call the converter and
-            //then move the generated avro to hdfs.
-            //if the file type is local and then ends with avro then copy the avro file to hdfs
-             if the file type is hdfs and then this bolock will do nothing.*/
+          then move the generated avro to hdfs.
+          if the file type is local and then ends with avro then copy the avro file to hdfs
+          if the file type is hdfs and then this block will do nothing.*/
 
         try {
             if (inputFile.startsWith(filePrefix)) {
@@ -258,8 +273,7 @@ Mapper<AvroKey<VariantAvro>, NullWritable, ImmutableBytesWritable, Put>  impleme
         Table table = con.getTable(tname);
         Result row = table.get(new Get(Bytes.toBytes(META)));
         if (row.isEmpty()) {
-            String returnValue="c1";
-            return returnValue;
+           return "c1";
         } else {
             byte[] value = row.getValue(COLUMN_FAMILY, Bytes
                     .toBytes(fileName));
@@ -304,7 +318,6 @@ Mapper<AvroKey<VariantAvro>, NullWritable, ImmutableBytesWritable, Put>  impleme
         TableName tname = TableName.valueOf(tablename);
         try (
                 Connection con = ConnectionFactory.createConnection(getConf());
-                Table table = con.getTable(tname);
                 Admin admin = con.getAdmin();
                 ) {
             if (!exist(tname, admin)) {
@@ -314,7 +327,6 @@ Mapper<AvroKey<VariantAvro>, NullWritable, ImmutableBytesWritable, Put>  impleme
             }
         }
     }
-
     private boolean exist(TableName tname, Admin admin) throws IOException {
         for (TableName tn : admin.listTableNames()) {
             if (tn.equals(tname)) {
