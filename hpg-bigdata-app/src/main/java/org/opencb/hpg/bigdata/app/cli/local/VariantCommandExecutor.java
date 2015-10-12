@@ -288,6 +288,7 @@ public class VariantCommandExecutor extends CommandExecutor {
                 Schema classSchema = org.ga4gh.models.Variant.getClassSchema();
                 // Converter
                 final VariantContext2VariantConverter converter = new VariantContext2VariantConverter();
+                converter.setVariantSetId("");  //TODO: Set VariantSetId
                 // Writer
                 AvroFileWriter<org.ga4gh.models.Variant> avroFileWriter = new AvroFileWriter<>(classSchema, compression, outputStream);
 

@@ -57,6 +57,7 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
     private final AtomicReference<VariantConverterContext> ctx = new AtomicReference<>();
     public static final String VCF_FILTER_COLUMN = "FILTER";
     public static final String VCF_QUAL_COLUMN = "QUAL";
+    private String variantSetId = "";
 
     public static void main(String[] args) {
         convert(args[0], args[1]);
@@ -167,12 +168,23 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
                 v.getId(), v.getReferenceBases(), v.getAlternateBases()));
     }
 
+    @Deprecated
     public VariantConverterContext getContext() {
         return ctx.get();
     }
 
+    @Deprecated
     public void setContext(VariantConverterContext ctx) {
         this.ctx.set(ctx);
+    }
+
+    public String getVariantSetId() {
+        return variantSetId;
+    }
+
+    public VariantContext2VariantConverter setVariantSetId(String variantSetId) {
+        this.variantSetId = variantSetId;
+        return this;
     }
 
     /*
@@ -205,6 +217,8 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
     @Override
     public Variant forward(VariantContext variantContext) {
         Variant gaVariant = new Variant();
+
+        gaVariant.setVariantSetId(variantSetId);
 
         gaVariant.setId(variantContext.getContig()
                 + ":" + translateStartPosition(variantContext)
