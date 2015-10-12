@@ -78,16 +78,20 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
     public static final String VFC_FILTER_COLUMN = "VFC_FILTER_COLUMN";
 
     public static void main(String[] args) {
+        convert(args[0], args[1]);
+    }
+
+    public static void convert(String input, String output) {
         StopWatch sw = new StopWatch();
         sw.start();
-        File file = new File(args[0]);
+        File file = new File(input);
 
         long cnt = 0;
 
-        File outFile = new File(args[1]);
+        File outFile = new File(output);
         try (OutputStream os = new FileOutputStream(outFile);
-             OutputStream callOs = new FileOutputStream(new File(args[1] + ".Call"));
-             OutputStream vsOs = new FileOutputStream(new File(args[1] + ".variantSet"))) {
+             OutputStream callOs = new FileOutputStream(new File(output + ".Call"));
+             OutputStream vsOs = new FileOutputStream(new File(output + ".variantSet"))) {
 
             CodecFactory codec = AvroUtils.getCodec("deflate");
 //          CompressionUtils.getCodec("snappy");
