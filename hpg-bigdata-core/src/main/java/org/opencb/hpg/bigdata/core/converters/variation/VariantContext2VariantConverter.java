@@ -206,9 +206,9 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
     public Variant forward(VariantContext variantContext) {
         Variant gaVariant = new Variant();
 
-        gaVariant.setVariantSetId(variantContext.getContig()
+        gaVariant.setId(variantContext.getContig()
                 + ":" + translateStartPosition(variantContext)
-                + ":" + variantContext.getReference()
+                + ":" + variantContext.getReference().getBaseString()
                 + ":" + StringUtils.join(variantContext.getAlternateAlleles(), ","));
         // Assumed to be related to the avro record
         long currTime = System.currentTimeMillis();
@@ -223,20 +223,16 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
          */
         gaVariant.setReferenceName(variantContext.getContig());
         gaVariant.setStart(translateStartPosition(variantContext));
-        gaVariant.setEnd(/* 0-based, exclusive end position [start,end) */
-                Long.valueOf(
-                        variantContext.getEnd() /* 1-based, inclusive end position [start,end] */
-                )); // TODO check if 0-based as well
 
-        String rsId = StringUtils.EMPTY;
+        /* 0-based, exclusive end position [start,end) */
+        /* 1-based, inclusive end position [start,end] */
+        gaVariant.setEnd((long) variantContext.getEnd());
         List<CharSequence> nameList = Collections.emptyList();
 
         if (StringUtils.isNotBlank(variantContext.getID())) {
-            rsId = variantContext.getID();
-            nameList = Collections.singletonList((CharSequence)rsId);
+            nameList = Arrays.asList(variantContext.getID().split(VCFConstants.ID_FIELD_SEPARATOR));
         }
 
-        gaVariant.setId(rsId);
         gaVariant.setNames(nameList);
 
         /* Classic mode */

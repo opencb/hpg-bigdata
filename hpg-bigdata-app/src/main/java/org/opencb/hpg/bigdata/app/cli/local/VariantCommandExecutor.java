@@ -138,7 +138,10 @@ public class VariantCommandExecutor extends CommandExecutor {
             if (compression.equals("auto")) {
                 if (output.endsWith(".gz")) {
                     compression = "gzip";
-                } else if (output.equalsIgnoreCase("STDOUT") || output.endsWith("pb") || output.endsWith("pb3") || output.endsWith("proto")) {
+                } else if (output.equalsIgnoreCase("STDOUT")
+                        || output.endsWith("pb")
+                        || output.endsWith("pb3")
+                        || output.endsWith("proto")) {
                     compression = "";
                 } else {
                     throw new IllegalArgumentException("Unknown compression extension for " + output);
