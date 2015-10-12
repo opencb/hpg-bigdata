@@ -68,7 +68,7 @@ public class VcfHeaderLine2VariantSetMetadataConverter implements Converter<VCFH
         throw new UnsupportedOperationException(String.format("Header line not supported yet: %s", hl.getClass()));
     }
 
-    private VariantSetMetadata convert(VCFHeaderLine hl) {
+    private VariantSetMetadata convertHeaderLine(VCFHeaderLine hl) {
         VariantSetMetadata vsm = new VariantSetMetadata();
         vsm.setKey(hl.getKey());
         vsm.setValue(hl.getValue());
@@ -76,7 +76,7 @@ public class VcfHeaderLine2VariantSetMetadataConverter implements Converter<VCFH
     }
 
     private VariantSetMetadata convert(VCFSimpleHeaderLine hl) {
-        VariantSetMetadata vsm = convert((VCFHeaderLine) hl);
+        VariantSetMetadata vsm = convertHeaderLine((VCFHeaderLine) hl);
         vsm.setId(hl.getID());
         return vsm;
     }
@@ -86,7 +86,7 @@ public class VcfHeaderLine2VariantSetMetadataConverter implements Converter<VCFH
     }
 
     private VariantSetMetadata convert(VCFCompoundHeaderLine hl) {
-        VariantSetMetadata vsm = convert((VCFHeaderLine) hl);
+        VariantSetMetadata vsm = convertHeaderLine((VCFHeaderLine) hl);
         vsm.setId(hl.getID());
         if (hl.isFixedCount()) {
             vsm.setNumber(Integer.toString(hl.getCount()));

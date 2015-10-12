@@ -23,44 +23,24 @@ import htsjdk.tribble.AbstractFeatureReader;
 import htsjdk.tribble.FeatureReader;
 import htsjdk.tribble.TribbleException;
 import htsjdk.variant.variantcontext.Allele;
-import htsjdk.variant.variantcontext.Genotype;
-import htsjdk.variant.variantcontext.GenotypeLikelihoods;
-import htsjdk.variant.variantcontext.GenotypesContext;
-import htsjdk.variant.variantcontext.VariantContext;
+import htsjdk.variant.variantcontext.*;
 import htsjdk.variant.vcf.VCFConstants;
 import htsjdk.variant.vcf.VCFHeader;
 import htsjdk.variant.vcf.VCFHeaderLine;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
-
 import org.apache.avro.file.CodecFactory;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
-import org.ga4gh.models.Call;
-import org.ga4gh.models.CallSet;
-import org.ga4gh.models.Variant;
-import org.ga4gh.models.VariantSet;
-import org.ga4gh.models.VariantSetMetadata;
+import org.ga4gh.models.*;
 import org.opencb.hpg.bigdata.core.converters.Converter;
 import org.opencb.hpg.bigdata.core.converters.FullVcfCodec;
 import org.opencb.hpg.bigdata.core.io.avro.AvroWriter;
 import org.opencb.hpg.bigdata.core.utils.AvroUtils;
+
+import java.io.*;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Chr20 of 1000 genomes -> 855,196 rows  = 30 header, 855,166 rows.
@@ -75,7 +55,8 @@ import org.opencb.hpg.bigdata.core.utils.AvroUtils;
 public class VariantContext2VariantConverter implements Converter<VariantContext, Variant> {
 
     private final AtomicReference<VariantConverterContext> ctx = new AtomicReference<>();
-    public static final String VFC_FILTER_COLUMN = "VFC_FILTER_COLUMN";
+    public static final String VCF_FILTER_COLUMN = "FILTER";
+    public static final String VCF_QUAL_COLUMN = "QUAL";
 
     public static void main(String[] args) {
         convert(args[0], args[1]);
@@ -222,14 +203,17 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
      */
 
     @Override
-    public Variant forward(VariantContext c) {
-        Variant v = new Variant();
+    public Variant forward(VariantContext variantContext) {
+        Variant gaVariant = new Variant();
 
-        v.setVariantSetId(""); // TODO
+        gaVariant.setVariantSetId(variantContext.getContig()
+                + ":" + translateStartPosition(variantContext)
+                + ":" + variantContext.getReference()
+                + ":" + StringUtils.join(variantContext.getAlternateAlleles(), ","));
         // Assumed to be related to the avro record
         long currTime = System.currentTimeMillis();
-        v.setCreated(currTime);
-        v.setUpdated(currTime);
+        gaVariant.setCreated(currTime);
+        gaVariant.setUpdated(currTime);
 
         /* VCF spec (1-Based):
          *  -> POS - position: The reference position, with the 1st base having position 1.
@@ -237,65 +221,64 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
          * GA4GH spec
          *  -> (0-Based)
          */
-        v.setReferenceName(c.getChr());
-        v.setStart(translateStartPosition(c));
-        v.setEnd(/* 0-based, exclusive end position [start,end) */
+        gaVariant.setReferenceName(variantContext.getContig());
+        gaVariant.setStart(translateStartPosition(variantContext));
+        gaVariant.setEnd(/* 0-based, exclusive end position [start,end) */
                 Long.valueOf(
-                        c.getEnd() /* 1-based, inclusive end position [start,end] */
+                        variantContext.getEnd() /* 1-based, inclusive end position [start,end] */
                 )); // TODO check if 0-based as well
 
         String rsId = StringUtils.EMPTY;
         List<CharSequence> nameList = Collections.emptyList();
 
-        if (StringUtils.isNotBlank(c.getID())) {
-            rsId = c.getID();
+        if (StringUtils.isNotBlank(variantContext.getID())) {
+            rsId = variantContext.getID();
             nameList = Collections.singletonList((CharSequence)rsId);
         }
 
-        v.setId(rsId);
-        v.setNames(nameList);
+        gaVariant.setId(rsId);
+        gaVariant.setNames(nameList);
 
         /* Classic mode */
         // Reference
-        Allele refAllele = c.getReference();
-        v.setReferenceBases(refAllele.getBaseString());
+        Allele refAllele = variantContext.getReference();
+        gaVariant.setReferenceBases(refAllele.getBaseString());
 
-        assert Long.compare(v.getEnd() - v.getStart(), v.getReferenceBases().length()) == 0;
+        assert Long.compare(gaVariant.getEnd() - gaVariant.getStart(), gaVariant.getReferenceBases().length()) == 0;
 
         // Alt
-        List<Allele> altAllele = c.getAlternateAlleles();
+        List<Allele> altAllele = variantContext.getAlternateAlleles();
         List<CharSequence> altList = new ArrayList<>(altAllele.size());
-        for (Allele a : altAllele) {
-            altList.add(a.getBaseString());
+        for (Allele allele : altAllele) {
+            altList.add(allele.getBaseString());
         }
-        v.setAlternateBases(altList);
+        gaVariant.setAlternateBases(altList);
 
 
         /* Graph mode */
         // NOT supported
-        // v.setAlleleIds(value);
-
-        // QUAL
-        /**
-         * TODO: QUAL - quality: Phred-scaled quality score
-         */
+        // gaVariant.setAlleleIds(value);
 
         // INFO
-        v.setInfo(convertInfo(c));
+        Map<CharSequence, List<CharSequence>> info = convertInfo(variantContext);
+        gaVariant.setInfo(info);
+
+        // QUAL
+        info.put(VCF_QUAL_COLUMN, Collections.singletonList(Double.toString(variantContext.getPhredScaledQual())));
 
         //  FILTER
-        /**
-         * TODO: FILTER - filter status
-         */
-        Set<String> filter = c.getFilters();
-        List<CharSequence> filterList = new ArrayList<CharSequence>(filter);
+        Set<String> filter = variantContext.getFilters();
+        if (filter.isEmpty()) {
+            info.put(VCF_FILTER_COLUMN, Collections.singletonList(VCFConstants.PASSES_FILTERS_v4));
+        } else {
+            info.put(VCF_FILTER_COLUMN, new ArrayList<>(filter));
+        }
 
         // Genotypes (Call's)
 
-        v.setCalls(convertCalls(c, filterList));
+        gaVariant.setCalls(convertCalls(variantContext));
 
-        // TODO Auto-generated method stub
-        return v;
+        return gaVariant;
     }
 
     /**
@@ -305,7 +288,7 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
      * @return {@link List} of {@link Call}
      */
     @SuppressWarnings("deprecation")
-    private List<Call> convertCalls(VariantContext context, List<CharSequence> filters) {
+    private List<Call> convertCalls(VariantContext context) {
         GenotypesContext gtc = context.getGenotypes();
 
         // Create Allele mapping
@@ -321,11 +304,12 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
 
         for (Genotype gt : gtc) {
             String name = gt.getSampleName();
-            CallSet cs = getContext().getCallSetMap().get(name);
+//            CallSet cs = getContext().getCallSetMap().get(name);
             Call c = new Call();
 
-            c.setCallSetId(cs.getId());
-//          c.setCallSetName(cs.getName());  // TODO is this really needed 2x
+            c.setCallSetId(name);
+//            c.setCallSetId(cs.getId());
+//            c.setCallSetName(cs.getName());  // TODO is this really needed 2x
             c.setCallSetName(StringUtils.EMPTY);
 
             List<Integer> cgt = new ArrayList<>(gt.getPloidy());
@@ -357,16 +341,16 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
             }
 
             if (gt.hasDP()) {
-                infoMap.put(VCFConstants.DEPTH_KEY, Arrays.asList((CharSequence) Integer.toString(gt.getDP())));
+                infoMap.put(VCFConstants.DEPTH_KEY, Collections.singletonList((CharSequence) Integer.toString(gt.getDP())));
             }
 
             if (gt.hasGQ()) {
                 infoMap.put(VCFConstants.GENOTYPE_QUALITY_KEY,
-                        Arrays.asList((CharSequence) Integer.toString(gt.getGQ())));
+                        Collections.singletonList((CharSequence) Integer.toString(gt.getGQ())));
             }
 
             // Add Filter information to the genotype data
-            infoMap.put(VFC_FILTER_COLUMN, filters);
+//            infoMap.put(VFC_FILTER_COLUMN, filters);
 
             Map<String, Object> extAttr = gt.getExtendedAttributes();
             List<Double> lhList = Collections.emptyList();
@@ -380,14 +364,14 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
                             double[] glv = glField.getAsVector();
                             lhList = new ArrayList<>(glv.length);
                             for (double d : glv) {
-                                lhList.add(Double.valueOf(d));
+                                lhList.add(d);
                             }
                         }
                     } else {
                         if (value instanceof List) {
                             // TODO Check if this works
                             List vlist = (List) value;
-                            List<CharSequence> lst = new ArrayList<CharSequence>();
+                            List<CharSequence> lst = new ArrayList<>(vlist.size());
                             for (Object o : vlist) {
                                 lst.add(o.toString());
                             }

@@ -18,6 +18,7 @@ package org.opencb.hpg.bigdata.app.cli.local;
 
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFFileReader;
+import org.apache.avro.Schema;
 import org.apache.commons.lang3.StringUtils;
 import org.opencb.biodata.models.variant.Variant;
 import org.opencb.biodata.models.variant.avro.VariantAvro;
@@ -44,9 +45,7 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPOutputStream;
 
@@ -96,13 +95,14 @@ public class VariantCommandExecutor extends CommandExecutor {
             isFile = true;
         } else {
             outputStream = System.out;
+            output = "STDOUT";
         }
 
         String dataModel = variantCommandOptions.convertVariantCommandOptions.dataModel;
         dataModel = (dataModel != null && !dataModel.isEmpty()) ? dataModel : "opencb";
 
         String compression = variantCommandOptions.convertVariantCommandOptions.compression;
-        compression = (compression == null || compression.isEmpty()) ? "auto" :  compression;
+        compression = (compression == null || compression.isEmpty()) ? "auto" :  compression.toLowerCase();
 
         if (!variantCommandOptions.convertVariantCommandOptions.toJson
                 && !variantCommandOptions.convertVariantCommandOptions.toAvro
@@ -115,11 +115,17 @@ public class VariantCommandExecutor extends CommandExecutor {
          * JSON converter. Mode 'auto' set to gzip is file name ends with .gz
          */
         if (variantCommandOptions.convertVariantCommandOptions.toJson) {
-            if (compression.equalsIgnoreCase("auto") && output != null && output.endsWith(".gz")) {
-                compression = "gzip";
+            if (compression.equals("auto")) {
+                if (output.endsWith(".gz")) {
+                    compression = "gzip";
+                } else if (output.equalsIgnoreCase("STDOUT") || output.endsWith("json")) {
+                    compression = "";
+                } else {
+                    throw new IllegalArgumentException("Unknown compression extension for " + output);
+                }
             }
 
-            if (compression.equalsIgnoreCase("gzip")) {
+            if (compression.equals("gzip")) {
                 outputStream = new GZIPOutputStream(outputStream);
             }
             convertToJson(inputPath, dataModel, outputStream);
@@ -129,11 +135,17 @@ public class VariantCommandExecutor extends CommandExecutor {
          * Protocol Buffer 3 converter. Mode 'auto' set to gzip is file name ends with .gz
          */
         if (variantCommandOptions.convertVariantCommandOptions.toProtoBuf) {
-            if (compression.equalsIgnoreCase("auto") && output != null && output.endsWith(".gz")) {
-                compression = "gzip";
+            if (compression.equals("auto")) {
+                if (output.endsWith(".gz")) {
+                    compression = "gzip";
+                } else if (output.equalsIgnoreCase("STDOUT") || output.endsWith("pb") || output.endsWith("pb3") || output.endsWith("proto")) {
+                    compression = "";
+                } else {
+                    throw new IllegalArgumentException("Unknown compression extension for " + output);
+                }
             }
 
-            if (compression.equalsIgnoreCase("gzip")) {
+            if (compression.equals("gzip")) {
                 outputStream = new GZIPOutputStream(outputStream);
             }
             convertToProtoBuf(inputPath, outputStream);
@@ -144,9 +156,9 @@ public class VariantCommandExecutor extends CommandExecutor {
          */
         if (variantCommandOptions.convertVariantCommandOptions.toAvro) {
             // if compression mode is set to 'auto' it is inferred from files extension
-            if (compression.equalsIgnoreCase("auto")) {
+            if (compression.equals("auto")) {
                 // if output is a defined file and contains an extension
-                if (output != null && output.contains(".")) {
+                if (output.contains(".")) {
                     String[] split = output.split("\\.");
                     switch (split[split.length - 1]) {
                         case "gz":
@@ -172,12 +184,7 @@ public class VariantCommandExecutor extends CommandExecutor {
                 }
             }
 
-            if (dataModel.equalsIgnoreCase("opencb")) {
-                convertToAvro(inputPath, compression, outputStream);
-            } else {
-                // TODO jacobo can you make this to work?
-                VariantContext2VariantConverter.convert(inputPath.toString(), output);
-            }
+            convertToAvro(inputPath, compression, dataModel, outputStream);
 
             if (isFile) {
                 String metaFile = output + ".meta";
@@ -200,23 +207,30 @@ public class VariantCommandExecutor extends CommandExecutor {
 
     private void convertToJson(Path inputPath, String dataModel, OutputStream outputStream) throws IOException {
         VCFFileReader reader = new VCFFileReader(inputPath.toFile(), false);
-        if (dataModel.equalsIgnoreCase("opencb")) {
-            VariantContextToVariantConverter variantContextToVariantConverter = new VariantContextToVariantConverter();
-            Variant variant;
-            for (VariantContext variantContext : reader) {
-                variant = variantContextToVariantConverter.convert(variantContext);
-                outputStream.write(variant.toJson().getBytes());
-                outputStream.write('\n');
+        switch (dataModel.toLowerCase()) {
+            case "opencb": {
+                VariantContextToVariantConverter variantContextToVariantConverter = new VariantContextToVariantConverter();
+                Variant variant;
+                for (VariantContext variantContext : reader) {
+                    variant = variantContextToVariantConverter.convert(variantContext);
+                    outputStream.write(variant.toJson().getBytes());
+                    outputStream.write('\n');
+                }
+                break;
             }
-        } else {
-            // GA4GH Avro data models used
-            VariantContext2VariantConverter variantContext2VariantConverter = new VariantContext2VariantConverter();
-            org.ga4gh.models.Variant variant;
-            for (VariantContext variantContext : reader) {
-                variant = variantContext2VariantConverter.forward(variantContext);
-                outputStream.write(variant.toString().getBytes());
-                outputStream.write('\n');
+            case "ga4gh": {
+                // GA4GH Avro data models used
+                VariantContext2VariantConverter variantContext2VariantConverter = new VariantContext2VariantConverter();
+                org.ga4gh.models.Variant variant;
+                for (VariantContext variantContext : reader) {
+                    variant = variantContext2VariantConverter.forward(variantContext);
+                    outputStream.write(variant.toString().getBytes());
+                    outputStream.write('\n');
+                }
+                break;
             }
+            default:
+                throw new IllegalArgumentException("Unknown dataModel \"" + dataModel + "\"");
         }
         reader.close();
     }
@@ -236,31 +250,14 @@ public class VariantCommandExecutor extends CommandExecutor {
         reader.close();
     }
 
-    private void convertToAvro(Path inputPath, String compression, OutputStream outputStream) throws Exception {
+    private void convertToAvro(Path inputPath, String compression, String dataModel, OutputStream outputStream) throws Exception {
         // Creating reader
         VcfBlockIterator iterator = (StringUtils.equals("-", inputPath.toAbsolutePath().toString()))
                 ? new VcfBlockIterator(new BufferedInputStream(System.in), new FullVcfCodec())
                 : new VcfBlockIterator(inputPath.toFile(), new FullVcfCodec());
 
-        DataReader<CharBuffer> vcfDataReader = new DataReader<CharBuffer>() {
-            @Override
-            public List<CharBuffer> read(int size) {
-                return (iterator.hasNext() ? iterator.next(size) : Collections.<CharBuffer>emptyList());
-            }
+        DataReader<CharBuffer> vcfDataReader = iterator.toDataReader();
 
-            @Override
-            public boolean close() {
-                try {
-                    iterator.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    return false;
-                }
-                return true;
-            }
-        };
-
-        AvroFileWriter<VariantAvro> avroFileWriter = new AvroFileWriter<>(VariantAvro.getClassSchema(), compression, outputStream);
 
         // main loop
         int numTasks = Math.max(variantCommandOptions.convertVariantCommandOptions.numThreads, 1);
@@ -268,11 +265,38 @@ public class VariantCommandExecutor extends CommandExecutor {
         int capacity = numTasks + 1;
 //            VariantConverterContext variantConverterContext = new VariantConverterContext();
         ParallelTaskRunner.Config config = new ParallelTaskRunner.Config(numTasks, batchSize, capacity, false);
-        ParallelTaskRunner<CharBuffer, ByteBuffer> runner =
-                new ParallelTaskRunner<>(
+        ParallelTaskRunner<CharBuffer, ByteBuffer> runner;
+        switch (dataModel.toLowerCase()) {
+            case "opencb": {
+                Schema classSchema = VariantAvro.getClassSchema();
+                // Converter
+                final VariantContextToVariantConverter converter = new VariantContextToVariantConverter("", "");
+                // Writer
+                AvroFileWriter<VariantAvro> avroFileWriter = new AvroFileWriter<>(classSchema, compression, outputStream);
+
+                runner = new ParallelTaskRunner<>(
                         vcfDataReader,
-                        () -> new VariantAvroEncoderTask(iterator.getHeader(), iterator.getVersion()),
+                        () -> new VariantAvroEncoderTask<>(iterator.getHeader(), iterator.getVersion(),
+                                variantContext -> converter.convert(variantContext).getImpl(), classSchema),
                         avroFileWriter, config);
+                break;
+            }
+            case "ga4gh": {
+                Schema classSchema = org.ga4gh.models.Variant.getClassSchema();
+                // Converter
+                final VariantContext2VariantConverter converter = new VariantContext2VariantConverter();
+                // Writer
+                AvroFileWriter<org.ga4gh.models.Variant> avroFileWriter = new AvroFileWriter<>(classSchema, compression, outputStream);
+
+                runner = new ParallelTaskRunner<>(
+                        vcfDataReader,
+                        () -> new VariantAvroEncoderTask<>(iterator.getHeader(), iterator.getVersion(), converter, classSchema),
+                        avroFileWriter, config);
+                break;
+            }
+            default:
+                throw new IllegalArgumentException("Unknown dataModel \"" + dataModel + "\"");
+        }
         long start = System.currentTimeMillis();
         runner.run();
 
