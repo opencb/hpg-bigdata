@@ -17,6 +17,7 @@
 package org.opencb.hpg.bigdata.app.cli.local;
 
 import htsjdk.variant.variantcontext.VariantContext;
+import htsjdk.variant.vcf.VCFCodec;
 import htsjdk.variant.vcf.VCFFileReader;
 import org.apache.avro.Schema;
 import org.apache.commons.lang3.StringUtils;
@@ -25,6 +26,7 @@ import org.opencb.biodata.models.variant.avro.VariantAvro;
 import org.opencb.biodata.models.variant.avro.VariantFileMetadata;
 import org.opencb.biodata.models.variant.avro.VariantFileMetadata.Builder;
 import org.opencb.biodata.models.variant.protobuf.VariantProto;
+import org.opencb.biodata.tools.variant.converter.Converter;
 import org.opencb.biodata.tools.variant.converter.VariantContextToVariantConverter;
 import org.opencb.biodata.tools.variant.converter.VariantContextToVariantProtoConverter;
 import org.opencb.commons.io.DataReader;
@@ -34,13 +36,12 @@ import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
 import org.opencb.hpg.bigdata.core.converters.FullVcfCodec;
 import org.opencb.hpg.bigdata.core.converters.variation.VariantAvroEncoderTask;
 import org.opencb.hpg.bigdata.core.converters.variation.VariantContext2VariantConverter;
+import org.opencb.hpg.bigdata.core.converters.variation.ProtoEncoderTask;
+import org.opencb.hpg.bigdata.core.io.VariantContextBlockIterator;
 import org.opencb.hpg.bigdata.core.io.VcfBlockIterator;
 import org.opencb.hpg.bigdata.core.io.avro.AvroFileWriter;
 
-import java.io.BufferedInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.file.Path;
@@ -238,19 +239,60 @@ public class VariantCommandExecutor extends CommandExecutor {
         reader.close();
     }
 
-    private void convertToProtoBuf(Path inputPath, OutputStream outputStream) throws IOException {
-        VCFFileReader reader = new VCFFileReader(inputPath.toFile(), false);
-        VariantContextToVariantProtoConverter variantContextToVariantProtoConverter = new VariantContextToVariantProtoConverter();
-        VariantProto.Variant variant;
-        for (VariantContext variantContext : reader) {
-            variant = variantContextToVariantProtoConverter.convert(variantContext);
-            variant.writeDelimitedTo(outputStream);
-//            variant.writeTo(outputStream);
+    private void convertToProtoBuf(Path inputPath, OutputStream outputStream) throws Exception {
+        // Creating reader
+        VcfBlockIterator iterator = (StringUtils.equals("-", inputPath.toAbsolutePath().toString()))
+                ? new VcfBlockIterator(new BufferedInputStream(System.in), new FullVcfCodec())
+                : new VcfBlockIterator(inputPath.toFile(), new FullVcfCodec());
 
-//            outputStream.write(variant.toByteArray());
-//            outputStream.write(Character.LINE_SEPARATOR);
-        }
-        reader.close();
+
+
+        int numTasks = Math.max(variantCommandOptions.convertVariantCommandOptions.numThreads, 1);
+        int batchSize = 1024 * 1024;  //Batch size in bytes
+        int capacity = numTasks + 1;
+        ParallelTaskRunner.Config config = new ParallelTaskRunner.Config(numTasks, batchSize, capacity, false);
+
+        ParallelTaskRunner<CharBuffer, ByteBuffer> runner = new ParallelTaskRunner<>(
+                iterator.toDataReader(),
+                () -> { //Task supplier. Will supply a task instance for each thread.
+
+                    //VCFCodec is not thread safe. MUST exist one instance per thread
+                    VCFCodec codec = new FullVcfCodec(iterator.getHeader(), iterator.getVersion());
+                    VariantContextBlockIterator blockIterator = new VariantContextBlockIterator(codec);
+                    Converter<VariantContext, VariantProto.Variant> converter = new VariantContextToVariantProtoConverter();
+                    return new ProtoEncoderTask<>(charBuffer -> converter.convert(blockIterator.convert(charBuffer)), 1000000);
+                },
+                batch -> {
+                    batch.forEach(byteBuffer -> {
+                        try {
+                            outputStream.write(byteBuffer.array());
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+                    return true;
+                }, config
+        );
+        runner.run();
+        outputStream.close();
+
+//        InputStream inputStream = new FileInputStream(variantCommandOptions.convertVariantCommandOptions.output);
+//        if (outputStream instanceof GZIPOutputStream) {
+//            inputStream = new GZIPInputStream(inputStream);
+//        }
+//        VariantProto.Variant variant;
+//        int i = 0;
+//        try {
+//            while ((variant = VariantProto.Variant.parseDelimitedFrom(inputStream)) != null) {
+//                i++;
+//            System.out.println(variant.getChromosome() + ":" + variant.getStart()
+//                    + ":" + variant.getReference() + ":" + variant.getAlternate());
+////            System.out.println("variant = " + variant.toString());
+//            }
+//        } finally {
+//            System.out.println("Num variants = " + i);
+//            inputStream.close();
+//        }
     }
 
     private void convertToAvro(Path inputPath, String compression, String dataModel, OutputStream outputStream) throws Exception {

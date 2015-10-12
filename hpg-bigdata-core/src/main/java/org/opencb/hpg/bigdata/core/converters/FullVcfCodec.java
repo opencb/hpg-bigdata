@@ -22,6 +22,7 @@ import htsjdk.variant.variantcontext.*;
 import htsjdk.variant.variantcontext.LazyGenotypesContext.LazyData;
 import htsjdk.variant.vcf.VCFCodec;
 import htsjdk.variant.vcf.VCFConstants;
+import htsjdk.variant.vcf.VCFHeader;
 import htsjdk.variant.vcf.VCFHeaderVersion;
 
 import java.util.ArrayList;
@@ -35,6 +36,13 @@ import java.util.List;
 public class FullVcfCodec extends VCFCodec {
 
     private final String[] INT_DECODE_ARRAY = new String[10000];
+
+    public FullVcfCodec() {
+    }
+
+    public FullVcfCodec(final VCFHeader header, final VCFHeaderVersion version) {
+        this.setVCFHeader(header, version);
+    }
 
     private int[] decodeInts(final String string) {
         final int nValues = ParsingUtils.split(string, INT_DECODE_ARRAY, ',');

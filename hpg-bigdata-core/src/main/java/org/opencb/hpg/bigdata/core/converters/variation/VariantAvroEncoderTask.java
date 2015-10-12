@@ -62,17 +62,6 @@ public class VariantAvroEncoderTask<T extends GenericRecord> implements Parallel
 
     private int failConvert = 0;
 
-
-//    public VariantAvroEncoderTask(VCFHeader header, VCFHeaderVersion version) {
-//        this.header = header;
-//        codec = new FullVcfCodec();
-//        codec.setVCFHeader(this.header, version);
-////        converter = new VariantContextToVariantConverter();
-//        encoder = new AvroEncoder<>(VariantAvro.getClassSchema());
-//        variantContextBlockIterator = new VariantContextBlockIterator(codec);
-//        variantContextBlockIterator.setDecodeGenotypes(false);
-//    }
-
     public VariantAvroEncoderTask(VCFHeader header, VCFHeaderVersion version, Converter<VariantContext, T> converter, Schema schema) {
         this.header = header;
         codec = new FullVcfCodec();
@@ -93,7 +82,6 @@ public class VariantAvroEncoderTask<T extends GenericRecord> implements Parallel
         postDone.set(false);
         int gtSize = header.getGenotypeSamples().size();
         List<String> genotypeSamples = header.getGenotypeSamples();
-
     }
 
     @Override
@@ -101,7 +89,7 @@ public class VariantAvroEncoderTask<T extends GenericRecord> implements Parallel
         List<T> convertedList = new ArrayList<>(charBufferList.size());
         List<ByteBuffer> encoded;
 
-        logProgress(charBufferList);
+        logProgress(charBufferList.size());
 
         //Parse from CharBuffer to VariantContext
         long start = System.nanoTime();
@@ -136,10 +124,10 @@ public class VariantAvroEncoderTask<T extends GenericRecord> implements Parallel
         }
     }
 
-    private void logProgress(List<CharBuffer> charBufferList) {
-        long num = numConverts.getAndAdd(charBufferList.size());
+    private void logProgress(int size) {
+        long num = numConverts.getAndAdd(size);
         long batch = num / BATCH_SIZE;
-        long newBatch = (num + charBufferList.size()) / BATCH_SIZE;
+        long newBatch = (num + size) / BATCH_SIZE;
         if (batch != newBatch) {
             logger.info("Num processed variants: " + newBatch * BATCH_SIZE);
         }
