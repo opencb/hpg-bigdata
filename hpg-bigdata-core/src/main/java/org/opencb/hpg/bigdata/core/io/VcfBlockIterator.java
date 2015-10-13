@@ -29,10 +29,7 @@ import org.opencb.hpg.bigdata.core.converters.FullVcfCodec;
 
 import java.io.*;
 import java.nio.CharBuffer;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPInputStream;
 
@@ -91,7 +88,7 @@ public class VcfBlockIterator implements AutoCloseable, Iterator<List<CharBuffer
         List<CharBuffer> next = new LinkedList<>(); // linked list faster at creation time
         while (iter.hasNext() && cnt < blockSize) {
             String line = iter.next();
-            CharBuffer buff = CharBuffer.wrap(line.toCharArray());
+            CharBuffer buff = CharBuffer.wrap(line.toCharArray());  //FIXME! Avoid char array copy
             next.add(buff);
             cnt += buff.length();
         }
@@ -138,7 +135,7 @@ public class VcfBlockIterator implements AutoCloseable, Iterator<List<CharBuffer
         return this;
     }
 
-    public DataReader<CharBuffer> toDataReader() {
+    public DataReader<CharBuffer> toCharBufferDataReader() {
         return new DataReader<CharBuffer>() {
             @Override
             public List<CharBuffer> read(int size) {
@@ -150,8 +147,30 @@ public class VcfBlockIterator implements AutoCloseable, Iterator<List<CharBuffer
                 try {
                     VcfBlockIterator.this.close();
                 } catch (IOException e) {
-                    e.printStackTrace();
-                    return false;
+                    throw new RuntimeException(e);
+                }
+                return true;
+            }
+        };
+    }
+
+    public DataReader<CharSequence> toLineDataReader() {
+        return new DataReader<CharSequence>() {
+            @Override
+            public List<CharSequence> read(int size) {
+                List<CharSequence> batch = new ArrayList<>(size);
+                for (int i = 0; i < size && iter.hasNext(); i++) {
+                    batch.add(iter.next());
+                }
+                return batch;
+            }
+
+            @Override
+            public boolean close() {
+                try {
+                    VcfBlockIterator.this.close();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
                 return true;
             }

@@ -325,6 +325,9 @@ public class LocalCliOptionsParser {
 
 //        @Parameter(names = {"--to-parquet"}, description = "Whether output must be in parquet format", required = false)
 //        public boolean toParquet;
+
+        @DynamicParameter(names = {"-D"}, hidden = true)
+        public Map<String, String> options = new HashMap<>();
     }
 
 

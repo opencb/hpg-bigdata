@@ -32,7 +32,7 @@ import java.util.List;
  * @author mh719
  *
  */
-public class VariantContextBlockIterator implements Converter<CharBuffer, VariantContext> {
+public class VariantContextBlockIterator implements Converter<CharSequence, VariantContext> {
 
     private final VCFCodec codec;
     private boolean decodeGenotypes = false;
@@ -57,7 +57,7 @@ public class VariantContextBlockIterator implements Converter<CharBuffer, Varian
     }
 
     @Override
-    public VariantContext convert(CharBuffer buff) {
+    public VariantContext convert(CharSequence buff) {
         return this.codec.decode(buff.toString());
     }
 

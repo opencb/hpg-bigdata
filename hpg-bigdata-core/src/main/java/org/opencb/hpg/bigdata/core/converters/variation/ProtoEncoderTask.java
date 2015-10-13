@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
@@ -19,33 +18,55 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * @author Jacobo Coll &lt;jacobo167@gmail.com&gt;
  */
-public class ProtoEncoderTask<T extends GeneratedMessage> implements ParallelTaskRunner.Task<CharBuffer, ByteBuffer> {
+public class ProtoEncoderTask<T extends GeneratedMessage> implements ParallelTaskRunner.Task<CharSequence, ByteBuffer> {
 
-    private final Converter<CharBuffer, T> converter;
+    private final Converter<CharSequence, T> converter;
     private final int bufferSize;
+    private int maxBufferSize;
 
     private static final int LOG_BATCH_SIZE = 1000;
     private static AtomicLong numConverts = new AtomicLong(0);
     private static Logger logger = LoggerFactory.getLogger(ProtoEncoderTask.class.toString());
 
-    public ProtoEncoderTask(Converter<CharBuffer, T> converter, int bufferSize) {
+    public ProtoEncoderTask(Converter<CharSequence, T> converter, int bufferSize) {
         this.converter = converter;
         this.bufferSize = bufferSize;
+        this.maxBufferSize = bufferSize;
+    }
+
+    public static class ByteBufferOutputStream extends ByteArrayOutputStream {
+        public ByteBufferOutputStream() {
+        }
+
+        public ByteBufferOutputStream(int size) {
+            super(size);
+        }
+
+        public ByteBuffer toByteBuffer() {
+            return ByteBuffer.wrap(buf, 0, count);
+        }
     }
 
     @Override
-    public List<ByteBuffer> apply(List<CharBuffer> batch) {
+    public void pre() {
+        maxBufferSize = bufferSize;
+    }
 
-        logProgress(batch.size());
+    @Override
+    public List<ByteBuffer> apply(List<CharSequence> batch) {
+
 
         List<T> converted = converter.apply(batch);
 
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream(bufferSize);
+        ByteBufferOutputStream outputStream = new ByteBufferOutputStream(maxBufferSize);
         try {
             for (T element : converted) {
                 element.writeDelimitedTo(outputStream);
             }
-            return Collections.singletonList(ByteBuffer.wrap(outputStream.toByteArray()));
+            logProgress(batch.size());
+            ByteBuffer byteBuffer = outputStream.toByteBuffer();
+            maxBufferSize = Math.max(maxBufferSize, byteBuffer.array().length);
+            return Collections.singletonList(byteBuffer);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

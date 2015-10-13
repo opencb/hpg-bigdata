@@ -34,14 +34,17 @@ import org.opencb.commons.run.ParallelTaskRunner;
 import org.opencb.commons.utils.FileUtils;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
 import org.opencb.hpg.bigdata.core.converters.FullVcfCodec;
+import org.opencb.hpg.bigdata.core.converters.variation.ProtoEncoderTask;
 import org.opencb.hpg.bigdata.core.converters.variation.VariantAvroEncoderTask;
 import org.opencb.hpg.bigdata.core.converters.variation.VariantContext2VariantConverter;
-import org.opencb.hpg.bigdata.core.converters.variation.ProtoEncoderTask;
 import org.opencb.hpg.bigdata.core.io.VariantContextBlockIterator;
 import org.opencb.hpg.bigdata.core.io.VcfBlockIterator;
 import org.opencb.hpg.bigdata.core.io.avro.AvroFileWriter;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.file.Path;
@@ -246,26 +249,27 @@ public class VariantCommandExecutor extends CommandExecutor {
                 : new VcfBlockIterator(inputPath.toFile(), new FullVcfCodec());
 
 
-
-        int numTasks = Math.max(variantCommandOptions.convertVariantCommandOptions.numThreads, 1);
-        int batchSize = 1024 * 1024;  //Batch size in bytes
+        LocalCliOptionsParser.ConvertVariantCommandOptions cliOptions = variantCommandOptions.convertVariantCommandOptions;
+        int numTasks = Math.max(cliOptions.numThreads, 1);
+        int batchSize = Integer.parseInt(cliOptions.options.getOrDefault("batch.size", "50"));
+        int bufferSize = Integer.parseInt(cliOptions.options.getOrDefault("buffer.size", "100000"));
         int capacity = numTasks + 1;
-        ParallelTaskRunner.Config config = new ParallelTaskRunner.Config(numTasks, batchSize, capacity, false);
+        ParallelTaskRunner.Config config = new ParallelTaskRunner.Config(numTasks, batchSize, capacity, true, false);
 
-        ParallelTaskRunner<CharBuffer, ByteBuffer> runner = new ParallelTaskRunner<>(
-                iterator.toDataReader(),
+        ParallelTaskRunner<CharSequence, ByteBuffer> runner = new ParallelTaskRunner<>(
+                iterator.toLineDataReader(),
                 () -> { //Task supplier. Will supply a task instance for each thread.
 
                     //VCFCodec is not thread safe. MUST exist one instance per thread
                     VCFCodec codec = new FullVcfCodec(iterator.getHeader(), iterator.getVersion());
                     VariantContextBlockIterator blockIterator = new VariantContextBlockIterator(codec);
                     Converter<VariantContext, VariantProto.Variant> converter = new VariantContextToVariantProtoConverter();
-                    return new ProtoEncoderTask<>(charBuffer -> converter.convert(blockIterator.convert(charBuffer)), 1000000);
+                    return new ProtoEncoderTask<>(charBuffer -> converter.convert(blockIterator.convert(charBuffer)), bufferSize);
                 },
                 batch -> {
                     batch.forEach(byteBuffer -> {
                         try {
-                            outputStream.write(byteBuffer.array());
+                            outputStream.write(byteBuffer.array(), byteBuffer.arrayOffset(), byteBuffer.limit());
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         }
@@ -301,7 +305,7 @@ public class VariantCommandExecutor extends CommandExecutor {
                 ? new VcfBlockIterator(new BufferedInputStream(System.in), new FullVcfCodec())
                 : new VcfBlockIterator(inputPath.toFile(), new FullVcfCodec());
 
-        DataReader<CharBuffer> vcfDataReader = iterator.toDataReader();
+        DataReader<CharBuffer> vcfDataReader = iterator.toCharBufferDataReader();
 
 
         // main loop
