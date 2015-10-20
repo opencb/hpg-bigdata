@@ -39,12 +39,12 @@ public class Genotype2CallSet implements Converter<String, CallSet> {
         CallSet cs = new CallSet();
         cs.setId(name); // TODO - maybe generate
         cs.setName(name);
-        Map<CharSequence, List<CharSequence>> emptyMap = Collections.emptyMap();
+        Map<String, List<String>> emptyMap = Collections.emptyMap();
         cs.setInfo(emptyMap);
         Long currentTimeMillis = System.currentTimeMillis();
         cs.setCreated(currentTimeMillis);
         cs.setUpdated(currentTimeMillis);
-        List<CharSequence> varSet = new LinkedList<>();
+        List<String> varSet = new LinkedList<>();
         cs.setVariantSetIds(varSet);
         return cs;
     }

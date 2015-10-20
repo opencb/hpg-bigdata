@@ -358,7 +358,7 @@ public class VariantCommandExecutor extends CommandExecutor {
             aw.open();
             Builder builder = VariantFileMetadata.newBuilder();
             builder.setStudyId(file).setFileId(file);
-            Map<String, String> meta = new HashMap<>();
+            Map<String, Object> meta = new HashMap<>();
             meta.put("FILTER_DEFAULT", "PASS");
             meta.put("QUAL_DEFAULT", StringUtils.EMPTY);
             meta.put("INFO_DEFAULT", "END,BLOCKAVG_min30p3a");

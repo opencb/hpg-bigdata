@@ -96,7 +96,7 @@ public class VcfHeaderLine2VariantSetMetadataConverter implements Converter<VCFH
         vsm.setType(hl.getType().name());
         vsm.setDescription(hl.getDescription());
         // Empty for the moment
-        Map<CharSequence, List<CharSequence>> infoMap = Collections.emptyMap();
+        Map<String, List<String>> infoMap = Collections.emptyMap();
         vsm.setInfo(infoMap);
         return vsm;
     }
@@ -166,7 +166,7 @@ public class VcfHeaderLine2VariantSetMetadataConverter implements Converter<VCFH
                 String.format("Header line currently not supported: %s", vsm.getKey().toString()));
     }
 
-    private VCFHeaderLine convertTo(CharSequence key, CharSequence value) {
+    private VCFHeaderLine convertTo(String key, String value) {
         return new VCFHeaderLine(key.toString(), value.toString());
     }
 

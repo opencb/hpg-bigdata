@@ -241,7 +241,7 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
         /* 0-based, exclusive end position [start,end) */
         /* 1-based, inclusive end position [start,end] */
         gaVariant.setEnd((long) variantContext.getEnd());
-        List<CharSequence> nameList = Collections.emptyList();
+        List<String> nameList = Collections.emptyList();
 
         if (StringUtils.isNotBlank(variantContext.getID())) {
             nameList = Arrays.asList(variantContext.getID().split(VCFConstants.ID_FIELD_SEPARATOR));
@@ -258,7 +258,7 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
 
         // Alt
         List<Allele> altAllele = variantContext.getAlternateAlleles();
-        List<CharSequence> altList = new ArrayList<>(altAllele.size());
+        List<String> altList = new ArrayList<>(altAllele.size());
         for (Allele allele : altAllele) {
             altList.add(allele.getBaseString());
         }
@@ -270,7 +270,7 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
         // gaVariant.setAlleleIds(value);
 
         // INFO
-        Map<CharSequence, List<CharSequence>> info = convertInfo(variantContext);
+        Map<String, List<String>> info = convertInfo(variantContext);
         gaVariant.setInfo(info);
 
         // QUAL
@@ -340,10 +340,10 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
             c.setGenotype(cgt);
             c.setPhaseset(Boolean.valueOf(gt.isPhased()).toString()); // TODO decide what's the correct string
 
-            Map<CharSequence, List<CharSequence>> infoMap = new HashMap<>();
+            Map<String, List<String>> infoMap = new HashMap<>();
             if (gt.hasAD()) {
                 int[] ad = gt.getAD();
-                List<CharSequence> adl = new ArrayList<>(ad.length);
+                List<String> adl = new ArrayList<>(ad.length);
                 for (int val : ad) {
                     adl.add(Integer.toString(val));
                 }
@@ -351,12 +351,12 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
             }
 
             if (gt.hasDP()) {
-                infoMap.put(VCFConstants.DEPTH_KEY, Collections.singletonList((CharSequence) Integer.toString(gt.getDP())));
+                infoMap.put(VCFConstants.DEPTH_KEY, Collections.singletonList(Integer.toString(gt.getDP())));
             }
 
             if (gt.hasGQ()) {
                 infoMap.put(VCFConstants.GENOTYPE_QUALITY_KEY,
-                        Collections.singletonList((CharSequence) Integer.toString(gt.getGQ())));
+                        Collections.singletonList(Integer.toString(gt.getGQ())));
             }
 
             // Add Filter information to the genotype data
@@ -381,13 +381,13 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
                         if (value instanceof List) {
                             // TODO Check if this works
                             List vlist = (List) value;
-                            List<CharSequence> lst = new ArrayList<>(vlist.size());
+                            List<String> lst = new ArrayList<>(vlist.size());
                             for (Object o : vlist) {
                                 lst.add(o.toString());
                             }
                             infoMap.put(extEntry.getKey(), lst);
                         } else {
-                            infoMap.put(extEntry.getKey(), Collections.singletonList((CharSequence) value.toString()));
+                            infoMap.put(extEntry.getKey(), Collections.singletonList(value.toString()));
                         }
                     }
                 }
@@ -405,13 +405,13 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
      * @param c {@link VariantContext}
      * @return Map of info information
      */
-    private Map<CharSequence, List<CharSequence>> convertInfo(VariantContext c) {
-        Map<CharSequence, List<CharSequence>> infoMap = new HashMap<>();
+    private Map<String, List<String>> convertInfo(VariantContext c) {
+        Map<String, List<String>> infoMap = new HashMap<>();
         Map<String, Object> attributes = c.getAttributes();
         for (Entry<String, Object> a : attributes.entrySet()) {
             String key = a.getKey();
             Object value = a.getValue();
-            final List<CharSequence> valList;
+            final List<String> valList;
             if (value == null) {
                 // don't do anything
                 valList = Collections.emptyList();
@@ -422,7 +422,7 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
                     valList.add(o.toString());
                 }
             } else {
-                CharSequence o = value.toString();
+                String o = value.toString();
                 valList = Arrays.asList(o);
             }
             infoMap.put(key, valList);
