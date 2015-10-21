@@ -1,0 +1,18 @@
+---
+logLevel: null
+logFile: null
+regions:
+- chromosome: "1"
+  start: 0
+  end: 2147483647
+- chromosome: "2"
+  start: 40000
+  end: 50000
+- chromosome: "3"
+  start: 1000000
+  end: 2147483647
+genotypeProbabilities:
+  0/0: 0.7
+  0/1: 0.2
+  1/1: 0.08
+  ./.: 0.02

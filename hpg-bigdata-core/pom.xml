@@ -53,7 +53,15 @@
             <groupId>org.opencb.commons</groupId>
             <artifactId>commons-lib</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.opencb.datastore</groupId>
+            <artifactId>datastore-core</artifactId>
+        </dependency>
 
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+        </dependency>
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
@@ -62,7 +70,7 @@
         <dependency>
             <groupId>com.github.samtools</groupId>
             <artifactId>htsjdk</artifactId>
-            <version>1.131</version>
+            <version>1.138</version>
         </dependency>
         <dependency>
             <groupId>org.apache.avro</groupId>

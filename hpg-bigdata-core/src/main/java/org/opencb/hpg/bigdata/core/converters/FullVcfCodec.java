@@ -53,6 +53,13 @@ public class FullVcfCodec extends VCFCodec {
         return this.version;
     }
 
+    /**
+     * Create a genotype map.
+     *
+     * @param str the string
+     * @param alleles the list of alleles
+     * @return a mapping of sample name to genotype object
+     */
     @Override
     public LazyData createGenotypeMap(String str, List<Allele> alleles, String chr, int pos) {
         if (genotypeParts == null) {
@@ -68,8 +75,7 @@ public class FullVcfCodec extends VCFCodec {
 
         ArrayList<Genotype> genotypes = new ArrayList<>(nParts);
         // get the format keys
-        int nGTKeys = ParsingUtils.split(genotypeParts[0],
-                genotypeKeyArray, VCFConstants.GENOTYPE_FIELD_SEPARATOR_CHAR);
+        List<String> genotypeKeys = ParsingUtils.split(genotypeParts[0], VCFConstants.GENOTYPE_FIELD_SEPARATOR_CHAR);
 
         // cycle through the sample names
         Iterator<String> sampleNameIterator = header.getGenotypeSamples().iterator();
@@ -79,25 +85,25 @@ public class FullVcfCodec extends VCFCodec {
 
         // cycle through the genotype strings
         for (int genotypeOffset = 1; genotypeOffset < nParts; genotypeOffset++) {
-            int gTValueSplitSize = ParsingUtils.split(genotypeParts[genotypeOffset],
-                    GTValueArray, VCFConstants.GENOTYPE_FIELD_SEPARATOR_CHAR);
+            List<String> genotypeValues = ParsingUtils.split(genotypeParts[genotypeOffset], VCFConstants.GENOTYPE_FIELD_SEPARATOR_CHAR);
 
             final String sampleName = sampleNameIterator.next();
             final GenotypeBuilder gb = new GenotypeBuilder(sampleName);
 
             // check to see if the value list is longer than the key list, which is a problem
-            if (nGTKeys < gTValueSplitSize) {
-                generateException("There are too many keys for the sample "
-                        + sampleName + ", keys = " + parts[8] + ", values = " + parts[genotypeOffset]);
+            if (genotypeKeys.size() < genotypeValues.size()) {
+                generateException("There are too many keys for the sample " + sampleName + ", "
+                        + "keys = " + parts[8] + ", "
+                        + "values = " + parts[genotypeOffset]);
             }
 
             int genotypeAlleleLocation = -1;
-            if (nGTKeys >= 1) {
-                gb.maxAttributes(nGTKeys - 1);
+            if (!genotypeKeys.isEmpty()) {
+                gb.maxAttributes(genotypeKeys.size() - 1);
 
-                for (int i = 0; i < nGTKeys; i++) {
-                    final String gtKey = genotypeKeyArray[i];
-                    boolean missing = i >= gTValueSplitSize;
+                for (int i = 0; i < genotypeKeys.size(); i++) {
+                    final String gtKey = genotypeKeys.get(i);
+                    boolean missing = i >= genotypeValues.size();
 
                     // todo -- all of these on the fly parsing of the missing value should be static constants
                     if (gtKey.equals(VCFConstants.GENOTYPE_KEY)) {
@@ -106,32 +112,33 @@ public class FullVcfCodec extends VCFCodec {
                         System.out.println("empty block");
                         // if its truly missing (there no provided value) skip adding it to the attributes
                     } else if (gtKey.equals(VCFConstants.GENOTYPE_FILTER_KEY)) {
-                        final List<String> filters = parseFilters(getCachedString(GTValueArray[i]));
+                        final List<String> filters = parseFilters(getCachedString(genotypeValues.get(i)));
                         if (filters != null) {
                             gb.filters(filters);
                         }
-                    } else if (GTValueArray[i].equals(VCFConstants.MISSING_VALUE_v4)) {
+                    } else if (genotypeValues.get(i).equals(VCFConstants.MISSING_VALUE_v4)) {
                         // don't add missing values to the map
                         System.out.println("empty block");
                     } else {
                         if (gtKey.equals(VCFConstants.GENOTYPE_QUALITY_KEY)) {
-                            if (GTValueArray[i].equals(VCFConstants.MISSING_GENOTYPE_QUALITY_v3)) {
+                            if (genotypeValues.get(i).equals(VCFConstants.MISSING_GENOTYPE_QUALITY_v3)) {
                                 gb.noGQ();
                             } else {
-                                gb.GQ((int)Math.round(Double.valueOf(GTValueArray[i])));
+                                gb.GQ((int)Math.round(Double.valueOf(genotypeValues.get(i))));
                             }
                         } else if (gtKey.equals(VCFConstants.GENOTYPE_ALLELE_DEPTHS)) {
-                            gb.AD(decodeInts(GTValueArray[i]));
+                            gb.AD(decodeInts(genotypeValues.get(i)));
                         } else if (gtKey.equals(VCFConstants.GENOTYPE_PL_KEY)) {
-                            gb.PL(decodeInts(GTValueArray[i]));
+                            gb.PL(decodeInts(genotypeValues.get(i)));
                         } else if (gtKey.equals(VCFConstants.GENOTYPE_LIKELIHOODS_KEY)) {
-                            GenotypeLikelihoods glField = GenotypeLikelihoods.fromGLField(GTValueArray[i]);
+                            gb.PL(GenotypeLikelihoods.fromGLField(genotypeValues.get(i)).getAsPLs());
+                            GenotypeLikelihoods glField = GenotypeLikelihoods.fromGLField(genotypeValues.get(i));
                             gb.PL(glField.getAsPLs());
-                            gb.attribute(gtKey, GTValueArray[i]);
+                            gb.attribute(gtKey, genotypeValues.get(i));
                         } else if (gtKey.equals(VCFConstants.DEPTH_KEY)) {
-                            gb.DP(Integer.valueOf(GTValueArray[i]));
+                            gb.DP(Integer.valueOf(genotypeValues.get(i)));
                         } else {
-                            gb.attribute(gtKey, GTValueArray[i]);
+                            gb.attribute(gtKey, genotypeValues.get(i));
                         }
                     }
                 }
@@ -148,10 +155,10 @@ public class FullVcfCodec extends VCFCodec {
 
             final List<Allele> gTalleles = (genotypeAlleleLocation == -1
                     ? new ArrayList<>(0)
-                    : parseGenotypeAlleles(GTValueArray[genotypeAlleleLocation], alleles, alleleMap));
+                    : parseGenotypeAlleles(genotypeValues.get(genotypeAlleleLocation), alleles, alleleMap));
             gb.alleles(gTalleles);
             gb.phased(genotypeAlleleLocation != -1
-                    && GTValueArray[genotypeAlleleLocation].indexOf(VCFConstants.PHASED) != -1);
+                    && genotypeValues.get(genotypeAlleleLocation).indexOf(VCFConstants.PHASED) != -1);
 
             // add it to the list
             try {
@@ -161,8 +168,7 @@ public class FullVcfCodec extends VCFCodec {
             }
         }
 
-        return new LazyGenotypesContext.LazyData(genotypes,
-                header.getSampleNamesInOrder(), header.getSampleNameToOffset());
+        return new LazyGenotypesContext.LazyData(genotypes, header.getSampleNamesInOrder(), header.getSampleNameToOffset());
     }
 
 }

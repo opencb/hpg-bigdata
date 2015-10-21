@@ -45,12 +45,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.avro.file.CodecFactory;
-import org.apache.commons.lang.NotImplementedException;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.time.StopWatch;
+import org.apache.commons.lang3.NotImplementedException;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.StopWatch;
 import org.ga4gh.models.Call;
 import org.ga4gh.models.CallSet;
 import org.ga4gh.models.Variant;
@@ -74,6 +75,7 @@ import org.opencb.hpg.bigdata.core.utils.AvroUtils;
 public class VariantContext2VariantConverter implements Converter<VariantContext, Variant> {
 
     private final AtomicReference<VariantConverterContext> ctx = new AtomicReference<>();
+    public static final String VFC_FILTER_COLUMN = "VFC_FILTER_COLUMN";
 
     public static void main(String[] args) {
         StopWatch sw = new StopWatch();
@@ -98,7 +100,7 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
                     new VcfHeaderLine2VariantSetMetadataConverter();
             VariantContext2VariantConverter varConverter = new VariantContext2VariantConverter();
             try (FeatureReader<VariantContext> freader =
-                         AbstractFeatureReader.getFeatureReader(file.getAbsolutePath(), new FullVcfCodec(), true)) {
+                         AbstractFeatureReader.getFeatureReader(file.getAbsolutePath(), new FullVcfCodec(), false)) {
                 VCFHeader header = (VCFHeader) freader.getHeader();
 
                 int gtSize = header.getGenotypeSamples().size();
@@ -274,17 +276,19 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
          * TODO: QUAL - quality: Phred-scaled quality score
          */
 
+        // INFO
+        v.setInfo(convertInfo(c));
+
         //  FILTER
         /**
          * TODO: FILTER - filter status
          */
+        Set<String> filter = c.getFilters();
+        List<CharSequence> filterList = new ArrayList<CharSequence>(filter);
 
-        // INFO
-        v.setInfo(convertInfo(c));
+        // Genotypes (Call's)
 
-        // Genotypes (Calls)
-
-        v.setCalls(convertCalls(c));
+        v.setCalls(convertCalls(c, filterList));
 
         // TODO Auto-generated method stub
         return v;
@@ -292,11 +296,12 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
 
     /**
      * Convert HTS Genotypes to GA4GH {@link Call}.
+     *
      * @param context {@link VariantContext}
      * @return {@link List} of {@link Call}
      */
     @SuppressWarnings("deprecation")
-    private List<Call> convertCalls(VariantContext context) {
+    private List<Call> convertCalls(VariantContext context, List<CharSequence> filters) {
         GenotypesContext gtc = context.getGenotypes();
 
         // Create Allele mapping
@@ -348,13 +353,16 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
             }
 
             if (gt.hasDP()) {
-                infoMap.put(VCFConstants.DEPTH_KEY, Arrays.asList((CharSequence)Integer.toString(gt.getDP())));
+                infoMap.put(VCFConstants.DEPTH_KEY, Arrays.asList((CharSequence) Integer.toString(gt.getDP())));
             }
 
             if (gt.hasGQ()) {
                 infoMap.put(VCFConstants.GENOTYPE_QUALITY_KEY,
-                        Arrays.asList((CharSequence)Integer.toString(gt.getGQ())));
+                        Arrays.asList((CharSequence) Integer.toString(gt.getGQ())));
             }
+
+            // Add Filter information to the genotype data
+            infoMap.put(VFC_FILTER_COLUMN, filters);
 
             Map<String, Object> extAttr = gt.getExtendedAttributes();
             List<Double> lhList = Collections.emptyList();
@@ -373,8 +381,13 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
                         }
                     } else {
                         if (value instanceof List) {
-                            // TODO
-                            System.out.println("TO-DO");
+                            // TODO Check if this works
+                            List vlist = (List) value;
+                            List<CharSequence> lst = new ArrayList<CharSequence>();
+                            for (Object o : vlist) {
+                                lst.add(o.toString());
+                            }
+                            infoMap.put(extEntry.getKey(), lst);
                         } else {
                             infoMap.put(extEntry.getKey(), Collections.singletonList((CharSequence) value.toString()));
                         }
@@ -434,7 +447,7 @@ public class VariantContext2VariantConverter implements Converter<VariantContext
 
     @Override
     public VariantContext backward(Variant obj) {
-        throw new NotImplementedException();
+        throw new NotImplementedException("");
     }
 
 }

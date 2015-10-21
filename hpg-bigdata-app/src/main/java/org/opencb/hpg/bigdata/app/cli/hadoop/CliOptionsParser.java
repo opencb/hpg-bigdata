@@ -69,6 +69,7 @@ public class CliOptionsParser {
         JCommander variantSubCommands = jcommander.getCommands().get("variant");
         variantSubCommands.addCommand("convert", variantCommandOptions.convertVariantCommandOptions);
         variantSubCommands.addCommand("index", variantCommandOptions.indexVariantCommandOptions);
+        variantSubCommands.addCommand("simulate", variantCommandOptions.simulateVariantCommandOptions);
 
         //        convertCommandOptions = new ConvertCommandOptions();
     }
@@ -340,10 +341,12 @@ public class CliOptionsParser {
 
         ConvertVariantCommandOptions convertVariantCommandOptions;
         IndexVariantCommandOptions indexVariantCommandOptions;
+        SimulateVariantCommandOptions simulateVariantCommandOptions;
 
         public VariantCommandOptions() {
             this.convertVariantCommandOptions = new ConvertVariantCommandOptions();
             this.indexVariantCommandOptions = new IndexVariantCommandOptions();
+            this.simulateVariantCommandOptions = new SimulateVariantCommandOptions();
         }
     }
 
@@ -388,8 +391,10 @@ public class CliOptionsParser {
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
 
+
         @Parameter(names = {"-i", "--input"}, description = "Input file can be .vcf.gz or avro", required = true, arity = 1)
         public String input = null;
+
 
         @Parameter(names = {"-t", "--type"}, description = "Type can be: vcf, bed, or gff", arity = 1)
         public String type = "vcf";
@@ -402,15 +407,48 @@ public class CliOptionsParser {
         public String database = "hbase";
 
         @Parameter(names = {"-r", "--regions"}, description = "Database to load data, values: hbase", arity = 1)
-        public String regions = null;
+        public String regions;
 
-        @Parameter(names = {"--credentials"},
-                description = "Database credentials: user, password, host, port", arity = 1)
+        @Parameter(names = {"-g", "--genome"}, description = "Load whole genome from gVCF - including non-variant regions", required = false, arity = 1)
+        public boolean includeNonVariants;
+
+        @Parameter(names = {"-e", "--expand"}, description = "Expand non-variant gVCF regions to one entry per base", required = false, arity = 1)
+        public boolean expand;
+
+        @Parameter(names = {"--credentials"}, description = "Database credentials: user, password, host, port", arity = 1)
         public String credentials;
 
         @Parameter(names = {"--hdfspath"},
                 description = "HDFS Path", arity = 1)
         public String hdfsPath;
+
+    }
+
+    @Parameters(commandNames = {"simulate"},
+            commandDescription = "Load avro gVCF/VCF files into different NoSQL, only HBase implemented so far")
+    public class SimulateVariantCommandOptions {
+
+        @ParametersDelegate
+        public CommonCommandOptions commonOptions = commonCommandOptions;
+
+        @Parameter(names = {"-i", "--input"}, description = "Inpput file with Chromosome and Position", required = true, arity = 1)
+        public String input;
+
+        @Parameter(names = {"-o", "--output"}, description = "The Simulator generated avro file", required = true, arity = 1)
+        public String output;
+
+        @Parameter(names = {"-n", "--num-variants"}, description = "", arity = 1)
+        public int numVariants = 1000;
+
+        @Parameter(names = {"-s", "--num-samples"}, description = "", arity = 1)
+        public int numSamples = 10;
+
+        @Parameter(names = {"-se", "--storage-engines"},
+                description = "Database, values: hbase, hive, impala", arity = 1)
+        public String database = "hbase";
+
+        @Parameter(names = {"-r", "--regions"}, description = "Database to load data, values: hbase", arity = 1)
+        public String regions = null;
 
     }
 

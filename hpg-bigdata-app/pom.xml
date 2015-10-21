@@ -35,6 +35,10 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.opencb.commons</groupId>
+            <artifactId>commons-lib</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.opencb.hpg-bigdata</groupId>
             <artifactId>hpg-bigdata-tools</artifactId>
         </dependency>
@@ -128,6 +132,7 @@
                                     <arg value="${project.basedir}/app/libs"/>
                                     <arg value="${project.basedir}/../README.md"/>
                                     <arg value="${project.basedir}/../LICENSE"/>
+                                    <arg value="${project.basedir}/../hpg-bigdata-core/target/classes/simulator-conf.yml"/>
                                     <arg value="${build.dir}"/>
                                 </exec>
 
