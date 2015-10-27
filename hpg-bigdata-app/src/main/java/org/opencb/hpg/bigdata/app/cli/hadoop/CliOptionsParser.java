@@ -70,8 +70,9 @@ public class CliOptionsParser {
         variantSubCommands.addCommand("convert", variantCommandOptions.convertVariantCommandOptions);
         variantSubCommands.addCommand("index", variantCommandOptions.indexVariantCommandOptions);
         variantSubCommands.addCommand("simulate", variantCommandOptions.simulateVariantCommandOptions);
+        variantSubCommands.addCommand("simulatorinput", variantCommandOptions.simulatorInputVariantCommandOptions);
 
-//        convertCommandOptions = new ConvertCommandOptions();
+        //        convertCommandOptions = new ConvertCommandOptions();
     }
 
     public void parse(String[] args) throws ParameterException {
@@ -143,7 +144,7 @@ public class CliOptionsParser {
 
         @Deprecated
         @Parameter(names = {"-v", "--verbose"},
-                description = "This parameter set the level of the logging", required = false, arity = 1)
+        description = "This parameter set the level of the logging", required = false, arity = 1)
         public boolean verbose;
 
         @Parameter(names = {"--conf"}, description = "Set the configuration file", required = false, arity = 1)
@@ -342,11 +343,13 @@ public class CliOptionsParser {
         ConvertVariantCommandOptions convertVariantCommandOptions;
         IndexVariantCommandOptions indexVariantCommandOptions;
         SimulateVariantCommandOptions simulateVariantCommandOptions;
+        SimulatorInputVariantCommandOptions simulatorInputVariantCommandOptions;
 
         public VariantCommandOptions() {
             this.convertVariantCommandOptions = new ConvertVariantCommandOptions();
             this.indexVariantCommandOptions = new IndexVariantCommandOptions();
             this.simulateVariantCommandOptions = new SimulateVariantCommandOptions();
+            this.simulatorInputVariantCommandOptions = new SimulatorInputVariantCommandOptions();
         }
     }
 
@@ -391,11 +394,15 @@ public class CliOptionsParser {
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
 
-        @Parameter(names = {"-i", "--input"}, description = "GA4GH Avro input file", required = true, arity = 1)
-        public String input;
+        @Parameter(names = {"-i", "--input"}, description = "Input file can be .vcf.gz or avro", required = true, arity = 1)
+        public String input = null;
+
 
         @Parameter(names = {"-t", "--type"}, description = "Type can be: vcf, bed, or gff", arity = 1)
         public String type = "vcf";
+
+        @Parameter(names = {"-lt", "--loadtype"}, description = "Load can be overwrite/force delete", arity = 1)
+        public String loadtype = "overwrite";
 
         @Parameter(names = {"-se", "--storage-engine"},
                 description = "Database, values: hbase, hive, impala", arity = 1)
@@ -413,6 +420,10 @@ public class CliOptionsParser {
         @Parameter(names = {"--credentials"}, description = "Database credentials: user, password, host, port", arity = 1)
         public String credentials;
 
+        @Parameter(names = {"--hdfspath"},
+                description = "HDFS Path", arity = 1)
+        public String hdfsPath;
+
     }
 
     @Parameters(commandNames = {"simulate"},
@@ -422,11 +433,14 @@ public class CliOptionsParser {
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
 
-        @Parameter(names = {"-o", "--output"}, description = "GA4GH Avro input file", required = true, arity = 1)
+        @Parameter(names = {"-i", "--input"}, description = "Inpput file with Chromosome and Position", required = true, arity = 1)
+        public String input;
+
+        @Parameter(names = {"-o", "--output"}, description = "The Simulator generated avro file", required = true, arity = 1)
         public String output;
 
         @Parameter(names = {"-n", "--num-variants"}, description = "", arity = 1)
-        public int numVariants = 1000;
+        public int numVariants = 10;
 
         @Parameter(names = {"-s", "--num-samples"}, description = "", arity = 1)
         public int numSamples = 10;
@@ -439,6 +453,25 @@ public class CliOptionsParser {
         public String regions = null;
 
     }
+
+    @Parameters(commandNames = {"simulatorinput"},
+            commandDescription = "Generate Input Data set for Simulator$$$$$$$$$$$$$$$$")
+    public class SimulatorInputVariantCommandOptions {
+        @ParametersDelegate
+        public CommonCommandOptions commonOptions = commonCommandOptions;
+
+        @Parameter(names = {"-i", "--input"}, description = "Inpput file with Chromosome and Position", required = true, arity = 1)
+        public String input;
+
+        @Parameter(names = {"-o", "--output"}, description = "The Simulator generated avro file", required = true, arity = 1)
+        public String output;
+
+        @Parameter(names = {"-n", "--num-variants"}, description = "", arity = 1)
+        public int numVariants;
+
+        @Parameter(names = {"-chrprob", "--chromosomeprobability"}, description = "Probability of Chromosome", arity = 1)
+        public String chromosomeprobability;
+       }
 
 
     public void printUsage(){
@@ -501,10 +534,10 @@ public class CliOptionsParser {
             }
             System.err.printf("%5s %-20s %-10s %s [%s]\n",
                     parameterDescription.getParameterized().getParameter().required() ? "*": "",
-                    parameterDescription.getNames(),
-                    type,
-                    parameterDescription.getDescription(),
-                    parameterDescription.getDefault());
+                            parameterDescription.getNames(),
+                            type,
+                            parameterDescription.getDescription(),
+                            parameterDescription.getDefault());
         }
     }
 
