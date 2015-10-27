@@ -102,14 +102,14 @@ public class GenomeVariantConverter extends Mapper<AvroKey<Variant>, NullWritabl
             return varList;
 
             /* Ignore fields */
-//          List<CharSequence> ids = v.getAlleleIds(); // graph mode -> not supported
+//          List<String> ids = v.getAlleleIds(); // graph mode -> not supported
         }
     }
 
     private List<Variant> expandAltRegion(Context context, Variant variant) {
         List<Variant> varList = new ArrayList<Variant>(1);
-        CharSequence refBases = variant.getReferenceBases();
-        List<CharSequence> altBasesList = variant.getAlternateBases();
+        String refBases = variant.getReferenceBases();
+        List<String> altBasesList = variant.getAlternateBases();
 
         int altCnt = altBasesList.size();
         List<Call> calls = nonull(variant.getCalls());
@@ -125,7 +125,7 @@ public class GenomeVariantConverter extends Mapper<AvroKey<Variant>, NullWritabl
         }
 
         for (int altIdx = 0; altIdx < altCnt; ++altIdx) {
-            CharSequence altBases = altBasesList.get(altIdx);
+            String altBases = altBasesList.get(altIdx);
 //            variant.getAlleleIds() TODO
             if (altBases.length() >= HBaseUtils.SV_THRESHOLD || refBases.length() >= HBaseUtils.SV_THRESHOLD) {
                 // KEEP SV information for the moment - evaluate if there are issues.
@@ -148,9 +148,9 @@ public class GenomeVariantConverter extends Mapper<AvroKey<Variant>, NullWritabl
         boolean nocall = calls.isEmpty();
         context.getCounter("VCF", "REG_EXPAND" + (nocall ? "_NOCALL" : "")).increment(1);
 
-        Map<CharSequence, List<CharSequence>> info = new HashMap<CharSequence, List<CharSequence>>(variant.getInfo());
+        Map<String, List<String>> info = new HashMap<String, List<String>>(variant.getInfo());
 
-        List<CharSequence> endLst = nonull(info.remove(ILLUMINA_GVCF_BLOCK_END)); // Get End position
+        List<String> endLst = nonull(info.remove(ILLUMINA_GVCF_BLOCK_END)); // Get End position
 
         if (endLst.isEmpty()) {
             // Region of size 1
@@ -167,20 +167,20 @@ public class GenomeVariantConverter extends Mapper<AvroKey<Variant>, NullWritabl
         return expVarList;
     }
 
-    protected List<Variant> expand(Variant variant, Long start, Long end, Map<CharSequence, List<CharSequence>> info, List<Call> calls) {
+    protected List<Variant> expand(Variant variant, Long start, Long end, Map<String, List<String>> info, List<Call> calls) {
         List<Variant> varList = new ArrayList<>(Long.valueOf((end - start)).intValue());
 
-        List<CharSequence> names = variant.getNames();
-        CharSequence setId = variant.getVariantSetId();
+        List<String> names = variant.getNames();
+        String setId = variant.getVariantSetId();
         Long created = variant.getCreated();
-        CharSequence id = variant.getId();
+        String id = variant.getId();
         Long updated = variant.getUpdated();
-        CharSequence refName = variant.getReferenceName();
-        CharSequence refBases = variant.getReferenceBases();
+        String refName = variant.getReferenceName();
+        String refBases = variant.getReferenceBases();
 
         // the following parameters shouldn't really matter
-        List<CharSequence> alleleIds = variant.getAlleleIds();
-        List<CharSequence> alternateBases = variant.getAlternateBases();
+        List<String> alleleIds = variant.getAlleleIds();
+        List<String> alternateBases = variant.getAlternateBases();
 
         for (Long pos = start; pos < end; ++pos) {
             Variant var = new Variant();

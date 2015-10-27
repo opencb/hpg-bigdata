@@ -105,8 +105,8 @@ public class Variant2HbaseMR extends Mapper<AvroKey<Variant>, NullWritable, Immu
             boolean nocall = calls.isEmpty();
             if (isExpandRegions()) {
                 context.getCounter("VCF", "REG_EXPAND" + (nocall ? "_NOCALL" : "")).increment(1);
-                Map<CharSequence, List<CharSequence>> info = variant.getInfo();
-                List<CharSequence> endLst = info.get("END"); // Get End position
+                Map<String, List<String>> info = variant.getInfo();
+                List<String> endLst = info.get("END"); // Get End position
 
                 if (null == endLst || endLst.isEmpty()) {
                     // Region of size 1
@@ -137,11 +137,11 @@ public class Variant2HbaseMR extends Mapper<AvroKey<Variant>, NullWritable, Immu
                 return; // skip SV
             }
             int altIdx = 0;
-            CharSequence altBases = "-";
+            String altBases = "-";
             if (altCnt > 0) {
                 altBases = variant.getAlternateBases().get(altIdx);
             }
-            CharSequence refBases = variant.getReferenceBases();
+            String refBases = variant.getReferenceBases();
             if (altBases.length() >= HBaseUtils.SV_THRESHOLD || refBases.length() >= HBaseUtils.SV_THRESHOLD) {
                 context.getCounter("VCF", "SV_COUNT").increment(1);
                 return; // skip SV
@@ -151,7 +151,7 @@ public class Variant2HbaseMR extends Mapper<AvroKey<Variant>, NullWritable, Immu
             store(context, calls, idStr);
 
             /* Ignore fields */
-//          List<CharSequence> ids = v.getAlleleIds(); // graph mode -> not supported
+//          List<String> ids = v.getAlleleIds(); // graph mode -> not supported
 
             /* TODO fields - fine for first implementation*/
 //            v.getInfo()
@@ -181,7 +181,7 @@ public class Variant2HbaseMR extends Mapper<AvroKey<Variant>, NullWritable, Immu
     }
 
     private void addEntry(Put put, Call call) {
-        CharSequence id = call.getCallSetId();
+        String id = call.getCallSetId();
         String idStr = id.toString();
         /* other possibility
          * id = call.getCallSetName()
