@@ -10,7 +10,7 @@ package org.opencb.hpg.bigdata.tools.variant;
         import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 
 public  class NLinesInputFormat extends FileInputFormat<LongWritable, Text> {
-    private static final long MAX_SPLIT_SIZE = 10;  //1KB SPLIT
+    private static final long MAX_SPLIT_SIZE = 100000;  //1KB SPLIT
 
     @Override
     public RecordReader<LongWritable, Text> createRecordReader(InputSplit inputsplit,

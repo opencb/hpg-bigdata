@@ -181,7 +181,7 @@ Mapper<AvroKey<VariantAvro>, NullWritable, ImmutableBytesWritable, Put>  impleme
                     String destinationFilePathString=inputFile.substring(6, inputFile.lastIndexOf(FILE_SUFFIX)) + avroSuffix;
                     java.nio.file.Path destFilePath = Paths.get(destinationFilePathString);
                     VariantContextToVariantConverter variantContextToVariantConverter = new VariantContextToVariantConverter("", fileName);
-                    variantContextToVariantConverter.convert(variantContext)readVCFFile(sourceFilepath, destFilePath);
+                    //variantContextToVariantConverter.convert(variantContext)readVCFFile(sourceFilepath, destFilePath);
                     fs.moveFromLocalFile(new Path(destFilePath.toString()), new Path(hdfsPath));
                     inputFile = hdfsPath + PATH_SEPARATORSTRING + fileName.substring(0, fileName.lastIndexOf(FILE_SUFFIX)) + avroSuffix;
                 }
