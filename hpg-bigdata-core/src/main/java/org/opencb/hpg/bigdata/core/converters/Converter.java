@@ -21,10 +21,14 @@ package org.opencb.hpg.bigdata.core.converters;
  *
  * @author Joaquín Tárraga Giménez &lt;joaquintarraga@gmail.com&gt;
  */
-public interface Converter<S, T> {
+public interface Converter<S, T> extends org.opencb.biodata.tools.variant.converter.Converter<S, T> {
 
     T forward(S obj);
 
     S backward(T obj);
+
+    default T convert(S obj) {
+        return forward(obj);
+    }
 
 }

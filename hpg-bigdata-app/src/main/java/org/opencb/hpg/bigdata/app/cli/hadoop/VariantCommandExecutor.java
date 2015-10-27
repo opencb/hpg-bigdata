@@ -16,27 +16,26 @@
 
 package org.opencb.hpg.bigdata.app.cli.hadoop;
 
-//import com.beust.jcommander.ParameterException;
-
-import org.ga4gh.models.Variant;
-import org.opencb.biodata.models.core.Region;
-import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
-import org.opencb.hpg.bigdata.tools.variant.*;
-//import org.opencb.hpg.bigdata.core.config.SimulatorConfiguration;
-import org.opencb.hpg.bigdata.tools.io.parquet.ParquetMR;
-
-
 //import java.io.File;
 //import java.io.FileInputStream;
 //import javax.management.Query;
 import java.io.IOException;
-
 //import java.nio.file.Path;
 //import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.ga4gh.models.Variant;
+import org.opencb.biodata.models.core.Region;
+import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
+import org.opencb.hpg.bigdata.tools.io.parquet.ParquetMR;
+import org.opencb.hpg.bigdata.tools.variant.BenchMarkTabix;
+import org.opencb.hpg.bigdata.tools.variant.DataSetGeneratorMR;
+import org.opencb.hpg.bigdata.tools.variant.LoadBEDAndGFF2HBase;
+import org.opencb.hpg.bigdata.tools.variant.VariantSimulatorMR;
+import org.opencb.hpg.bigdata.tools.variant.Vcf2AvroMR;
 
 /**
  * Created by imedina on 25/06/15.
@@ -82,6 +81,28 @@ public class VariantCommandExecutor extends CommandExecutor {
             break;
         }
     }
+
+//    private void index() throws Exception {
+//        String input = variantCommandOptions.indexVariantCommandOptions.input;
+//        String db = variantCommandOptions.indexVariantCommandOptions.database;
+//        boolean nonVar = variantCommandOptions.indexVariantCommandOptions.includeNonVariants;
+//        boolean expand = variantCommandOptions.indexVariantCommandOptions.expand;
+//
+//        URI server = null;
+//        // new URI("//who1:60000/VariantExpanded");
+//        if (StringUtils.isNotBlank(db)) {
+//            server = new URI(db);
+//        }
+//        Variant2HbaseMR.Builder builder = new Variant2HbaseMR.Builder(input, server);
+//        builder.setExpand(expand);
+//        builder.setNonVar(nonVar);
+//        Job job = builder.build(true);
+//
+//        boolean fine = job.waitForCompletion(true);
+//        if (!fine) {
+//            throw new IllegalStateException("Variant 2 HBase failed!");
+//        }
+//    }
 
     private void convert() throws Exception {
         String input = variantCommandOptions.convertVariantCommandOptions.input;
