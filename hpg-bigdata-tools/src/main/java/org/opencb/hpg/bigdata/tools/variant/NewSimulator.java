@@ -15,8 +15,8 @@ import org.apache.hadoop.mapreduce.Mapper;
 //import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.opencb.biodata.models.variant.StudyEntry;
 import org.opencb.biodata.models.variant.Variant;
-import org.opencb.biodata.models.variant.VariantSourceEntry;
 import org.opencb.biodata.models.variant.avro.VariantAvro;
 
 import java.io.IOException;
@@ -57,7 +57,7 @@ public class NewSimulator {
 
         private String variantType = null;
         private String strand = null;
-        private List<VariantSourceEntry> variantSourceEntry =new ArrayList<>();
+        private List<StudyEntry> variantSourceEntry = new ArrayList<>();
         @Override
         protected void setup(
                 Context context)
@@ -145,12 +145,12 @@ public class NewSimulator {
         return variants.get(randomNumber);
     }
 
-    public static List<VariantSourceEntry> getStudies(int n) {
+    public static List<StudyEntry> getStudies(int n) {
         int studyID = rand.nextInt(1000 - 0 + 1000) + 0;
         int fieldID = rand.nextInt(1000 - 0 + 1000) + 0;
         Variant variant=new Variant();
-        List<VariantSourceEntry> variantSourceEntryList=new ArrayList<>();
-        VariantSourceEntry variantSourceEntry=new VariantSourceEntry();
+        List<StudyEntry> variantSourceEntryList=new ArrayList<>();
+        StudyEntry variantSourceEntry = new StudyEntry();
         variantSourceEntry.setStudyId(Integer.toString(studyID));
         variantSourceEntry.setFileId(Integer.toString(fieldID));
         variantSourceEntry.setFormat(getFormat());

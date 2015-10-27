@@ -56,6 +56,29 @@ public class VariantCommandExecutor extends CommandExecutor {
         }
     }
 
+//    private void index() throws Exception {
+//        String input = variantCommandOptions.indexVariantCommandOptions.input;
+//        String db = variantCommandOptions.indexVariantCommandOptions.database;
+//        boolean nonVar = variantCommandOptions.indexVariantCommandOptions.includeNonVariants;
+//        boolean expand = variantCommandOptions.indexVariantCommandOptions.expand;
+//
+//        URI server = null;
+//        // new URI("//who1:60000/VariantExpanded");
+//        if (StringUtils.isNotBlank(db)) {
+//            server = new URI(db);
+//        }
+//        Variant2HbaseMR.Builder builder = new Variant2HbaseMR.Builder(input, server);
+//        builder.setExpand(expand);
+//        builder.setNonVar(nonVar);
+//        Job job = builder.build(true);
+//
+//        boolean fine = job.waitForCompletion(true);
+//        if (!fine) {
+//            throw new IllegalStateException("Variant 2 HBase failed!");
+//        }
+//    }
+
+
     private void convert() throws Exception {
         String input = variantCommandOptions.convertVariantCommandOptions.input;
         String output = variantCommandOptions.convertVariantCommandOptions.output;

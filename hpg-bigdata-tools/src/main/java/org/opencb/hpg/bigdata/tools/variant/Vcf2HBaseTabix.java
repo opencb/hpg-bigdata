@@ -37,7 +37,6 @@ import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.opencb.biodata.models.variant.avro.VariantAvro;
 import org.opencb.biodata.tools.variant.converter.VariantToProtoVcfRecord;
-import org.opencb.biodata.tools.variant.converter.VariantContextToVariantConverter;
 
 import java.nio.file.Paths;
 import java.io.IOException;
@@ -180,8 +179,8 @@ Mapper<AvroKey<VariantAvro>, NullWritable, ImmutableBytesWritable, Put>  impleme
                     java.nio.file.Path sourceFilepath = Paths.get(inputFile.substring(6, inputFile.length()));
                     String destinationFilePathString=inputFile.substring(6, inputFile.lastIndexOf(FILE_SUFFIX)) + avroSuffix;
                     java.nio.file.Path destFilePath = Paths.get(destinationFilePathString);
-                    VariantContextToVariantConverter variantContextToVariantConverter = new VariantContextToVariantConverter("", fileName);
-                    variantContextToVariantConverter.convert(variantContext)readVCFFile(sourceFilepath, destFilePath);
+//                  VariantContextToVariantConverter variantContextToVariantConverter = new VariantContextToVariantConverter("", fileName);
+//                  variantContextToVariantConverter.convert(variantContext).readVCFFile(sourceFilepath, destFilePath);
                     fs.moveFromLocalFile(new Path(destFilePath.toString()), new Path(hdfsPath));
                     inputFile = hdfsPath + PATH_SEPARATORSTRING + fileName.substring(0, fileName.lastIndexOf(FILE_SUFFIX)) + avroSuffix;
                 }

@@ -22,22 +22,16 @@ package org.opencb.hpg.bigdata.core.io;
 import htsjdk.tribble.readers.LineIterator;
 import htsjdk.variant.vcf.VCFHeader;
 import htsjdk.variant.vcf.VCFHeaderVersion;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.NotImplementedException;
+import org.opencb.commons.io.DataReader;
+import org.opencb.hpg.bigdata.core.converters.FullVcfCodec;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.CharBuffer;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPInputStream;
-
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang.NotImplementedException;
-import org.opencb.hpg.bigdata.core.converters.FullVcfCodec;
 
 /**
  * @author mh719
@@ -94,7 +88,7 @@ public class VcfBlockIterator implements AutoCloseable, Iterator<List<CharBuffer
         List<CharBuffer> next = new LinkedList<>(); // linked list faster at creation time
         while (iter.hasNext() && cnt < blockSize) {
             String line = iter.next();
-            CharBuffer buff = CharBuffer.wrap(line.toCharArray());
+            CharBuffer buff = CharBuffer.wrap(line.toCharArray());  //FIXME! Avoid char array copy
             next.add(buff);
             cnt += buff.length();
         }
@@ -133,11 +127,53 @@ public class VcfBlockIterator implements AutoCloseable, Iterator<List<CharBuffer
 
     @Override
     public void remove() {
-        throw new NotImplementedException();
+        throw new NotImplementedException("Remove not implemented");
     }
 
     @Override
     public Iterator<List<CharBuffer>> iterator() {
         return this;
+    }
+
+    public DataReader<CharBuffer> toCharBufferDataReader() {
+        return new DataReader<CharBuffer>() {
+            @Override
+            public List<CharBuffer> read(int size) {
+                return (hasNext() ? next(size) : Collections.<CharBuffer>emptyList());
+            }
+
+            @Override
+            public boolean close() {
+                try {
+                    VcfBlockIterator.this.close();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                return true;
+            }
+        };
+    }
+
+    public DataReader<CharSequence> toLineDataReader() {
+        return new DataReader<CharSequence>() {
+            @Override
+            public List<CharSequence> read(int size) {
+                List<CharSequence> batch = new ArrayList<>(size);
+                for (int i = 0; i < size && iter.hasNext(); i++) {
+                    batch.add(iter.next());
+                }
+                return batch;
+            }
+
+            @Override
+            public boolean close() {
+                try {
+                    VcfBlockIterator.this.close();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                return true;
+            }
+        };
     }
 }

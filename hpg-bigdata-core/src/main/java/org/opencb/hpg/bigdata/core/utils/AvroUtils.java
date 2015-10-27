@@ -32,6 +32,7 @@ public final class AvroUtils {
             case "snappy":
                 codecFactory = CodecFactory.snappyCodec();
                 break;
+            case "gzip":
             case "deflate":
                 codecFactory = CodecFactory.deflateCodec(CodecFactory.DEFAULT_DEFLATE_LEVEL);
                 break;

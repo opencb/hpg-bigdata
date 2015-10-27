@@ -53,7 +53,6 @@
             <groupId>org.opencb.commons</groupId>
             <artifactId>commons-lib</artifactId>
         </dependency>
-
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
@@ -62,7 +61,7 @@
         <dependency>
             <groupId>com.github.samtools</groupId>
             <artifactId>htsjdk</artifactId>
-            <version>1.131</version>
+            <version>1.138</version>
         </dependency>
         <dependency>
             <groupId>org.apache.avro</groupId>
@@ -79,6 +78,11 @@
             <groupId>org.apache.avro</groupId>
             <artifactId>avro-ipc</artifactId>
             <version>${avro.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+            <version>3.0.0-beta-1</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>

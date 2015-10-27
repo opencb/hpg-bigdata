@@ -64,10 +64,10 @@ public class SAMRecord2ReadAlignmentConverter implements Converter<SAMRecord, Re
     @Override
     public ReadAlignment forward(SAMRecord in) {
         //id
-        CharSequence id = in.getReadName();
+        String id = in.getReadName();
 
         // read group id
-        CharSequence readGroupId;
+        String readGroupId;
         if (in.getReadGroup() != null) {
             readGroupId = in.getReadGroup().getId();
         } else {
@@ -75,7 +75,7 @@ public class SAMRecord2ReadAlignmentConverter implements Converter<SAMRecord, Re
         }
 
         // reference name
-        CharSequence fragmentName = in.getReferenceName();
+        String fragmentName = in.getReferenceName();
 
         // the read is mapped in a proper pair
         boolean properPlacement = in.getReadPairedFlag() && in.getProperPairFlag();
@@ -151,7 +151,7 @@ public class SAMRecord2ReadAlignmentConverter implements Converter<SAMRecord, Re
         boolean supplementaryAlignment = in.getSupplementaryAlignmentFlag();
 
         // read sequence
-        CharSequence alignedSequence = in.getReadString();
+        String alignedSequence = in.getReadString();
 
         // aligned quality
         byte[] baseQualities = in.getBaseQualities();
@@ -179,10 +179,10 @@ public class SAMRecord2ReadAlignmentConverter implements Converter<SAMRecord, Re
         }
 
         // A map of additional read alignment information.
-        Map<CharSequence, List<CharSequence>> info = new HashMap<CharSequence, List<CharSequence>>();
+        Map<String, List<String>> info = new HashMap<String, List<String>>();
         List<SAMTagAndValue> attributes = in.getAttributes();
         for (SAMTagAndValue tv : attributes) {
-            List<CharSequence> list = new ArrayList<CharSequence>();
+            List<String> list = new ArrayList<String>();
             if (tv.value instanceof String) {
                 list.add("Z");
             } else if (tv.value instanceof Float) {

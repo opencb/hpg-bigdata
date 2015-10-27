@@ -18,6 +18,13 @@ package org.opencb.hpg.bigdata.tools.variant;
 
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFHeader;
+
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+
 import org.apache.avro.mapred.AvroKey;
 import org.apache.avro.mapred.AvroValue;
 import org.apache.avro.mapreduce.AvroJob;
@@ -47,15 +54,12 @@ import org.opencb.hpg.bigdata.tools.utils.CompressionUtils;
 import org.seqdoop.hadoop_bam.VCFInputFormat;
 import org.seqdoop.hadoop_bam.VariantContextWritable;
 
-import java.io.*;
-import java.util.List;
-
 /**
  * Created by hpccoll1 on 18/05/15.
  */
 public class Vcf2AvroMR {
 
-    public static final String VARIANT_HEADER = "variantHeader";
+    public static final String VARIANT_FILE = "variantfile";
 
     public static class VariantWritable extends Variant implements Writable {
 
@@ -80,12 +84,15 @@ public class Vcf2AvroMR {
 
         @Override
         protected void setup(Mapper.Context context) throws IOException, InterruptedException {
-            byte[] variantHeaders = context.getConfiguration().get(VARIANT_HEADER).getBytes();
-            VcfBlockIterator iter = new VcfBlockIterator(new ByteArrayInputStream(variantHeaders), new FullVcfCodec());
-            header = iter.getHeader();
+            String input = context.getConfiguration().get(VARIANT_FILE);
+            FileSystem fs = FileSystem.get(context.getConfiguration());
+
+            try (InputStream inputStream = fs.open(new Path(input));
+                 VcfBlockIterator iterator = new VcfBlockIterator(inputStream, new FullVcfCodec())) {
+                header = iterator.getHeader();
+            }
 
             int gtSize = header.getGenotypeSamples().size();
-
             variantConverterContext = new VariantConverterContext();
 
             VariantSet vs = new VariantSet();
@@ -135,17 +142,11 @@ public class Vcf2AvroMR {
 
     public static int run(String input, String output, String codecName) throws Exception {
         Configuration conf = new Configuration();
-        FileSystem fs = FileSystem.get(conf);
 
-        int size = 500000;
-        byte[] bytes = new byte[size];
-
-        InputStream inputStream = fs.open(new Path(input));
         if (input.endsWith(".gz")) {
             throw new UnsupportedOperationException("Unable to read gzip vcf");
         }
-        inputStream.read(bytes, 0, size);
-        conf.set(VARIANT_HEADER, new String(bytes));
+        conf.set(VARIANT_FILE, input);
 
         Job job = Job.getInstance(conf, "Vcf2AvroMR");
         job.setJarByClass(Vcf2AvroMR.class);

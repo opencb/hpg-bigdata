@@ -33,7 +33,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.ga4gh.models.VariantSetMetadata;
 import org.opencb.hpg.bigdata.core.converters.Converter;
 
@@ -68,7 +68,7 @@ public class VcfHeaderLine2VariantSetMetadataConverter implements Converter<VCFH
         throw new UnsupportedOperationException(String.format("Header line not supported yet: %s", hl.getClass()));
     }
 
-    private VariantSetMetadata convert(VCFHeaderLine hl) {
+    private VariantSetMetadata convertHeaderLine(VCFHeaderLine hl) {
         VariantSetMetadata vsm = new VariantSetMetadata();
         vsm.setKey(hl.getKey());
         vsm.setValue(hl.getValue());
@@ -76,7 +76,7 @@ public class VcfHeaderLine2VariantSetMetadataConverter implements Converter<VCFH
     }
 
     private VariantSetMetadata convert(VCFSimpleHeaderLine hl) {
-        VariantSetMetadata vsm = convert((VCFHeaderLine) hl);
+        VariantSetMetadata vsm = convertHeaderLine((VCFHeaderLine) hl);
         vsm.setId(hl.getID());
         return vsm;
     }
@@ -86,7 +86,7 @@ public class VcfHeaderLine2VariantSetMetadataConverter implements Converter<VCFH
     }
 
     private VariantSetMetadata convert(VCFCompoundHeaderLine hl) {
-        VariantSetMetadata vsm = convert((VCFHeaderLine) hl);
+        VariantSetMetadata vsm = convertHeaderLine((VCFHeaderLine) hl);
         vsm.setId(hl.getID());
         if (hl.isFixedCount()) {
             vsm.setNumber(Integer.toString(hl.getCount()));
@@ -96,7 +96,7 @@ public class VcfHeaderLine2VariantSetMetadataConverter implements Converter<VCFH
         vsm.setType(hl.getType().name());
         vsm.setDescription(hl.getDescription());
         // Empty for the moment
-        Map<CharSequence, List<CharSequence>> infoMap = Collections.emptyMap();
+        Map<String, List<String>> infoMap = Collections.emptyMap();
         vsm.setInfo(infoMap);
         return vsm;
     }
@@ -166,7 +166,7 @@ public class VcfHeaderLine2VariantSetMetadataConverter implements Converter<VCFH
                 String.format("Header line currently not supported: %s", vsm.getKey().toString()));
     }
 
-    private VCFHeaderLine convertTo(CharSequence key, CharSequence value) {
+    private VCFHeaderLine convertTo(String key, String value) {
         return new VCFHeaderLine(key.toString(), value.toString());
     }
 

@@ -17,11 +17,12 @@
 /**
  *
  */
-package org.opencb.hpg.bigdata.core.utils;
+package org.opencb.hpg.bigdata.core.io;
 
 import htsjdk.variant.variantcontext.LazyGenotypesContext;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFCodec;
+import org.opencb.biodata.tools.variant.converter.Converter;
 
 import java.nio.CharBuffer;
 import java.util.ArrayList;
@@ -31,10 +32,10 @@ import java.util.List;
  * @author mh719
  *
  */
-public class VariantContextBlockIterator {
+public class VariantContextBlockIterator implements Converter<CharSequence, VariantContext> {
 
     private final VCFCodec codec;
-    private boolean decodeGenotypes = true;
+    private boolean decodeGenotypes = false;
 
     public VariantContextBlockIterator(VCFCodec codec) {
         this.codec = codec;
@@ -55,9 +56,9 @@ public class VariantContextBlockIterator {
         return varList;
     }
 
-    private VariantContext convert(CharBuffer buff) {
-        VariantContext ctx = getCodec().decode(buff.toString());
-        return ctx;
+    @Override
+    public VariantContext convert(CharSequence buff) {
+        return this.codec.decode(buff.toString());
     }
 
     public VCFCodec getCodec() {

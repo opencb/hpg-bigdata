@@ -74,12 +74,12 @@ public class ReadAlignmentDepthMR {
         public void map(AvroKey<ReadAlignment> key, NullWritable value, Context context) throws
                 IOException, InterruptedException {
             ReadAlignment ra = key.datum();
-            LinearAlignment la = (LinearAlignment) ra.getAlignment();
+            LinearAlignment linearAlignment = (LinearAlignment) ra.getAlignment();
 
             ChunkKey newKey;
             RegionDepthWritable newValue;
 
-            if (la == null) {
+            if (linearAlignment == null) {
                 //newKey = new ChunkKey("*", 0L);
                 // unmapped read
                 //newValue = new RegionDepthWritable(new RegionDepth("*", 0, 0, 0));
@@ -89,9 +89,9 @@ public class ReadAlignmentDepthMR {
 
             RegionDepthCalculator calculator = new RegionDepthCalculator();
 
-            String chrom = la.getPosition().getReferenceName().toString();
-            long start = la.getPosition().getPosition();
-            long end = start + calculator.computeSizeByCigar(la.getCigar()) - 1;
+            String chrom = linearAlignment.getPosition().getReferenceName().toString();
+            int start = linearAlignment.getPosition().getPosition().intValue();
+            int end = start + calculator.computeSizeByCigar(linearAlignment.getCigar()) - 1;
 
             if ((regionFilter == null) || regionFilter.apply(chrom, start, end)) {
                 List<RegionDepth> regions = calculator.computeAsList(ra);
