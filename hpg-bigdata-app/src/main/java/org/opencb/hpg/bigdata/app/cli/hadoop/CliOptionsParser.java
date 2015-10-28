@@ -70,6 +70,7 @@ public class CliOptionsParser {
         variantSubCommands.addCommand("convert", variantCommandOptions.convertVariantCommandOptions);
         variantSubCommands.addCommand("index", variantCommandOptions.indexVariantCommandOptions);
         variantSubCommands.addCommand("simulate", variantCommandOptions.simulateVariantCommandOptions);
+        variantSubCommands.addCommand("sort", variantCommandOptions.sortVariantCommandOptions);
         variantSubCommands.addCommand("simulatorinput", variantCommandOptions.simulatorInputVariantCommandOptions);
 
         //        convertCommandOptions = new ConvertCommandOptions();
@@ -144,7 +145,7 @@ public class CliOptionsParser {
 
         @Deprecated
         @Parameter(names = {"-v", "--verbose"},
-        description = "This parameter set the level of the logging", required = false, arity = 1)
+                description = "This parameter set the level of the logging", required = false, arity = 1)
         public boolean verbose;
 
         @Parameter(names = {"--conf"}, description = "Set the configuration file", required = false, arity = 1)
@@ -333,6 +334,7 @@ public class CliOptionsParser {
         public String regions = null;
     }
 
+
     /*
      * Variant (VCF) CLI options
      */
@@ -343,12 +345,14 @@ public class CliOptionsParser {
         ConvertVariantCommandOptions convertVariantCommandOptions;
         IndexVariantCommandOptions indexVariantCommandOptions;
         SimulateVariantCommandOptions simulateVariantCommandOptions;
+        SortVariantCommandOptions sortVariantCommandOptions;
         SimulatorInputVariantCommandOptions simulatorInputVariantCommandOptions;
 
         public VariantCommandOptions() {
             this.convertVariantCommandOptions = new ConvertVariantCommandOptions();
             this.indexVariantCommandOptions = new IndexVariantCommandOptions();
             this.simulateVariantCommandOptions = new SimulateVariantCommandOptions();
+            this.sortVariantCommandOptions = new SortVariantCommandOptions();
             this.simulatorInputVariantCommandOptions = new SimulatorInputVariantCommandOptions();
         }
     }
@@ -426,41 +430,63 @@ public class CliOptionsParser {
 
     }
 
-    @Parameters(commandNames = {"simulate"},
-            commandDescription = "Load avro gVCF/VCF files into different NoSQL, only HBase implemented so far")
+    @Parameters(commandNames = {"simulate"}, commandDescription = "Simulate a random Variant dataset in Avro format")
     public class SimulateVariantCommandOptions {
 
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
 
-        @Parameter(names = {"-i", "--input"}, description = "Inpput file with Chromosome and Position", required = true, arity = 1)
+        @Parameter(names = {"-o", "--output"}, description = "The Simulator generated avro file", required = true, arity = 1)
+        public String output;
+
+        @Parameter(names = {"-n", "--num-variants"}, description = "Set the number of variants to simulate", arity = 1)
+        public int numVariants = 1000000;
+
+        @Parameter(names = {"-s", "--num-samples"}, description = "Set the number of samples to simulate", arity = 1)
+        public int numSamples = 20;
+
+        @Parameter(names = {"-r", "--regions"}, description = "A comma separated list of chr:start-end regions", arity = 1)
+        public String regions;
+
+        @Parameter(names = {"--region-file"}, description = "GFF file containing the valid regions. Not implemented yet", arity = 1)
+        public String regionFile;
+
+        @Parameter(names = {"--genotype-freqs"}, description = "Set the frequencies of '0/0,0/1,1/1,./.' in that order", arity = 1)
+        public String genotypeFreqs = "0.7,0.2,0.08,0.02";
+
+        @Parameter(names = {"--type-freqs"}, description = "Set the frequencies of variant type 'SNV,INDEL,SV' in that order", arity = 1)
+        public String typeFreqs = "0.95,0.04,0.01";
+
+        @Parameter(names = {"--chunk-size"}, description = "Database to load data, values: hbase", arity = 1)
+        public int chunkSize = 100000;
+
+//        @Parameter(names = {"--execution-engine"}, description = "Set which execution engine is used, accepted values are: MR, Spark", arity = 1)
+//        public String executionEngine = "MR";
+
+    }
+
+    @Parameters(commandNames = {"sort"}, commandDescription = "Sort ascending by chromosome and position a Variant Avro file in HDFS")
+    public class SortVariantCommandOptions {
+
+        @ParametersDelegate
+        public CommonCommandOptions commonOptions = commonCommandOptions;
+
+        @Parameter(names = {"-i", "--input"}, description = "Input file with Chromosome and Position", required = true, arity = 1)
         public String input;
 
         @Parameter(names = {"-o", "--output"}, description = "The Simulator generated avro file", required = true, arity = 1)
         public String output;
 
-        @Parameter(names = {"-n", "--num-variants"}, description = "", arity = 1)
-        public int numVariants = 10;
-
-        @Parameter(names = {"-s", "--num-samples"}, description = "", arity = 1)
-        public int numSamples = 10;
-
-        @Parameter(names = {"-se", "--storage-engines"},
-                description = "Database, values: hbase, hive, impala", arity = 1)
-        public String database = "hbase";
-
-        @Parameter(names = {"-r", "--regions"}, description = "Database to load data, values: hbase", arity = 1)
-        public String regions = null;
-
     }
 
-    @Parameters(commandNames = {"simulatorinput"},
-            commandDescription = "Generate Input Data set for Simulator$$$$$$$$$$$$$$$$")
+    @Deprecated
+    @Parameters(commandNames = {"simulatorinput"}, commandDescription = "Generate Input Data set for Simulator$")
     public class SimulatorInputVariantCommandOptions {
+
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
 
-        @Parameter(names = {"-i", "--input"}, description = "Inpput file with Chromosome and Position", required = true, arity = 1)
+        @Parameter(names = {"-i", "--input"}, description = "Input file with Chromosome and Position", required = true, arity = 1)
         public String input;
 
         @Parameter(names = {"-o", "--output"}, description = "The Simulator generated avro file", required = true, arity = 1)
@@ -471,7 +497,7 @@ public class CliOptionsParser {
 
         @Parameter(names = {"-chrprob", "--chromosomeprobability"}, description = "Probability of Chromosome", arity = 1)
         public String chromosomeprobability;
-       }
+    }
 
 
     public void printUsage(){
@@ -534,10 +560,10 @@ public class CliOptionsParser {
             }
             System.err.printf("%5s %-20s %-10s %s [%s]\n",
                     parameterDescription.getParameterized().getParameter().required() ? "*": "",
-                            parameterDescription.getNames(),
-                            type,
-                            parameterDescription.getDescription(),
-                            parameterDescription.getDefault());
+                    parameterDescription.getNames(),
+                    type,
+                    parameterDescription.getDescription(),
+                    parameterDescription.getDefault());
         }
     }
 

@@ -16,26 +16,20 @@
 
 package org.opencb.hpg.bigdata.app.cli.hadoop;
 
-//import java.io.File;
-//import java.io.FileInputStream;
-//import javax.management.Query;
+import com.beust.jcommander.ParameterException;
+import org.ga4gh.models.Variant;
+import org.opencb.biodata.models.core.Region;
+import org.opencb.biodata.tools.variant.simulator.VariantSimulatorConfiguration;
+import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
+import org.opencb.hpg.bigdata.tools.io.parquet.ParquetMR;
+import org.opencb.hpg.bigdata.tools.variant.*;
+
 import java.io.IOException;
-//import java.nio.file.Path;
-//import java.nio.file.Paths;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.ga4gh.models.Variant;
-import org.opencb.biodata.models.core.Region;
-import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
-import org.opencb.hpg.bigdata.tools.io.parquet.ParquetMR;
-import org.opencb.hpg.bigdata.tools.variant.BenchMarkTabix;
-import org.opencb.hpg.bigdata.tools.variant.DataSetGeneratorMR;
-import org.opencb.hpg.bigdata.tools.variant.LoadBEDAndGFF2HBase;
-import org.opencb.hpg.bigdata.tools.variant.VariantSimulatorMR;
-import org.opencb.hpg.bigdata.tools.variant.Vcf2AvroMR;
 
 /**
  * Created by imedina on 25/06/15.
@@ -53,32 +47,38 @@ public class VariantCommandExecutor extends CommandExecutor {
     public void execute() throws Exception {
         String subCommandString = variantCommandOptions.getParsedSubCommand();
         switch (subCommandString) {
-        case "convert":
-            init(variantCommandOptions.convertVariantCommandOptions.commonOptions.logLevel,
-                    variantCommandOptions.convertVariantCommandOptions.commonOptions.verbose,
-                    variantCommandOptions.convertVariantCommandOptions.commonOptions.conf);
-            convert();
-            break;
-        case "index":
-            init(variantCommandOptions.indexVariantCommandOptions.commonOptions.logLevel,
-                    variantCommandOptions.indexVariantCommandOptions.commonOptions.verbose,
-                    variantCommandOptions.indexVariantCommandOptions.commonOptions.conf);
-            index();
-            break;
-        case "simulate":
-            init(variantCommandOptions.simulateVariantCommandOptions.commonOptions.logLevel,
-                    variantCommandOptions.simulateVariantCommandOptions.commonOptions.verbose,
-                    variantCommandOptions.simulateVariantCommandOptions.commonOptions.conf);
-            simulate();
-            break;
-        case "simulatorinput":
-            init(variantCommandOptions.simulatorInputVariantCommandOptions.commonOptions.logLevel,
-                    variantCommandOptions.simulatorInputVariantCommandOptions.commonOptions.verbose,
-                    variantCommandOptions.simulatorInputVariantCommandOptions.commonOptions.conf);
-            simulatorinput();
-            break;
-        default:
-            break;
+            case "convert":
+                init(variantCommandOptions.convertVariantCommandOptions.commonOptions.logLevel,
+                        variantCommandOptions.convertVariantCommandOptions.commonOptions.verbose,
+                        variantCommandOptions.convertVariantCommandOptions.commonOptions.conf);
+                convert();
+                break;
+            case "index":
+                init(variantCommandOptions.indexVariantCommandOptions.commonOptions.logLevel,
+                        variantCommandOptions.indexVariantCommandOptions.commonOptions.verbose,
+                        variantCommandOptions.indexVariantCommandOptions.commonOptions.conf);
+                index();
+                break;
+            case "simulate":
+                init(variantCommandOptions.simulateVariantCommandOptions.commonOptions.logLevel,
+                        variantCommandOptions.simulateVariantCommandOptions.commonOptions.verbose,
+                        variantCommandOptions.simulateVariantCommandOptions.commonOptions.conf);
+                simulate();
+                break;
+            case "sort":
+                init(variantCommandOptions.simulateVariantCommandOptions.commonOptions.logLevel,
+                        variantCommandOptions.simulateVariantCommandOptions.commonOptions.verbose,
+                        variantCommandOptions.simulateVariantCommandOptions.commonOptions.conf);
+                sort();
+                break;
+            case "simulatorinput":
+                init(variantCommandOptions.simulatorInputVariantCommandOptions.commonOptions.logLevel,
+                        variantCommandOptions.simulatorInputVariantCommandOptions.commonOptions.verbose,
+                        variantCommandOptions.simulatorInputVariantCommandOptions.commonOptions.conf);
+                simulatorinput();
+                break;
+            default:
+                break;
         }
     }
 
@@ -161,6 +161,72 @@ public class VariantCommandExecutor extends CommandExecutor {
 
     private void simulate() throws IOException {
 
+        // TODO check if parent folder exist in HDFS
+        String output = variantCommandOptions.simulateVariantCommandOptions.output;
+
+        int numVariants = variantCommandOptions.simulateVariantCommandOptions.numVariants;
+        if (numVariants <= 0) {
+            logger.warn("Number of variants is <=0, it is set to 1000000");
+            numVariants = 1000000;
+        }
+
+        int numSamples = variantCommandOptions.simulateVariantCommandOptions.numSamples;
+        if (numSamples <= 0) {
+            logger.warn("Number of samples is <=0, it is set to 20");
+            numSamples = 20;
+        }
+
+        List<Region> regions = new ArrayList<>();
+        if (variantCommandOptions.simulateVariantCommandOptions.regions != null) {
+            regions = Region.parseRegions(variantCommandOptions.simulateVariantCommandOptions.regions);
+        }
+
+        Map<String, Double> genotypeFrequencies = new HashMap<>();
+        if (variantCommandOptions.simulateVariantCommandOptions.genotypeFreqs != null) {
+            String[] genotypeFreqsArray = variantCommandOptions.simulateVariantCommandOptions.genotypeFreqs.split(",");
+            if (genotypeFreqsArray.length == 4) {
+                genotypeFrequencies.put("0/0", Double.parseDouble(genotypeFreqsArray[0]));
+                genotypeFrequencies.put("0/1", Double.parseDouble(genotypeFreqsArray[1]));
+                genotypeFrequencies.put("1/1", Double.parseDouble(genotypeFreqsArray[2]));
+                genotypeFrequencies.put("./.", Double.parseDouble(genotypeFreqsArray[3]));
+            } else {
+                throw new ParameterException("--genotype-freqs param needs 4 fields");
+            }
+        }
+
+        Map<String, Double> typeFrequencies = new HashMap<>();
+        if (variantCommandOptions.simulateVariantCommandOptions.typeFreqs != null) {
+            String[] typeFreqsArray = variantCommandOptions.simulateVariantCommandOptions.typeFreqs.split(",");
+            if (typeFreqsArray.length == 3) {
+                typeFrequencies.put("SNV", Double.parseDouble(typeFreqsArray[0]));
+                typeFrequencies.put("INDEL", Double.parseDouble(typeFreqsArray[1]));
+                typeFrequencies.put("SV", Double.parseDouble(typeFreqsArray[2]));
+            } else {
+                throw new ParameterException("--type-freqs param needs 3 fields");
+            }
+        }
+
+        // Variant simulator configuration object is created with all the parsed parameters
+        VariantSimulatorConfiguration variantSimulatorConfiguration = new VariantSimulatorConfiguration();
+        variantSimulatorConfiguration.setNumSamples(numSamples);
+        variantSimulatorConfiguration.setGenotypeProbabilities(genotypeFrequencies);
+//        variantSimulatorConfiguration.setTypeProbabilities(typeFrequencies);
+        // if region is different from nul lwe overwrite them, otherwise the default human genome is used
+        if (regions != null && !regions.isEmpty()) {
+            variantSimulatorConfiguration.setRegions(regions);
+        }
+
+
+        String [] args = {output, regions.toString(), genotypeFrequencies.toString()};
+        try {
+            VariantSimulatorMR variantSimulatorMR = new VariantSimulatorMR(variantSimulatorConfiguration);
+            variantSimulatorMR.setNumVariants(numVariants);
+            variantSimulatorMR.setChunkSize(variantCommandOptions.simulateVariantCommandOptions.chunkSize);
+            variantSimulatorMR.run(args);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         //        SimulatorConfiguration simulatorConfiguration;
         //        if (variantCommandOptions.simulateVariantCommandOptions.commonOptions.conf != null) {
         //            Path confPath = Paths.get(variantCommandOptions.simulateVariantCommandOptions.commonOptions.conf);
@@ -179,30 +245,10 @@ public class VariantCommandExecutor extends CommandExecutor {
         //        List<Region> regions = simulatorConfiguration.getRegions();
         //        Map<String, Float> genProb = simulatorConfiguration.getGenotypeProbabilities();
 
-        List<Region> regions = Arrays.asList(Region.parseRegion("1"), Region.parseRegion("2:40000-50000"),
-                Region.parseRegion("3:1000000"));
+    }
 
-        Map<String, Float> genProb = new HashMap<>();
-        genProb.put("0/0", 0.7f);
-        genProb.put("0/1", 0.2f);
-        genProb.put("1/1", 0.08f);
-        genProb.put("./.", 0.02f);
-
-        String input = variantCommandOptions.simulateVariantCommandOptions.input;
-        String output = variantCommandOptions.simulateVariantCommandOptions.output;
-
-        //String conf = variantCommandOptions.simulateVariantCommandOptions.conf;
-        //String genProbMap = variantCommandOptions.simulateVariantCommandOptions.output;
-
-        String [] args = {input, output, regions.toString(), genProb.toString()};
-        try {
-            //new VariantSimulatorMR().run(input, output, regions.toString(), genProb.toString());
-            new VariantSimulatorMR().run(args);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-
+    private void sort() throws IOException {
+        logger.info("Not implemented yet");
     }
 
 }
