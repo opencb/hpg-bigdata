@@ -17,6 +17,10 @@
 package org.opencb.hpg.bigdata.app.cli.hadoop;
 
 import com.beust.jcommander.ParameterException;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.ga4gh.models.Variant;
 import org.opencb.biodata.models.core.Region;
 import org.opencb.biodata.tools.variant.simulator.VariantSimulatorConfiguration;
@@ -77,32 +81,38 @@ public class VariantCommandExecutor extends CommandExecutor {
                         variantCommandOptions.simulatorInputVariantCommandOptions.commonOptions.conf);
                 simulatorinput();
                 break;
+            case "merge":
+                init(variantCommandOptions.mergeVariantCommandOptions.commonOptions.logLevel,
+                        variantCommandOptions.mergeVariantCommandOptions.commonOptions.verbose,
+                        variantCommandOptions.mergeVariantCommandOptions.commonOptions.conf);
+                merge();
+                break;
             default:
                 break;
         }
     }
 
-//    private void index() throws Exception {
-//        String input = variantCommandOptions.indexVariantCommandOptions.input;
-//        String db = variantCommandOptions.indexVariantCommandOptions.database;
-//        boolean nonVar = variantCommandOptions.indexVariantCommandOptions.includeNonVariants;
-//        boolean expand = variantCommandOptions.indexVariantCommandOptions.expand;
-//
-//        URI server = null;
-//        // new URI("//who1:60000/VariantExpanded");
-//        if (StringUtils.isNotBlank(db)) {
-//            server = new URI(db);
-//        }
-//        Variant2HbaseMR.Builder builder = new Variant2HbaseMR.Builder(input, server);
-//        builder.setExpand(expand);
-//        builder.setNonVar(nonVar);
-//        Job job = builder.build(true);
-//
-//        boolean fine = job.waitForCompletion(true);
-//        if (!fine) {
-//            throw new IllegalStateException("Variant 2 HBase failed!");
-//        }
-//    }
+    //    private void index() throws Exception {
+    //        String input = variantCommandOptions.indexVariantCommandOptions.input;
+    //        String db = variantCommandOptions.indexVariantCommandOptions.database;
+    //        boolean nonVar = variantCommandOptions.indexVariantCommandOptions.includeNonVariants;
+    //        boolean expand = variantCommandOptions.indexVariantCommandOptions.expand;
+    //
+    //        URI server = null;
+    //        // new URI("//who1:60000/VariantExpanded");
+    //        if (StringUtils.isNotBlank(db)) {
+    //            server = new URI(db);
+    //        }
+    //        Variant2HbaseMR.Builder builder = new Variant2HbaseMR.Builder(input, server);
+    //        builder.setExpand(expand);
+    //        builder.setNonVar(nonVar);
+    //        Job job = builder.build(true);
+    //
+    //        boolean fine = job.waitForCompletion(true);
+    //        if (!fine) {
+    //            throw new IllegalStateException("Variant 2 HBase failed!");
+    //        }
+    //    }
 
     private void convert() throws Exception {
         String input = variantCommandOptions.convertVariantCommandOptions.input;
@@ -162,7 +172,15 @@ public class VariantCommandExecutor extends CommandExecutor {
     private void simulate() throws IOException {
 
         // TODO check if parent folder exist in HDFS
+
         String output = variantCommandOptions.simulateVariantCommandOptions.output;
+        Configuration config = new Configuration();
+        FileSystem hdfs = FileSystem.get(config);
+        Path path = new Path(output);
+
+        boolean isExists = hdfs.exists(path);
+        //        if (isExists) {
+        //        }
 
         int numVariants = variantCommandOptions.simulateVariantCommandOptions.numVariants;
         if (numVariants <= 0) {
@@ -181,7 +199,8 @@ public class VariantCommandExecutor extends CommandExecutor {
             regions = Region.parseRegions(variantCommandOptions.simulateVariantCommandOptions.regions);
         }
 
-        Map<String, Double> genotypeFrequencies = new HashMap<>();
+        //Written by Nacho
+        /*Map<String, Double> genotypeFrequencies = new HashMap<>();
         if (variantCommandOptions.simulateVariantCommandOptions.genotypeFreqs != null) {
             String[] genotypeFreqsArray = variantCommandOptions.simulateVariantCommandOptions.genotypeFreqs.split(",");
             if (genotypeFreqsArray.length == 4) {
@@ -189,6 +208,17 @@ public class VariantCommandExecutor extends CommandExecutor {
                 genotypeFrequencies.put("0/1", Double.parseDouble(genotypeFreqsArray[1]));
                 genotypeFrequencies.put("1/1", Double.parseDouble(genotypeFreqsArray[2]));
                 genotypeFrequencies.put("./.", Double.parseDouble(genotypeFreqsArray[3]));
+            } else {
+                throw new ParameterException("--genotype-freqs param needs 4 fields");
+            }
+        }*/
+
+
+        String genotypeFrequencies = null;
+        if (variantCommandOptions.simulateVariantCommandOptions.genotypeFreqs != null) {
+            String[] genotypeFreqsArray = variantCommandOptions.simulateVariantCommandOptions.genotypeFreqs.split(",");
+            if (genotypeFreqsArray.length == 4) {
+                genotypeFrequencies = variantCommandOptions.simulateVariantCommandOptions.genotypeFreqs;
             } else {
                 throw new ParameterException("--genotype-freqs param needs 4 fields");
             }
@@ -206,18 +236,20 @@ public class VariantCommandExecutor extends CommandExecutor {
             }
         }
 
+        //Written by Nacho
         // Variant simulator configuration object is created with all the parsed parameters
         VariantSimulatorConfiguration variantSimulatorConfiguration = new VariantSimulatorConfiguration();
-        variantSimulatorConfiguration.setNumSamples(numSamples);
-        variantSimulatorConfiguration.setGenotypeProbabilities(genotypeFrequencies);
-//        variantSimulatorConfiguration.setTypeProbabilities(typeFrequencies);
+        //variantSimulatorConfiguration.setNumSamples(numSamples);
+        //variantSimulatorConfiguration.setGenotypeProbabilities(genotypeFrequencies);
+        //        variantSimulatorConfiguration.setTypeProbabilities(typeFrequencies);
         // if region is different from nul lwe overwrite them, otherwise the default human genome is used
-        if (regions != null && !regions.isEmpty()) {
-            variantSimulatorConfiguration.setRegions(regions);
-        }
+        //        if (regions != null && !regions.isEmpty()) {
+        //            variantSimulatorConfiguration.setRegions(regions);
+        //        }
 
 
-        String [] args = {output, regions.toString(), genotypeFrequencies.toString()};
+        String [] args = {output, regions.toString(), genotypeFrequencies.toString(), String.valueOf(numSamples)};
+        //String [] args = {output};
         try {
             VariantSimulatorMR variantSimulatorMR = new VariantSimulatorMR(variantSimulatorConfiguration);
             variantSimulatorMR.setNumVariants(numVariants);
@@ -247,8 +279,38 @@ public class VariantCommandExecutor extends CommandExecutor {
 
     }
 
-    private void sort() throws IOException {
-        logger.info("Not implemented yet");
+    private void sort() {
+        //logger.info("Not implemented yet");
+        String input = variantCommandOptions.sortVariantCommandOptions.input;
+        String output = variantCommandOptions.sortVariantCommandOptions.output;
+
+        String [] args = {input, output};
+        //VariantSimulatorAvroSortMR variantSimulatorAvroSortMR = new VariantSimulatorAvroSortMR();
+        VariantAvroSortCustomMR variantAvroSortCustomMR = new VariantAvroSortCustomMR();
+        try {
+            //variantSimulatorAvroSortMR.run(args);
+            variantAvroSortCustomMR.run(args);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void merge() {
+        //logger.info("Not implemented yet");
+        String input = variantCommandOptions.mergeVariantCommandOptions.input;
+        String output = variantCommandOptions.mergeVariantCommandOptions.output;
+
+        String [] args = {input, output};
+        VaraintAvroMergeMR varaintAvroMergeMR = new VaraintAvroMergeMR();
+        try {
+            varaintAvroMergeMR.run(args);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 }

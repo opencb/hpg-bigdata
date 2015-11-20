@@ -72,6 +72,7 @@ public class CliOptionsParser {
         variantSubCommands.addCommand("simulate", variantCommandOptions.simulateVariantCommandOptions);
         variantSubCommands.addCommand("sort", variantCommandOptions.sortVariantCommandOptions);
         variantSubCommands.addCommand("simulatorinput", variantCommandOptions.simulatorInputVariantCommandOptions);
+        variantSubCommands.addCommand("merge", variantCommandOptions.mergeVariantCommandOptions);
 
         //        convertCommandOptions = new ConvertCommandOptions();
     }
@@ -347,6 +348,7 @@ public class CliOptionsParser {
         SimulateVariantCommandOptions simulateVariantCommandOptions;
         SortVariantCommandOptions sortVariantCommandOptions;
         SimulatorInputVariantCommandOptions simulatorInputVariantCommandOptions;
+        MergeVariantCommandOptions mergeVariantCommandOptions;
 
         public VariantCommandOptions() {
             this.convertVariantCommandOptions = new ConvertVariantCommandOptions();
@@ -354,6 +356,7 @@ public class CliOptionsParser {
             this.simulateVariantCommandOptions = new SimulateVariantCommandOptions();
             this.sortVariantCommandOptions = new SortVariantCommandOptions();
             this.simulatorInputVariantCommandOptions = new SimulatorInputVariantCommandOptions();
+            this.mergeVariantCommandOptions = new MergeVariantCommandOptions();
         }
     }
 
@@ -467,6 +470,20 @@ public class CliOptionsParser {
 
     @Parameters(commandNames = {"sort"}, commandDescription = "Sort ascending by chromosome and position a Variant Avro file in HDFS")
     public class SortVariantCommandOptions {
+
+        @ParametersDelegate
+        public CommonCommandOptions commonOptions = commonCommandOptions;
+
+        @Parameter(names = {"-i", "--input"}, description = "Input file with Chromosome and Position", required = true, arity = 1)
+        public String input;
+
+        @Parameter(names = {"-o", "--output"}, description = "The Simulator generated avro file", required = true, arity = 1)
+        public String output;
+
+    }
+
+    @Parameters(commandNames = {"merge"}, commandDescription = "Sort ascending by chromosome and position a Variant Avro file in HDFS")
+    public class MergeVariantCommandOptions {
 
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
