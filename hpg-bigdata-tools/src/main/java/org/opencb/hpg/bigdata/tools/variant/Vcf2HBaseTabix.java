@@ -48,7 +48,7 @@ import java.util.List;
  *
  */
 public class Vcf2HBaseTabix extends
-Mapper<AvroKey<VariantAvro>, NullWritable, ImmutableBytesWritable, Put>  implements Tool {
+Mapper<AvroKey<VariantAvro>, NullWritable, ImmutableBytesWritable, Put> implements Tool {
 
     public static final byte[] COLUMN_FAMILY = Bytes.toBytes("cf");
     private static final String ROWKEY_SEPARATOR = "_";
@@ -83,7 +83,7 @@ Mapper<AvroKey<VariantAvro>, NullWritable, ImmutableBytesWritable, Put>  impleme
             throws IOException, InterruptedException {
         VariantAvro variantAvro = key.datum();
         byte[] id = Bytes.toBytes(constructRowKey(variantAvro));
-        VariantToProtoVcfRecord variantAvroToVcfRecord= new VariantToProtoVcfRecord();
+        VariantToProtoVcfRecord variantAvroToVcfRecord = new VariantToProtoVcfRecord();
         Put put = new Put(id);
         //TODO this will be removed once the changes in the ProtoConverter is ready
         put.addColumn(

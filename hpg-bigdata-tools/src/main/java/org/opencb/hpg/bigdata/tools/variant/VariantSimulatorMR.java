@@ -16,17 +16,28 @@
 
 package org.opencb.hpg.bigdata.tools.variant;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.avro.mapred.AvroKey;
 import org.apache.avro.mapreduce.AvroJob;
 import org.apache.avro.mapreduce.AvroKeyOutputFormat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
@@ -36,16 +47,6 @@ import org.opencb.biodata.models.variant.avro.VariantAvro;
 import org.opencb.biodata.tools.variant.simulator.VariantSimulator;
 import org.opencb.biodata.tools.variant.simulator.VariantSimulatorConfiguration;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-
-//import org.apache.avro.mapred.AvroValue;
-//import org.apache.hadoop.io.NullWritable;
-//import org.apache.hadoop.mapreduce.Reducer;
 
 /**
  * Created by kalyanreddyemani on 06/10/15.
@@ -55,102 +56,147 @@ import java.util.Map;
 
 public class VariantSimulatorMR extends Configured implements Tool{
     //private static Random rand = new Random();
-    private static List<Region> regionsList;
-    private static Map<String, Double> genotypeProbabilites;
+    //    private static List<Region> regionsList;
+    //    private static Map<String, Double> genotypeProbabilites;
     private Configuration conf = null;
 
-    private VariantSimulator variantSimulator;
-    private int numVariants;
+    private static VariantSimulator variantSimulator;
+    private static int numVariants;
     private int chunkSize;
+    private List<Region> regionList;
 
-    private VariantSimulatorConfiguration variantSimulatorConfiguration;
+    private static VariantSimulatorConfiguration variantSimulatorConfiguration;
 
     public VariantSimulatorMR() {
     }
 
     public VariantSimulatorMR(VariantSimulatorConfiguration variantSimulatorConfiguration) {
-        this.variantSimulatorConfiguration = variantSimulatorConfiguration;
+        VariantSimulatorMR.variantSimulatorConfiguration = variantSimulatorConfiguration;
     }
 
-    public class SimulatorAvroMapper extends Mapper<LongWritable, Text, AvroKey<VariantAvro>, NullWritable> {
+    public static class SimulatorAvroMapper extends Mapper<LongWritable, Text, AvroKey<VariantAvro>, NullWritable> {
 
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Mapper#map(KEYIN, VALUEIN, org.apache.hadoop.mapreduce.Mapper.Context)
          */
         @Override
         public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-            String[] valStr = value.toString().split("\t");
-            List<Region> regionList = Arrays.asList(new Region(valStr[0], Integer.parseInt(valStr[1]), Integer.parseInt(valStr[2])));
-            int numVariants = Integer.parseInt(valStr[3]);
+            Configuration config = context.getConfiguration();
 
+            String[] valStr = value.toString().split("\t");
+
+            List<Region> regionList = Arrays.asList(new Region(valStr[0], Integer.parseInt(valStr[1]), Integer.parseInt(valStr[2])));
+
+            int numVariants = Integer.parseInt(valStr[3].trim());
+
+            String genotypeFreqs = config.get("genotypeProbabilites");
+            Map<String, Double> genotypeFrequencies = new HashMap<>();
+            if (genotypeFreqs != null) {
+                String[] genotypeFreqsArray = genotypeFreqs.split(",");
+                if (genotypeFreqsArray.length == 4) {
+                    genotypeFrequencies.put("0/0", Double.parseDouble(genotypeFreqsArray[0]));
+                    genotypeFrequencies.put("0/1", Double.parseDouble(genotypeFreqsArray[1]));
+                    genotypeFrequencies.put("1/1", Double.parseDouble(genotypeFreqsArray[2]));
+                    genotypeFrequencies.put("./.", Double.parseDouble(genotypeFreqsArray[3]));
+                }
+            }
+
+            org.opencb.biodata.tools.variant.simulator.VariantSimulatorConfiguration variantSimulatorConfiguration =
+                    new org.opencb.biodata.tools.variant.simulator.VariantSimulatorConfiguration(regionList, genotypeFrequencies);
+            variantSimulatorConfiguration.setNumSamples(Integer.parseInt(config.get("numOfSamples")));
             variantSimulator = new VariantSimulator(variantSimulatorConfiguration);
-            List<Variant> variants = variantSimulator.simulate(numVariants, variantSimulatorConfiguration.getNumSamples(), regionList);
+            //variantSimulator = new VariantSimulator(variantSimulatorConfiguration);
+            List<Variant> variants = variantSimulator.simulate(numVariants, variantSimulatorConfiguration.getNumSamples(),
+                    regionList);
 
             for (Variant variant : variants) {
                 context.write(new AvroKey<>(variant.getImpl()), NullWritable.get());
             }
-
-//            int position = 0;
-//            if (valStr[1] != null || !valStr[1].isEmpty()) {
-//                position = Integer.parseInt(valStr[1].trim());
-//            }
-//
-//            int start = position;
-//            int end = position;
-//            variant.setStart(start);
-//            variant.setEnd(end);
-//            VariantAvro variantAvro = variant.getImpl();
-//            context.write(new AvroKey<>(variantAvro), NullWritable.get());
         }
     }
 
     @Override
     public int run(String[] args) throws Exception {
+        conf = new Configuration();
+        //define how many numbers of lines need to processed by one mapper
+        conf.setInt(NLineInputFormat.LINES_PER_MAP, 200);
 
-        if (args.length != 3) {
-            System.err.println("Usage: Data Gen " + "<inputPath>  <OutputPath>  <regions>  <genotypeProbabilites>");
-            return -1;
+        //Set region value if null or if not null take default
+        String regionData = args[1].replace("[", "").replace("]", "");
+        if (regionData.isEmpty()) {
+            regionList = variantSimulatorConfiguration.getRegions();
+        } else {
+            regionList = new ArrayList<>();
+            String[] regionArray = regionData.split(",");
+            for (int i = 0; i <= regionArray.length - 1; i++) {
+                System.out.println("Entered regions are : " + regionArray[i]);
+                regionList.add(Region.parseRegion(regionArray[i].trim()));
+            }
         }
 
-        String output = args[0];
-        String regions = args[1];
-        String genProb = args[2];
-
-        conf = new Configuration();
-//        conf.setInt(NLineInputFormat.LINES_PER_MAP, 500000);
-
-        List<Region> regionList = variantSimulatorConfiguration.getRegions();
+        //Calculate number of variants per chunk
         long totalGenomeSize = 0;
         for (Region region : regionList) {
             totalGenomeSize += region.getEnd();
         }
-
         int numVariantsPerChunk = Math.round(numVariants / (totalGenomeSize / chunkSize));
 
         // create the input file for Hadoop MR
-        PrintWriter printWriter = new PrintWriter(new File("/tmp/aaa"));
+        String fileName = "mrInput.txt";
+        File tmpFile = new File("/tmp/" + fileName);
+
+        //Check if file exist. Delete if exist
+        if (tmpFile.exists() && !tmpFile.isDirectory()) {
+            System.out.println("File " + tmpFile + " already exist. Deleting file...");
+            tmpFile.delete();
+            System.out.println("File " + tmpFile + " deleted");
+        }
+
+        //Write chromosome, start, end and number of variants per chunk
+        PrintWriter printWriter = new PrintWriter(tmpFile);
         for (Region region : regionList) {
             int start = 1;
             int end = chunkSize;
             int numChunks = region.getEnd() / chunkSize;
             for (int i = 0; i < numChunks; i++) {
-                printWriter.println(region.getChromosome() + "\t" + start + "\t" + end + "\t" + numVariantsPerChunk);
+                printWriter.println(region.getChromosome() + "\t" + String.format("%09d", start) + "\t"
+                        + String.format("%09d", end) + "\t" + numVariantsPerChunk);
                 start += chunkSize;
                 end += chunkSize;
             }
         }
         printWriter.close();
 
+        FileSystem fs = FileSystem.get(conf);
+        Path srcPath = new Path("/tmp/" + fileName);
+
+        //Check if HDFS destination path exist
+        Path dstPath = new Path("/home/hpcpal1/simulatorInputFile");
+        if (!fs.exists(dstPath)) {
+            fs.mkdirs(dstPath);
+        }
+
+        //Check if simulator input file already exist, delete if exist
+        Path hdfsPathWithFile = new Path("/home/hpcpal1/simulatorInputFile/" + fileName);
+        if (fs.exists(hdfsPathWithFile)) {
+            System.out.println("Inside hdfsPathWithFile");
+            fs.delete(hdfsPathWithFile, true);
+        }
+
+        //Copy above generated input file to HSFS
+        System.out.println("Source file path is : " + srcPath + ", Destination file path is : " + dstPath);
+        fs.copyFromLocalFile(srcPath, dstPath);
+
         Job job = Job.getInstance(conf, "Simulator");
         job.setJarByClass(VariantSimulatorMR.class);
         AvroJob.setMapOutputKeySchema(job, VariantAvro.getClassSchema());
         AvroJob.setMapOutputValueSchema(job, VariantAvro.getClassSchema());
+        FileInputFormat.addInputPath(job, new Path(dstPath.toString()));
+        FileOutputFormat.setOutputPath(job, new Path(args[0]));
 
-//        FileInputFormat.addInputPath(job, new Path(input));
-        FileOutputFormat.setOutputPath(job, new Path(output));
-
-//        job.getConfiguration().set("regions", regions);
-//        job.getConfiguration().set("genotypeProbabilites", genProb);
+        job.getConfiguration().set("regions", args[1]);
+        job.getConfiguration().set("genotypeProbabilites", args[2]);
+        job.getConfiguration().set("numOfSamples", args[3]);
 
         job.setInputFormatClass(NLineInputFormat.class);
         job.setNumReduceTasks(0);
@@ -159,20 +205,15 @@ public class VariantSimulatorMR extends Configured implements Tool{
         return (job.waitForCompletion(true) ? 0 : 1);
     }
 
-
     public int getNumVariants() {
         return numVariants;
     }
-
     public void setNumVariants(int numVariants) {
         this.numVariants = numVariants;
     }
-
-
     public int getChunkSize() {
         return chunkSize;
     }
-
     public void setChunkSize(int chunkSize) {
         this.chunkSize = chunkSize;
     }
