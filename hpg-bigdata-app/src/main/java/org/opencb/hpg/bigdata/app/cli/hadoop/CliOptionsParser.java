@@ -333,6 +333,9 @@ public class CliOptionsParser {
 
         @Parameter(names = {"-r", "--regions"}, description = "Compute depth for the mentioned regions separated by commas. The region format is: chromosome:start-end. Example: 3:230000000-250000000,12:435050000-435100000", required = false, arity = 1)
         public String regions = null;
+
+        @Parameter(names = {"-q", "--min-mapq"}, description = "Compute depth for alignments whose mapping quality is greater that this minimum mapping quality", required = false, arity = 1)
+        public int minMapQ = 0;
     }
 
 

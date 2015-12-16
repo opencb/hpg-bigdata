@@ -54,11 +54,13 @@ public class ReadAlignmentDepthMR {
 
     public static final String OUTPUT_SUMMARY_JSON = "summary.depth.json";
     public static final String REGIONS_PARAM = "regions";
+    public static final String MIN_MAPQ_PARAM = "min_mapq";
 
     public static class ReadAlignmentDepthMapper extends
             Mapper<AvroKey<ReadAlignment>, NullWritable, ChunkKey, RegionDepthWritable> {
 
         private RegionFilter regionFilter = null;
+        private int minMapQ = 0;
 
         @Override
         public void setup(Mapper.Context context) throws IOException, InterruptedException {
@@ -68,6 +70,7 @@ public class ReadAlignmentDepthMR {
                 System.err.println(">>>>>>> mapper, regs = " + regs);
                 regionFilter = new RegionFilter(regs);
             }
+            minMapQ = context.getConfiguration().getInt(MIN_MAPQ_PARAM, 0);
         }
 
         @Override
@@ -93,7 +96,8 @@ public class ReadAlignmentDepthMR {
             int start = linearAlignment.getPosition().getPosition().intValue();
             int end = start + calculator.computeSizeByCigar(linearAlignment.getCigar()) - 1;
 
-            if ((regionFilter == null) || regionFilter.apply(chrom, start, end)) {
+            //if ((regionFilter == null) || regionFilter.apply(chrom, start, end)) {
+            if ((minMapQ < linearAlignment.getMappingQuality()) && ((regionFilter == null) || regionFilter.apply(chrom, start, end))) {
                 List<RegionDepth> regions = calculator.computeAsList(ra);
 
                 for (RegionDepth region: regions) {
@@ -196,15 +200,19 @@ public class ReadAlignmentDepthMR {
                     ? acc
                     : acc + chromAccDepth.get(key.getName())));
 
-            context.write(new Text(regionDepth.toFormat(regionFilter)), NullWritable.get());
+            if (regionFilter == null) {
+                context.write(new Text(regionDepth.toFormat()), NullWritable.get());
+            } else {
+                context.write(new Text(regionDepth.toFormat(regionFilter)), NullWritable.get());
+            }
         }
     }
 
-    public static int run(String input, String output, String regions) throws Exception {
-        return run(input, output, regions, new Configuration());
+    public static int run(String input, String output, String regions, int minMapQ) throws Exception {
+        return run(input, output, regions, minMapQ, new Configuration());
     }
 
-    public static int run(String input, String output, String regions, Configuration conf) throws Exception {
+    public static int run(String input, String output, String regions, int minMapQ, Configuration conf) throws Exception {
         // read header, and save sequence name/length in config
         byte[] data = null;
         Path headerPath = new Path(input + ".header");
@@ -224,10 +232,12 @@ public class ReadAlignmentDepthMR {
             conf.setInt(sr.getSequenceName(), sr.getSequenceLength());
         }
 
+        // filters
         conf.set(OUTPUT_SUMMARY_JSON, output + "summary.json");
         if (regions != null) {
             conf.set(REGIONS_PARAM, regions);
         }
+        conf.set(MIN_MAPQ_PARAM, "" + minMapQ);
 
         Job job = Job.getInstance(conf, "ReadAlignmentDepthMR");
         job.setJarByClass(ReadAlignmentDepthMR.class);

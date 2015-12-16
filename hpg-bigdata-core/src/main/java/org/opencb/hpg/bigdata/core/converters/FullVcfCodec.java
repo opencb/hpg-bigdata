@@ -117,7 +117,7 @@ public class FullVcfCodec extends VCFCodec {
                     if (gtKey.equals(VCFConstants.GENOTYPE_KEY)) {
                         genotypeAlleleLocation = i;
                     } else if (missing) {
-                        System.out.println("empty block");
+                        Void emptyStatement;
                         // if its truly missing (there no provided value) skip adding it to the attributes
                     } else if (gtKey.equals(VCFConstants.GENOTYPE_FILTER_KEY)) {
                         final List<String> filters = parseFilters(getCachedString(genotypeValues.get(i)));
@@ -126,7 +126,7 @@ public class FullVcfCodec extends VCFCodec {
                         }
                     } else if (genotypeValues.get(i).equals(VCFConstants.MISSING_VALUE_v4)) {
                         // don't add missing values to the map
-                        System.out.println("empty block");
+                        Void emptyStatement;
                     } else {
                         if (gtKey.equals(VCFConstants.GENOTYPE_QUALITY_KEY)) {
                             if (genotypeValues.get(i).equals(VCFConstants.MISSING_GENOTYPE_QUALITY_v3)) {
