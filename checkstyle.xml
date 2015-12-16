@@ -66,6 +66,11 @@
         <module name="LineLength">
             <property name="max" value="140"/>
         </module>
+        <module name="MethodLength"/>
+        <module name="ParameterNumber">
+            <property name="max" value="8"/>
+        </module>
+        <module name="OuterTypeNumber"/>
 
         <!-- Checks for whitespace                               -->
         <!-- See http://checkstyle.sf.net/config_whitespace.html -->
