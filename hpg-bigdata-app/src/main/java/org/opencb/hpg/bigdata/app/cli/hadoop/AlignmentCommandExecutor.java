@@ -129,6 +129,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
         String input = alignmentCommandOptions.depthAlignmentCommandOptions.input;
         String output = alignmentCommandOptions.depthAlignmentCommandOptions.output;
         String regions = alignmentCommandOptions.depthAlignmentCommandOptions.regions;
+        int minMapQ = alignmentCommandOptions.depthAlignmentCommandOptions.minMapQ;
 
         // check regions before launching MR job
         //List<Region> regs = null;
@@ -138,7 +139,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
         FileSystem fs = FileSystem.get(conf);
 
         // run MapReduce job to compute stats
-        ReadAlignmentDepthMR.run(input, output, regions);
+        ReadAlignmentDepthMR.run(input, output, regions, minMapQ);
 
 //        String tmpOutDirName = output + "_" + Long.toString(new Date().getTime());
 //
