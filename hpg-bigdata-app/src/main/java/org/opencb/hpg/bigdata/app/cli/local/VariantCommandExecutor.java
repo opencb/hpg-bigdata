@@ -49,6 +49,7 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.zip.GZIPOutputStream;
@@ -216,7 +217,8 @@ public class VariantCommandExecutor extends CommandExecutor {
         VCFFileReader reader = new VCFFileReader(inputPath.toFile(), false);
         switch (dataModel.toLowerCase()) {
             case "opencb": {
-                VariantContextToVariantConverter variantContextToVariantConverter = new VariantContextToVariantConverter();
+                VariantContextToVariantConverter variantContextToVariantConverter =
+                        new VariantContextToVariantConverter("", "", Collections.emptyList());
                 Variant variant;
                 for (VariantContext variantContext : reader) {
                     variant = variantContextToVariantConverter.convert(variantContext);
