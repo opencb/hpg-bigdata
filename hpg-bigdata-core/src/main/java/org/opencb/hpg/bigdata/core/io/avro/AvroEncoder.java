@@ -37,10 +37,16 @@ public class AvroEncoder<T> {
     private final Encoder encoder;
     private final ByteArrayOutputStream byteArrayOutputStream;
     private int encodeFails = 0;
+    private boolean abortOnFail = false;
 
     public static final int SIZE = 1000000;
 
     public AvroEncoder(Schema schema) {
+        this(schema, true);
+    }
+
+    public AvroEncoder(Schema schema, boolean abortOnFail) {
+        this.abortOnFail = abortOnFail;
         this.datumWriter = new GenericDatumWriter<>(schema);
         this.byteArrayOutputStream = new ByteArrayOutputStream(SIZE);    //Initialize with 1MB
         this.encoder = EncoderFactory.get().binaryEncoder(byteArrayOutputStream, null);
@@ -52,6 +58,9 @@ public class AvroEncoder<T> {
             try {
                 datumWriter.write(elem, encoder);
             } catch (Exception e) {
+                if (abortOnFail) {
+                    throw e;
+                }
                 encodeFails++;
                 System.err.println(e.getMessage());
                 encoder.flush();
@@ -65,5 +74,11 @@ public class AvroEncoder<T> {
         return encoded;
     }
 
+    public int getEncodeFails() {
+        return encodeFails;
+    }
 
+    public boolean isAbortOnFail() {
+        return abortOnFail;
+    }
 }
