@@ -216,8 +216,12 @@ public class VariantCommandExecutor extends CommandExecutor {
         VCFFileReader reader = new VCFFileReader(inputPath.toFile(), false);
         switch (dataModel.toLowerCase()) {
             case "opencb": {
+<<<<<<< HEAD
                 VariantContextToVariantConverter variantContextToVariantConverter =
                         new VariantContextToVariantConverter("s", "f", reader.getFileHeader().getSampleNamesInOrder());
+=======
+                VariantContextToVariantConverter variantContextToVariantConverter = new VariantContextToVariantConverter("", "", null);
+>>>>>>> develop
                 Variant variant;
                 for (VariantContext variantContext : reader) {
                     variant = variantContextToVariantConverter.convert(variantContext);
