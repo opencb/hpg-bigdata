@@ -67,7 +67,7 @@ public class VariantAvroEncoderTask<T extends GenericRecord> implements Parallel
         codec = new FullVcfCodec();
         codec.setVCFHeader(this.header, version);
         this.converter = converter;
-        encoder = new AvroEncoder<>(schema);
+        encoder = new AvroEncoder<>(schema, true);
         variantContextBlockIterator = new VariantContextBlockIterator(codec);
         variantContextBlockIterator.setDecodeGenotypes(false);
     }
