@@ -1,29 +1,19 @@
 package com.cloudera.spark.hbase
 
-import org.apache.spark.deploy.SparkHadoopUtil
-import org.apache.spark.{ SparkContext, TaskContext }
-import org.apache.spark.broadcast.Broadcast
-import org.apache.spark.SerializableWritable
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.security.Credentials
-import org.apache.spark.rdd.RDD
-import org.apache.spark.Partition
-import org.apache.spark.InterruptibleIterator
-import org.apache.hadoop.hbase.mapreduce.TableInputFormat
-import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil
-import org.apache.hadoop.hbase.client.Scan
-import org.apache.hadoop.mapreduce.Job
-import org.apache.spark.SparkHadoopMapReduceUtilExtended
-import org.apache.spark.Logging
-import org.apache.hadoop.mapreduce.JobID
-import org.apache.hadoop.io.Writable
-import org.apache.hadoop.mapreduce.InputSplit
 import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.ArrayList
+import java.util.{ArrayList, Date}
+
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.hbase.client.Scan
+import org.apache.hadoop.hbase.mapreduce.{IdentityTableMapper, TableInputFormat, TableMapReduceUtil}
+import org.apache.hadoop.io.Writable
+import org.apache.hadoop.mapreduce.{InputSplit, Job, JobID}
 import org.apache.hadoop.security.UserGroupInformation
 import org.apache.hadoop.security.UserGroupInformation.AuthenticationMethod
-import org.apache.hadoop.hbase.mapreduce.IdentityTableMapper
+import org.apache.spark.broadcast.Broadcast
+import org.apache.spark.deploy.SparkHadoopUtil
+import org.apache.spark.rdd.RDD
+import org.apache.spark.{InterruptibleIterator, Logging, Partition, SerializableWritable, SparkContext, SparkHadoopMapReduceUtilExtended, TaskContext}
 
 class HBaseScanRDD(sc: SparkContext,
                    @transient tableName: String,

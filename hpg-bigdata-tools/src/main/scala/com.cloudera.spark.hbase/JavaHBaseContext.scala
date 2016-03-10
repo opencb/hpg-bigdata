@@ -1,21 +1,13 @@
 package com.cloudera.spark.hbase
 
-import org.apache.spark.api.java.JavaSparkContext
 import org.apache.hadoop.conf.Configuration
-import org.apache.spark.api.java.JavaRDD
-import org.apache.spark.api.java.function.VoidFunction
-import org.apache.spark.api.java.function.Function
-import org.apache.hadoop.hbase.client.HConnection
-import org.apache.spark.streaming.api.java.JavaDStream
-import org.apache.spark.api.java.function.FlatMapFunction
-import scala.collection.JavaConversions._
-import org.apache.hadoop.hbase.client.Put
-import org.apache.hadoop.hbase.client.Increment
-import org.apache.hadoop.hbase.client.Delete
-import org.apache.hadoop.hbase.client.Get
-import org.apache.hadoop.hbase.client.Result
-import org.apache.hadoop.hbase.client.Scan
+import org.apache.hadoop.hbase.client.{Delete, Get, HConnection, Increment, Put, Result, Scan}
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable
+import org.apache.spark.api.java.function.{FlatMapFunction, Function, VoidFunction}
+import org.apache.spark.api.java.{JavaRDD, JavaSparkContext}
+import org.apache.spark.streaming.api.java.JavaDStream
+
+import scala.collection.JavaConversions._
 import scala.reflect.ClassTag
 
 class JavaHBaseContext(@transient jsc: JavaSparkContext,
@@ -145,7 +137,7 @@ class JavaHBaseContext(@transient jsc: JavaSparkContext,
    */
   def bulkPut[T](javaRdd: JavaRDD[T],
       tableName: String, 
-      f: Function[(T), Put], 
+      f: Function[(T), Put],
       autoFlush: Boolean) {
     
     hbc.bulkPut(javaRdd.rdd, tableName, (t:T) => f.call(t), autoFlush)

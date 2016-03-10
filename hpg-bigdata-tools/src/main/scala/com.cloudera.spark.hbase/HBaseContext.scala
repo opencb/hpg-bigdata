@@ -17,32 +17,24 @@
 
 package com.cloudera.spark.hbase
 
+import java.io._
+import java.util.ArrayList
+
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.hadoop.hbase.client.{Delete, Get, HConnection, HConnectionManager, Increment, Mutation, Put, Result, Scan}
+import org.apache.hadoop.hbase.io.ImmutableBytesWritable
+import org.apache.hadoop.hbase.mapreduce.{IdentityTableMapper, TableInputFormat, TableMapReduceUtil}
+import org.apache.hadoop.mapreduce.Job
+import org.apache.hadoop.security.UserGroupInformation.AuthenticationMethod
+import org.apache.hadoop.security.{Credentials, UserGroupInformation}
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.deploy.SparkHadoopUtil
 import org.apache.spark.rdd.RDD
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.hbase.client.HConnectionManager
-import org.apache.hadoop.hbase.client.Scan
-import org.apache.hadoop.hbase.client.Get
-import java.util.ArrayList
-import org.apache.hadoop.hbase.client.Result
-import scala.reflect.ClassTag
-import org.apache.hadoop.hbase.client.HConnection
-import org.apache.hadoop.hbase.client.Put
-import org.apache.hadoop.hbase.client.Increment
-import org.apache.hadoop.hbase.client.Delete
-import org.apache.spark.{Logging, SerializableWritable, SparkConf, SparkContext}
-import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil
-import org.apache.hadoop.hbase.io.ImmutableBytesWritable
-import org.apache.hadoop.mapreduce.Job
-import org.apache.hadoop.hbase.client.Mutation
 import org.apache.spark.streaming.dstream.DStream
-import java.io._
-import org.apache.hadoop.security.{Credentials, UserGroupInformation}
-import org.apache.hadoop.security.UserGroupInformation.AuthenticationMethod
-import org.apache.hadoop.hbase.mapreduce.TableInputFormat
-import org.apache.hadoop.hbase.mapreduce.IdentityTableMapper
-import org.apache.hadoop.fs.{Path, FileSystem}
+import org.apache.spark.{Logging, SerializableWritable, SparkContext}
+
+import scala.reflect.ClassTag
 
 
 /**
