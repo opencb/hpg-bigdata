@@ -43,10 +43,6 @@ public class VariantSparkHBaseGet {
 
         List<byte[]> list = new ArrayList<>();
         list.add(Bytes.toBytes(rowkey));
-//        list.add(Bytes.toBytes("2"));
-//        list.add(Bytes.toBytes("3"));
-//        list.add(Bytes.toBytes("4"));
-//        list.add(Bytes.toBytes("5"));
 
         JavaRDD<byte[]> rdd = jsc.parallelize(list);
 
@@ -75,15 +71,15 @@ public class VariantSparkHBaseGet {
         public String call(Result result) throws Exception {
             Iterator<KeyValue> it = result.list().iterator();
             StringBuilder b = new StringBuilder();
-            b.append(Bytes.toString(result.getRow()) + ":");
+            b.append(Bytes.toString(result.getRow())).append(":");
 
             while (it.hasNext()) {
                 KeyValue kv = it.next();
                 String q = Bytes.toString(kv.getQualifier());
-                if (q.equals("counter")) {
-                    b.append("(" + Bytes.toString(kv.getQualifier()) + "," + Bytes.toLong(kv.getValue()) + ")");
+                if (q.equals("v")) {
+                    b.append("(").append(Bytes.toString(kv.getQualifier())).append(",").append(Bytes.toLong(kv.getValue())).append(")");
                 } else {
-                    b.append("(" + Bytes.toString(kv.getQualifier()) + "," + Bytes.toString(kv.getValue()) + ")");
+                    b.append("(").append(Bytes.toString(kv.getQualifier())).append(",").append(Bytes.toString(kv.getValue())).append(")");
                 }
             }
             return b.toString();

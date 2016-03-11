@@ -103,9 +103,6 @@ public class SimulatorSpark implements Serializable{
         }
     }*/
 
-
-
-
     private Variant create(int numSamples, List<Region> regions) {
 
         SparkConf sparkConf = new SparkConf().setAppName("Simulator").set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
@@ -113,7 +110,7 @@ public class SimulatorSpark implements Serializable{
         /*sparkConf.set("spark.kryo.registrator", SimulatorRegistrator.class.getName());
         sparkConf.set("spark.kryo.registrator", VariantSimulatorConfiguration.class.getName());
         sparkConf.set("spark.kryo.registrator", Variant.class.getName());*/
-
+        Variant variant1 = new Variant();
 
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
 
@@ -122,9 +119,6 @@ public class SimulatorSpark implements Serializable{
         JavaRDD<String[]> rdd1 = fileRDD.map(line -> line.split("\\t"));
 
         JavaRDD<String> rdd2 = simulateVariants(rdd1);
-//        for (String line : rdd2.collect()) {
-//            System.out.println("variants = " + line);
-//        }
 
         JavaRDD<String> rdd3 = addIndelAlleles(rdd2);
 //        rdd3.collect().forEach(System.out::println);
@@ -134,8 +128,6 @@ public class SimulatorSpark implements Serializable{
 
         JavaRDD<String> rdd5 = addId(rdd4);
 //        rdd5.collect().forEach(System.out::println);
-
-        Variant variant1 = new Variant();
 
         JavaRDD<Variant> variantJavaRDD = addStudies(DEFAULT_NUM_SAMPLES, rdd5);
 
@@ -149,20 +141,17 @@ public class SimulatorSpark implements Serializable{
 
 
         Schema schema = SimulatorSpark.getAvroSchema(VariantAvro.class);
-        //System.out.println("s = " + schema);
         DataFrame df = SimulatorSpark.createDataFrame(sc, variantAvroJavaRDD, schema);
         df.printSchema();
         df.registerTempTable("variant");
 
-//        if (outputFilePath != null) {
-//            df.write().format("com.databricks.spark.avro").mode("ignore").save(outputFilePath);
-//        } else {
-//            System.out.println("Output path is null or empty!!! ");
-//        }
+        /*if (outputFilePath != null) {
+            df.write().format("com.databricks.spark.avro").mode("ignore").save(outputFilePath);
+        } else {
+            System.out.println("Output path is null or empty!!! ");
+        }*/
 
         sc.close();
-
-
         return variant1;
     }
 
@@ -185,11 +174,6 @@ public class SimulatorSpark implements Serializable{
         JavaRDD<Row> rows = rdd.map((Function<T, Row>) record -> (Row) converter.apply(record));
         return sqlContext.createDataFrame(rows, structType);
     }
-
-
-
-
-
 
     private JavaRDD<Variant> addStudies(int n, JavaRDD<String> variantRDD) {
 
@@ -228,21 +212,14 @@ public class SimulatorSpark implements Serializable{
             variant.setStrand(strand);
             VariantType vt = VariantType.valueOf(parts[4]);
             variant.setType(vt);
-
             variant.setStudies(studyEntryList);
-
             variant.setAnnotation(null);
             variant.setHgvs(null);
 
             return variant;
-
         });
-
         return variantRDD1;
     }
-
-
-
 
     public JavaRDD<String> simulateVariants(JavaRDD<String[]> splitInputData) {
 
@@ -254,11 +231,6 @@ public class SimulatorSpark implements Serializable{
             }
 
             private Iterable<String> getVariants(String[] s) {
-//                System.out.println("s.length = " + s.length);
-//                System.out.println("s = " + s[0]);
-//                System.out.println("s = " + s[1]);
-//                System.out.println("s = " + s[2]);
-//                System.out.println("s = " + s[3]);
                 List<String> variants = new ArrayList<>();
                 int pos = Integer.parseInt(s[1]);
                 for (int i = 1; i <= Integer.parseInt(s[3]); i++) {
@@ -269,18 +241,8 @@ public class SimulatorSpark implements Serializable{
                 return variants;
             }
         });
-
-//        JavaRDD<String> finalVar = var.map(s -> s.concat(" " + ids));
-//        if (!outFilePath.isEmpty() || !outFilePath.equals("")) {
-//            finalVar.saveAsTextFile(outFilePath);
-//        }
-//        for (String line : finalVar.collect()) {
-//            System.out.println("variants = " + line);
-//        }
         return variantRDD;
     }
-
-
 
     private JavaRDD<String> addIndelAlleles(JavaRDD<String> variantRDD) {
 
@@ -326,12 +288,8 @@ public class SimulatorSpark implements Serializable{
             alternateAllele = refAltArray[1];
             return s + "\t" + referenceAllele + "\t" + alternateAllele;
         });
-
         return variantRDD1;
     }
-
-
-
 
     private JavaRDD<String> addVariantType(JavaRDD<String> variantRDD) {
 
@@ -349,9 +307,6 @@ public class SimulatorSpark implements Serializable{
             variants.add("SYMBOLIC");
             variants.add("MIXED");
             String type = null;
-
-//            System.out.println("referenceAllele.length() = " + referenceAllele.length());
-//            System.out.println("alternateAllele.length() = " + alternateAllele.length());
 
             if (referenceAllele.length() == 1 && alternateAllele.length() > 1) {
                 type = variants.get(9);
@@ -372,11 +327,8 @@ public class SimulatorSpark implements Serializable{
             }
             return s + "\t" + type;
         });
-
         return variantRDD2;
     }
-
-
 
     private JavaRDD<String> addId(JavaRDD<String> variantRDD) {
 
@@ -400,16 +352,7 @@ public class SimulatorSpark implements Serializable{
         return variantRDD3;
     }
 
-
-
-
-
-
-
-
-
-
-    private List<StudyEntry> getStudies(int n) {
+    /*private List<StudyEntry> getStudies(int n) {
         int studyID = 2;
         int fieldID = 3;
 
@@ -427,9 +370,7 @@ public class SimulatorSpark implements Serializable{
         studyEntry.setSamplesData(sampleList);
         studyEntryList.add(studyEntry);
         return studyEntryList;
-    }
-
-
+    }*/
 
     private List<String> getRandomample() {
         Random rand = new Random();
@@ -438,7 +379,6 @@ public class SimulatorSpark implements Serializable{
         int dpValue = rand.nextInt((100) + 100);
         int hqValue = rand.nextInt((100) + 100);
 
-        // Nacho example
         int genotypeIndex = rand.nextInt(1000);
 
         String genotype = variantSimulatorConfiguration.getGenotypeValues()[genotypeIndex];
@@ -451,8 +391,6 @@ public class SimulatorSpark implements Serializable{
         return sample;
     }
 
-
-
     public List<String> getFormat() {
         List<String> formatFields = new ArrayList<>(10);
         formatFields.add("GT");
@@ -462,26 +400,10 @@ public class SimulatorSpark implements Serializable{
         return formatFields;
     }
 
-
-//    public static void main(String[] args) {
-//        SimulatorSpark simulatorSpark = new SimulatorSpark();
-//        Map<String, String> map = simulatorSpark.addAttributes();
-//
-//        for (Map.Entry entry : map.entrySet()) {
-//            System.out.println("entry = " + entry.toString());
-//        }
-//    }
-
-
     private Map<String, String> addAttributes() {
-
-//        JavaRDD<String> varRDD1 = varRDD.map((Function<String, String>) s -> {
 
         Random rand = new Random();
         Map<String, String> attributeMap = new HashMap<>();
-
-//        System.out.println("alternateAllele.length() = " + alternateAllele.length());
-//        System.out.println("referenceAllele.length() = " + referenceAllele.length());
         int acLength = 1; //alternateAllele.length();
         //int afLength = alternateAllele.length();
         int anLength = 1; //referenceAllele.length() + alternateAllele.length();
@@ -498,8 +420,6 @@ public class SimulatorSpark implements Serializable{
         attributeMap.put("DP", alleleDPVal);
 
         return attributeMap;
-//        });
-//        return null;
     }
 
 
