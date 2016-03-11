@@ -178,7 +178,7 @@ public class VariantCommandExecutor extends CommandExecutor {
         FileSystem hdfs = FileSystem.get(config);
         Path path = new Path(output);
 
-        boolean isExists = hdfs.exists(path);
+//        boolean isExists = hdfs.exists(path);
         //        if (isExists) {
         //        }
 
@@ -303,7 +303,7 @@ public class VariantCommandExecutor extends CommandExecutor {
         String output = variantCommandOptions.mergeVariantCommandOptions.output;
 
         String [] args = {input, output};
-        VaraintAvroMergeMR varaintAvroMergeMR = new VaraintAvroMergeMR();
+        VariantAvroMergeMR varaintAvroMergeMR = new VariantAvroMergeMR();
         try {
             varaintAvroMergeMR.run(args);
         } catch (InterruptedException e) {

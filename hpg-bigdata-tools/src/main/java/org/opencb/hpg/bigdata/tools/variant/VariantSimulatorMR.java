@@ -28,6 +28,7 @@ import java.util.Map;
 import org.apache.avro.mapred.AvroKey;
 import org.apache.avro.mapreduce.AvroJob;
 import org.apache.avro.mapreduce.AvroKeyOutputFormat;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FileSystem;
@@ -119,7 +120,7 @@ public class VariantSimulatorMR extends Configured implements Tool{
     public int run(String[] args) throws Exception {
         conf = new Configuration();
         //define how many numbers of lines need to processed by one mapper
-        conf.setInt(NLineInputFormat.LINES_PER_MAP, 200);
+        conf.setInt(NLineInputFormat.LINES_PER_MAP, 10);
 
         //Set region value if null or if not null take default
         String regionData = args[1].replace("[", "").replace("]", "");
@@ -170,14 +171,16 @@ public class VariantSimulatorMR extends Configured implements Tool{
         FileSystem fs = FileSystem.get(conf);
         Path srcPath = new Path("/tmp/" + fileName);
 
+
+
         //Check if HDFS destination path exist
-        Path dstPath = new Path("/home/hpcpal1/simulatorInputFile");
+        Path dstPath = new Path(args[0].split(":")[1]);
         if (!fs.exists(dstPath)) {
             fs.mkdirs(dstPath);
         }
 
         //Check if simulator input file already exist, delete if exist
-        Path hdfsPathWithFile = new Path("/home/hpcpal1/simulatorInputFile/" + fileName);
+        Path hdfsPathWithFile = new Path(args[0].split(":")[1] + fileName);
         if (fs.exists(hdfsPathWithFile)) {
             System.out.println("Inside hdfsPathWithFile");
             fs.delete(hdfsPathWithFile, true);
@@ -192,7 +195,7 @@ public class VariantSimulatorMR extends Configured implements Tool{
         AvroJob.setMapOutputKeySchema(job, VariantAvro.getClassSchema());
         AvroJob.setMapOutputValueSchema(job, VariantAvro.getClassSchema());
         FileInputFormat.addInputPath(job, new Path(dstPath.toString()));
-        FileOutputFormat.setOutputPath(job, new Path(args[0]));
+        FileOutputFormat.setOutputPath(job, new Path(args[0].split(":")[0]));
 
         job.getConfiguration().set("regions", args[1]);
         job.getConfiguration().set("genotypeProbabilites", args[2]);

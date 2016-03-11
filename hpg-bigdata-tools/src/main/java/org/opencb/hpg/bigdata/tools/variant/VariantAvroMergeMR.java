@@ -21,7 +21,7 @@ import java.io.IOException;
 /**
  * Created by pawan on 17/11/15.
  */
-public class VaraintAvroMergeMR implements Tool {
+public class VariantAvroMergeMR implements Tool {
 
     private Configuration conf = null;
 
