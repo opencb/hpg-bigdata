@@ -37,7 +37,7 @@
     <properties>
         <hpg.version>0.6-SNAPSHOT</hpg.version>
         <ga4gh.version>0.5.1.1</ga4gh.version>
-        <biodata.version>0.6.0-SNAPSHOT</biodata.version>
+        <biodata.version>0.7.0-SNAPSHOT</biodata.version>
         <datastore.version>0.5.0-SNAPSHOT</datastore.version>
         <commons-lib.version>3.3.0-SNAPSHOT</commons-lib.version>
         <hadoop.version>2.6.0</hadoop.version>
