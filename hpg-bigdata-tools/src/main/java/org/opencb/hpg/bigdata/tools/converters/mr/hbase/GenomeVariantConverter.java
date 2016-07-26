@@ -179,7 +179,7 @@ public class GenomeVariantConverter extends Mapper<AvroKey<Variant>, NullWritabl
         String refBases = variant.getReferenceBases();
 
         // the following parameters shouldn't really matter
-        List<String> alleleIds = variant.getAlleleIds();
+//        List<String> alleleIds = variant.getAlleleIds();
         List<String> alternateBases = variant.getAlternateBases();
 
         for (Long pos = start; pos < end; ++pos) {
@@ -200,7 +200,7 @@ public class GenomeVariantConverter extends Mapper<AvroKey<Variant>, NullWritabl
             var.setReferenceName(refName);
             var.setReferenceBases(refBases);
             var.setAlternateBases(alternateBases);
-            var.setAlleleIds(alleleIds);
+//            var.setAlleleIds(alleleIds);
 
             /* ADD */
             varList.add(var);

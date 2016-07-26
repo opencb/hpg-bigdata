@@ -103,7 +103,7 @@ public class SAMRecord2ReadAlignmentConverter implements Converter<SAMRecord, Re
         Position position = new Position();
         position.setPosition((long) in.getAlignmentStart() - 1); //from 1-based to 0-based
         position.setReferenceName(in.getReferenceName());
-        position.setSequenceId("");
+//        position.setSequenceId("");
         position.setStrand(in.getReadNegativeStrandFlag() ? Strand.NEG_STRAND : Strand.POS_STRAND);
         int mappingQuality = in.getMappingQuality();
         List<CigarUnit> cigar = new ArrayList<CigarUnit>();
@@ -174,7 +174,7 @@ public class SAMRecord2ReadAlignmentConverter implements Converter<SAMRecord, Re
             nextMatePosition = new Position();
             nextMatePosition.setPosition((long) in.getMateAlignmentStart());
             nextMatePosition.setReferenceName(in.getMateReferenceName());
-            nextMatePosition.setSequenceId("");
+//            nextMatePosition.setSequenceId("");
             nextMatePosition.setStrand(in.getMateNegativeStrandFlag() ? Strand.NEG_STRAND : Strand.POS_STRAND);
         }
 

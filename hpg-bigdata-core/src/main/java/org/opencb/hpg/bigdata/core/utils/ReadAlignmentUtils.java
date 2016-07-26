@@ -33,15 +33,15 @@ public class ReadAlignmentUtils {
         LinearAlignment la = (LinearAlignment) ra.getAlignment();
 
         // id
-        res.append(ra.getId().toString());
-        res.append(FIELD_SEPARATOR);
+        res.append(ra.getId().toString()).append(FIELD_SEPARATOR);
 
         // flags
         int flags = 0;
         if (ra.getNumberReads() > 0) {
             flags |= 0x1;
         }
-        if (ra.getProperPlacement()) {
+        // TODO Check this line, it was getProperPlacement() before
+        if (!ra.getImproperPlacement()) {
             flags |= 0x2;
         }
         if (la == null) {
