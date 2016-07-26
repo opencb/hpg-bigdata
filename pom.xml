@@ -37,13 +37,14 @@
     <properties>
         <hpg.version>0.6-SNAPSHOT</hpg.version>
         <ga4gh.version>0.5.1.1</ga4gh.version>
-        <biodata.version>0.7.0-SNAPSHOT</biodata.version>
-        <datastore.version>0.5.0-SNAPSHOT</datastore.version>
+        <biodata.version>0.8.0-SNAPSHOT</biodata.version>
         <commons-lib.version>3.3.0-SNAPSHOT</commons-lib.version>
-        <hadoop.version>2.6.0</hadoop.version>
+        <hadoop.version>2.6.3</hadoop.version>
         <hbase.version>1.0.1</hbase.version>
         <avro.version>1.7.7</avro.version>
         <parquet.version>1.8.1</parquet.version>
+        <jackson.version>2.6.6</jackson.version>
+        <slf4j.version>1.7.21</slf4j.version>
         <compileSource>1.8</compileSource>
     </properties>
 
@@ -135,17 +136,17 @@
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
-                <version>1.7.12</version>
+                <version>${slf4j.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-simple</artifactId>
-                <version>1.7.12</version>
+                <version>${slf4j.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
-                <version>2.5.4</version>
+                <version>${jackson.version}</version>
             </dependency>
             <dependency>
                 <groupId>junit</groupId>
@@ -164,7 +165,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.2</version>
+                <version>3.5.1</version>
                 <configuration>
                     <source>${compileSource}</source>
                     <target>${compileSource}</target>

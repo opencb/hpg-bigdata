@@ -36,16 +36,6 @@
             <version>${biodata.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.opencb.biodata</groupId>
-            <artifactId>biodata-models</artifactId>
-            <version>${biodata.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.opencb.biodata</groupId>
-            <artifactId>biodata-formats</artifactId>
-            <version>${biodata.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.opencb.ga4gh</groupId>
             <artifactId>ga4gh</artifactId>
         </dependency>
@@ -53,6 +43,7 @@
             <groupId>org.opencb.commons</groupId>
             <artifactId>commons-lib</artifactId>
         </dependency>
+
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
@@ -67,12 +58,12 @@
             <groupId>org.apache.avro</groupId>
             <artifactId>avro</artifactId>
             <version>${avro.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-api</artifactId>
-                </exclusion>
-            </exclusions>
+            <!--<exclusions>-->
+                <!--<exclusion>-->
+                    <!--<groupId>org.slf4j</groupId>-->
+                    <!--<artifactId>slf4j-api</artifactId>-->
+                <!--</exclusion>-->
+            <!--</exclusions>-->
         </dependency>
         <dependency>
             <groupId>org.apache.avro</groupId>
@@ -82,7 +73,7 @@
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
-            <version>3.0.0-beta-1</version>
+            <version>3.0.0-beta-3</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
