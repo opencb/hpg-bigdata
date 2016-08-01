@@ -21,7 +21,7 @@
 
     <groupId>org.opencb.hpg-bigdata</groupId>
     <artifactId>hpg-bigdata</artifactId>
-    <version>0.6-SNAPSHOT</version>
+    <version>1.0.0-alpha</version>
     <packaging>pom</packaging>
 
     <modules>
@@ -35,7 +35,7 @@
     <url>https://github.com/opencb/hpg-bigdata</url>
 
     <properties>
-        <hpg.version>0.6-SNAPSHOT</hpg.version>
+        <hpg.version>1.0.0-alpha</hpg.version>
         <ga4gh.version>0.6.0a5</ga4gh.version>
         <biodata.version>0.8.0-SNAPSHOT</biodata.version>
         <commons-lib.version>3.3.0-SNAPSHOT</commons-lib.version>
@@ -228,58 +228,6 @@
                     <autoReleaseAfterClose>true</autoReleaseAfterClose>
                 </configuration>
             </plugin>
-            <!--<plugin>-->
-            <!--<groupId>org.apache.maven.plugins</groupId>-->
-            <!--<artifactId>maven-shade-plugin</artifactId>-->
-            <!--<version>2.4</version>-->
-            <!--<executions>-->
-            <!--<execution>-->
-            <!--<phase>package</phase>-->
-            <!--<goals>-->
-            <!--<goal>shade</goal>-->
-            <!--</goals>-->
-            <!--<configuration>-->
-            <!--<artifactSet>-->
-            <!--<includes>-->
-            <!--<include>org.apache.avro:avro</include>-->
-            <!--</includes>-->
-            <!--</artifactSet>-->
-            <!--<relocations>-->
-            <!--<relocation>-->
-            <!--<pattern>org.apache.avro</pattern>-->
-            <!--<shadedPattern>org.opencb.shaded.org.apache.avros</shadedPattern>-->
-            <!--</relocation>-->
-            <!--</relocations>-->
-            <!--</configuration>-->
-            <!--</execution>-->
-            <!--</executions>-->
-            <!--</plugin>-->
-            <!--
-            <plugin>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <mainClass></mainClass>
-                        </manifest>
-                    </archive>
-                    <descriptorRefs>
-                        <descriptorRef>
-                            jar-with-dependencies
-                        </descriptorRef>
-                    </descriptorRefs>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>make-assembly</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-             -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
