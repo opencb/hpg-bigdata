@@ -27,6 +27,7 @@ import org.apache.avro.file.DataFileStream;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.commons.lang3.StringUtils;
 import org.opencb.biodata.formats.variant.vcf4.FullVcfCodec;
+import org.opencb.biodata.models.core.Region;
 import org.opencb.biodata.models.variant.Variant;
 import org.opencb.biodata.models.variant.avro.Aggregation;
 import org.opencb.biodata.models.variant.avro.VariantAvro;
@@ -218,6 +219,9 @@ public class VariantCommandExecutor extends CommandExecutor {
 
             InputStream is = new FileInputStream(variantCommandOptions.convertVariantCommandOptions.input);
             VariantParquetConverter parquetConverter = new VariantParquetConverter();
+            parquetConverter.addRegionFilter(new Region("1", 1, 800000))
+                    .addRegionFilter(new Region("1", 798801, 222800000))
+                    .addFilter(v -> v.getStudies().get(0).getFiles().get(0).getAttributes().get("NS").equals("60"));
             parquetConverter.toParquet(is, variantCommandOptions.convertVariantCommandOptions.output + "2");
 
             is.close();
