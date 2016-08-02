@@ -310,6 +310,9 @@ public class LocalCliOptionsParser {
         @Parameter(names = {"--to-avro"}, description = "Whether output must be in Avro format", required = false)
         public boolean toAvro;
 
+        @Parameter(names = {"--to-parquet"}, description = "Whether output must be in Avro format", required = false)
+        public boolean toParquet;
+
         @Parameter(names = {"--to-protobuf"}, description = "Whether output must be in protobuf format. This option is only available with 'opencb' model", required = false)
         public boolean toProtoBuf;
 
