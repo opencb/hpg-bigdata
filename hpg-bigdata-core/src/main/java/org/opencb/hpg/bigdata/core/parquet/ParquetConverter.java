@@ -18,9 +18,9 @@ package org.opencb.hpg.bigdata.core.parquet;
 
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileStream;
-import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.IndexedRecord;
 import org.apache.avro.io.DatumReader;
+import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.hadoop.fs.Path;
 import org.apache.parquet.avro.AvroParquetWriter;
 import org.apache.parquet.hadoop.ParquetWriter;
@@ -28,6 +28,9 @@ import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * Created by hpccoll1 on 05/05/15.
@@ -40,20 +43,36 @@ public abstract class ParquetConverter<T extends IndexedRecord> {
 
     protected Schema schema;
 
+    protected List<Predicate<T>> filters;
+
     public ParquetConverter() {
-        compressionCodecName = CompressionCodecName.GZIP;
-        rowGroupSize = ParquetWriter.DEFAULT_BLOCK_SIZE;
-        pageSize = ParquetWriter.DEFAULT_PAGE_SIZE;
+        this(CompressionCodecName.GZIP, ParquetWriter.DEFAULT_BLOCK_SIZE, ParquetWriter.DEFAULT_PAGE_SIZE);
     }
 
-    public ParquetConverter(Schema schema) {
-        this();
+    public ParquetConverter(CompressionCodecName compressionCodecName, int rowGroupSize, int pageSize) {
+        this.compressionCodecName = compressionCodecName;
+        this.rowGroupSize = rowGroupSize;
+        this.pageSize = pageSize;
 
-        this.schema = schema;
+        filters = new ArrayList<>();
+    }
+
+    public boolean filter(T record) {
+        for (Predicate filter: filters) {
+            if (!filter.test(record)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public ParquetConverter addFilter(Predicate<T> predicate) {
+        getFilters().add(predicate);
+        return this;
     }
 
     public void toParquet(InputStream inputStream, String outputFile) throws IOException {
-        DatumReader<T> datumReader = new GenericDatumReader<>(schema);
+        DatumReader<T> datumReader = new SpecificDatumReader<T>(schema);
         DataFileStream<T> dataFileStream = new DataFileStream<>(inputStream, datumReader);
 
         ParquetWriter<Object> parquetWriter = AvroParquetWriter.builder(new Path(outputFile))
@@ -67,7 +86,11 @@ public abstract class ParquetConverter<T extends IndexedRecord> {
         T record = null;
         while (dataFileStream.hasNext()) {
             record = dataFileStream.next(record);
+
+            if (filter(record)) {
+                System.out.println("record = " + record);
                 parquetWriter.write(record);
+            }
 
             if (numRecords % 10000 == 0) {
                 System.out.println(numRecords);
@@ -76,6 +99,28 @@ public abstract class ParquetConverter<T extends IndexedRecord> {
         }
 
         parquetWriter.close();
+    }
+
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("ParquetConverter{");
+        sb.append("compressionCodecName=").append(compressionCodecName);
+        sb.append(", rowGroupSize=").append(rowGroupSize);
+        sb.append(", pageSize=").append(pageSize);
+        sb.append(", schema=").append(schema);
+        sb.append(", filters=").append(filters);
+        sb.append('}');
+        return sb.toString();
+    }
+
+    public List<Predicate<T>> getFilters() {
+        return filters;
+    }
+
+    public ParquetConverter setFilters(List<Predicate<T>> filters) {
+        this.filters = filters;
+        return this;
     }
 
 }
