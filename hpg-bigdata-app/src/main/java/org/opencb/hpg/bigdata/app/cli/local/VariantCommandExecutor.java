@@ -16,12 +16,19 @@
 
 package org.opencb.hpg.bigdata.app.cli.local;
 
+import htsjdk.samtools.util.CloseableIterator;
+import htsjdk.variant.variantcontext.LazyGenotypesContext;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFCodec;
 import htsjdk.variant.vcf.VCFFileReader;
+import htsjdk.variant.vcf.VCFHeader;
 import org.apache.avro.Schema;
+import org.apache.avro.file.DataFileStream;
+import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.commons.lang3.StringUtils;
+import org.opencb.biodata.formats.variant.vcf4.FullVcfCodec;
 import org.opencb.biodata.models.variant.Variant;
+import org.opencb.biodata.models.variant.avro.Aggregation;
 import org.opencb.biodata.models.variant.avro.VariantAvro;
 import org.opencb.biodata.models.variant.avro.VariantFileMetadata;
 import org.opencb.biodata.models.variant.avro.VariantFileMetadata.Builder;
@@ -33,22 +40,20 @@ import org.opencb.commons.io.DataReader;
 import org.opencb.commons.run.ParallelTaskRunner;
 import org.opencb.commons.utils.FileUtils;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
-import org.opencb.hpg.bigdata.core.converters.FullVcfCodec;
 import org.opencb.hpg.bigdata.core.converters.variation.ProtoEncoderTask;
 import org.opencb.hpg.bigdata.core.converters.variation.VariantAvroEncoderTask;
 import org.opencb.hpg.bigdata.core.converters.variation.VariantContext2VariantConverter;
 import org.opencb.hpg.bigdata.core.io.VariantContextBlockIterator;
 import org.opencb.hpg.bigdata.core.io.VcfBlockIterator;
 import org.opencb.hpg.bigdata.core.io.avro.AvroFileWriter;
+import org.opencb.hpg.bigdata.core.parquet.VariantParquetConverter;
 
-import java.io.BufferedInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -113,7 +118,8 @@ public class VariantCommandExecutor extends CommandExecutor {
                 && !variantCommandOptions.convertVariantCommandOptions.toAvro
                 && !variantCommandOptions.convertVariantCommandOptions.toProtoBuf
                 && !variantCommandOptions.convertVariantCommandOptions.fromAvro) {
-            variantCommandOptions.convertVariantCommandOptions.toAvro = true;
+//            variantCommandOptions.convertVariantCommandOptions.toAvro = true;
+            variantCommandOptions.convertVariantCommandOptions.toParquet = true;
         }
 
         /*
@@ -192,6 +198,8 @@ public class VariantCommandExecutor extends CommandExecutor {
                 }
             }
 
+            System.out.println("compression = " + compression);
+
             convertToAvro(inputPath, compression, dataModel, outputStream);
 
             if (isFile) {
@@ -201,10 +209,20 @@ public class VariantCommandExecutor extends CommandExecutor {
                     writeAvroStats(new AvroFileWriter<>(VariantFileMetadata.getClassSchema(), compression, out), output);
                 }
             }
-        } else {
-            if (variantCommandOptions.convertVariantCommandOptions.fromAvro) {
-                logger.info("NOT IMPLEMENTED YET");
-            }
+        }
+
+        if (variantCommandOptions.convertVariantCommandOptions.toParquet) {
+            InputStream is2 = new FileInputStream(variantCommandOptions.convertVariantCommandOptions.input);
+            DataFileStream<VariantAvro> reader = new DataFileStream<>(is2, new SpecificDatumReader<>(VariantAvro.class));
+            Schema schema = reader.getSchema();
+
+            InputStream is = new FileInputStream(variantCommandOptions.convertVariantCommandOptions.input);
+            VariantParquetConverter parquetConverter = new VariantParquetConverter();
+            parquetConverter.toParquet(is, variantCommandOptions.convertVariantCommandOptions.output + "2");
+
+            is.close();
+            is2.close();
+            reader.close();
         }
 
         if (outputStream != null) {
@@ -301,27 +319,65 @@ public class VariantCommandExecutor extends CommandExecutor {
 //        }
     }
 
+    private void convertToAvro2(Path inputPath, String compression, String dataModel, OutputStream outputStream) throws Exception {
+
+        VariantContextToVariantConverter converter = new VariantContextToVariantConverter("", "");
+        VCFFileReader vcfFileReader = new VCFFileReader(inputPath.toFile(), false);
+        VCFHeader fileHeader = vcfFileReader.getFileHeader();
+        CloseableIterator<VariantContext> iterator = vcfFileReader.iterator();
+        while (iterator.hasNext()) {
+            VariantContext variantContext = iterator.next();
+            System.out.println("======================================");
+            System.out.println("variantContext = " + variantContext);
+            System.out.println("variantContext.getCommonInfo().getAttributes() = " + variantContext.getCommonInfo().getAttributes());
+            System.out.println("variantContext.getGenotypes().isLazyWithData() = " + variantContext.getGenotypes().isLazyWithData());
+            ((LazyGenotypesContext)variantContext.getGenotypes()).decode();
+            System.out.println("variantContext.getGenotypes().getUnparsedGenotypeData() = "
+                    + ((LazyGenotypesContext)variantContext.getGenotypes()).getUnparsedGenotypeData());
+//            System.out.println("variantContext.toStringDecodeGenotypes() = " + variantContext.toStringDecodeGenotypes());
+            System.out.println("variantContext.getGenotypes().get(0) = " + variantContext.getGenotypes().get(0).hasAnyAttribute("GC"));
+            System.out.println("variantContext.getGenotypes().get(0).getExtendedAttributes() = " + variantContext.getGenotypes().get(0)
+                    .getExtendedAttributes());
+            Variant variant = converter.convert(variantContext);
+            System.out.println("variant = " + variant);
+            System.out.println("======================================");
+        }
+    }
+
     private void convertToAvro(Path inputPath, String compression, String dataModel, OutputStream outputStream) throws Exception {
         // Creating reader
         VcfBlockIterator iterator = (StringUtils.equals("-", inputPath.toAbsolutePath().toString()))
                 ? new VcfBlockIterator(new BufferedInputStream(System.in), new FullVcfCodec())
                 : new VcfBlockIterator(inputPath.toFile(), new FullVcfCodec());
-
         DataReader<CharBuffer> vcfDataReader = iterator.toCharBufferDataReader();
 
+
+        ArrayList<String> sampleNamesInOrder = iterator.getHeader().getSampleNamesInOrder();
+//        System.out.println("sampleNamesInOrder = " + sampleNamesInOrder);
 
         // main loop
         int numTasks = Math.max(variantCommandOptions.convertVariantCommandOptions.numThreads, 1);
         int batchSize = 1024 * 1024;  //Batch size in bytes
         int capacity = numTasks + 1;
 //            VariantConverterContext variantConverterContext = new VariantConverterContext();
+
+//        long start = System.currentTimeMillis();
+
+//        final VariantContextToVariantConverter converter = new VariantContextToVariantConverter("", "", sampleNamesInOrder);
+//        List<CharBuffer> read;
+//        while ((read = vcfDataReader.read()) != null {
+//            converter.convert(read.)
+//        }
+
+//        Old implementation:
+
         ParallelTaskRunner.Config config = new ParallelTaskRunner.Config(numTasks, batchSize, capacity, false);
         ParallelTaskRunner<CharBuffer, ByteBuffer> runner;
         switch (dataModel.toLowerCase()) {
             case "opencb": {
                 Schema classSchema = VariantAvro.getClassSchema();
                 // Converter
-                final VariantContextToVariantConverter converter = new VariantContextToVariantConverter("", "");
+                final VariantContextToVariantConverter converter = new VariantContextToVariantConverter("", "", sampleNamesInOrder);
                 // Writer
                 AvroFileWriter<VariantAvro> avroFileWriter = new AvroFileWriter<>(classSchema, compression, outputStream);
 
@@ -366,6 +422,9 @@ public class VariantCommandExecutor extends CommandExecutor {
             meta.put("INFO_DEFAULT", "END,BLOCKAVG_min30p3a");
             meta.put("FORMAT_DEFAULT", "GT:GQX:DP:DPF");
             builder.setMetadata(meta);
+            builder.setAggregation(Aggregation.NONE);
+            builder.setStats(null);
+            builder.setHeader(null);
             aw.writeDatum(builder.build());
         } finally {
             try {
