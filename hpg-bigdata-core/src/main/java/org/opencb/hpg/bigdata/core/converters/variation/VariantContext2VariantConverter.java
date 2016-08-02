@@ -32,8 +32,8 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.ga4gh.models.*;
+import org.opencb.biodata.formats.variant.vcf4.FullVcfCodec;
 import org.opencb.hpg.bigdata.core.converters.Converter;
-import org.opencb.hpg.bigdata.core.converters.FullVcfCodec;
 import org.opencb.hpg.bigdata.core.io.avro.AvroWriter;
 import org.opencb.hpg.bigdata.core.utils.AvroUtils;
 
