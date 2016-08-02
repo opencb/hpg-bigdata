@@ -72,7 +72,7 @@ public abstract class ParquetConverter<T extends IndexedRecord> {
     }
 
     public void toParquet(InputStream inputStream, String outputFile) throws IOException {
-        DatumReader<T> datumReader = new SpecificDatumReader<T>(schema);
+        DatumReader<T> datumReader = new SpecificDatumReader<>(schema);
         DataFileStream<T> dataFileStream = new DataFileStream<>(inputStream, datumReader);
 
         ParquetWriter<Object> parquetWriter = AvroParquetWriter.builder(new Path(outputFile))
@@ -88,17 +88,16 @@ public abstract class ParquetConverter<T extends IndexedRecord> {
             record = dataFileStream.next(record);
 
             if (filter(record)) {
-                System.out.println("record = " + record);
                 parquetWriter.write(record);
-            }
 
-            if (numRecords % 10000 == 0) {
-                System.out.println(numRecords);
+                if (++numRecords % 10000 == 0) {
+                    System.out.println("Number of processed records: " + numRecords);
+                }
             }
-            numRecords++;
         }
 
         parquetWriter.close();
+        dataFileStream.close();
     }
 
 

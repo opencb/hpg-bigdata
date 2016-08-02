@@ -23,11 +23,8 @@ import htsjdk.variant.vcf.VCFCodec;
 import htsjdk.variant.vcf.VCFFileReader;
 import htsjdk.variant.vcf.VCFHeader;
 import org.apache.avro.Schema;
-import org.apache.avro.file.DataFileStream;
-import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.commons.lang3.StringUtils;
 import org.opencb.biodata.formats.variant.vcf4.FullVcfCodec;
-import org.opencb.biodata.models.core.Region;
 import org.opencb.biodata.models.variant.Variant;
 import org.opencb.biodata.models.variant.avro.Aggregation;
 import org.opencb.biodata.models.variant.avro.VariantAvro;
@@ -213,20 +210,14 @@ public class VariantCommandExecutor extends CommandExecutor {
         }
 
         if (variantCommandOptions.convertVariantCommandOptions.toParquet) {
-            InputStream is2 = new FileInputStream(variantCommandOptions.convertVariantCommandOptions.input);
-            DataFileStream<VariantAvro> reader = new DataFileStream<>(is2, new SpecificDatumReader<>(VariantAvro.class));
-            Schema schema = reader.getSchema();
-
             InputStream is = new FileInputStream(variantCommandOptions.convertVariantCommandOptions.input);
             VariantParquetConverter parquetConverter = new VariantParquetConverter();
-            parquetConverter.addRegionFilter(new Region("1", 1, 800000))
-                    .addRegionFilter(new Region("1", 798801, 222800000))
-                    .addFilter(v -> v.getStudies().get(0).getFiles().get(0).getAttributes().get("NS").equals("60"));
+//            parquetConverter.addRegionFilter(new Region("1", 1, 800000))
+//                    .addRegionFilter(new Region("1", 798801, 222800000))
+//                    .addFilter(v -> v.getStudies().get(0).getFiles().get(0).getAttributes().get("NS").equals("60"));
             parquetConverter.toParquet(is, variantCommandOptions.convertVariantCommandOptions.output + "2");
 
             is.close();
-            is2.close();
-            reader.close();
         }
 
         if (outputStream != null) {
