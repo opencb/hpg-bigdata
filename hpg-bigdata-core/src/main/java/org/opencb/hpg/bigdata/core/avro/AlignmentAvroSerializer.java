@@ -12,6 +12,14 @@ import java.io.*;
  */
 public class AlignmentAvroSerializer extends AvroSerializer<ReadAlignment> {
 
+    public AlignmentAvroSerializer() {
+        this("deflate");
+    }
+
+    public AlignmentAvroSerializer(String compression) {
+        super(compression);
+    }
+
     @Override
     public void toAvro(String inputFilename, String outputFilename) throws IOException {
 

@@ -16,6 +16,10 @@ import java.util.List;
  */
 public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
 
+    public VariantAvroSerializer() {
+        super("deflate");
+    }
+
     public VariantAvroSerializer(String compression) {
         super(compression);
     }

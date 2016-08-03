@@ -88,7 +88,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
 
         // sanity check
         if (compressionCodecName.equals("null")) {
-            compressionCodecName = null;
+            compressionCodecName = "deflate";
         }
 
         if (alignmentCommandOptions.convertAlignmentCommandOptions.toBam) {
@@ -136,7 +136,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
 
         } else {
             boolean adjustQuality = alignmentCommandOptions.convertAlignmentCommandOptions.adjustQuality;
-            AlignmentAvroSerializer avroSerializer = new AlignmentAvroSerializer(compressionCodecName, adjustQuality);
+            AlignmentAvroSerializer avroSerializer = new AlignmentAvroSerializer(compressionCodecName);
             avroSerializer.toAvro(input, output);
         }
     }
