@@ -27,7 +27,7 @@ import org.opencb.biodata.tools.alignment.tasks.AlignmentStatsCalculator;
 import org.opencb.biodata.tools.alignment.tasks.RegionDepth;
 import org.opencb.biodata.tools.alignment.tasks.RegionDepthCalculator;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
-import org.opencb.hpg.bigdata.core.NativeSupport;
+import org.opencb.hpg.bigdata.core.avro.AlignmentAvroSerializer;
 import org.opencb.hpg.bigdata.core.converters.SAMRecord2ReadAlignmentConverter;
 
 import java.io.*;
@@ -135,27 +135,9 @@ public class AlignmentCommandExecutor extends CommandExecutor {
             is.close();
 
         } else {
-
-            // conversion: BAM -> GA4GH/Avro model
-            System.out.println("Loading library hpgbigdata...");
-            System.out.println("\tjava.libary.path = " + System.getProperty("java.library.path"));
-            System.loadLibrary("hpgbigdata");
-            System.out.println("...done!");
-            new NativeSupport().bam2ga(input, output, compressionCodecName == null
-                    ? "snappy"
-                    : compressionCodecName, alignmentCommandOptions.convertAlignmentCommandOptions.adjustQuality);
-
-            try {
-                // header management: saved it in a separate file
-                SamReader reader = SamReaderFactory.makeDefault().open(new File(input));
-                SAMFileHeader header = reader.getFileHeader();
-                PrintWriter pwriter = null;
-                pwriter = new PrintWriter(new FileWriter(output + BAM_HEADER_SUFFIX));
-                pwriter.write(header.getTextHeader());
-                pwriter.close();
-            } catch (IOException e) {
-                throw e;
-            }
+            boolean adjustQuality = alignmentCommandOptions.convertAlignmentCommandOptions.adjustQuality;
+            AlignmentAvroSerializer avroSerializer = new AlignmentAvroSerializer(compressionCodecName, adjustQuality);
+            avroSerializer.toAvro(input, output);
         }
     }
 

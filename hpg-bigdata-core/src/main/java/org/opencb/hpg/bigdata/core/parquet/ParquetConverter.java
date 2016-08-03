@@ -71,11 +71,11 @@ public abstract class ParquetConverter<T extends IndexedRecord> {
         return this;
     }
 
-    public void toParquet(InputStream inputStream, String outputFile) throws IOException {
+    public void toParquet(InputStream inputStream, String outputFilename) throws IOException {
         DatumReader<T> datumReader = new SpecificDatumReader<>(schema);
         DataFileStream<T> dataFileStream = new DataFileStream<>(inputStream, datumReader);
 
-        ParquetWriter<Object> parquetWriter = AvroParquetWriter.builder(new Path(outputFile))
+        ParquetWriter<Object> parquetWriter = AvroParquetWriter.builder(new Path(outputFilename))
                 .withSchema(schema)
                 .withCompressionCodec(compressionCodecName)
                 .withRowGroupSize(rowGroupSize)
