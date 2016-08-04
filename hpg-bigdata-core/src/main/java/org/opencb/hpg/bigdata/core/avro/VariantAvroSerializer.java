@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import org.apache.commons.lang3.StringUtils;
+import org.opencb.biodata.models.core.Region;
 import org.opencb.biodata.models.variant.Variant;
 import org.opencb.biodata.models.variant.VariantSource;
 import org.opencb.biodata.models.variant.avro.VariantAvro;
@@ -37,9 +39,13 @@ public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
         vcfReader.pre();
 
         // writer
-        OutputStream outputStream = new FileOutputStream(outputFilename);
-        AvroFileWriter<VariantAvro> avroFileWriter = new AvroFileWriter<>(VariantAvro.SCHEMA$,
-                                                                          compression, outputStream);
+        OutputStream outputStream;
+        if (StringUtils.isEmpty(outputFilename) || outputFilename.equals("STDOUT")) {
+            outputStream = System.out;
+        } else {
+            outputStream = new FileOutputStream(outputFilename);
+        }
+        AvroFileWriter<VariantAvro> avroFileWriter = new AvroFileWriter<>(VariantAvro.SCHEMA$, compression, outputStream);
         avroFileWriter.open();
         VariantGlobalStatsCalculator statsCalculator = new VariantGlobalStatsCalculator(vcfReader.getSource());
         statsCalculator.pre();
@@ -75,5 +81,12 @@ public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
         vcfReader.close();
         avroFileWriter.close();
         outputStream.close();
+    }
+
+    public VariantAvroSerializer addRegionFilter(Region region) {
+        getFilters().add(v -> v.getChromosome().equals(region.getChromosome())
+                && v.getEnd() >= region.getStart()
+                && v.getStart() <= region.getEnd());
+        return this;
     }
 }

@@ -17,6 +17,7 @@
 package org.opencb.hpg.bigdata.app.cli.local;
 
 import com.beust.jcommander.*;
+import org.opencb.hpg.bigdata.app.cli.hadoop.CliOptionsParser;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -295,36 +296,34 @@ public class LocalCliOptionsParser {
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
 
-        @Parameter(names = {"-i", "--input"}, description = "Input file in VCF/gVCF format", required = true, arity = 1)
+        @Parameter(names = {"-i", "--input"}, description = "Input file name, usually a gVCF/VCF but it can be an Avro file when converting to Parquet.",
+                required = true, arity = 1)
         public String input;
 
-        @Parameter(names = {"-o", "--output"}, description = "File where to store output", required = false, arity = 1)
-        public String output = "STDOUT";
+        @Parameter(names = {"--to"}, description = "Destination Serialization format. Accepted values: avro, parquet and json", required = true)
+        public String to;
+
+        @Parameter(names = {"-o", "--output"}, description = "Output file name.", required = false, arity = 1)
+        public String output;
+
+        @Parameter(names = {"-O"}, description = "Use the standard output.", required = false, arity = 0)
+        public boolean stdOutput;
+
+        @Parameter(names = {"--from"}, description = "Accepted values: vcf, avro", required = false)
+        public String from;
+
+        @Parameter(names = {"--region"}, description = "Filter variant by regions, comma separated list of regions, e.g.: 1:300000-400000000,15:343453463-8787665654", required = false)
+        public String regions;
 
         @Parameter(names = {"-d", "--data-model"}, description = "Only for 'to-json' and 'to-avro' options. 'to-protobuf' is only available with opencb data models. Values: opencb, ga4gh", required = false, arity = 1)
         public String dataModel = "opencb";
 
-        @Parameter(names = {"--to-json"}, description = "Whether output must be in protobuf format.", required = false)
-        public boolean toJson;
-
-        @Parameter(names = {"--to-avro"}, description = "Whether output must be in Avro format", required = false)
-        public boolean toAvro;
-
-        @Parameter(names = {"--to-parquet"}, description = "Whether output must be in Avro format", required = false)
-        public boolean toParquet;
-
-        @Parameter(names = {"--to-protobuf"}, description = "Whether output must be in protobuf format. This option is only available with 'opencb' model", required = false)
-        public boolean toProtoBuf;
-
         @Parameter(names = {"-x", "--compression"}, description = "Available options for Avro are: : snappy, deflate, bzip2, xz. " +
-                "For JSON and ProtoBuf only 'gzip' is available. Mode 'auto' will infer compression from file extensions: .gz, .sz, ...", required = false, arity = 1)
-        public String compression = "auto";
+                "For JSON and ProtoBuf only 'gzip' is available. It compression is null,  it will be inferred compression from file extensions: .gz, .sz, ...", required = false, arity = 1)
+        public String compression = "deflate";
 
         @Parameter(names = {"-t", "--num-threads"}, description = "Number of threads to use, this must be less than the number of cores", required = false)
         public int numThreads = 2;
-
-        @Parameter(names = {"--from-avro"}, description = "Converts Avro format into JSON", required = false)
-        public boolean fromAvro;
 
 //        @Parameter(names = {"--to-parquet"}, description = "Whether output must be in parquet format", required = false)
 //        public boolean toParquet;
