@@ -211,15 +211,16 @@ public class ParentDataset<T> {
     public void explain(boolean extended) {
         df.explain(extended);
     }
-    /*
-        public ParentDataset<T> explode(Seq<Column> input, scala.Function1<Row,TraversableOnce<A>> f,
-        scala.reflect.api.TypeTags.TypeTag<A> evidence$2) {
-            df = df.explode(input, );
-            return this;
-        }
-        <A,B> DataFrame explode(String inputColumn, String outputColumn, scala.Function1<A,TraversableOnce<B>> f,
-        scala.reflect.api.TypeTags.TypeTag<B> evidence$3)
-    */
+
+//    public ParentDataset<T> explode(Seq<Column> input, scala.Function1<Row,TraversableOnce<A>> f,
+//                                    scala.reflect.api.TypeTags.TypeTag<A> evidence) {
+//        df = df.explode(input, evidence);
+//        return this;
+//    }
+//    public <A,B> DataFrame explode(String inputColumn, String outputColumn, scala.Function1<A,TraversableOnce<B>> f,
+//                            scala.reflect.api.TypeTags.TypeTag<B> evidence)
+
+
     public ParentDataset<T> filter(Column condition) {
         df = df.filter(condition);
         return this;
@@ -331,7 +332,7 @@ public class ParentDataset<T> {
     }
 
     public <R> RDD<R> mapPartitions(scala.Function1<scala.collection.Iterator<Row>, scala.collection.Iterator<R>> f,
-                                   scala.reflect.ClassTag<R> evidence) {
+                                    scala.reflect.ClassTag<R> evidence) {
         return df.mapPartitions(f, evidence);
     }
 

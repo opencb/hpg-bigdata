@@ -18,6 +18,7 @@ package org.opencb.hpg.bigdata.core.lib;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.sql.Column;
 import org.junit.Test;
 
 /**
@@ -28,27 +29,33 @@ public class VariantDatasetTest {
     @Test
     public void execute() {
         System.out.println(">>>> Running VariantDatasetTest 0000...");
-//        SparkConf sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "/home/imedina/soft/spark-1.6.2");
+        SparkConf sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "/home/imedina/soft/spark-1.6.2");
 
-        SparkConf sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "/home/joaquin/softs/spark-2.0.0-bin-hadoop2.7/bin");
+//        SparkConf sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "/home/joaquin/softs/spark-2.0.0-bin-hadoop2.7/bin");
         System.out.println("sparkConf = " + sparkConf.toDebugString());
         JavaSparkContext sparkContext = new JavaSparkContext(sparkConf);
 
         System.out.println(">>>> opening file...");
 
-        //String filename = "/home/imedina/appl/hpg-bigdata/data/CEU-1409-01_20000.vcf.avro";
-        String filename = "/tmp/kk/xxx.avro";
+        String filename = "/home/imedina/data/CEU-1409-01_20000.vcf.avro";
+//        String filename = "/tmp/kk/xxx.avro";
         VariantDataset vd = new VariantDataset();
         try {
             vd.load(filename, sparkContext);
 
             System.out.println("--------------------------------------");
-            vd.select(vd.col("studies.files")).show(2);
+//            vd.select(vd.col("studies")).show(2);
             System.out.println("--------------------------------------");
+            System.out.println(vd.count());
+//            System.out.println(vd.filter("start >= 564477").filter("end <= 729948").count());
+//            System.out.println(vd.groupBy("chromosome").avg("start").sort("chromosome").take(3)[0]);
+//            System.out.println(vd.describe("studies"));
+            vd.select("studies.files").select("attributes").show();
+//            System.out.println(vd.filter("studies.files[0].attributes.AF = '0.009'"));
+//            System.out.println(vd.filter("studies.files.attributes.AF = '0.009'"));
         } catch (Exception e) {
             e.printStackTrace();
         }
-
 
 
         /*

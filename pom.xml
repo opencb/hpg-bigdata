@@ -43,7 +43,7 @@
         <hbase.version>1.0.1</hbase.version>
         <avro.version>1.7.7</avro.version>
         <parquet.version>1.8.1</parquet.version>
-        <jackson.version>2.6.6</jackson.version>
+        <jackson.version>2.4.4</jackson.version>
         <slf4j.version>1.7.21</slf4j.version>
         <compileSource>1.8</compileSource>
     </properties>
