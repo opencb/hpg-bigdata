@@ -27,14 +27,17 @@ public class VariantDatasetTest {
 
     @Test
     public void execute() {
-        System.out.println(">>>> Running VariantDatasetTest...");
-        SparkConf sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "/home/imedina/soft/spark-1.6.2");
+        System.out.println(">>>> Running VariantDatasetTest 0000...");
+//        SparkConf sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "/home/imedina/soft/spark-1.6.2");
+
+        SparkConf sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "/home/joaquin/softs/spark-2.0.0-bin-hadoop2.7/bin");
         System.out.println("sparkConf = " + sparkConf.toDebugString());
         JavaSparkContext sparkContext = new JavaSparkContext(sparkConf);
 
         System.out.println(">>>> opening file...");
 
-        String filename = "/home/imedina/appl/hpg-bigdata/data/CEU-1409-01_20000.vcf.avro";
+        //String filename = "/home/imedina/appl/hpg-bigdata/data/CEU-1409-01_20000.vcf.avro";
+        String filename = "/tmp/kk/xxx.avro";
         VariantDataset vd = new VariantDataset();
         try {
             vd.load(filename, sparkContext);
