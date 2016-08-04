@@ -40,11 +40,9 @@ import org.opencb.hpg.bigdata.core.converters.variation.VariantContext2VariantCo
 import org.opencb.hpg.bigdata.core.io.VariantContextBlockIterator;
 import org.opencb.hpg.bigdata.core.io.VcfBlockIterator;
 import org.opencb.hpg.bigdata.core.io.avro.AvroFileWriter;
+import org.opencb.hpg.bigdata.core.parquet.VariantParquetConverter;
 
-import java.io.BufferedInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.file.Path;
@@ -119,11 +117,23 @@ public class VariantCommandExecutor extends CommandExecutor {
             regions = Region.parseRegions(variantCommandOptions.convertVariantCommandOptions.regions);
         }
 
-        VariantAvroSerializer avroSerializer = new VariantAvroSerializer(compression);
-        if (regions != null) {
-            regions.forEach(avroSerializer::addRegionFilter);
+        switch (variantCommandOptions.convertVariantCommandOptions.to) {
+            case "avro":
+                VariantAvroSerializer avroSerializer = new VariantAvroSerializer(compression);
+                if (regions != null) {
+                    regions.forEach(avroSerializer::addRegionFilter);
+                }
+                avroSerializer.toAvro(inputPath.toString(), output);
+                break;
+            case "parquet":
+                InputStream is = new FileInputStream(variantCommandOptions.convertVariantCommandOptions.input);
+                VariantParquetConverter parquetConverter = new VariantParquetConverter();
+                parquetConverter.toParquet(is, variantCommandOptions.convertVariantCommandOptions.output + "2");
+                break;
+            default:
+                System.out.println("No valid format: " + variantCommandOptions.convertVariantCommandOptions.to);
+                break;
         }
-        avroSerializer.toAvro(inputPath.toString(), output);
 
     }
 
