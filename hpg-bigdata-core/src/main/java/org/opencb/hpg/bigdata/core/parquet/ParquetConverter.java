@@ -77,7 +77,9 @@ public abstract class ParquetConverter<T extends IndexedRecord> {
 
         AvroParquetWriter parquetWriter =
                 new AvroParquetWriter(new Path(outputFilename), schema, compressionCodecName, rowGroupSize, pageSize);
-//        ParquetWriter<Object> parquetWriter = AvroParquetWriter.builder(new Path(outputFilename))
+
+        // This code is correct for parquet 1.8.1. Scala is still using parquet 1.7.0
+//        ParquetWriter<Object> parquetWriter2 = AvroParquetWriter.builder(new Path(outputFilename))
 //                .withSchema(schema)
 //                .withCompressionCodec(compressionCodecName)
 //                .withRowGroupSize(rowGroupSize)

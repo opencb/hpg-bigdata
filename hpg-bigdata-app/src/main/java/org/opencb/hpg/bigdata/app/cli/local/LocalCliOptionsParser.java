@@ -323,10 +323,10 @@ public class LocalCliOptionsParser {
         public String compression = "deflate";
 
         @Parameter(names = {"-t", "--num-threads"}, description = "Number of threads to use, this must be less than the number of cores", required = false)
-        public int numThreads = 2;
+        public int numThreads = 1;
 
-//        @Parameter(names = {"--to-parquet"}, description = "Whether output must be in parquet format", required = false)
-//        public boolean toParquet;
+        @Parameter(names = {"--skip-normalization"}, description = "Whether to skip variant normalization", required = false)
+        public boolean skipNormalization;
 
         @DynamicParameter(names = {"-D"}, hidden = true)
         public Map<String, String> options = new HashMap<>();
