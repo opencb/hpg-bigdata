@@ -18,7 +18,6 @@ package org.opencb.hpg.bigdata.core.lib;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.rdd.RDD;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.types.StructType;
@@ -36,185 +35,187 @@ import java.util.Map;
  */
 public class ParentDataset<T> {
 
-    protected DataFrame df;
+    protected Dataset<Row> ds;
     protected SQLContext sqlContext;
+    protected SparkSession sparkSession;
 
     public ParentDataset() {
-        df = null;
+        ds = null;
         sqlContext = null;
     }
 
-    public void load(String filename, JavaSparkContext sparkContext) throws Exception {
-        sqlContext = new SQLContext(sparkContext);
+    public void load(String filename, SparkSession sparkSession) throws Exception {
+        this.sparkSession = sparkSession;
+        sqlContext = new SQLContext(sparkSession);
 
         if (StringUtils.endsWithAny(filename, "avro", "avro.gz", "avro.sz")) {
-            df = sqlContext.read().format("com.databricks.spark.avro").load(filename);
+            ds = sqlContext.read().format("com.databricks.spark.avro").load(filename);
         } else if (StringUtils.endsWithAny(filename, "json", "json.gz")) {
-            df = sqlContext.read().json(filename);
+            ds = sqlContext.read().json(filename);
         } else {
-            df = sqlContext.read().load(filename);
+            ds = sqlContext.read().load(filename);
         }
     }
 
     public ParentDataset<T> agg(Column expr, Column... exprs) {
-        df = df.agg(expr, exprs);
+        ds = ds.agg(expr, exprs);
         return this;
     }
 
     public ParentDataset<T> agg(Column expr, Seq<Column> exprs) {
-        df = df.agg(expr, exprs);
+        ds = ds.agg(expr, exprs);
         return this;
     }
 
     public ParentDataset<T> agg(scala.collection.immutable.Map<String, String> exprs) {
-        df = df.agg(exprs);
+        ds = ds.agg(exprs);
         return this;
     }
 
     public ParentDataset<T> agg(Map<String, String> exprs) {
-        df = df.agg(exprs);
+        ds = ds.agg(exprs);
         return this;
     }
 
     public ParentDataset<T> agg(Tuple2<String, String> aggExpr, Seq<Tuple2<String, String>> aggExprs) {
-        df = df.agg(aggExpr, aggExprs);
+        ds = ds.agg(aggExpr, aggExprs);
         return this;
     }
 
     public ParentDataset<T> alias(String alias)  {
-        df = df.alias(alias);
+        ds = ds.alias(alias);
         return this;
     }
 
     public ParentDataset<T> alias(Symbol alias) {
-        df = df.alias(alias);
+        ds = ds.alias(alias);
         return this;
     }
 
     public Column apply(String colName) {
-        return df.apply(colName);
+        return ds.apply(colName);
     }
 
     public ParentDataset<T> as(String alias) {
-        df = df.as(alias);
+        ds = ds.as(alias);
         return this;
     }
 
     public ParentDataset<T> as(scala.Symbol alias) {
-        df = df.as(alias);
+        ds = ds.as(alias);
         return this;
     }
 
     public ParentDataset<T> cache() {
-        df = df.cache();
+        ds = ds.cache();
         return this;
     }
 
     public ParentDataset<T> coalesce(int numPartitions) {
-        df = df.coalesce(numPartitions);
+        ds = ds.coalesce(numPartitions);
         return this;
     }
 
     public Column col(String colName) {
-        return df.col(colName);
+        return ds.col(colName);
     }
 
-    public Row[] collect() {
-        return df.collect();
+    public Object collect() {
+        return ds.collect();
     }
 
     public List<Row> collectAsList() {
-        return df.collectAsList();
+        return ds.collectAsList();
     }
 
     protected int collectToPython() {
-        return df.collectToPython();
+        return ds.collectToPython();
     }
 
     public String[] columns() {
-        return df.columns();
+        return ds.columns();
     }
 
     long count() {
-        return df.count();
+        return ds.count();
     }
 
-    public GroupedData cube(Column... cols) {
-        return df.cube(cols);
+    public RelationalGroupedDataset cube(Column... cols) {
+        return ds.cube(cols);
     }
 
-    public GroupedData cube(Seq<Column> cols) {
-        return df.cube(cols);
+    public RelationalGroupedDataset cube(Seq<Column> cols) {
+        return ds.cube(cols);
     }
 
-    public GroupedData cube(String col1, Seq<String> cols) {
-        return df.cube(col1, cols);
+    public RelationalGroupedDataset cube(String col1, Seq<String> cols) {
+        return ds.cube(col1, cols);
     }
 
-    public GroupedData cube(String col1, String... cols) {
-        return df.cube(col1, cols);
+    public RelationalGroupedDataset cube(String col1, String... cols) {
+        return ds.cube(col1, cols);
     }
 
     public ParentDataset<T> describe(Seq<String> cols) {
-        df = df.describe(cols);
+        ds = ds.describe(cols);
         return this;
     }
 
     public ParentDataset<T> describe(String... cols) {
-        df = df.describe(cols);
+        ds = ds.describe(cols);
         return this;
     }
 
     public ParentDataset<T> distinct() {
-        df = df.distinct();
+        ds = ds.distinct();
         return this;
     }
 
     public ParentDataset<T> drop(Column col) {
-        df = df.drop(col);
+        ds = ds.drop(col);
         return this;
     }
 
     public ParentDataset<T> drop(String colName) {
-        df = df.drop(colName);
+        ds = ds.drop(colName);
         return this;
     }
 
     public ParentDataset<T> dropDuplicates() {
-        df = df.dropDuplicates();
+        ds = ds.dropDuplicates();
         return this;
     }
 
     public ParentDataset<T> dropDuplicates(Seq<String> colNames) {
-        df = df.dropDuplicates(colNames);
+        ds = ds.dropDuplicates(colNames);
         return this;
     }
 
     public ParentDataset<T> dropDuplicates(String[] colNames) {
-        df = df.dropDuplicates(colNames);
+        ds = ds.dropDuplicates(colNames);
         return this;
     }
 
     public Tuple2<String, String>[] dtypes() {
-        return df.dtypes();
+        return ds.dtypes();
     }
 
-    public ParentDataset<T> except(DataFrame other) {
-        df = df.except(other);
+    public ParentDataset<T> except(Dataset<Row> other) {
+        ds = ds.except(other);
         return this;
     }
 
     public void explain() {
-        df.explain();
+        ds.explain();
     }
 
     public void explain(boolean extended) {
-        df.explain(extended);
+        ds.explain(extended);
     }
 
 //    public ParentDataset<T> explode(Seq<Column> input, scala.Function1<Row,TraversableOnce<A>> f,
 //                                    scala.reflect.api.TypeTags.TypeTag<A> evidence) {
-//        df = df.explode(input, evidence);
+//        ds = ds.explode(input, evidence);
 //        return this;
 //    }
 //    public <A,B> DataFrame explode(String inputColumn, String outputColumn, scala.Function1<A,TraversableOnce<B>> f,
@@ -222,400 +223,412 @@ public class ParentDataset<T> {
 
 
     public ParentDataset<T> filter(Column condition) {
-        df = df.filter(condition);
+        ds = ds.filter(condition);
         return this;
     }
 
     public ParentDataset<T> filter(String conditionExpr) {
-        df = df.filter(conditionExpr);
+        ds = ds.filter(conditionExpr);
         return this;
     }
 
     public Row first() {
-        return df.first();
+        return ds.first();
     }
 
     public void foreach(scala.Function1<Row, scala.runtime.BoxedUnit> f) {
-        df.foreach(f);
+        ds.foreach(f);
     }
 
     public void foreachPartition(scala.Function1<scala.collection.Iterator<Row>, scala.runtime.BoxedUnit> f) {
-        df.foreachPartition(f);
+        ds.foreachPartition(f);
     }
 
-    public GroupedData groupBy(Column... cols) {
-        return df.groupBy(cols);
+    public RelationalGroupedDataset groupBy(Column... cols) {
+        return ds.groupBy(cols);
     }
 
-    public GroupedData groupBy(Seq<Column> cols) {
-        return df.groupBy(cols);
+    public RelationalGroupedDataset groupBy(Seq<Column> cols) {
+        return ds.groupBy(cols);
     }
 
-    public GroupedData groupBy(String col1, Seq<String> cols) {
-        return df.groupBy(col1, cols);
+    public RelationalGroupedDataset groupBy(String col1, Seq<String> cols) {
+        return ds.groupBy(col1, cols);
     }
 
-    public GroupedData groupBy(String col1, String... cols) {
-        return df.groupBy(col1, cols);
+    public RelationalGroupedDataset groupBy(String col1, String... cols) {
+        return ds.groupBy(col1, cols);
     }
 
     public Row head() {
-        return df.head();
+        return ds.head();
     }
 
-    public Row[] head(int n) {
-        return df.head(n);
+    public Object head(int n) {
+        return ds.head(n);
     }
 
     public String[] inputFiles() {
-        return df.inputFiles();
+        return ds.inputFiles();
     }
 
-    public ParentDataset<T> intersect(DataFrame other) {
-        df = df.intersect(other);
+    public ParentDataset<T> intersect(Dataset<Row> other) {
+        ds = ds.intersect(other);
         return this;
     }
 
     boolean isLocal() {
-        return df.isLocal();
+        return ds.isLocal();
     }
 
     public JavaRDD<Row> javaRDD() {
-        return df.javaRDD();
+        return ds.javaRDD();
     }
 
     protected JavaRDD<byte[]> javaToPython() {
-        return df.javaToPython();
+        return ds.javaToPython();
     }
 
-    public ParentDataset<T> join(DataFrame right) {
-        df = df.join(right);
+    public ParentDataset<T> join(Dataset<Row> right) {
+        ds = ds.join(right);
         return this;
     }
 
-    public ParentDataset<T> join(DataFrame right, Column joinExprs) {
-        df = df.join(right, joinExprs);
+    public ParentDataset<T> join(Dataset<Row> right, Column joinExprs) {
+        ds = ds.join(right, joinExprs);
         return this;
     }
 
-    public ParentDataset<T> join(DataFrame right, Column joinExprs, String joinType) {
-        df = df.join(right, joinExprs, joinType);
+    public ParentDataset<T> join(Dataset<Row> right, Column joinExprs, String joinType) {
+        ds = ds.join(right, joinExprs, joinType);
         return this;
     }
 
-    public ParentDataset<T> join(DataFrame right, Seq<String> usingColumns) {
-        df = df.join(right, usingColumns);
+    public ParentDataset<T> join(Dataset<Row> right, Seq<String> usingColumns) {
+        ds = ds.join(right, usingColumns);
         return this;
     }
 
-    public ParentDataset<T> join(DataFrame right, Seq<String> usingColumns, String joinType) {
-        df = df.join(right, usingColumns, joinType);
+    public ParentDataset<T> join(Dataset<Row> right, Seq<String> usingColumns, String joinType) {
+        ds = ds.join(right, usingColumns, joinType);
         return this;
     }
 
-    public ParentDataset<T> join(DataFrame right, String usingColumn) {
-        df = df.join(right, usingColumn);
+    public ParentDataset<T> join(Dataset<Row> right, String usingColumn) {
+        ds = ds.join(right, usingColumn);
         return this;
     }
 
     public ParentDataset<T> limit(int n) {
-        df = df.limit(n);
+        ds = ds.limit(n);
         return this;
     }
 
     protected org.apache.spark.sql.catalyst.plans.logical.LogicalPlan logicalPlan() {
-        return df.logicalPlan();
+        return ds.logicalPlan();
     }
 
-    public <R> RDD<R> map(scala.Function1<Row, R> f, scala.reflect.ClassTag<R> evidence) {
-        return df.map(f, evidence);
+    /*
+    public Dataset<U> map(Function1<Row, U> f, Encoder<U> encoder) {
+        return ds.map(f, encoder);
+    }
+
+    public Dataset<U> map(MapFunction<Row, U> f, Encoder<U> encoder) {
+        return ds.map(f, encoder);
     }
 
     public <R> RDD<R> mapPartitions(scala.Function1<scala.collection.Iterator<Row>, scala.collection.Iterator<R>> f,
                                     scala.reflect.ClassTag<R> evidence) {
-        return df.mapPartitions(f, evidence);
+        return ds.mapPartitions(f, evidence);
     }
+*/
 
     public DataFrameNaFunctions na() {
-        return df.na();
+        return ds.na();
     }
 
     protected Seq<org.apache.spark.sql.catalyst.expressions.Expression> numericColumns() {
-        return df.numericColumns();
+        return ds.numericColumns();
     }
 
     public ParentDataset<T> orderBy(Column... sortExprs) {
-        df = df.orderBy(sortExprs);
+        ds = ds.orderBy(sortExprs);
         return this;
     }
 
     public ParentDataset<T> orderBy(Seq<Column> sortExprs) {
-        df = df.orderBy(sortExprs);
+        ds = ds.orderBy(sortExprs);
         return this;
     }
 
     public ParentDataset<T> orderBy(String sortCol, Seq<String> sortCols) {
-        df = df.orderBy(sortCol, sortCols);
+        ds = ds.orderBy(sortCol, sortCols);
         return this;
     }
 
     public ParentDataset<T> orderBy(String sortCol, String... sortCols) {
-        df = df.orderBy(sortCol, sortCols);
+        ds = ds.orderBy(sortCol, sortCols);
         return this;
     }
 
     public ParentDataset<T> persist() {
-        df = df.persist();
+        ds = ds.persist();
         return this;
     }
 
     public ParentDataset<T> persist(StorageLevel newLevel) {
-        df = df.persist(newLevel);
+        ds = ds.persist(newLevel);
         return this;
     }
 
     public void printSchema() {
-        df.printSchema();
+        ds.printSchema();
     }
 
     /*
-    public T[] randomSplit(double[] weights) {
-        df = df.randomSplit();
+    public T[] randomSplit(double[] weighscala.reflect.ClassTagts) {
+        ds = ds.randomSplit();
         return this;
     }
     public T[] randomSplit(double[] weights, long seed)
     */
 
     public RDD<Row> rdd() {
-        return df.rdd();
+        return ds.rdd();
     }
 
     public void registerTempTable(String tableName) {
-        df.registerTempTable(tableName);
+        ds.registerTempTable(tableName);
     }
 
     public ParentDataset<T> repartition(Column... partitionExprs) {
-        df = df.repartition(partitionExprs);
+        ds = ds.repartition(partitionExprs);
         return this;
     }
 
     public ParentDataset<T> repartition(int numPartitions) {
-        df = df.repartition(numPartitions);
+        ds = ds.repartition(numPartitions);
         return this;
     }
 
     public ParentDataset<T> repartition(int numPartitions, Column... partitionExprs) {
-        df = df.repartition(numPartitions, partitionExprs);
+        ds = ds.repartition(numPartitions, partitionExprs);
         return this;
     }
 
     public ParentDataset<T> repartition(int numPartitions, Seq<Column> partitionExprs) {
-        df = df.repartition(numPartitions, partitionExprs);
+        ds = ds.repartition(numPartitions, partitionExprs);
         return this;
     }
 
     public ParentDataset<T> repartition(Seq<Column> partitionExprs) {
-        df = df.repartition(partitionExprs);
+        ds = ds.repartition(partitionExprs);
         return this;
     }
 
     protected org.apache.spark.sql.catalyst.expressions.NamedExpression resolve(String colName) {
-        return df.resolve(colName);
+        return ds.resolve(colName);
     }
 
-    public GroupedData rollup(Column... cols) {
-        return df.rollup(cols);
+    public RelationalGroupedDataset rollup(Column... cols) {
+        return ds.rollup(cols);
     }
 
-    public GroupedData rollup(Seq<Column> cols) {
-        return df.rollup(cols);
+    public RelationalGroupedDataset rollup(Seq<Column> cols) {
+        return ds.rollup(cols);
     }
 
-    public GroupedData rollup(String col1, Seq<String> cols) {
-        return df.rollup(col1, cols);
+    public RelationalGroupedDataset rollup(String col1, Seq<String> cols) {
+        return ds.rollup(col1, cols);
     }
 
-    public GroupedData rollup(String col1, String... cols) {
-        return df.rollup(col1, cols);
+    public RelationalGroupedDataset rollup(String col1, String... cols) {
+        return ds.rollup(col1, cols);
     }
 
     public ParentDataset<T> sample(boolean withReplacement, double fraction) {
-        df = df.sample(withReplacement, fraction);
+        ds = ds.sample(withReplacement, fraction);
         return this;
     }
 
     public ParentDataset<T> sample(boolean withReplacement, double fraction, long seed) {
-        df = df.sample(withReplacement, fraction, seed);
+        ds = ds.sample(withReplacement, fraction, seed);
         return this;
     }
 
     public StructType schema() {
-        return df.schema();
+        return ds.schema();
     }
 
     public ParentDataset<T> select(Column... cols) {
-        df = df.select(cols);
+        ds = ds.select(cols);
         return this;
     }
 
     public ParentDataset<T> select(Seq<Column> cols) {
-        df = df.select(cols);
+        ds = ds.select(cols);
         return this;
     }
 
     public ParentDataset<T> select(String col, Seq<String> cols) {
-        df = df.select(col, cols);
+        ds = ds.select(col, cols);
         return this;
     }
 
     public ParentDataset<T> select(String col, String... cols) {
-        df = df.select(col, cols);
+        ds = ds.select(col, cols);
         return this;
     }
 
     public ParentDataset<T> selectExpr(Seq<String> exprs) {
-        df = df.selectExpr(exprs);
+        ds = ds.selectExpr(exprs);
         return this;
     }
 
     public ParentDataset<T> selectExpr(String... exprs) {
-        df = df.selectExpr(exprs);
+        ds = ds.selectExpr(exprs);
         return this;
     }
 
     public void show() {
-        df.show();
+        ds.show();
     }
 
     public void show(boolean truncate) {
-        df.show(truncate);
+        ds.show(truncate);
     }
 
     public void show(int numRows) {
-        df.show(numRows);
+        ds.show(numRows);
     }
 
     public void show(int numRows, boolean truncate) {
-        df.show(numRows, truncate);
+        ds.show(numRows, truncate);
     }
 
     public ParentDataset<T> sort(Column... sortExprs) {
-        df = df.sort(sortExprs);
+        ds = ds.sort(sortExprs);
         return this;
     }
 
     public ParentDataset<T> sort(Seq<Column> sortExprs) {
-        df = df.sort(sortExprs);
+        ds = ds.sort(sortExprs);
         return this;
     }
 
     public ParentDataset<T> sort(String sortCol, Seq<String> sortCols) {
-        df = df.sort(sortCol, sortCols);
+        ds = ds.sort(sortCol, sortCols);
         return this;
     }
 
     public ParentDataset<T> sort(String sortCol, String... sortCols) {
-        df = df.sort(sortCol, sortCols);
+        ds = ds.sort(sortCol, sortCols);
         return this;
     }
 
     public ParentDataset<T> sortWithinPartitions(Column... sortExprs) {
-        df = df.sortWithinPartitions(sortExprs);
+        ds = ds.sortWithinPartitions(sortExprs);
         return this;
     }
 
     public ParentDataset<T> sortWithinPartitions(Seq<Column> sortExprs) {
-        df = df.sortWithinPartitions(sortExprs);
+        ds = ds.sortWithinPartitions(sortExprs);
         return this;
     }
 
     public ParentDataset<T> sortWithinPartitions(String sortCol, Seq<String> sortCols) {
-        df = df.sortWithinPartitions(sortCol, sortCols);
+        ds = ds.sortWithinPartitions(sortCol, sortCols);
         return this;
     }
 
     public ParentDataset<T> sortWithinPartitions(String sortCol, String... sortCols) {
-        df = df.sortWithinPartitions(sortCol, sortCols);
+        ds = ds.sortWithinPartitions(sortCol, sortCols);
         return this;
     }
 
     public SQLContext sqlContext() {
-        return df.sqlContext();
+        return ds.sqlContext();
     }
 
     public DataFrameStatFunctions stat() {
-        return df.stat();
+        return ds.stat();
     }
 
-    public Row[] take(int n) {
-        return df.take(n);
+    public Object take(int n) {
+        return ds.take(n);
     }
 
     public List<Row> takeAsList(int n) {
-        return df.takeAsList(n);
+        return ds.takeAsList(n);
     }
 
     public ParentDataset<T> toDF() {
-        df = df.toDF();
+        ds = ds.toDF();
         return this;
     }
 
     public ParentDataset<T> toDF(Seq<String> colNames) {
-        df = df.toDF(colNames);
+        ds = ds.toDF(colNames);
         return this;
     }
 
     public ParentDataset<T> toDF(String... colNames) {
-        df = df.toDF(colNames);
+        ds = ds.toDF(colNames);
         return this;
     }
 
     public JavaRDD<Row> toJavaRDD() {
-        return df.toJavaRDD();
+        return ds.toJavaRDD();
     }
 
-    public RDD<String> toJSON() {
-        return df.toJSON();
+    public Dataset<String> toJSON() {
+        return ds.toJSON();
     }
 
 //    <U> DataFrame transform(scala.Function1<DataFrame,DataFrame> t)
 
-    public ParentDataset<T> unionAll(DataFrame other) {
-        df = df.unionAll(other);
+    public ParentDataset<T> union(Dataset<Row> other) {
+        ds = ds.union(other);
+        return this;
+    }
+
+    @Deprecated
+    public ParentDataset<T> unionAll(Dataset<Row> other) {
+        ds = ds.unionAll(other);
         return this;
     }
 
     public ParentDataset<T> unpersist() {
-        df = df.unpersist();
+        ds = ds.unpersist();
         return this;
     }
 
     public ParentDataset<T> unpersist(boolean blocking) {
-        df = df.unpersist(blocking);
+        ds = ds.unpersist(blocking);
         return this;
     }
 
     public ParentDataset<T> where(Column condition) {
-        df = df.where(condition);
+        ds = ds.where(condition);
         return this;
     }
 
     public ParentDataset<T> where(String conditionExpr) {
-        df = df.where(conditionExpr);
+        ds = ds.where(conditionExpr);
         return this;
     }
 
     public ParentDataset<T> withColumn(String colName, Column col) {
-        df = df.withColumn(colName, col);
+        ds = ds.withColumn(colName, col);
         return this;
     }
 
     public ParentDataset<T> withColumnRenamed(String existingName, String newName) {
-        df = df.withColumnRenamed(existingName, newName);
+        ds = ds.withColumnRenamed(existingName, newName);
         return this;
     }
 
     public DataFrameWriter write() {
-        return df.write();
+        return ds.write();
     }
 }
