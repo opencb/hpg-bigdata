@@ -16,14 +16,37 @@
 
 package org.opencb.hpg.bigdata.core.lib;
 
+import org.opencb.commons.datastore.core.Query;
+
 /**
  * Created by imedina on 04/08/16.
  */
 public class VariantDataset extends ParentDataset<VariantDataset> {
 
+    private VariantParseQuery variantParseQuery;
+    private String sql;
+
     public VariantDataset() {
         super();
+        query = new Query();
+        variantParseQuery = new VariantParseQuery();
     }
+
+    @Override
+    protected void updateDataset(Query query) {
+        if (this.sql == null) {
+            this.sql = variantParseQuery.parse(query, null);
+//            this.sql = "select * from " + this.viewName + " lateral view explode(annotation.consequenceTypes) act as ct lateral view"
+//                        + " explode(ct.sequenceOntologyTerms) ctso as so where so.accession = 'SO:0001566'";
+            this.ds = this.sqlContext.sql(this.sql);
+        }
+    }
+
+    public VariantDataset annotationfilter(String key, String value) {
+        query.put("annotation." + key, value);
+        return this;
+    }
+
 
     public void showMe() {
         System.out.println("------> VariatDataset");

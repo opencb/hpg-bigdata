@@ -16,13 +16,28 @@
 
 package org.opencb.hpg.bigdata.core.lib;
 
+import org.opencb.commons.datastore.core.Query;
+
 /**
  * Created by imedina on 04/08/16.
  */
 public class AlignmentDataset extends ParentDataset<AlignmentDataset> {
 
+    private VariantParseQuery alignmentParseQuery;
+    private String sql;
+
     public AlignmentDataset() {
         super();
+        query = new Query();
+        alignmentParseQuery = new VariantParseQuery();
+    }
+
+    @Override
+    protected void updateDataset(Query query) {
+        if (this.sql == null) {
+            this.sql = alignmentParseQuery.parse(query, null);
+            this.ds = this.sqlContext.sql(this.sql);
+        }
     }
 
     public void showMe() {

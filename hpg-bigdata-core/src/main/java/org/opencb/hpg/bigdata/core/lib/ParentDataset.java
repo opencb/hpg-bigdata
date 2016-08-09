@@ -22,6 +22,7 @@ import org.apache.spark.rdd.RDD;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.types.StructType;
 import org.apache.spark.storage.StorageLevel;
+import org.opencb.commons.datastore.core.Query;
 import scala.Symbol;
 import scala.Tuple2;
 import scala.collection.Seq;
@@ -33,8 +34,10 @@ import java.util.Map;
 /**
  * Created by imedina on 04/08/16.
  */
-public class ParentDataset<T> {
+public abstract class ParentDataset<T> {
 
+    protected Query query;
+    protected String viewName;
     protected Dataset<Row> ds;
     protected SQLContext sqlContext;
     protected SparkSession sparkSession;
@@ -43,6 +46,8 @@ public class ParentDataset<T> {
         ds = null;
         sqlContext = null;
     }
+
+    protected abstract void updateDataset(Query query);
 
     public void load(String filename, SparkSession sparkSession) throws Exception {
         this.sparkSession = sparkSession;
@@ -137,6 +142,7 @@ public class ParentDataset<T> {
     }
 
     long count() {
+        updateDataset(query);
         return ds.count();
     }
 
@@ -397,8 +403,20 @@ public class ParentDataset<T> {
         return ds.rdd();
     }
 
+    @Deprecated
     public void registerTempTable(String tableName) {
+        this.viewName = tableName;
         ds.registerTempTable(tableName);
+    }
+
+    public void createOrReplaceTempView(String viewName) {
+        this.viewName = viewName;
+        ds.createOrReplaceTempView(viewName);
+    }
+
+    public void createTempView(String viewName) throws AnalysisException {
+        this.viewName = viewName;
+        ds.createTempView(viewName);
     }
 
     public ParentDataset<T> repartition(Column... partitionExprs) {

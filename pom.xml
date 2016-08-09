@@ -131,6 +131,12 @@
                 <artifactId>commons-lib</artifactId>
                 <version>${commons-lib.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.opencb.commons</groupId>
+                <artifactId>commons-datastore-core</artifactId>
+                <version>${commons-lib.version}</version>
+            </dependency>
+
 
             <!-- General dependencies -->
             <dependency>

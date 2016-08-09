@@ -40,21 +40,39 @@ public class VariantDatasetTest {
 
         System.out.println(">>>> opening file...");
 
-        String filename = "/home/imedina/data/CEU-1409-01_20000.vcf.avro";
+        //String filename = "/home/imedina/data/CEU-1409-01_20000.vcf.avro";
+        String filename = "/home/imedina/data/10k.variants.avro";
+
 //        String filename = "/tmp/kk/xxx.avro";
         VariantDataset vd = new VariantDataset();
         try {
             vd.load(filename, sparkSession);
+            vd.printSchema();
 
+            vd.registerTempTable("vcf");
             System.out.println("--------------------------------------");
+//            long count = vd.annotationfilter("consequenceTypes.sequenceOntologyTerms.accession", "SO:0001566").count();
+
+//            vd.annotationfilter("populationFrequencies.altAlleleFreq", "1000G:CEU < 0.2,1000G:ASW < 0.25").count();
+//            vd.annotationfilter("populationFrequencies", "1000G:ASW < 0.2").count();
+            long count = vd//.annotationfilter("consequenceTypes.sequenceOntologyTerms.accession", "SO:0001566")
+                    .annotationfilter("conservation.phylop", "< 0.9")
+                    .annotationfilter("conservation.phastCons", "< 0.5")
+                    .count();
+
+
+            System.out.println("count = " + count);
+            //scala> spark.sql("select * from v10k lateral view explode(annotation.consequenceTypes) act as ct lateral view explode(ct.sequenceOntologyTerms) ctso as so where so.accession = 'SO:0001566'").count()
+            //res6: Long = 4437
+
 //            vd.select(vd.col("studies")).show(2);
             System.out.println("--------------------------------------");
-            System.out.println(vd.count());
+//            System.out.println(vd.count());
 //            System.out.println(vd.filter("start >= 564477").filter("end <= 729948").count());
 //            System.out.println(vd.groupBy("chromosome").avg("start").sort("chromosome").take(3)[0]);
 //            System.out.println(vd.describe("studies"));
-            System.out.println("---->>> " + vd.select("studies.files").head());
-            System.out.println("---->>> " + vd.select("studies.files").select("attributes").head());
+//            System.out.println("---->>> " + vd.select("studies.files").head());
+//            System.out.println("---->>> " + vd.select("studies.files").select("attributes").head());
 //            System.out.println(vd.filter("studies.files[0].attributes.AF = '0.009'"));
 //            System.out.println(vd.filter("studies.files.attributes.AF = '0.009'"));
         } catch (Exception e) {
