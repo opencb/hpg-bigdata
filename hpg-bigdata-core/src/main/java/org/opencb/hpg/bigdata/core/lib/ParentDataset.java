@@ -45,6 +45,8 @@ public abstract class ParentDataset<T> {
     public ParentDataset() {
         ds = null;
         sqlContext = null;
+
+        query = new Query();
     }
 
     protected abstract void updateDataset(Query query);
@@ -234,6 +236,7 @@ public abstract class ParentDataset<T> {
     }
 
     public ParentDataset<T> filter(String conditionExpr) {
+        updateDataset(query);
         ds = ds.filter(conditionExpr);
         return this;
     }
@@ -509,7 +512,7 @@ public abstract class ParentDataset<T> {
     }
 
     public void show() {
-        ds.show();
+        this.show(20);
     }
 
     public void show(boolean truncate) {
@@ -517,6 +520,7 @@ public abstract class ParentDataset<T> {
     }
 
     public void show(int numRows) {
+        updateDataset(query);
         ds.show(numRows);
     }
 

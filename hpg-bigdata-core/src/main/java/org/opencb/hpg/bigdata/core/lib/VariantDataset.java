@@ -27,26 +27,31 @@ public class VariantDataset extends ParentDataset<VariantDataset> {
     private String sql;
 
     public VariantDataset() {
-        super();
-        query = new Query();
         variantParseQuery = new VariantParseQuery();
     }
 
     @Override
     protected void updateDataset(Query query) {
         if (this.sql == null) {
-            this.sql = variantParseQuery.parse(query, null);
-//            this.sql = "select * from " + this.viewName + " lateral view explode(annotation.consequenceTypes) act as ct lateral view"
-//                        + " explode(ct.sequenceOntologyTerms) ctso as so where so.accession = 'SO:0001566'";
+            this.sql = variantParseQuery.parse(query, null, viewName);
             this.ds = this.sqlContext.sql(this.sql);
         }
+    }
+
+    public VariantDataset idfilter(String value) {
+        query.put("id", value);
+        return this;
+    }
+
+    public VariantDataset studyfilter(String key, String value) {
+        query.put("studies." + key, value);
+        return this;
     }
 
     public VariantDataset annotationfilter(String key, String value) {
         query.put("annotation." + key, value);
         return this;
     }
-
 
     public void showMe() {
         System.out.println("------> VariatDataset");

@@ -27,15 +27,13 @@ public class AlignmentDataset extends ParentDataset<AlignmentDataset> {
     private String sql;
 
     public AlignmentDataset() {
-        super();
-        query = new Query();
         alignmentParseQuery = new VariantParseQuery();
     }
 
     @Override
     protected void updateDataset(Query query) {
         if (this.sql == null) {
-            this.sql = alignmentParseQuery.parse(query, null);
+            this.sql = alignmentParseQuery.parse(query, null, viewName);
             this.ds = this.sqlContext.sql(this.sql);
         }
     }

@@ -49,19 +49,31 @@ public class VariantDatasetTest {
             vd.load(filename, sparkSession);
             vd.printSchema();
 
-            vd.registerTempTable("vcf");
+            vd.createOrReplaceTempView("vcf");
             System.out.println("--------------------------------------");
 //            long count = vd.annotationfilter("consequenceTypes.sequenceOntologyTerms.accession", "SO:0001566").count();
 
 //            vd.annotationfilter("populationFrequencies.altAlleleFreq", "1000G:CEU < 0.2,1000G:ASW < 0.25").count();
 //            vd.annotationfilter("populationFrequencies", "1000G:ASW < 0.2").count();
-            long count = vd//.annotationfilter("consequenceTypes.sequenceOntologyTerms.accession", "SO:0001566")
-                    .annotationfilter("conservation.phylop", "< 0.9")
-                    .annotationfilter("conservation.phastCons", "< 0.5")
+
+//            long count = vd.annotationfilter("consequenceTypes.sequenceOntologyTerms.accession", "SO:0001566")
+            long count = vd//.annotationfilter("consequenceTypes.sequenceOntologyTerms.name", "missense_variant")
+                    .annotationfilter("conservation.phylop", "< 0.2")
+                    .annotationfilter("conservation.phastCons", "< 0.4")
+                    .idfilter("rs587604674")
                     .count();
 
+//            System.out.println(vd.annotationfilter("consequenceTypes.sequenceOntologyTerms.accession", "SO:0001566")
+//                    .annotationfilter("conservation.phylop", "< 0.1")
+//                    .annotationfilter("conservation.phastCons", "< 0.1")
+//                    .head());
 
             System.out.println("count = " + count);
+//            System.out.println(vd.annotationfilter("consequenceTypes.sequenceOntologyTerms.name", "missense_variant")
+//                    .select("annotation.consequenceTypes.sequenceOntologyTerms").count());
+
+//            System.out.println(vd.idfilter("rs587604674").count());
+//            System.out.println(vd.annotationfilter("id", "ENSG00000233866").count());
             //scala> spark.sql("select * from v10k lateral view explode(annotation.consequenceTypes) act as ct lateral view explode(ct.sequenceOntologyTerms) ctso as so where so.accession = 'SO:0001566'").count()
             //res6: Long = 4437
 
