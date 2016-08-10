@@ -58,7 +58,20 @@ public class VariantParseQuery {
                 case "id":
                 case "chromosome":
                 case "type":
-                    filters.add(fields[0] + " = '" + query.get(key) + "'");
+                    Object value = query.get(key);
+                    if (value instanceof List) {
+                        List<String> values = (List<String>) value;
+                        StringBuilder where = new StringBuilder();
+                        where.append("(").append(fields[0]).append(" = '").append(values.get(0)).append("'");
+                        for (int i=1; i < values.size(); i++) {
+                            where.append(" OR ");
+                            where.append(fields[0]).append(" = '").append(values.get(i)).append("'");
+                        }
+                        where.append(")");
+                        filters.add(where.toString());
+                    } else {
+                        filters.add(fields[0] + " = '" + query.get(key) + "'");
+                    }
                     break;
                 case "start":
                 case "end":

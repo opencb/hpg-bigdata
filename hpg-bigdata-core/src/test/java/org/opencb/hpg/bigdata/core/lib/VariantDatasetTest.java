@@ -16,12 +16,15 @@
 
 package org.opencb.hpg.bigdata.core.lib;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.SparkSession;
 import org.junit.Test;
+
+import java.util.Arrays;
 
 /**
  * Created by imedina on 04/08/16.
@@ -41,7 +44,7 @@ public class VariantDatasetTest {
         System.out.println(">>>> opening file...");
 
         //String filename = "/home/imedina/data/CEU-1409-01_20000.vcf.avro";
-        String filename = "/home/imedina/data/10k.variants.avro";
+        String filename = "/home/jtarraga/data/spark/10k.variants.avro";
 
 //        String filename = "/tmp/kk/xxx.avro";
         VariantDataset vd = new VariantDataset();
@@ -57,11 +60,15 @@ public class VariantDatasetTest {
 //            vd.annotationfilter("populationFrequencies", "1000G:ASW < 0.2").count();
 
 //            long count = vd.annotationfilter("consequenceTypes.sequenceOntologyTerms.accession", "SO:0001566")
-            long count = vd//.annotationfilter("consequenceTypes.sequenceOntologyTerms.name", "missense_variant")
-                    .annotationfilter("conservation.phylop", "< 0.2")
-                    .annotationfilter("conservation.phastCons", "< 0.4")
-                    .idfilter("rs587604674")
-                    .count();
+//            long count = vd//.annotationfilter("consequenceTypes.sequenceOntologyTerms.name", "missense_variant")
+//                    .annotationFilter("conservation.phylop", "< 0.2")
+//                    .annotationFilter("conservation.phastCons", "< 0.4")
+//                    .idFilter("rs587604674")
+//                    .count();
+
+
+            String ids = "rs587604674,rs587603352";
+            long count = vd.idFilter(Arrays.asList(StringUtils.split(ids, ","))).count();
 
 //            System.out.println(vd.annotationfilter("consequenceTypes.sequenceOntologyTerms.accession", "SO:0001566")
 //                    .annotationfilter("conservation.phylop", "< 0.1")

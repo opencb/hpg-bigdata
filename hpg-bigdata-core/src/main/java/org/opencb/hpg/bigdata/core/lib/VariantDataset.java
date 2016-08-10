@@ -18,6 +18,8 @@ package org.opencb.hpg.bigdata.core.lib;
 
 import org.opencb.commons.datastore.core.Query;
 
+import java.util.List;
+
 /**
  * Created by imedina on 04/08/16.
  */
@@ -40,6 +42,11 @@ public class VariantDataset extends ParentDataset<VariantDataset> {
 
     public VariantDataset idFilter(String value) {
         query.put("id", value);
+        return this;
+    }
+
+    public VariantDataset idFilter(List<String> values) {
+        query.put("id", values);
         return this;
     }
 
