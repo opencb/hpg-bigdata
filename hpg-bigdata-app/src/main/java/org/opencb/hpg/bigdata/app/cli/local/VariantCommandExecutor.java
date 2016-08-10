@@ -517,7 +517,6 @@ public class VariantCommandExecutor extends CommandExecutor {
                     true, "/home/jtarraga/soft/spark-2.0.0/");
         System.out.println("sparkConf = " + sparkConf.toDebugString());
         SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
-        System.exit(0);
 
 //        SparkConf sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "/home/jtarraga/soft/spark-2.0.0/");
 //        SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
