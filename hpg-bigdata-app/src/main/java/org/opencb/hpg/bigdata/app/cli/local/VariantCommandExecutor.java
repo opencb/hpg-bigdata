@@ -33,6 +33,7 @@ import org.opencb.commons.io.DataReader;
 import org.opencb.commons.run.ParallelTaskRunner;
 import org.opencb.commons.utils.FileUtils;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
+import org.opencb.hpg.bigdata.core.avro.VariantAvroAnnotator;
 import org.opencb.hpg.bigdata.core.avro.VariantAvroSerializer;
 import org.opencb.hpg.bigdata.core.converters.variation.ProtoEncoderTask;
 import org.opencb.hpg.bigdata.core.converters.variation.VariantAvroEncoderTask;
@@ -74,6 +75,11 @@ public class VariantCommandExecutor extends CommandExecutor {
                         variantCommandOptions.convertVariantCommandOptions.commonOptions.conf);
                 convert();
                 break;
+            case "annotate":
+                init(variantCommandOptions.convertVariantCommandOptions.commonOptions.logLevel,
+                        variantCommandOptions.convertVariantCommandOptions.commonOptions.verbose,
+                        variantCommandOptions.convertVariantCommandOptions.commonOptions.conf);
+                annotate();
             default:
                 break;
         }
@@ -489,4 +495,13 @@ public class VariantCommandExecutor extends CommandExecutor {
         }
     }
 */
+
+    public void annotate() throws IOException {
+        VariantAvroAnnotator variantAvroAnnotator = new VariantAvroAnnotator();
+
+        Path input = Paths.get(variantCommandOptions.annotateVariantCommandOptions.input);
+        Path output = Paths.get(variantCommandOptions.annotateVariantCommandOptions.ouput);
+        variantAvroAnnotator.annotate(input, output);
+
+    }
 }

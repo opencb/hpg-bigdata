@@ -67,6 +67,7 @@ public class LocalCliOptionsParser {
         jcommander.addCommand("variant", sequenceCommandOptions);
         JCommander variantSubCommands = jcommander.getCommands().get("variant");
         variantSubCommands.addCommand("convert", variantCommandOptions.convertVariantCommandOptions);
+        variantSubCommands.addCommand("annotate", variantCommandOptions.annotateVariantCommandOptions);
 
     }
 
@@ -284,9 +285,11 @@ public class LocalCliOptionsParser {
     public class VariantCommandOptions extends CommandOptions {
 
         ConvertVariantCommandOptions convertVariantCommandOptions;
+        AnnotateVariantCommandOptions annotateVariantCommandOptions;
 
         public VariantCommandOptions() {
             this.convertVariantCommandOptions = new ConvertVariantCommandOptions();
+            this.annotateVariantCommandOptions = new AnnotateVariantCommandOptions();
         }
     }
 
@@ -332,6 +335,22 @@ public class LocalCliOptionsParser {
         public Map<String, String> options = new HashMap<>();
     }
 
+
+    @Parameters(commandNames = {"annotate"}, commandDescription = "Convert gVCF/VCF files to different big data formats such as Avro and Parquet using GA4GH models")
+    class AnnotateVariantCommandOptions {
+
+        @ParametersDelegate
+        public CommonCommandOptions commonOptions = commonCommandOptions;
+
+        @Parameter(names = {"-i", "--input"}, description = "Input file name, usually a gVCF/VCF but it can be an Avro file when converting to Parquet.",
+                required = true, arity = 1)
+        public String input;
+
+        @Parameter(names = {"-o", "--output"}, description = "Input file name, usually a gVCF/VCF but it can be an Avro file when converting to Parquet.",
+                required = true, arity = 1)
+        public String ouput;
+
+    }
 
     public void printUsage(){
         if(getCommand().isEmpty()) {
