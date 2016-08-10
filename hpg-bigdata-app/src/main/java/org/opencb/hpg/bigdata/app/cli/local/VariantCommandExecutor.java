@@ -22,6 +22,7 @@ import htsjdk.variant.vcf.VCFFileReader;
 import org.apache.avro.Schema;
 import org.apache.commons.lang3.StringUtils;
 import org.opencb.biodata.formats.variant.vcf4.FullVcfCodec;
+import org.opencb.biodata.models.core.Region;
 import org.opencb.biodata.models.variant.Variant;
 import org.opencb.biodata.models.variant.avro.VariantAvro;
 import org.opencb.biodata.models.variant.protobuf.VariantProto;
@@ -32,6 +33,7 @@ import org.opencb.commons.io.DataReader;
 import org.opencb.commons.run.ParallelTaskRunner;
 import org.opencb.commons.utils.FileUtils;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
+import org.opencb.hpg.bigdata.core.avro.VariantAvroAnnotator;
 import org.opencb.hpg.bigdata.core.avro.VariantAvroSerializer;
 import org.opencb.hpg.bigdata.core.converters.variation.ProtoEncoderTask;
 import org.opencb.hpg.bigdata.core.converters.variation.VariantAvroEncoderTask;
@@ -48,7 +50,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.zip.GZIPOutputStream;
+import java.util.List;
 
 /**
  * Created by imedina on 25/06/15.
@@ -73,155 +75,218 @@ public class VariantCommandExecutor extends CommandExecutor {
                         variantCommandOptions.convertVariantCommandOptions.commonOptions.conf);
                 convert();
                 break;
+            case "annotate":
+                init(variantCommandOptions.convertVariantCommandOptions.commonOptions.logLevel,
+                        variantCommandOptions.convertVariantCommandOptions.commonOptions.verbose,
+                        variantCommandOptions.convertVariantCommandOptions.commonOptions.conf);
+                annotate();
             default:
                 break;
         }
     }
 
     private void convert() throws Exception {
+        // check mandatory parameter 'input file'
         Path inputPath = Paths.get(variantCommandOptions.convertVariantCommandOptions.input);
         FileUtils.checkFile(inputPath);
 
-        // Creating file writer. If 'output' parameter is passed and it is different from
-        // STDOUT then a file is created if parent folder exist, otherwise STDOUT is used.
+        // check mandatory parameter 'to'
+        String to = variantCommandOptions.convertVariantCommandOptions.to;
+        if (!to.equals("avro") && !to.equals("parquet") && !to.equals("json")) {
+            throw new IllegalArgumentException("Unknown serialization format: " + to + ". Valid values: avro, parquet and json");
+        }
+
+        // check output
         String output = variantCommandOptions.convertVariantCommandOptions.output;
-        boolean isFile = false;
+        boolean stdOutput = variantCommandOptions.convertVariantCommandOptions.stdOutput;
         OutputStream outputStream;
-        if (output != null && !output.isEmpty() && !output.equalsIgnoreCase("STDOUT")) {
-            Path parent = Paths.get(output).toAbsolutePath().getParent();
-            if (parent != null) { // null if output is a file in the current directory
-                FileUtils.checkDirectory(parent, true); // Throws exception, if does not exist
+        if (stdOutput) {
+            output = "STDOUT";
+        } else {
+            if (output != null && !output.isEmpty()) {
+                Path parent = Paths.get(output).toAbsolutePath().getParent();
+                if (parent != null) { // null if output is a file in the current directory
+                    FileUtils.checkDirectory(parent, true); // Throws exception, if does not exist
+                }
+            } else {
+                output = inputPath.toString() + "."  + to;
             }
             outputStream = new FileOutputStream(output);
-            isFile = true;
-        } else {
-            outputStream = System.out;
-            output = "STDOUT";
         }
 
-        String dataModel = variantCommandOptions.convertVariantCommandOptions.dataModel;
-        dataModel = (dataModel != null && !dataModel.isEmpty()) ? dataModel : "opencb";
-
+        // compression
         String compression = variantCommandOptions.convertVariantCommandOptions.compression;
-        compression = (compression == null || compression.isEmpty()) ? "auto" :  compression.toLowerCase();
 
-        if (!variantCommandOptions.convertVariantCommandOptions.toJson
-                && !variantCommandOptions.convertVariantCommandOptions.toAvro
-                && !variantCommandOptions.convertVariantCommandOptions.toProtoBuf
-                && !variantCommandOptions.convertVariantCommandOptions.fromAvro) {
-//            variantCommandOptions.convertVariantCommandOptions.toAvro = true;
-            variantCommandOptions.convertVariantCommandOptions.toParquet = true;
+        // region filter
+        List<Region> regions = null;
+        if (StringUtils.isNotEmpty(variantCommandOptions.convertVariantCommandOptions.regions)) {
+            regions = Region.parseRegions(variantCommandOptions.convertVariantCommandOptions.regions);
         }
 
-        /*
-         * JSON converter. Mode 'auto' set to gzip is file name ends with .gz
-         */
-        if (variantCommandOptions.convertVariantCommandOptions.toJson) {
-            if (compression.equals("auto")) {
-                if (output.endsWith(".gz")) {
-                    compression = "gzip";
-                } else if (output.equalsIgnoreCase("STDOUT") || output.endsWith("json")) {
-                    compression = "";
-                } else {
-                    throw new IllegalArgumentException("Unknown compression extension for " + output);
+        switch (variantCommandOptions.convertVariantCommandOptions.to) {
+            case "avro":
+                VariantAvroSerializer avroSerializer = new VariantAvroSerializer(compression);
+                if (regions != null) {
+                    regions.forEach(avroSerializer::addRegionFilter);
                 }
-            }
-
-            if (compression.equals("gzip")) {
-                outputStream = new GZIPOutputStream(outputStream);
-            }
-            convertToJson(inputPath, dataModel, outputStream);
+                avroSerializer.toAvro(inputPath.toString(), output);
+                break;
+            case "parquet":
+                InputStream is = new FileInputStream(variantCommandOptions.convertVariantCommandOptions.input);
+                VariantParquetConverter parquetConverter = new VariantParquetConverter();
+                parquetConverter.toParquet(is, variantCommandOptions.convertVariantCommandOptions.output + "2");
+                break;
+            default:
+                System.out.println("No valid format: " + variantCommandOptions.convertVariantCommandOptions.to);
+                break;
         }
 
-        /*
-         * Protocol Buffer 3 converter. Mode 'auto' set to gzip is file name ends with .gz
-         */
-        if (variantCommandOptions.convertVariantCommandOptions.toProtoBuf) {
-            if (compression.equals("auto")) {
-                if (output.endsWith(".gz")) {
-                    compression = "gzip";
-                } else if (output.equalsIgnoreCase("STDOUT")
-                        || output.endsWith("pb")
-                        || output.endsWith("pb3")
-                        || output.endsWith("proto")) {
-                    compression = "";
-                } else {
-                    throw new IllegalArgumentException("Unknown compression extension for " + output);
-                }
-            }
-
-            if (compression.equals("gzip")) {
-                outputStream = new GZIPOutputStream(outputStream);
-            }
-            convertToProtoBuf(inputPath, outputStream);
-        }
-
-        /*
-         * Avro converter. Mode 'auto' set to gzip is file name ends with .gz
-         */
-        if (variantCommandOptions.convertVariantCommandOptions.toAvro) {
-            // if compression mode is set to 'auto' it is inferred from files extension
-            if (compression.equals("auto")) {
-                // if output is a defined file and contains an extension
-                if (output.contains(".")) {
-                    String[] split = output.split("\\.");
-                    switch (split[split.length - 1]) {
-                        case "gz":
-                        case "deflate":
-                            compression = "deflate";
-                            break;
-                        case "sz":
-                        case "snz":
-                            compression = "snappy";
-                            break;
-                        case "bzip2":
-                            compression = "bzip2";
-                            break;
-                        case "xz":
-                            compression = "xz";
-                            break;
-                        default:
-                            compression = "deflate";
-                            break;
-                    }
-                } else {    // if we reach this point is very likely output is set to STDOUT
-                    compression = "deflate";
-                }
-            }
-
-            System.out.println("compression = " + compression);
-            VariantAvroSerializer avroSerializer = new VariantAvroSerializer(compression);
-            avroSerializer.toAvro(inputPath.toString(), output);
-
-            /*
-            convertToAvro(inputPath, compression, dataModel, outputStream);
-
-            if (isFile) {
-                String metaFile = output + ".meta";
-                logger.info("Write metadata into " + metaFile);
-                try (FileOutputStream out = new FileOutputStream(metaFile)) {
-                    writeAvroStats(new AvroFileWriter<>(VariantFileMetadata.getClassSchema(), compression, out), output);
-                }
-            }
-            */
-        }
-
-        if (variantCommandOptions.convertVariantCommandOptions.toParquet) {
-            InputStream is = new FileInputStream(variantCommandOptions.convertVariantCommandOptions.input);
-            VariantParquetConverter parquetConverter = new VariantParquetConverter();
-//            parquetConverter.addRegionFilter(new Region("1", 1, 800000))
-//                    .addRegionFilter(new Region("1", 798801, 222800000))
-//                    .addFilter(v -> v.getStudies().get(0).getFiles().get(0).getAttributes().get("NS").equals("60"));
-            parquetConverter.toParquet(is, variantCommandOptions.convertVariantCommandOptions.output + "2");
-
-            is.close();
-        }
-
-        if (outputStream != null) {
-            outputStream.flush();
-            outputStream.close();
-        }
     }
+
+//    private void convert2() throws Exception {
+//        Path inputPath = Paths.get(variantCommandOptions.convertVariantCommandOptions.input);
+//        FileUtils.checkFile(inputPath);
+//
+//        // Creating file writer. If 'output' parameter is passed and it is different from
+//        // STDOUT then a file is created if parent folder exist, otherwise STDOUT is used.
+//        String output = variantCommandOptions.convertVariantCommandOptions.output;
+//        boolean isFile = false;
+//        OutputStream outputStream;
+//        if (output != null && !output.isEmpty() && !output.equalsIgnoreCase("STDOUT")) {
+//            Path parent = Paths.get(output).toAbsolutePath().getParent();
+//            if (parent != null) { // null if output is a file in the current directory
+//                FileUtils.checkDirectory(parent, true); // Throws exception, if does not exist
+//            }
+//            outputStream = new FileOutputStream(output);
+//            isFile = true;
+//        } else {
+//            outputStream = System.out;
+//            output = "STDOUT";
+//        }
+//
+//        String dataModel = variantCommandOptions.convertVariantCommandOptions.dataModel;
+//        dataModel = (dataModel != null && !dataModel.isEmpty()) ? dataModel : "opencb";
+//
+//        String compression = variantCommandOptions.convertVariantCommandOptions.compression;
+//        compression = (compression == null || compression.isEmpty()) ? "auto" :  compression.toLowerCase();
+//
+//        if (!variantCommandOptions.convertVariantCommandOptions.toJson
+//                && !variantCommandOptions.convertVariantCommandOptions.toAvro
+//                && !variantCommandOptions.convertVariantCommandOptions.toProtoBuf
+//                && !variantCommandOptions.convertVariantCommandOptions.fromAvro) {
+////            variantCommandOptions.convertVariantCommandOptions.toAvro = true;
+//            variantCommandOptions.convertVariantCommandOptions.toParquet = true;
+//        }
+//
+//        /*
+//         * JSON converter. Mode 'auto' set to gzip is file name ends with .gz
+//         */
+//        if (variantCommandOptions.convertVariantCommandOptions.toJson) {
+//            if (compression.equals("auto")) {
+//                if (output.endsWith(".gz")) {
+//                    compression = "gzip";
+//                } else if (output.equalsIgnoreCase("STDOUT") || output.endsWith("json")) {
+//                    compression = "";
+//                } else {
+//                    throw new IllegalArgumentException("Unknown compression extension for " + output);
+//                }
+//            }
+//
+//            if (compression.equals("gzip")) {
+//                outputStream = new GZIPOutputStream(outputStream);
+//            }
+//            convertToJson(inputPath, dataModel, outputStream);
+//        }
+//
+//        /*
+//         * Protocol Buffer 3 converter. Mode 'auto' set to gzip is file name ends with .gz
+//         */
+//        if (variantCommandOptions.convertVariantCommandOptions.toProtoBuf) {
+//            if (compression.equals("auto")) {
+//                if (output.endsWith(".gz")) {
+//                    compression = "gzip";
+//                } else if (output.equalsIgnoreCase("STDOUT")
+//                        || output.endsWith("pb")
+//                        || output.endsWith("pb3")
+//                        || output.endsWith("proto")) {
+//                    compression = "";
+//                } else {
+//                    throw new IllegalArgumentException("Unknown compression extension for " + output);
+//                }
+//            }
+//
+//            if (compression.equals("gzip")) {
+//                outputStream = new GZIPOutputStream(outputStream);
+//            }
+//            convertToProtoBuf(inputPath, outputStream);
+//        }
+//
+//        /*
+//         * Avro converter. Mode 'auto' set to gzip is file name ends with .gz
+//         */
+//        if (variantCommandOptions.convertVariantCommandOptions.toAvro) {
+//            // if compression mode is set to 'auto' it is inferred from files extension
+//            if (compression.equals("auto")) {
+//                // if output is a defined file and contains an extension
+//                if (output.contains(".")) {
+//                    String[] split = output.split("\\.");
+//                    switch (split[split.length - 1]) {
+//                        case "gz":
+//                        case "deflate":
+//                            compression = "deflate";
+//                            break;
+//                        case "sz":
+//                        case "snz":
+//                            compression = "snappy";
+//                            break;
+//                        case "bzip2":
+//                            compression = "bzip2";
+//                            break;
+//                        case "xz":
+//                            compression = "xz";
+//                            break;
+//                        default:
+//                            compression = "deflate";
+//                            break;
+//                    }
+//                } else {    // if we reach this point is very likely output is set to STDOUT
+//                    compression = "deflate";
+//                }
+//            }
+//
+//            System.out.println("compression = " + compression);
+//            VariantAvroSerializer avroSerializer = new VariantAvroSerializer(compression);
+//            avroSerializer.toAvro(inputPath.toString(), output);
+//
+//            /*
+//            convertToAvro(inputPath, compression, dataModel, outputStream);
+//
+//            if (isFile) {
+//                String metaFile = output + ".meta";
+//                logger.info("Write metadata into " + metaFile);
+//                try (FileOutputStream out = new FileOutputStream(metaFile)) {
+//                    writeAvroStats(new AvroFileWriter<>(VariantFileMetadata.getClassSchema(), compression, out), output);
+//                }
+//            }
+//            */
+//        }
+//
+//        if (variantCommandOptions.convertVariantCommandOptions.toParquet) {
+//            InputStream is = new FileInputStream(variantCommandOptions.convertVariantCommandOptions.input);
+//            VariantParquetConverter parquetConverter = new VariantParquetConverter();
+////            parquetConverter.addRegionFilter(new Region("1", 1, 800000))
+////                    .addRegionFilter(new Region("1", 798801, 222800000))
+////                    .addFilter(v -> v.getStudies().get(0).getFiles().get(0).getAttributes().get("NS").equals("60"));
+//            parquetConverter.toParquet(is, variantCommandOptions.convertVariantCommandOptions.output + "2");
+//
+//            is.close();
+//        }
+//
+//        if (outputStream != null) {
+//            outputStream.flush();
+//            outputStream.close();
+//        }
+//    }
 
     private void convertToJson(Path inputPath, String dataModel, OutputStream outputStream) throws IOException {
         VCFFileReader reader = new VCFFileReader(inputPath.toFile(), false);
@@ -430,4 +495,13 @@ public class VariantCommandExecutor extends CommandExecutor {
         }
     }
 */
+
+    public void annotate() throws IOException {
+        VariantAvroAnnotator variantAvroAnnotator = new VariantAvroAnnotator();
+
+        Path input = Paths.get(variantCommandOptions.annotateVariantCommandOptions.input);
+        Path output = Paths.get(variantCommandOptions.annotateVariantCommandOptions.ouput);
+        variantAvroAnnotator.annotate(input, output);
+
+    }
 }

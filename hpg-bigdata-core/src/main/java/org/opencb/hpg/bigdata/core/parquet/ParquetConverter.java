@@ -75,12 +75,16 @@ public abstract class ParquetConverter<T extends IndexedRecord> {
         DatumReader<T> datumReader = new SpecificDatumReader<>(schema);
         DataFileStream<T> dataFileStream = new DataFileStream<>(inputStream, datumReader);
 
-        ParquetWriter<Object> parquetWriter = AvroParquetWriter.builder(new Path(outputFilename))
-                .withSchema(schema)
-                .withCompressionCodec(compressionCodecName)
-                .withRowGroupSize(rowGroupSize)
-                .withPageSize(pageSize)
-                .build();
+        AvroParquetWriter parquetWriter =
+                new AvroParquetWriter(new Path(outputFilename), schema, compressionCodecName, rowGroupSize, pageSize);
+
+        // This code is correct for parquet 1.8.1. Scala is still using parquet 1.7.0
+//        ParquetWriter<Object> parquetWriter2 = AvroParquetWriter.builder(new Path(outputFilename))
+//                .withSchema(schema)
+//                .withCompressionCodec(compressionCodecName)
+//                .withRowGroupSize(rowGroupSize)
+//                .withPageSize(pageSize)
+//                .build();
 
         int numRecords = 0;
         T record = null;

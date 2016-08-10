@@ -1,9 +1,14 @@
 package org.opencb.hpg.bigdata.core.avro;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import org.apache.commons.lang3.StringUtils;
+import org.opencb.biodata.models.core.Region;
 import org.opencb.biodata.models.variant.Variant;
 import org.opencb.biodata.models.variant.VariantSource;
 import org.opencb.biodata.models.variant.avro.VariantAvro;
-import org.opencb.biodata.models.variant.avro.VariantFileMetadata;
 import org.opencb.biodata.tools.variant.VariantVcfHtsjdkReader;
 import org.opencb.biodata.tools.variant.stats.VariantGlobalStatsCalculator;
 import org.opencb.hpg.bigdata.core.io.avro.AvroFileWriter;
@@ -34,9 +39,13 @@ public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
         vcfReader.pre();
 
         // writer
-        OutputStream outputStream = new FileOutputStream(outputFilename);
-        AvroFileWriter<VariantAvro> avroFileWriter = new AvroFileWriter<>(VariantAvro.SCHEMA$,
-                                                                          compression, outputStream);
+        OutputStream outputStream;
+        if (StringUtils.isEmpty(outputFilename) || outputFilename.equals("STDOUT")) {
+            outputStream = System.out;
+        } else {
+            outputStream = new FileOutputStream(outputFilename);
+        }
+        AvroFileWriter<VariantAvro> avroFileWriter = new AvroFileWriter<>(VariantAvro.SCHEMA$, compression, outputStream);
         avroFileWriter.open();
         VariantGlobalStatsCalculator statsCalculator = new VariantGlobalStatsCalculator(vcfReader.getSource());
         statsCalculator.pre();
@@ -57,19 +66,27 @@ public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
             }
         }
 
-        // write variant metadata (header, stats,...) in a separated file
-        FileOutputStream out = new FileOutputStream(metaFilename);
-        AvroFileWriter<VariantFileMetadata> aw = new AvroFileWriter<>(VariantFileMetadata.SCHEMA$,
-                                                                      compression, out);
-        aw.open();
-        aw.writeDatum(variantSource.getImpl());
-        aw.close();
-        out.close();
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        mapper.configure(MapperFeature.REQUIRE_SETTERS_FOR_GETTERS, true);
+
+        ObjectWriter writer = mapper.writer();
+        PrintWriter pwriter = new PrintWriter(new FileWriter(metaFilename + ".json"));
+        pwriter.write(writer.withDefaultPrettyPrinter().writeValueAsString(variantSource.getImpl()));
+        pwriter.close();
+
 
         // close
         vcfReader.post();
         vcfReader.close();
         avroFileWriter.close();
         outputStream.close();
+    }
+
+    public VariantAvroSerializer addRegionFilter(Region region) {
+        getFilters().add(v -> v.getChromosome().equals(region.getChromosome())
+                && v.getEnd() >= region.getStart()
+                && v.getStart() <= region.getEnd());
+        return this;
     }
 }
