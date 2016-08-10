@@ -17,6 +17,7 @@
 package org.opencb.hpg.bigdata.app.cli.local;
 
 import com.beust.jcommander.*;
+import org.opencb.commons.datastore.core.Query;
 import org.opencb.hpg.bigdata.app.cli.hadoop.CliOptionsParser;
 
 import java.util.HashMap;
@@ -68,6 +69,7 @@ public class LocalCliOptionsParser {
         JCommander variantSubCommands = jcommander.getCommands().get("variant");
         variantSubCommands.addCommand("convert", variantCommandOptions.convertVariantCommandOptions);
         variantSubCommands.addCommand("annotate", variantCommandOptions.annotateVariantCommandOptions);
+        variantSubCommands.addCommand("query", variantCommandOptions.queryVariantCommandOptions);
 
     }
 
@@ -286,10 +288,12 @@ public class LocalCliOptionsParser {
 
         ConvertVariantCommandOptions convertVariantCommandOptions;
         AnnotateVariantCommandOptions annotateVariantCommandOptions;
+        QueryVariantCommandOptions queryVariantCommandOptions;
 
         public VariantCommandOptions() {
             this.convertVariantCommandOptions = new ConvertVariantCommandOptions();
             this.annotateVariantCommandOptions = new AnnotateVariantCommandOptions();
+            this.queryVariantCommandOptions = new QueryVariantCommandOptions();
         }
     }
 
@@ -349,7 +353,36 @@ public class LocalCliOptionsParser {
         @Parameter(names = {"-o", "--output"}, description = "Input file name, usually a gVCF/VCF but it can be an Avro file when converting to Parquet.",
                 required = true, arity = 1)
         public String ouput;
+    }
 
+    @Parameters(commandNames = {"query"}, commandDescription = "Command to execute queries against the input file (Avro or Parquet), the results will be saved into the output file.")
+    class QueryVariantCommandOptions {
+
+        @ParametersDelegate
+        public CommonCommandOptions commonOptions = commonCommandOptions;
+
+        @Parameter(names = {"-i", "--input"}, description = "Input file name (in Avro or Parquet format).",
+                required = true, arity = 1)
+        public String input;
+
+        @Parameter(names = {"-o", "--output"}, description = "Output file name.",
+                required = true, arity = 1)
+        public String output;
+
+        @Parameter(names = {"--id"}, description = "Query for ID; comma separated list of IDs, e.g.: \"rs312411,rs421225\"",
+                required = false, arity = 1)
+        public String ids;
+
+        @Parameter(names = {"--region"}, description = "Query for region; comma separated list of regions, e.g.: 1:300000-400000000,15:343453463-8787665654", required = false)
+        public String regions;
+
+        @Parameter(names = {"--consequence-type-so-accession"}, description = "Query for Sequence Ontology (SO) term accession code; comma separated list of accession codes of the SO terms related to the variant consequence type, e.g.: SO:32234,SO:00124",
+                required = false, arity = 1)
+        public String so_accessions;
+
+        @Parameter(names = {"--consequence-type-so-name"}, description = "Query for Sequence Ontology (SO) term name; comma separated list of names of the SO terms related to the variant consequence type, e.g.:  \"transgenic insertion, genetic marker\"",
+                required = false, arity = 1)
+        public String so_names;
     }
 
     public void printUsage(){

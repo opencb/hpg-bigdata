@@ -21,6 +21,9 @@ import htsjdk.variant.vcf.VCFCodec;
 import htsjdk.variant.vcf.VCFFileReader;
 import org.apache.avro.Schema;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.spark.SparkConf;
+import org.apache.spark.SparkContext;
+import org.apache.spark.sql.SparkSession;
 import org.opencb.biodata.formats.variant.vcf4.FullVcfCodec;
 import org.opencb.biodata.models.core.Region;
 import org.opencb.biodata.models.variant.Variant;
@@ -41,6 +44,8 @@ import org.opencb.hpg.bigdata.core.converters.variation.VariantContext2VariantCo
 import org.opencb.hpg.bigdata.core.io.VariantContextBlockIterator;
 import org.opencb.hpg.bigdata.core.io.VcfBlockIterator;
 import org.opencb.hpg.bigdata.core.io.avro.AvroFileWriter;
+import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
+import org.opencb.hpg.bigdata.core.lib.VariantDataset;
 import org.opencb.hpg.bigdata.core.parquet.VariantParquetConverter;
 
 import java.io.*;
@@ -80,6 +85,12 @@ public class VariantCommandExecutor extends CommandExecutor {
                         variantCommandOptions.convertVariantCommandOptions.commonOptions.verbose,
                         variantCommandOptions.convertVariantCommandOptions.commonOptions.conf);
                 annotate();
+            case "query":
+                init(variantCommandOptions.queryVariantCommandOptions.commonOptions.logLevel,
+                        variantCommandOptions.queryVariantCommandOptions.commonOptions.verbose,
+                        variantCommandOptions.queryVariantCommandOptions.commonOptions.conf);
+                query();
+                break;
             default:
                 break;
         }
@@ -109,7 +120,7 @@ public class VariantCommandExecutor extends CommandExecutor {
                     FileUtils.checkDirectory(parent, true); // Throws exception, if does not exist
                 }
             } else {
-                output = inputPath.toString() + "."  + to;
+                output = inputPath.toString() + "." + to;
             }
             outputStream = new FileOutputStream(output);
         }
@@ -495,6 +506,80 @@ public class VariantCommandExecutor extends CommandExecutor {
         }
     }
 */
+
+    public void query() throws Exception {
+        // check mandatory parameter 'input file'
+        Path inputPath = Paths.get(variantCommandOptions.queryVariantCommandOptions.input);
+        FileUtils.checkFile(inputPath);
+
+        // TODO: to take the spark home from somewhere else
+        SparkConf sparkConf = SparkConfCreator.getConf("variant query", "local", 1,
+                    true, "/home/jtarraga/soft/spark-2.0.0/");
+        System.out.println("sparkConf = " + sparkConf.toDebugString());
+        SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
+        System.exit(0);
+
+//        SparkConf sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "/home/jtarraga/soft/spark-2.0.0/");
+//        SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
+
+        VariantDataset vd = new VariantDataset();
+
+        vd.load(variantCommandOptions.queryVariantCommandOptions.input, sparkSession);
+        vd.createOrReplaceTempView("vcf");
+
+        // query for id
+        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.ids)) {
+            String[] ids = StringUtils.split(variantCommandOptions.queryVariantCommandOptions.regions, ",");
+
+            for (String id : ids) {
+                vd.idFilter(id);
+                logger.warn("Query for multiple IDs, not yet implemented. Currently, it queries for the first ID.");
+                break;
+            }
+        }
+
+        // query for region
+        List<Region> regions = null;
+        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.regions)) {
+            regions = Region.parseRegions(variantCommandOptions.queryVariantCommandOptions.regions);
+
+            for (Region region : regions) {
+                logger.warn("Query for region, not yet implemented.");
+                break;
+            }
+        }
+
+        // query for SO term name
+        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.so_names)) {
+            String[] names = StringUtils.split(variantCommandOptions.queryVariantCommandOptions.so_names, ",");
+
+            for (String name : names) {
+                vd.annotationFilter("consequenceTypes.sequenceOntologyTerms.name", name);
+                logger.warn("Query for multiple SO term names (consequence type), not yet implemented. "
+                        + "Currently, it queries for the first SO term name.");
+                break;
+            }
+        }
+
+        // query for SO term accession
+        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.so_accessions)) {
+            String[] accessions = StringUtils.split(variantCommandOptions.queryVariantCommandOptions.so_accessions, ",");
+
+            for (String accession : accessions) {
+                vd.annotationFilter("consequenceTypes.sequenceOntologyTerms.accession", accession);
+                logger.warn("Query for multiple SO term accessions (consequence type), not yet implemented. "
+                        + "Currently, it queries for the first SO term accession.");
+                break;
+            }
+        }
+
+        // apply previous filters
+        vd.update();
+
+        // save the dataset
+        logger.warn("The current query implementation saves the resulting dataset in Avro format.");
+        vd.write().format("com.databricks.spark.avro").save(variantCommandOptions.queryVariantCommandOptions.output);
+    }
 
     public void annotate() throws IOException {
         VariantAvroAnnotator variantAvroAnnotator = new VariantAvroAnnotator();

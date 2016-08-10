@@ -49,8 +49,6 @@ public abstract class ParentDataset<T> {
         query = new Query();
     }
 
-    protected abstract void updateDataset(Query query);
-
     public void load(String filename, SparkSession sparkSession) throws Exception {
         this.sparkSession = sparkSession;
         sqlContext = new SQLContext(sparkSession);
@@ -63,6 +61,13 @@ public abstract class ParentDataset<T> {
             ds = sqlContext.read().load(filename);
         }
     }
+
+    protected abstract void updateDataset(Query query);
+
+    public void update() {
+        updateDataset(query);
+    }
+
 
     public ParentDataset<T> agg(Column expr, Column... exprs) {
         ds = ds.agg(expr, exprs);
