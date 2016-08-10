@@ -38,22 +38,18 @@ public class VariantDataset extends ParentDataset<VariantDataset> {
         }
     }
 
-    public VariantDataset idfilter(String value) {
+    public VariantDataset idFilter(String value) {
         query.put("id", value);
         return this;
     }
 
-    public VariantDataset studyfilter(String key, String value) {
+    public VariantDataset studyFilter(String key, String value) {
         query.put("studies." + key, value);
         return this;
     }
 
-    public VariantDataset annotationfilter(String key, String value) {
+    public VariantDataset annotationFilter(String key, String value) {
         query.put("annotation." + key, value);
         return this;
-    }
-
-    public void showMe() {
-        System.out.println("------> VariatDataset");
     }
 }
