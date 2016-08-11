@@ -25,6 +25,8 @@ import org.apache.spark.sql.SparkSession;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by imedina on 04/08/16.
@@ -46,6 +48,7 @@ public class VariantDatasetTest {
         //String filename = "/home/imedina/data/CEU-1409-01_20000.vcf.avro";
         String filename = "/home/jtarraga/data/spark/10k.variants.avro";
 
+        long count;
 //        String filename = "/tmp/kk/xxx.avro";
         VariantDataset vd = new VariantDataset();
         try {
@@ -56,7 +59,8 @@ public class VariantDatasetTest {
             System.out.println("--------------------------------------");
 //            long count = vd.annotationfilter("consequenceTypes.sequenceOntologyTerms.accession", "SO:0001566").count();
 
-//            vd.annotationfilter("populationFrequencies.altAlleleFreq", "1000G:CEU < 0.2,1000G:ASW < 0.25").count();
+//            count = vd.annotationFilter("populationFrequencies.altAlleleFreq", "1000G:CEU < 1.2,1000G:ASW < 1.25")
+//                    .count();
 //            vd.annotationfilter("populationFrequencies", "1000G:ASW < 0.2").count();
 
 //            long count = vd.annotationfilter("consequenceTypes.sequenceOntologyTerms.accession", "SO:0001566")
@@ -67,13 +71,10 @@ public class VariantDatasetTest {
 //                    .count();
 
 
-            String ids = "rs587604674,rs587603352";
-            long count = vd.idFilter(Arrays.asList(StringUtils.split(ids, ","))).count();
+//            String ids = "rs587604674,rs587603352";
+//            count = vd.idFilter(Arrays.asList(StringUtils.split(ids, ","))).count();
 
-//            System.out.println(vd.annotationfilter("consequenceTypes.sequenceOntologyTerms.accession", "SO:0001566")
-//                    .annotationfilter("conservation.phylop", "< 0.1")
-//                    .annotationfilter("conservation.phastCons", "< 0.1")
-//                    .head());
+            count = vd.annotationFilter("conservation", "phylop<0.3,phastCons<0.1").count();
 
             System.out.println("count = " + count);
 //            System.out.println(vd.annotationfilter("consequenceTypes.sequenceOntologyTerms.name", "missense_variant")

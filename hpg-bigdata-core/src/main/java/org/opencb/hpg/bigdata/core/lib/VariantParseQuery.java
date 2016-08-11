@@ -24,6 +24,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by imedina on 09/08/16.
@@ -35,6 +37,9 @@ public class VariantParseQuery {
 
     private StringBuilder sqlQueryString;
 
+    private String op1, op2, binaryOp;
+    private String[] values;
+
     public VariantParseQuery() {
         explodes = new LinkedHashSet<>();
         filters = new ArrayList<>();
@@ -42,6 +47,73 @@ public class VariantParseQuery {
         sqlQueryString = new StringBuilder();
     }
 
+    private void preProcessing(String value, boolean isString) {
+        values = null;
+        binaryOp = "";
+        if (value.contains(",")) {
+            values = value.split(",");
+            binaryOp = " OR ";
+        } else if (value.contains(";")) {
+            values = value.split(";");
+            binaryOp = " AND ";
+        }
+
+        if (isString) {
+            op1 = " = '";
+            op2 = "'";
+        } else {
+            op1 = "";
+            op2 = "";
+        }
+    }
+
+    private void processValue(String key, String value, boolean isString) {
+        preProcessing(value, isString);
+
+        StringBuilder where = new StringBuilder();
+        if (values == null) {
+            where.append(key).append(op1).append(value).append(op2);
+        } else {
+            where.append("(").append(key).append(op1).append(values[0]).append(op2);
+            for (int i=1; i < values.length; i++) {
+                where.append(binaryOp);
+                where.append(key).append(op1).append(values[i]).append(op2);
+            }
+            where.append(")");
+        }
+        filters.add(where.toString());
+    }
+
+    private void processArrayContains(String key, String value, boolean isString) {
+        preProcessing(value, isString);
+
+        // values on the list are considered as String
+        StringBuilder where = new StringBuilder();
+        if (values == null) {
+            where.append("array_contains(").append(key).append(op1).append(value).append(op2).append(")");
+        } else {
+            where.append("(array_contains(").append(key).append(op1).append(values[0]).append(op2).append(")");
+            for (int i = 1; i < values.length; i++) {
+                where.append(binaryOp);
+                where.append("array_contains(").append(key).append(op1).append(values[i]).append(op2).append(")");
+            }
+            where.append(")");
+        }
+        filters.add(where.toString());
+    }
+
+    private void updatePopWhereString(String field, String viewName, Matcher matcher, StringBuilder where) {
+        where.append("(").append(viewName).append(".study = '").append(matcher.group(1).trim())
+                .append("' AND ").append(viewName).append(".population = '").append(matcher.group(2).trim())
+                .append("' AND ").append(viewName).append(".").append(field).append(matcher.group(3).trim())
+                .append(matcher.group(4).trim()).append(")");
+    }
+
+    private void updateConsWhereString(String viewName, Matcher matcher, StringBuilder where) {
+        where.append("(").append(viewName).append(".source = '").append(matcher.group(1).trim())
+                .append("' AND ").append(viewName).append(".score")
+                .append(matcher.group(2).trim()).append(matcher.group(3).trim()).append(")");
+    }
 
     public String parse(Query query, QueryOptions queryOptions, String viewName) {
 
@@ -54,32 +126,23 @@ public class VariantParseQuery {
                 return null;
             }
 
+            String value = (String) query.get(key);
+
             switch (fields[0]) {
                 case "id":
                 case "chromosome":
                 case "type":
-                    Object value = query.get(key);
-                    if (value instanceof List) {
-                        List<String> values = (List<String>) value;
-                        StringBuilder where = new StringBuilder();
-                        where.append("(").append(fields[0]).append(" = '").append(values.get(0)).append("'");
-                        for (int i=1; i < values.size(); i++) {
-                            where.append(" OR ");
-                            where.append(fields[0]).append(" = '").append(values.get(i)).append("'");
-                        }
-                        where.append(")");
-                        filters.add(where.toString());
-                    } else {
-                        filters.add(fields[0] + " = '" + query.get(key) + "'");
-                    }
+                    processValue(fields[0], value, true);
                     break;
                 case "start":
                 case "end":
                 case "length":
-                    filters.add(fields[0] + query.get(key));
+                    processValue(fields[0], value, false);
                     break;
                 case "names":
-                    filters.add("array_contains(annotation.hgvs, '" + fields[fields.length - 1] + "')");
+                    // this is equivalent to annotationFilter("hgvs", ...)
+                    processArrayContains("annotation.hgvs", value, true);
+                    //filters.add("array_contains(annotation.hgvs, '" + fields[fields.length - 1] + "')");
                     break;
                 case "studies":
                     processStudyQuery(fields, query.get(key));
@@ -94,7 +157,7 @@ public class VariantParseQuery {
 
         // Build the SQL string from the processed query using explodes and filters
         if (queryOptions != null && StringUtils.isNotEmpty(queryOptions.getString(QueryOptions.INCLUDE))) {
-            sqlQueryString.append("SELECT " + queryOptions.getString(QueryOptions.INCLUDE) + " ");
+            sqlQueryString.append("SELECT ").append(queryOptions.getString(QueryOptions.INCLUDE)).append(" ");
         } else {
             sqlQueryString.append("SELECT * ");
         }
@@ -117,7 +180,7 @@ public class VariantParseQuery {
 
         switch (path) {
             case "studyId":
-                filters.add("studies." + path + " = '" + value + "'");
+                processValue("studies." + path, (String) value, true);
                 break;
             case "files":
                 explodes.add("LATERAL VIEW explode(studies.files) act as file");
@@ -125,7 +188,7 @@ public class VariantParseQuery {
                 switch (field) {
                     case "fileId":
                     case "call":
-                        filters.add("file." + field + " = '" + value + "'");
+                        processValue("file." + field, (String) value, true);
                         break;
                     default:
                         // error!!
@@ -134,7 +197,7 @@ public class VariantParseQuery {
                 break;
 
             case "format":
-                filters.add("array_contains(studies.format, '" + value + "')");
+                processArrayContains("studies.format", (String) value, true);
                 break;
 
             case "samplesData":
@@ -148,31 +211,34 @@ public class VariantParseQuery {
     }
 
     private void processAnnotationQuery(String[] fields, Object value) {
-        //            annotation.consequenceTypes.sequenceOntologyTerms.accession
-        //            this.sql = "select * from vcf lateral view explode(annotation.consequenceTypes) act as ct
-        //                                          lateral view explode(ct.sequenceOntologyTerms) ctso as so
-        //                                          where so.accession = 'SO:0001566' and ct.geneName = 'BRCA2';
-
         // sanity check, if there is any ...
         if (fields == null || fields.length == 0) {
             return;
         }
 
-        String path = StringUtils.join(fields, ".", 1, fields.length - 1);
+        Matcher matcher;
+        Pattern pattern;
+        StringBuilder where;
+
         String field = fields[fields.length - 1];
+        String path = StringUtils.join(fields, ".", 1, fields.length - 1);
+        if (StringUtils.isEmpty(path)) {
+            path = field;
+        }
 
         switch (path) {
             case "id":
             case "ancestralAllele":
             case "displayConsequenceType":
-                filters.add("annotation." + path + " = '" + value + "'");
+                processValue("annotation." + path, (String) value, true);
                 break;
             case "xrefs":
                 explodes.add("LATERAL VIEW explode(annotation.xrefs) act as xref");
-                filters.add("xref." + field + " = '" + value + "'");
+                processValue("xref." + field, (String) value, true);
                 break;
             case "hgvs":
-                filters.add("array_contains(annotation.hgvs, '" + value + "')");
+                // this is equivalent to case 'names' in parse function !!
+                processArrayContains("annotation.hgvs", (String) value, true);
                 break;
 
             // consequenceTypes is an array and therefore we have to use explode function
@@ -185,10 +251,10 @@ public class VariantParseQuery {
                     case "ensemblGeneId":
                     case "ensemblTranscriptId":
                     case "biotype":
-                        filters.add("ct." + field + " = '" + value + "'");
+                        processValue("ct." + field, (String) value, true);
                         break;
                     case "transcriptAnnotationFlags":
-                        filters.add("array_contains(ct.transcriptAnnotationFlags, '" + value + "')");
+                        processArrayContains("ct.transcriptAnnotationFlags", (String) value, true);
                         break;
                     default:
                         // error!!
@@ -205,7 +271,7 @@ public class VariantParseQuery {
                 switch (field) {
                     case "accession":
                     case "name":
-                        filters.add("so." + field + " = '" + value + "'");
+                        processValue("so." + field, (String) value, true);
                         break;
                     default:
                         // error!!
@@ -215,34 +281,94 @@ public class VariantParseQuery {
 
             case "populationFrequencies":
                 explodes.add("LATERAL VIEW explode(annotation.populationFrequencies) apf as popfreq");
+                preProcessing((String) value, false);
 
-                String[] studyAndPopulation = value.toString().split(":");
-                filters.add("popfreq.study = " + studyAndPopulation[0] + " AND popfreq.population = " + studyAndPopulation[1]);
+                pattern = Pattern.compile("^([^=<>:]+.*):([^=<>:]+.*)(<=?|>=?|!=|!?=?~|==?)([^=<>:]+.*)$");
 
+                where = new StringBuilder();
+                if (values == null) {
+                    matcher = pattern.matcher((String) value);
+                    if (matcher.find()) {
+                        updatePopWhereString(field, "popfreq", matcher, where);
+                    } else {
+                        // error
+                        System.out.println("error: invalid expresion " + value + ": abort!");
+                    }
+                } else {
+                    matcher = pattern.matcher(values[0]);
+                    if (matcher.find()) {
+                        where.append("(");
+                        updatePopWhereString(field, "popfreq", matcher, where);
+                        for (int i=1; i < values.length; i++) {
+                            matcher = pattern.matcher(values[i]);
+                            if (matcher.find()) {
+                                where.append(binaryOp);
+                                updatePopWhereString(field, "popfreq", matcher, where);
+                            } else {
+                                // error
+                                System.out.println("error: invalid expresion " + values[i] + ": abort!");
+                            }
+                        }
+                        where.append(")");
+                    } else {
+                        // error
+                        System.out.println("error: invalid expresion " + values[0] + ": abort!");
+                    }
+                }
+                filters.add(where.toString());
                 break;
 
             case "conservation":
-                String colName = "cons_" + field;
-                switch (field) {
-                    case "phylop":
-                    case "phastCons":
-                    case "gerp":
-                        explodes.add("LATERAL VIEW explode(annotation.conservation) acons as " + colName);
-                        filters.add(colName + ".source = '" + field + "' AND " + colName + ".score " + value);
-                        break;
-                    default:
-                        break;
+                // is it expensive computationally? Maybe we have to use a map to check if
+                // a given cons has already explode before exploding!
+                explodes.add("LATERAL VIEW explode(annotation.conservation) acons as cons_phylop");
+                explodes.add("LATERAL VIEW explode(annotation.conservation) acons as cons_phastCons");
+                explodes.add("LATERAL VIEW explode(annotation.conservation) acons as cons_gerp");
+                preProcessing((String) value, false);
+
+                pattern = Pattern.compile("^([^=<>]+.*)(<=?|>=?|!=|!?=?~|==?)([^=<>]+.*)$");
+
+                where = new StringBuilder();
+                if (values == null) {
+                    matcher = pattern.matcher((String) value);
+                    if (matcher.find()) {
+                        updateConsWhereString("cons_" + matcher.group(1).trim(), matcher, where);
+                    } else {
+                        // error
+                        System.out.println("error: invalid expresion " + value + ": abort!");
+                    }
+                } else {
+                    matcher = pattern.matcher(values[0]);
+                    if (matcher.find()) {
+                        where.append("(");
+                        updateConsWhereString("cons_" + matcher.group(1).trim(), matcher, where);
+                        for (int i=1; i < values.length; i++) {
+                            matcher = pattern.matcher(values[i]);
+                            if (matcher.find()) {
+                                where.append(binaryOp);
+                                updateConsWhereString("cons_" + matcher.group(1).trim(), matcher, where);
+                            } else {
+                                // error
+                                System.out.println("error: invalid expresion " + values[i] + ": abort!");
+                            }
+                        }
+                        where.append(")");
+                    } else {
+                        // error
+                        System.out.println("error: invalid expresion " + values[0] + ": abort!");
+                    }
                 }
+                filters.add(where.toString());
                 break;
 
             case "variantTraitAssociation":
                 switch (field) {
                     case "clinvar":
                         explodes.add("LATERAL VIEW explode(annotation.variantTraitAssociation.clinvar) avtac as clinvar");
-                        filters.add("clinvar.accession = '" + value + "'");
+                        processValue("clinvar.accession", (String) value, true);
                     case "cosmic":
                         explodes.add("LATERAL VIEW explode(annotation.variantTraitAssociation.cosmic) avtac as cosmic");
-                        filters.add("cosmic.mutationId = '" + value + "'");
+                        processValue("cosmic.mutationId", (String) value, true);
                         break;
                     default:
                         break;
