@@ -40,23 +40,56 @@ public class VariantDataset extends ParentDataset<VariantDataset> {
         }
     }
 
+    private void updateQuery(String key, List<String> values, boolean and) {
+        if (and) {
+            query.put(key, String.join(";", values));
+        } else {
+            query.put(key, String.join(",", values));
+        }
+    }
+
+    // id filter
     public VariantDataset idFilter(String value) {
         query.put("id", value);
         return this;
     }
 
     public VariantDataset idFilter(List<String> values) {
-        query.put("id", values);
+        return idFilter(values, false);
+    }
+
+    public VariantDataset idFilter(List<String> values, boolean and) {
+        updateQuery("id", values, and);
         return this;
     }
 
+    // study filter
     public VariantDataset studyFilter(String key, String value) {
         query.put("studies." + key, value);
         return this;
     }
 
+    public VariantDataset studyFilter(String key, List<String> values) {
+        return studyFilter(key, values, false);
+    }
+
+    public VariantDataset studyFilter(String key, List<String> values, boolean and) {
+        updateQuery("studies." + key, values, and);
+        return this;
+    }
+
+    // annotation filter
     public VariantDataset annotationFilter(String key, String value) {
         query.put("annotation." + key, value);
+        return this;
+    }
+
+    public VariantDataset annotationFilter(String key, List<String> values) {
+        return annotationFilter(key, values, false);
+    }
+
+    public VariantDataset annotationFilter(String key, List<String> values, boolean and) {
+        updateQuery("annotation." + key, values, and);
         return this;
     }
 }
