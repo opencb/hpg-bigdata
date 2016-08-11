@@ -17,8 +17,6 @@
 package org.opencb.hpg.bigdata.app.cli.local;
 
 import com.beust.jcommander.*;
-import org.opencb.commons.datastore.core.Query;
-import org.opencb.hpg.bigdata.app.cli.hadoop.CliOptionsParser;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -35,6 +33,8 @@ public class LocalCliOptionsParser {
 
     private final CommonCommandOptions commonCommandOptions;
 
+    private AdminCommandOptions adminCommandOptions;
+
     // NGS Sequence command and subcommmands
     private SequenceCommandOptions sequenceCommandOptions;
 
@@ -50,6 +50,12 @@ public class LocalCliOptionsParser {
 
         commandOptions = new CommandOptions();
         commonCommandOptions = new CommonCommandOptions();
+
+        adminCommandOptions = new AdminCommandOptions();
+        jcommander.addCommand("admin", adminCommandOptions);
+        JCommander adminSubCommands = jcommander.getCommands().get("admin");
+        adminSubCommands.addCommand("server", adminCommandOptions.serverAdminCommandOptions);
+
 
         sequenceCommandOptions = new SequenceCommandOptions();
         jcommander.addCommand("sequence", sequenceCommandOptions);
@@ -146,6 +152,32 @@ public class LocalCliOptionsParser {
         public String conf;
 
     }
+
+    /*
+ * Sequence (FASTQ) CLI options
+ */
+    @Parameters(commandNames = {"admin"}, commandDescription = "Implements different tools for working with Fastq files")
+    public class AdminCommandOptions extends CommandOptions {
+
+        ServerAdminCommandOptions serverAdminCommandOptions;
+
+        public AdminCommandOptions() {
+            this.serverAdminCommandOptions = new ServerAdminCommandOptions();
+        }
+    }
+
+    @Parameters(commandNames = {"server"}, commandDescription = "Converts FastQ files to different big data formats such as Avro")
+    class ServerAdminCommandOptions {
+
+        @ParametersDelegate
+        public CommonCommandOptions commonOptions = commonCommandOptions;
+
+        @Parameter(names = {"-p", "--port"}, description = "Input file name, usually a gVCF/VCF but it can be an Avro file when converting to Parquet.",
+                required = true, arity = 1)
+        public int port = 1042;
+
+    }
+
 
 
     /*
@@ -385,6 +417,7 @@ public class LocalCliOptionsParser {
         public String so_names;
     }
 
+
     public void printUsage(){
         if(getCommand().isEmpty()) {
             System.err.println("");
@@ -458,6 +491,10 @@ public class LocalCliOptionsParser {
 
     public CommandOptions getCommandOptions() {
         return commandOptions;
+    }
+
+    public AdminCommandOptions getAdminCommandOptions() {
+        return adminCommandOptions;
     }
 
     public SequenceCommandOptions getSequenceCommandOptions() {

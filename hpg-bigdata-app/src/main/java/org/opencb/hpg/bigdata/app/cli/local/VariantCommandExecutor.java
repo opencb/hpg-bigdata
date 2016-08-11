@@ -588,4 +588,5 @@ public class VariantCommandExecutor extends CommandExecutor {
         variantAvroAnnotator.annotate(input, output);
 
     }
+
 }
