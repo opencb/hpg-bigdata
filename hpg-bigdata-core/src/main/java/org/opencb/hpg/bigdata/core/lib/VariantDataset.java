@@ -16,8 +16,11 @@
 
 package org.opencb.hpg.bigdata.core.lib;
 
+import org.apache.commons.lang3.StringUtils;
+import org.opencb.biodata.models.core.Region;
 import org.opencb.commons.datastore.core.Query;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -47,6 +50,7 @@ public class VariantDataset extends ParentDataset<VariantDataset> {
             query.put(key, String.join(",", values));
         }
     }
+
 
     // id filter
     public VariantDataset idFilter(String value) {
