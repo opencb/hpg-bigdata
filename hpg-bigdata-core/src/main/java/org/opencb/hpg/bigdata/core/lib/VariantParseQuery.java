@@ -66,18 +66,18 @@ public class VariantParseQuery {
                 case "id":
                 case "chromosome":
                 case "type":
-                    processFilter(fields[0], value, true, false);
+                    filters.add(processFilter(fields[0], value, true, false));
                     break;
                 case "start":
                 case "end":
                 case "length":
-                    processFilter(fields[0], value, false, false);
+                    filters.add(processFilter(fields[0], value, false, false));
                     break;
                 case "region":
                     processRegionQuery(value);
                     break;
                 case "names":
-                    processFilter("hgvs", value, true, true);
+                    filters.add(processFilter("hgvs", value, true, true));
                     break;
                 case "studies":
                     processStudyQuery(fields, value);
@@ -142,7 +142,7 @@ public class VariantParseQuery {
 
         switch (path) {
             case "studyId":
-                processFilter("studies." + path, (String) value, true, false);
+                filters.add(processFilter("studies." + path, (String) value, true, false));
                 break;
             case "files":
                 explodes.add("LATERAL VIEW explode(studies.files) act as file");
@@ -150,7 +150,7 @@ public class VariantParseQuery {
                 switch (field) {
                     case "fileId":
                     case "call":
-                        processFilter("file." + field, (String) value, true, false);
+                        filters.add(processFilter("file." + field, (String) value, true, false));
                         break;
                     default:
                         // error!!
@@ -159,7 +159,7 @@ public class VariantParseQuery {
                 break;
 
             case "format":
-                processFilter("studies.format", (String) value, true, true);
+                filters.add(processFilter("studies.format", (String) value, true, true));
                 break;
 
             case "samplesData":
@@ -191,15 +191,15 @@ public class VariantParseQuery {
             case "id":
             case "ancestralAllele":
             case "displayConsequenceType":
-                processFilter("annotation." + path, value, true, false);
+                filters.add(processFilter("annotation." + path, value, true, false));
                 break;
             case "xrefs":
                 explodes.add("LATERAL VIEW explode(annotation.xrefs) act as xref");
-                processFilter("xref." + field, value, true, false);
+                filters.add(processFilter("xref." + field, value, true, false));
                 break;
             case "hgvs":
                 // this is equivalent to case 'names' in parse function !!
-                processFilter("annotation.hgvs", value, true, true);
+                filters.add(processFilter("annotation.hgvs", value, true, true));
                 break;
 
             // consequenceTypes is an array and therefore we have to use explode function
@@ -212,10 +212,10 @@ public class VariantParseQuery {
                     case "ensemblGeneId":
                     case "ensemblTranscriptId":
                     case "biotype":
-                        processFilter("ct." + field, value, true, false);
+                        filters.add(processFilter("ct." + field, value, true, false));
                         break;
                     case "transcriptAnnotationFlags":
-                        processFilter("ct.transcriptAnnotationFlags", value, true, true);
+                        filters.add(processFilter("ct.transcriptAnnotationFlags", value, true, true));
                         break;
                     default:
                         // error!!
@@ -232,7 +232,7 @@ public class VariantParseQuery {
                 switch (field) {
                     case "accession":
                     case "name":
-                        processFilter("so." + field, value, true, false);
+                        filters.add(processFilter("so." + field, value, true, false));
                         break;
                     default:
                         // error!!
@@ -354,10 +354,10 @@ public class VariantParseQuery {
                 switch (field) {
                     case "clinvar":
                         explodes.add("LATERAL VIEW explode(annotation.variantTraitAssociation.clinvar) avtac as clinvar");
-                        processFilter("clinvar.accession", value, true, false);
+                        filters.add(processFilter("clinvar.accession", value, true, false));
                     case "cosmic":
                         explodes.add("LATERAL VIEW explode(annotation.variantTraitAssociation.cosmic) avtac as cosmic");
-                        processFilter("cosmic.mutationId", value, true, false);
+                        filters.add(processFilter("cosmic.mutationId", value, true, false));
                         break;
                     default:
                         break;
