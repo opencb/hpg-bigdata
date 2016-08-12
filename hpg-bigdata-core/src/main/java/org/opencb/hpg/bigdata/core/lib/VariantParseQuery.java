@@ -20,10 +20,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.opencb.commons.datastore.core.Query;
 import org.opencb.commons.datastore.core.QueryOptions;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -32,15 +29,18 @@ import java.util.regex.Pattern;
  */
 public class VariantParseQuery {
 
+    private static final Pattern REGION_PATTERN = Pattern.compile("[:-]");
+    private static final Pattern POPULATION_PATTERN =
+            Pattern.compile("^([^=<>:]+.*):([^=<>:]+.*)(<=?|>=?|!=|!?=?~|==?)([^=<>:]+.*)$");
+    private static final Pattern CONSERVATION_PATTERN =
+            Pattern.compile("^([^=<>]+.*)(<=?|>=?|!=|!?=?~|==?)([^=<>]+.*)$");
+
+    private static final String CONSERVATION_PREFIX = "cons_";
+
     private Set<String> explodes;
     private List<String> filters;
 
     private StringBuilder sqlQueryString;
-
-    @Deprecated
-    private String op1, op2, binaryOp;
-    @Deprecated
-    private String[] values;
 
     public VariantParseQuery() {
         explodes = new LinkedHashSet<>();
@@ -48,65 +48,6 @@ public class VariantParseQuery {
 
         sqlQueryString = new StringBuilder();
     }
-
-    @Deprecated
-    private void preProcessing(String value, boolean isString) {
-        values = null;
-        binaryOp = "";
-        if (value.contains(",")) {
-            values = value.split(",");
-            binaryOp = " OR ";
-        } else if (value.contains(";")) {
-            values = value.split(";");
-            binaryOp = " AND ";
-        }
-
-        if (isString) {
-            op1 = " = '";
-            op2 = "'";
-        } else {
-            op1 = "";
-            op2 = "";
-        }
-    }
-
-    @Deprecated
-    private void processValue(String key, String value, boolean isString) {
-        preProcessing(value, isString);
-
-        StringBuilder where = new StringBuilder();
-        if (values == null) {
-            where.append(key).append(op1).append(value).append(op2);
-        } else {
-            where.append("(").append(key).append(op1).append(values[0]).append(op2);
-            for (int i=1; i < values.length; i++) {
-                where.append(binaryOp);
-                where.append(key).append(op1).append(values[i]).append(op2);
-            }
-            where.append(")");
-        }
-        filters.add(where.toString());
-    }
-
-    @Deprecated
-    private void processArrayContains(String key, String value, boolean isString) {
-        preProcessing(value, isString);
-
-        // values on the list are considered as String
-        StringBuilder where = new StringBuilder();
-        if (values == null) {
-            where.append("array_contains(").append(key).append(op1).append(value).append(op2).append(")");
-        } else {
-            where.append("(array_contains(").append(key).append(op1).append(values[0]).append(op2).append(")");
-            for (int i = 1; i < values.length; i++) {
-                where.append(binaryOp);
-                where.append("array_contains(").append(key).append(op1).append(values[i]).append(op2).append(")");
-            }
-            where.append(")");
-        }
-        filters.add(where.toString());
-    }
-
 
     public String parse(Query query, QueryOptions queryOptions, String viewName) {
 
@@ -133,16 +74,16 @@ public class VariantParseQuery {
                     processFilter(fields[0], value, false, false);
                     break;
                 case "region":
+                    processRegionQuery(value);
                     break;
                 case "names":
                     processFilter("hgvs", value, true, true);
-                    //filters.add("array_contains(annotation.hgvs, '" + fields[fields.length - 1] + "')");
                     break;
                 case "studies":
-                    processStudyQuery(fields, query.get(key));
+                    processStudyQuery(fields, value);
                     break;
                 case "annotation":
-                    processAnnotationQuery(fields, query.get(key));
+                    processAnnotationQuery(fields, value);
                     break;
                 default:
                     break;
@@ -158,8 +99,35 @@ public class VariantParseQuery {
         sqlQueryString.append("FROM ").append(viewName).append(" ").append(StringUtils.join(explodes.toArray(), " ")).append(" ");
         sqlQueryString.append("WHERE ").append(StringUtils.join(filters, " AND "));
 
-        System.out.println(sqlQueryString.toString());
+        System.err.println(sqlQueryString.toString());
+
         return sqlQueryString.toString();
+    }
+
+    private void processRegionQuery(String value) {
+        if (StringUtils.isEmpty(value)) {
+            throw new IllegalArgumentException("value is null or empty");
+        }
+
+        if (value.contains(";")) {
+            throw new IllegalArgumentException("Semi-colon is not supported by region filter, only comma is allowed : "
+                    + value);
+        }
+
+        String[] regions = value.split("[,]");
+        StringBuilder filter = new StringBuilder();
+        if (regions.length == 1) {
+            filter.append(processRegion(regions[0].trim()));
+        } else {
+            filter.append("(");
+            filter.append(processRegion(regions[0].trim()));
+            for (int i = 1; i < regions.length; i++) {
+                filter.append(" OR ");
+                filter.append(processRegion(regions[i].trim()));
+            }
+            filter.append(")");
+        }
+        filters.add(filter.toString());
     }
 
     private void processStudyQuery(String[] fields, Object value) {
@@ -204,14 +172,13 @@ public class VariantParseQuery {
         }
     }
 
-    private void processAnnotationQuery(String[] fields, Object value) {
+    private void processAnnotationQuery(String[] fields, String value) {
         // sanity check, if there is any ...
         if (fields == null || fields.length == 0) {
             return;
         }
 
         Matcher matcher;
-        Pattern pattern;
         StringBuilder where;
 
         String field = fields[fields.length - 1];
@@ -224,15 +191,15 @@ public class VariantParseQuery {
             case "id":
             case "ancestralAllele":
             case "displayConsequenceType":
-                processFilter("annotation." + path, (String) value, true, false);
+                processFilter("annotation." + path, value, true, false);
                 break;
             case "xrefs":
                 explodes.add("LATERAL VIEW explode(annotation.xrefs) act as xref");
-                processFilter("xref." + field, (String) value, true, false);
+                processFilter("xref." + field, value, true, false);
                 break;
             case "hgvs":
                 // this is equivalent to case 'names' in parse function !!
-                processFilter("annotation.hgvs", (String) value, true, true);
+                processFilter("annotation.hgvs", value, true, true);
                 break;
 
             // consequenceTypes is an array and therefore we have to use explode function
@@ -245,10 +212,10 @@ public class VariantParseQuery {
                     case "ensemblGeneId":
                     case "ensemblTranscriptId":
                     case "biotype":
-                        processFilter("ct." + field, (String) value, true, false);
+                        processFilter("ct." + field, value, true, false);
                         break;
                     case "transcriptAnnotationFlags":
-                        processFilter("ct.transcriptAnnotationFlags", (String) value, true, true);
+                        processFilter("ct.transcriptAnnotationFlags", value, true, true);
                         break;
                     default:
                         // error!!
@@ -265,7 +232,7 @@ public class VariantParseQuery {
                 switch (field) {
                     case "accession":
                     case "name":
-                        processFilter("so." + field, (String) value, true, false);
+                        processFilter("so." + field, value, true, false);
                         break;
                     default:
                         // error!!
@@ -273,96 +240,124 @@ public class VariantParseQuery {
                 }
                 break;
 
-            case "populationFrequencies":
+            case "populationFrequencies": {
                 explodes.add("LATERAL VIEW explode(annotation.populationFrequencies) apf as popfreq");
-                preProcessing((String) value, false);
 
-                pattern = Pattern.compile("^([^=<>:]+.*):([^=<>:]+.*)(<=?|>=?|!=|!?=?~|==?)([^=<>:]+.*)$");
+                if (StringUtils.isEmpty(value)) {
+                    throw new IllegalArgumentException("value is null or empty for population frequencies");
+                }
+
+                boolean or = value.contains(",");
+                boolean and = value.contains(";");
+                if (or && and) {
+                    throw new IllegalArgumentException("Command and semi-colon cannot be mixed: " + value);
+                }
+                String logicalComparator = or ? " OR " : " AND ";
+
+                String[] values = value.split("[,;]");
 
                 where = new StringBuilder();
                 if (values == null) {
-                    matcher = pattern.matcher((String) value);
+                    matcher = POPULATION_PATTERN.matcher((String) value);
                     if (matcher.find()) {
                         updatePopWhereString(field, "popfreq", matcher, where);
                     } else {
                         // error
-                        System.out.println("error: invalid expresion " + value + ": abort!");
+                        System.err.format("error: invalid expresion for population frequencies %s: abort!", value);
                     }
                 } else {
-                    matcher = pattern.matcher(values[0]);
+                    matcher = POPULATION_PATTERN.matcher(values[0]);
                     if (matcher.find()) {
                         where.append("(");
                         updatePopWhereString(field, "popfreq", matcher, where);
-                        for (int i=1; i < values.length; i++) {
-                            matcher = pattern.matcher(values[i]);
+                        for (int i = 1; i < values.length; i++) {
+                            matcher = POPULATION_PATTERN.matcher(values[i]);
                             if (matcher.find()) {
-                                where.append(binaryOp);
+                                where.append(logicalComparator);
                                 updatePopWhereString(field, "popfreq", matcher, where);
                             } else {
                                 // error
-                                System.out.println("error: invalid expresion " + values[i] + ": abort!");
+                                System.err.format("Error: invalid expresion %s: abort!", values[i]);
                             }
                         }
                         where.append(")");
                     } else {
                         // error
-                        System.out.println("error: invalid expresion " + values[0] + ": abort!");
+                        System.err.format("Error: invalid expresion %s: abort!", values[0]);
                     }
                 }
                 filters.add(where.toString());
                 break;
+            }
 
-            case "conservation":
-                // is it expensive computationally? Maybe we have to use a map to check if
-                // a given cons has already explode before exploding!
-                explodes.add("LATERAL VIEW explode(annotation.conservation) acons as cons_phylop");
-                explodes.add("LATERAL VIEW explode(annotation.conservation) acons as cons_phastCons");
-//                explodes.add("LATERAL VIEW explode(annotation.conservation) acons as cons_gerp");
-                preProcessing((String) value, false);
+            case "conservation": {
+                String consView;
+                Set<String> consExplodeSet = new HashSet<>();
 
-                pattern = Pattern.compile("^([^=<>]+.*)(<=?|>=?|!=|!?=?~|==?)([^=<>]+.*)$");
+                if (StringUtils.isEmpty(value)) {
+                    throw new IllegalArgumentException("value is null or empty for conservation");
+                }
+
+                boolean or = value.contains(",");
+                boolean and = value.contains(";");
+                if (or && and) {
+                    throw new IllegalArgumentException("Command and semi-colon cannot be mixed: " + value);
+                }
+                String logicalComparator = or ? " OR " : " AND ";
+
+                String[] values = value.split("[,;]");
 
                 where = new StringBuilder();
                 if (values == null) {
-                    matcher = pattern.matcher((String) value);
+                    matcher = CONSERVATION_PATTERN.matcher(value);
                     if (matcher.find()) {
-                        updateConsWhereString("cons_" + matcher.group(1).trim(), matcher, where);
+                        consView = CONSERVATION_PREFIX + matcher.group(1).trim();
+                        consExplodeSet.add(consView);
+                        updateConsWhereString(consView, matcher, where);
                     } else {
                         // error
-                        System.out.println("error: invalid expresion " + value + ": abort!");
+                        System.err.format("error: invalid expresion %s: abort!", value);
                     }
                 } else {
-                    matcher = pattern.matcher(values[0]);
+                    matcher = CONSERVATION_PATTERN.matcher(values[0]);
                     if (matcher.find()) {
                         where.append("(");
-                        updateConsWhereString("cons_" + matcher.group(1).trim(), matcher, where);
-                        for (int i=1; i < values.length; i++) {
-                            matcher = pattern.matcher(values[i]);
+                        consView = CONSERVATION_PREFIX + matcher.group(1).trim();
+                        consExplodeSet.add(consView);
+                        updateConsWhereString(consView, matcher, where);
+                        for (int i = 1; i < values.length; i++) {
+                            matcher = CONSERVATION_PATTERN.matcher(values[i]);
                             if (matcher.find()) {
-                                where.append(binaryOp);
-                                updateConsWhereString("cons_" + matcher.group(1).trim(), matcher, where);
+                                where.append(logicalComparator);
+                                consView = CONSERVATION_PREFIX + matcher.group(1).trim();
+                                consExplodeSet.add(consView);
+                                updateConsWhereString(consView, matcher, where);
                             } else {
                                 // error
-                                System.out.println("error: invalid expresion " + values[i] + ": abort!");
+                                System.err.format("Error: invalid expresion %s: abort!", values[i]);
                             }
                         }
                         where.append(")");
                     } else {
                         // error
-                        System.out.println("error: invalid expresion " + values[0] + ": abort!");
+                        System.err.format("Error: invalid expresion %s: abort!", values[0]);
                     }
+                }
+                for (String item: consExplodeSet) {
+                    explodes.add("LATERAL VIEW explode(annotation.conservation) acons as " + item);
                 }
                 filters.add(where.toString());
                 break;
+            }
 
             case "variantTraitAssociation":
                 switch (field) {
                     case "clinvar":
                         explodes.add("LATERAL VIEW explode(annotation.variantTraitAssociation.clinvar) avtac as clinvar");
-                        processFilter("clinvar.accession", (String) value, true, false);
+                        processFilter("clinvar.accession", value, true, false);
                     case "cosmic":
                         explodes.add("LATERAL VIEW explode(annotation.variantTraitAssociation.cosmic) avtac as cosmic");
-                        processFilter("cosmic.mutationId", (String) value, true, false);
+                        processFilter("cosmic.mutationId", value, true, false);
                         break;
                     default:
                         break;
@@ -376,7 +371,7 @@ public class VariantParseQuery {
 
     private String processFilter(String key, String value, boolean isString, boolean isArray) {
 
-        if (StringUtils.isEmpty(key)|| StringUtils.isEmpty(value)) {
+        if (StringUtils.isEmpty(key) || StringUtils.isEmpty(value)) {
             throw new IllegalArgumentException("key or value are null or empty");
         }
 
@@ -386,17 +381,17 @@ public class VariantParseQuery {
             throw new IllegalArgumentException("Command and semi-colon cannot be mixed: " + value);
         }
 
-        String op1 = (isString) ? " = '" : "";
-        String op2 = (isString) ? "'" : "";
-        String openArraContains = (isArray) ? "array_contains(" : "";
-        String closeArrayContains = (isArray) ? ")" : "";
+        String op1 = isString ? " = '" : "";
+        String op2 = isString ? "'" : "";
+        String openArraContains = isArray ? "array_contains(" : "";
+        String closeArrayContains = isArray ? ")" : "";
 
         String[] values = value.split("[,;]");
         StringBuilder filter = new StringBuilder();
         if (values.length == 1) {
             filter.append(openArraContains).append(key).append(op1).append(value).append(op2).append(closeArrayContains);
         } else {
-            String logicalComparator = (or) ? " OR " : " AND ";
+            String logicalComparator = or ? " OR " : " AND ";
             filter.append("(");
             filter.append(openArraContains).append(key).append(op1).append(values[0]).append(op2).append(closeArrayContains);
             for (int i = 1; i < values.length; i++) {
@@ -406,6 +401,28 @@ public class VariantParseQuery {
             filter.append(")");
         }
 
+        return filter.toString();
+    }
+
+    private String processRegion(String region) {
+        StringBuilder filter = new StringBuilder();
+        filter.append("(");
+        if (region.contains(":")) {
+            String[] fields = REGION_PATTERN.split(region, -1);
+            if (fields.length == 3) {
+                filter.append("chromosome = '").append(fields[0]).append("'");
+                filter.append(" AND start >= ").append(fields[1]);
+                filter.append(" AND end <= ").append(fields[2]);
+            } else {
+                if (fields.length == 2) {
+                    filter.append("chromosome = '").append(fields[0]).append("'");
+                    filter.append(" AND start >= ").append(fields[1]);
+                }
+            }
+        } else {
+            filter.append("chromosome = '").append(region).append("'");
+        }
+        filter.append(")");
         return filter.toString();
     }
 

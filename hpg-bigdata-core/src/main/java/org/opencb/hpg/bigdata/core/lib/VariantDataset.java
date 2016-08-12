@@ -20,7 +20,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.opencb.biodata.models.core.Region;
 import org.opencb.commons.datastore.core.Query;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -65,6 +64,20 @@ public class VariantDataset extends ParentDataset<VariantDataset> {
     public VariantDataset idFilter(List<String> values, boolean and) {
         updateQuery("id", values, and);
         return this;
+    }
+
+    // region filter
+    public VariantDataset regionFilter(String regions) {
+        query.put("region", regions);
+        return this;
+    }
+
+    public VariantDataset regionFilter(Region region) {
+        return regionFilter(region.toString());
+    }
+
+    public VariantDataset regionFilter(List<Region> regions) {
+        return regionFilter(StringUtils.join(",", regions).replace(",[", "").replace("[", "").replace("]", ""));
     }
 
     // study filter
