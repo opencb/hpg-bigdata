@@ -35,7 +35,7 @@ public class VariantParseQuery {
     private static final Pattern CONSERVATION_PATTERN =
             Pattern.compile("^([^=<>]+.*)(<=?|>=?|!=|!?=?~|==?)([^=<>]+.*)$");
 
-    private static final String CONSERVATION_PREFIX = "cons_";
+    private static final String CONSERVATION_VIEW = "cons";
 
     private Set<String> explodes;
     private List<String> filters;
@@ -291,9 +291,6 @@ public class VariantParseQuery {
             }
 
             case "conservation": {
-                String consView;
-                Set<String> consExplodeSet = new HashSet<>();
-
                 if (StringUtils.isEmpty(value)) {
                     throw new IllegalArgumentException("value is null or empty for conservation");
                 }
@@ -311,9 +308,7 @@ public class VariantParseQuery {
                 if (values == null) {
                     matcher = CONSERVATION_PATTERN.matcher(value);
                     if (matcher.find()) {
-                        consView = CONSERVATION_PREFIX + matcher.group(1).trim();
-                        consExplodeSet.add(consView);
-                        updateConsWhereString(consView, matcher, where);
+                        updateConsWhereString(matcher, where);
                     } else {
                         // error
                         System.err.format("error: invalid expresion %s: abort!", value);
@@ -322,16 +317,12 @@ public class VariantParseQuery {
                     matcher = CONSERVATION_PATTERN.matcher(values[0]);
                     if (matcher.find()) {
                         where.append("(");
-                        consView = CONSERVATION_PREFIX + matcher.group(1).trim();
-                        consExplodeSet.add(consView);
-                        updateConsWhereString(consView, matcher, where);
+                        updateConsWhereString(matcher, where);
                         for (int i = 1; i < values.length; i++) {
                             matcher = CONSERVATION_PATTERN.matcher(values[i]);
                             if (matcher.find()) {
                                 where.append(logicalComparator);
-                                consView = CONSERVATION_PREFIX + matcher.group(1).trim();
-                                consExplodeSet.add(consView);
-                                updateConsWhereString(consView, matcher, where);
+                                updateConsWhereString(matcher, where);
                             } else {
                                 // error
                                 System.err.format("Error: invalid expresion %s: abort!", values[i]);
@@ -343,10 +334,8 @@ public class VariantParseQuery {
                         System.err.format("Error: invalid expresion %s: abort!", values[0]);
                     }
                 }
-                for (String item: consExplodeSet) {
-                    explodes.add("LATERAL VIEW explode(annotation.conservation) acons as " + item);
-                }
                 filters.add(where.toString());
+                explodes.add("LATERAL VIEW explode(annotation.conservation) acons as " + CONSERVATION_VIEW);
                 break;
             }
 
@@ -433,9 +422,9 @@ public class VariantParseQuery {
                 .append(matcher.group(4).trim()).append(")");
     }
 
-    private void updateConsWhereString(String viewName, Matcher matcher, StringBuilder where) {
-        where.append("(").append(viewName).append(".source = '").append(matcher.group(1).trim())
-                .append("' AND ").append(viewName).append(".score")
+    private void updateConsWhereString(Matcher matcher, StringBuilder where) {
+        where.append("(").append(CONSERVATION_VIEW).append(".source = '").append(matcher.group(1).trim())
+                .append("' AND ").append(CONSERVATION_VIEW).append(".score")
                 .append(matcher.group(2).trim()).append(matcher.group(3).trim()).append(")");
     }
 }
