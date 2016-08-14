@@ -427,5 +427,14 @@ public class VariantParseQuery {
                 .append("' AND ").append(CONSERVATION_VIEW).append(".score")
                 .append(matcher.group(2).trim()).append(matcher.group(3).trim()).append(")");
     }
+
+    public Set<String> getExplodes() {
+        return explodes;
+    }
+
+    public void setExplodes(Set<String> explodes) {
+        this.explodes = explodes;
+    }
+
 }
 
