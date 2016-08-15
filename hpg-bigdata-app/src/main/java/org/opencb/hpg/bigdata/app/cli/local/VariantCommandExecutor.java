@@ -528,7 +528,7 @@ public class VariantCommandExecutor extends CommandExecutor {
 
         // query for id
         if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.ids)) {
-            String[] ids = StringUtils.split(variantCommandOptions.queryVariantCommandOptions.regions, ",");
+            String[] ids = StringUtils.split(variantCommandOptions.queryVariantCommandOptions.ids, ",");
 
             for (String id : ids) {
                 vd.idFilter(id);
