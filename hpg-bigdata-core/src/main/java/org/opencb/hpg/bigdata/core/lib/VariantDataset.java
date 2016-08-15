@@ -40,7 +40,7 @@ public class VariantDataset extends ParentDataset<VariantDataset> {
             this.sql = variantParseQuery.parse(query, null, viewName);
             this.ds = this.sqlContext.sql(this.sql);
 
-            for(String item: variantParseQuery.getExplodes()) {
+            for (String item: variantParseQuery.getExplodes()) {
                 String[] fields = item.split(" as ");
                 this.ds = this.ds.drop(fields[1]);
             }
