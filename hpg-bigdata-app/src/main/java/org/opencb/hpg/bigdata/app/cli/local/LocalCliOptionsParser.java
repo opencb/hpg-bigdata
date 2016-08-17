@@ -405,6 +405,10 @@ public class LocalCliOptionsParser {
                 required = false, arity = 1)
         public String ids;
 
+        @Parameter(names = {"--type"}, description = "Query for type; comma separated list of IDs, e.g.: \"SNP,SNV\"",
+                required = false, arity = 1)
+        public String types;
+
         @Parameter(names = {"--region"}, description = "Query for region; comma separated list of regions, e.g.: 1:300000-400000000,15:343453463-8787665654", required = false)
         public String regions;
 

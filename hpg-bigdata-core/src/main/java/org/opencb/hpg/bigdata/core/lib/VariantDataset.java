@@ -72,6 +72,17 @@ public class VariantDataset extends ParentDataset<VariantDataset> {
         return this;
     }
 
+    // type filter
+    public VariantDataset typeFilter(String value) {
+        query.put("type", value);
+        return this;
+    }
+
+    public VariantDataset typeFilter(List<String> values) {
+        updateQuery("type", values, false);
+        return this;
+    }
+
     // region filter
     public VariantDataset regionFilter(String regions) {
         query.put("region", regions);

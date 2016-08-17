@@ -54,6 +54,7 @@ import java.nio.CharBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -534,6 +535,17 @@ public class VariantCommandExecutor extends CommandExecutor {
                 vd.idFilter(id);
                 logger.warn("Query for multiple IDs, not yet implemented. Currently, it queries for the first ID.");
                 break;
+            }
+        }
+
+        // query for type
+        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.types)) {
+            String[] types = StringUtils.split(variantCommandOptions.queryVariantCommandOptions.types, ",");
+
+            if (types.length == 1) {
+                vd.typeFilter(types[0]);
+            } else {
+                vd.typeFilter(new ArrayList<>(Arrays.asList(types)));
             }
         }
 
