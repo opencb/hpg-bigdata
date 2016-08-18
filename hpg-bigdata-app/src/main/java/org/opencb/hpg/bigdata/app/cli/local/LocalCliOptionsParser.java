@@ -69,6 +69,7 @@ public class LocalCliOptionsParser {
         alignmentSubCommands.addCommand("convert", alignmentCommandOptions.convertAlignmentCommandOptions);
         alignmentSubCommands.addCommand("stats", alignmentCommandOptions.statsAlignmentCommandOptions);
         alignmentSubCommands.addCommand("depth", alignmentCommandOptions.depthAlignmentCommandOptions);
+        alignmentSubCommands.addCommand("query", alignmentCommandOptions.queryAlignmentCommandOptions);
 
         variantCommandOptions = new VariantCommandOptions();
         jcommander.addCommand("variant", sequenceCommandOptions);
@@ -246,11 +247,13 @@ public class LocalCliOptionsParser {
         ConvertAlignmentCommandOptions convertAlignmentCommandOptions;
         StatsAlignmentCommandOptions statsAlignmentCommandOptions;
         DepthAlignmentCommandOptions depthAlignmentCommandOptions;
+        QueryAlignmentCommandOptions queryAlignmentCommandOptions;
 
         public AlignmentCommandOptions() {
             this.convertAlignmentCommandOptions = new ConvertAlignmentCommandOptions();
             this.statsAlignmentCommandOptions = new StatsAlignmentCommandOptions();
             this.depthAlignmentCommandOptions = new DepthAlignmentCommandOptions();
+            this.queryAlignmentCommandOptions = new QueryAlignmentCommandOptions();
         }
     }
 
@@ -309,6 +312,55 @@ public class LocalCliOptionsParser {
 
         //@Parameter(names = {"-f", "--filter"}, description = "", required = false, arity = 1)
         //public String filter = null;
+    }
+
+    @Parameters(commandNames = {"query"}, commandDescription = "Command to execute queries against the Alignment input file (Avro or Parquet), the results will be saved into the output file.")
+    class QueryAlignmentCommandOptions {
+
+        @ParametersDelegate
+        public CommonCommandOptions commonOptions = commonCommandOptions;
+
+        @Parameter(names = {"-i", "--input"}, description = "Input file name (in Avro or Parquet format) that contains the alignments.",
+                required = true, arity = 1)
+        public String input;
+
+        @Parameter(names = {"-o", "--output"}, description = "Output file name.",
+                required = true, arity = 1)
+        public String output;
+
+        @Parameter(names = {"--region"}, description = "Query for region; comma separated list of regions, e.g.: 1:300000-400000000,15:343453463-8787665654", required = false)
+        public String regions;
+
+        @Parameter(names = {"--region-file"}, description = "Query for region; the list of regions is stored in this input file, one region (1:300000-400000000) per line", required = false)
+        public String regionFile;
+
+        @Parameter(names = {"--min-mapq"}, description = "Query for minimun mappging quality",
+                required = false, arity = 1)
+        public int minMapQ = 0;
+
+        @Parameter(names = {"--include-flags"}, description = "Query for alignments matching theses flags",
+                required = false, arity = 1)
+        public int includeFlags = 4095;
+
+        @Parameter(names = {"--exclude-flags"}, description = "Query for alignments not matching these flags",
+                required = false, arity = 1)
+        public int excludeFlags = 0;
+
+        @Parameter(names = {"--min-tlen"}, description = "Query for alignments with a template length greater than the minimun",
+                required = false, arity = 1)
+        public int minTLen = 0;
+
+        @Parameter(names = {"--max-tlen"}, description = "Query for alignments with a template length less than the maximum\"",
+                required = false, arity = 1)
+        public int maxTLen = Integer.MAX_VALUE;
+
+        @Parameter(names = {"--min-alen"}, description = "Query for alignments with an alignment length greater than the minimun",
+                required = false, arity = 1)
+        public int minALen = 0;
+
+        @Parameter(names = {"--max-alen"}, description = "Query for alignments with an alignment length less than the maximum\"",
+                required = false, arity = 1)
+        public int maxALen = Integer.MAX_VALUE;
     }
 
 
