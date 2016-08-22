@@ -10,7 +10,6 @@ import org.junit.Test;
  */
 public class AlignmentDatasetTest {
 
-    @Test
     public void execute() {
         System.out.println(">>>> Running AlignmentDatasetTest 0000...");
 //        SparkConf sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "/home/imedina/soft/spark-1.6.2");

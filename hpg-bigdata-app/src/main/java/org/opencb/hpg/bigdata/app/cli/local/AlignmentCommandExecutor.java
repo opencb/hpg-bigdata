@@ -33,7 +33,7 @@ import org.opencb.biodata.tools.alignment.tasks.RegionDepth;
 import org.opencb.biodata.tools.alignment.tasks.RegionDepthCalculator;
 import org.opencb.commons.utils.FileUtils;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
-import org.opencb.hpg.bigdata.core.NativeSupport;
+import org.opencb.hpg.bigdata.core.avro.AlignmentAvroSerializer;
 import org.opencb.hpg.bigdata.core.converters.SAMRecord2ReadAlignmentConverter;
 import org.opencb.hpg.bigdata.core.lib.AlignmentDataset;
 import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
@@ -154,7 +154,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
         } else {
 
             // conversion: BAM -> GA4GH/Avro model
-            System.out.println("Loading library hpgbigdata...");
+/*            System.out.println("Loading library hpgbigdata...");
             System.out.println("\tjava.libary.path = " + System.getProperty("java.library.path"));
             System.loadLibrary("hpgbigdata");
             System.out.println("...done!");
@@ -173,12 +173,12 @@ public class AlignmentCommandExecutor extends CommandExecutor {
             } catch (IOException e) {
                 throw e;
             }
+*/
 
-/*
             boolean adjustQuality = alignmentCommandOptions.convertAlignmentCommandOptions.adjustQuality;
             AlignmentAvroSerializer avroSerializer = new AlignmentAvroSerializer(compressionCodecName);
             avroSerializer.toAvro(input, output);
-*/
+
         }
     }
 

@@ -16,12 +16,10 @@
 
 package org.opencb.hpg.bigdata.core.lib;
 
-import org.apache.commons.lang3.StringUtils;
 import org.opencb.commons.datastore.core.Query;
 import org.opencb.commons.datastore.core.QueryOptions;
 
 import java.util.Set;
-import java.util.regex.Pattern;
 
 /**
  * Created by jtarraga on 19/08/16.

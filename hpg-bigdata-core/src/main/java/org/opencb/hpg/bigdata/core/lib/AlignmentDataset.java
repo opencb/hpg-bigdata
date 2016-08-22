@@ -37,8 +37,4 @@ public class AlignmentDataset extends ParentDataset<AlignmentDataset> {
             this.ds = this.sqlContext.sql(this.sql);
         }
     }
-
-    public void showMe() {
-        System.out.println("------> AlignmentDataset");
-    }
 }

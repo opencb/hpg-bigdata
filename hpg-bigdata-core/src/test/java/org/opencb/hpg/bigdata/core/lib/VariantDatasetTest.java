@@ -24,6 +24,7 @@ import org.apache.spark.sql.Column;
 import org.apache.spark.sql.SparkSession;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -46,7 +47,8 @@ public class VariantDatasetTest {
         System.out.println(">>>> opening file...");
 
         //String filename = "/home/imedina/data/CEU-1409-01_20000.vcf.avro";
-        String filename = "/home/jtarraga/data/spark/10k.variants.avro";
+        //String filename = "/home/jtarraga/data/spark/10k.variants.avro";
+        String filename = "/home/jtarraga/CAM/data/10k.variants.avro";
 
         long count;
 //        String filename = "/tmp/kk/xxx.avro";
@@ -74,9 +76,10 @@ public class VariantDatasetTest {
 //            String ids = "rs587604674,rs587603352";
 //            count = vd.idFilter(Arrays.asList(StringUtils.split(ids, ","))).count();
 
-            count = vd.annotationFilter("conservation", "phylop<0.3,phastCons<0.1").count();
+//            count = vd.annotationFilter("conservation", "phylop<0.3,phastCons<0.1").count();
+            String types = "SNP,SNV";
+            count = vd.typeFilter(new ArrayList<>(Arrays.asList(StringUtils.split(types, ",")))).count();
 
-            System.out.println("count = " + count);
 //            System.out.println(vd.annotationfilter("consequenceTypes.sequenceOntologyTerms.name", "missense_variant")
 //                    .select("annotation.consequenceTypes.sequenceOntologyTerms").count());
 
@@ -86,6 +89,8 @@ public class VariantDatasetTest {
             //res6: Long = 4437
 
 //            vd.select(vd.col("studies")).show(2);
+            System.out.println("--------------------------------------");
+            System.out.println("count = " + count);
             System.out.println("--------------------------------------");
 //            System.out.println(vd.count());
 //            System.out.println(vd.filter("start >= 564477").filter("end <= 729948").count());
@@ -98,7 +103,6 @@ public class VariantDatasetTest {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
 
         /*
             JavaRDD<Row> rdd = vd.javaRDD();
