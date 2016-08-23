@@ -37,4 +37,11 @@ public class AlignmentDataset extends ParentDataset<AlignmentDataset> {
             this.ds = this.sqlContext.sql(this.sql);
         }
     }
+
+    // mapping quuality filter
+    public AlignmentDataset mappingQualityFilter(String value) {
+        query.put("mapq", value);
+        return this;
+    }
+
 }

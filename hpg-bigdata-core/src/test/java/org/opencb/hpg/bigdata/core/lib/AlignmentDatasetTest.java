@@ -3,6 +3,9 @@ package org.opencb.hpg.bigdata.core.lib;
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
 import org.apache.spark.sql.SparkSession;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
@@ -10,45 +13,69 @@ import org.junit.Test;
  */
 public class AlignmentDatasetTest {
 
-    @Test
-    public void execute() {
-        System.out.println(">>>> Running AlignmentDatasetTest 0000...");
+    static AlignmentDataset ad;
+    static SparkConf sparkConf;
+    static SparkSession sparkSession;
+
+    @BeforeClass
+    public static void setup() {
+        sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "/home/joaquin/softs/spark-2.0.0-bin-hadoop2.7/bin");
 //        SparkConf sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "/home/imedina/soft/spark-1.6.2");
         //SparkConf sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "/home/imedina/soft/spark-2.0.0");
 
-        SparkConf sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "/home/joaquin/softs/spark-2.0.0-bin-hadoop2.7/bin");
         System.out.println("sparkConf = " + sparkConf.toDebugString());
-        SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
+        sparkSession = new SparkSession(new SparkContext(sparkConf));
+    }
 
-        System.out.println(">>>> opening file...");
+    @AfterClass
+    public static void shutdown() {
+        ad.sparkSession.sparkContext().stop();
+    }
 
-        String filename = "/home/jtarraga/CAM/data/test.bam.avro";
-
-        long count;
-//        String filename = "/tmp/kk/xxx.avro";
-        AlignmentDataset ad = new AlignmentDataset();
+    public void initDataset() {
+        ad = new AlignmentDataset();
         try {
+            String filename = "/home/jtarraga/CAM/data/test.bam.avro";
+            System.out.println(">>>> opening file " + filename);
             ad.load(filename, sparkSession);
-            ad.printSchema();
-
+            //ad.printSchema();
             ad.createOrReplaceTempView("bam");
-
-            count = sparkSession.sql("select alignment.position.referenceName, alignment.position.position from bam").count();
-            System.out.println("count = " + count);
-
-            System.out.println("-------------------------------------- using SQL query");
-
-            sparkSession.sql("select alignment.position.referenceName, alignment.position.position, fragmentName, fragmentLength, length(alignedSequence), alignedSequence from bam where alignment.position.referenceName = \"1\" AND alignment.position.position >= 31915360 AND (alignment.position.position + length(alignedSequence)) <= 31925679").show();
-
-            System.out.println("-------------------------------------- using regionFilter");
-
-            ad.regionFilter("1:31915360-31925679").show();
-
-            System.out.println("--------------------------------------");
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
 
-        ad.sparkSession.sparkContext().stop();
+    @Test
+    public void regionFilter() {
+        initDataset();
+        System.out.println(">>>> Running regionFilter...");
+
+        long count;
+        count = sparkSession.sql("select alignment.position.referenceName, alignment.position.position from bam").count();
+        System.out.println("count = " + count);
+
+        System.out.println("-------------------------------------- using SQL query");
+
+        sparkSession.sql("select alignment.position.referenceName, alignment.position.position, fragmentName, fragmentLength, length(alignedSequence), alignedSequence from bam where alignment.position.referenceName = \"1\" AND alignment.position.position >= 31915360 AND (alignment.position.position + length(alignedSequence)) <= 31925679").show();
+
+        System.out.println("-------------------------------------- using regionFilter");
+
+        ad.regionFilter("1:31915360-31925679").show();
+
+        System.out.println("--------------------------------------");
+    }
+
+    @Test
+    public void mapqFilter() {
+        initDataset();
+        System.out.println(">>>> Running mappingQualityFilter...");
+
+        long count;
+
+        System.out.println("-------------------------------------- using mappingQualityFilter");
+
+        ad.mappingQualityFilter(">50").show();
+
+        System.out.println("--------------------------------------");
     }
 }
