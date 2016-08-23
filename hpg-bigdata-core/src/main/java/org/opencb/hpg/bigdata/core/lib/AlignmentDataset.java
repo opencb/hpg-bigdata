@@ -44,4 +44,9 @@ public class AlignmentDataset extends ParentDataset<AlignmentDataset> {
         return this;
     }
 
+    // template length filter
+    public AlignmentDataset templateLengthFilter(String value) {
+        query.put("tlen", value);
+        return this;
+    }
 }

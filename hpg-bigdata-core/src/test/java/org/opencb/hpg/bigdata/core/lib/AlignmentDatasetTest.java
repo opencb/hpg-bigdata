@@ -78,4 +78,19 @@ public class AlignmentDatasetTest {
 
         System.out.println("--------------------------------------");
     }
+
+    @Test
+    public void tlenFilter() {
+        initDataset();
+        System.out.println(">>>> Running templateLengthFilter...");
+
+        long count;
+
+        System.out.println("-------------------------------------- using templateLengthFilter");
+
+        ad.templateLengthFilter(">398;<400").show();
+
+        System.out.println("--------------------------------------");
+    }
+
 }
