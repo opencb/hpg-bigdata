@@ -10,6 +10,7 @@ import org.junit.Test;
  */
 public class AlignmentDatasetTest {
 
+    @Test
     public void execute() {
         System.out.println(">>>> Running AlignmentDatasetTest 0000...");
 //        SparkConf sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "/home/imedina/soft/spark-1.6.2");
@@ -34,12 +35,20 @@ public class AlignmentDatasetTest {
 
             count = sparkSession.sql("select alignment.position.referenceName, alignment.position.position from bam").count();
             System.out.println("count = " + count);
+
+            System.out.println("-------------------------------------- using SQL query");
+
             sparkSession.sql("select alignment.position.referenceName, alignment.position.position, fragmentName, fragmentLength, length(alignedSequence), alignedSequence from bam where alignment.position.referenceName = \"1\" AND alignment.position.position >= 31915360 AND (alignment.position.position + length(alignedSequence)) <= 31925679").show();
 
+            System.out.println("-------------------------------------- using regionFilter");
+
+            ad.regionFilter("1:31915360-31925679").show();
 
             System.out.println("--------------------------------------");
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        ad.sparkSession.sparkContext().stop();
     }
 }

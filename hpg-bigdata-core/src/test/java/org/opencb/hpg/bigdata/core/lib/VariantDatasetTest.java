@@ -104,6 +104,8 @@ public class VariantDatasetTest {
             e.printStackTrace();
         }
 
+        vd.sparkSession.sparkContext().stop();
+
         /*
             JavaRDD<Row> rdd = vd.javaRDD();
             System.out.println("--------------------------------------");
