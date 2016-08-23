@@ -22,6 +22,7 @@ import org.apache.spark.rdd.RDD;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.types.StructType;
 import org.apache.spark.storage.StorageLevel;
+import org.opencb.biodata.models.core.Region;
 import org.opencb.commons.datastore.core.Query;
 import scala.Symbol;
 import scala.Tuple2;
@@ -68,6 +69,19 @@ public abstract class ParentDataset<T> {
         updateDataset(query);
     }
 
+    // region filter
+    public ParentDataset<T> regionFilter(String regions) {
+        query.put("region", regions);
+        return this;
+    }
+
+    public ParentDataset<T> regionFilter(Region region) {
+        return regionFilter(region.toString());
+    }
+
+    public ParentDataset<T> regionFilter(List<Region> regions) {
+        return regionFilter(StringUtils.join(",", regions).replace(",[", "").replace("[", "").replace("]", ""));
+    }
 
     public ParentDataset<T> agg(Column expr, Column... exprs) {
         ds = ds.agg(expr, exprs);
