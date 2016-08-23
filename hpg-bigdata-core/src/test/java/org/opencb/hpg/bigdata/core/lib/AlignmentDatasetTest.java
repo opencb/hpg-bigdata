@@ -93,4 +93,17 @@ public class AlignmentDatasetTest {
         System.out.println("--------------------------------------");
     }
 
+    @Test
+    public void alenFilter() {
+        initDataset();
+        System.out.println(">>>> Running alignmentLengthFilter...");
+
+        long count;
+
+        System.out.println("-------------------------------------- using alignmentLengthFilter");
+
+        ad.alignmentLengthFilter(">50;<50").show();
+
+        System.out.println("--------------------------------------");
+    }
 }

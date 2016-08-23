@@ -38,7 +38,7 @@ public class AlignmentDataset extends ParentDataset<AlignmentDataset> {
         }
     }
 
-    // mapping quuality filter
+    // mapping quality filter
     public AlignmentDataset mappingQualityFilter(String value) {
         query.put("mapq", value);
         return this;
@@ -47,6 +47,12 @@ public class AlignmentDataset extends ParentDataset<AlignmentDataset> {
     // template length filter
     public AlignmentDataset templateLengthFilter(String value) {
         query.put("tlen", value);
+        return this;
+    }
+
+    // alignment length filter
+    public AlignmentDataset alignmentLengthFilter(String value) {
+        query.put("alen", value);
         return this;
     }
 }
