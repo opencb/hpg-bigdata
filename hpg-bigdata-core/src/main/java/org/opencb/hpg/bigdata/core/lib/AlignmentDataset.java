@@ -23,11 +23,11 @@ import org.opencb.commons.datastore.core.Query;
  */
 public class AlignmentDataset extends ParentDataset<AlignmentDataset> {
 
-    private VariantParseQuery alignmentParseQuery;
+    private AlignmentParseQuery alignmentParseQuery;
     private String sql;
 
     public AlignmentDataset() {
-        alignmentParseQuery = new VariantParseQuery();
+        alignmentParseQuery = new AlignmentParseQuery();
     }
 
     @Override
