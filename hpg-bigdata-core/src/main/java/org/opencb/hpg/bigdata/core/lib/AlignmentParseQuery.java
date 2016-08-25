@@ -54,8 +54,11 @@ public class AlignmentParseQuery extends ParseQuery {
                 case "alen": // alignment length
                     filters.add(processFilter("length(alignedSequence)", value, false, false));
                     break;
-                case "flag":
-                    processFlagQuery(value);
+                case "required-flag":
+                    processFlagQuery(value, false);
+                    break;
+                case "filtering-flag":
+                    processFlagQuery(value, true);
                     break;
                 case "region":
                     processRegionQuery(value, "alignment.position.referenceName",
@@ -74,7 +77,7 @@ public class AlignmentParseQuery extends ParseQuery {
 
 
 
-    private void processFlagQuery(String value) {
+    private void processFlagQuery(String value, Boolean exclude) {
 
         String[] values = value.split("[,;]");
 
@@ -83,67 +86,72 @@ public class AlignmentParseQuery extends ParseQuery {
             flag |= Integer.parseInt(values[i]);
         }
 
+        if (exclude) {
+            flag ^= 0xFF;
+        }
+        //System.out.println("---------> flag = " + flag);
+
         StringBuilder filter = new StringBuilder();
 
         if ((flag & 1) > 0) {
             // template having multiple segments in sequencing
             System.err.println("Filter by SAM flag 1, not implemented yet. Aborting!");
-            System.exit(-1);
+            //System.exit(-1);
         }
         if ((flag & 2) > 0) {
             // each segment properly aligned according to the aligner
             System.err.println("Filter by SAM flag 1, not implemented yet. Aborting!");
-            System.exit(-1);
+            //System.exit(-1);
         }
         if ((flag & 4) > 0) {
             // segment unmapped
             System.err.println("Filter by SAM flag 1, not implemented yet. Aborting!");
-            System.exit(-1);
+            //System.exit(-1);
         }
         if ((flag & 8) > 0) {
             // next segment in the template unmapped
             System.err.println("Filter by SAM flag 1, not implemented yet. Aborting!");
-            System.exit(-1);
+            //System.exit(-1);
         }
         if ((flag & 16) > 0) {
             // SEQ being reverse complemented
             System.err.println("Filter by SAM flag 1, not implemented yet. Aborting!");
-            System.exit(-1);
+            //System.exit(-1);
         }
         if ((flag & 32) > 0) {
             // SEQ of the next segment in the template being reverse complemented
             System.err.println("Filter by SAM flag 1, not implemented yet. Aborting!");
-            System.exit(-1);
+            //System.exit(-1);
         }
         if ((flag & 64) > 0) {
             // the  rst segment in the template
             System.err.println("Filter by SAM flag 1, not implemented yet. Aborting!");
-            System.exit(-1);
+            //System.exit(-1);
         }
         if ((flag & 128) > 0) {
             // the last segment in the template
             System.err.println("Filter by SAM flag 1, not implemented yet. Aborting!");
-            System.exit(-1);
+            //System.exit(-1);
         }
         if ((flag & 256) > 0) {
             // secondary alignment
             System.err.println("Filter by SAM flag 1, not implemented yet. Aborting!");
-            System.exit(-1);
+            //System.exit(-1);
         }
         if ((flag & 512) > 0) {
             // not passing  lters, such as platform/vendor quality controls
             System.err.println("Filter by SAM flag 1, not implemented yet. Aborting!");
-            System.exit(-1);
+            //System.exit(-1);
         }
         if ((flag & 1024) > 0) {
             // PCR or optical duplicate
             System.err.println("Filter by SAM flag 1, not implemented yet. Aborting!");
-            System.exit(-1);
+            //System.exit(-1);
         }
         if ((flag & 2048) > 0) {
             // supplementary alignment
             System.err.println("Filter by SAM flag 1, not implemented yet. Aborting!");
-            System.exit(-1);
+            //System.exit(-1);
         }
 
         filters.add(filter.toString());

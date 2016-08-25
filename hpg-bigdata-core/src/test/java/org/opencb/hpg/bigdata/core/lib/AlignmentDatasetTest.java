@@ -38,7 +38,7 @@ public class AlignmentDatasetTest {
             String filename = "/home/jtarraga/CAM/data/test.bam.avro";
             System.out.println(">>>> opening file " + filename);
             ad.load(filename, sparkSession);
-            //ad.printSchema();
+            ad.printSchema();
             ad.createOrReplaceTempView("bam");
         } catch (Exception e) {
             e.printStackTrace();
@@ -103,6 +103,25 @@ public class AlignmentDatasetTest {
         System.out.println("-------------------------------------- using alignmentLengthFilter");
 
         ad.alignmentLengthFilter(">50;<50").show();
+
+        System.out.println("--------------------------------------");
+    }
+
+
+    @Test
+    public void flagFilter() {
+        System.out.println(">>>> Running flagFilter...");
+
+        long count;
+
+        System.out.println("-------------------------------------- using flagFilter");
+
+        initDataset();
+        //sparkSession.sql("select * from bam").show();
+        ad.flagFilter("147,99").show();
+
+        initDataset();
+        ad.flagFilter("83", true).show();
 
         System.out.println("--------------------------------------");
     }

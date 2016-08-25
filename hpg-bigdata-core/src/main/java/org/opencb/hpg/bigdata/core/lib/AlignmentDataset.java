@@ -55,4 +55,18 @@ public class AlignmentDataset extends ParentDataset<AlignmentDataset> {
         query.put("alen", value);
         return this;
     }
+
+    // alignment length filter
+    public AlignmentDataset flagFilter(String value) {
+        return flagFilter(value, false);
+    }
+
+    public AlignmentDataset flagFilter(String value, Boolean exclude) {
+        if (exclude) {
+            query.put("filtering-flag", value);
+        } else {
+            query.put("required-flag", value);
+        }
+        return this;
+    }
 }
