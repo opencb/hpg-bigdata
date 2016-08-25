@@ -24,6 +24,7 @@ import java.util.List;
 
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileWriter;
+import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.specific.SpecificDatumWriter;
 import org.opencb.commons.io.DataWriter;
@@ -34,7 +35,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Created by hpccoll1 on 02/04/15.
  */
-public class AvroFileWriter <T> implements DataWriter<ByteBuffer> {
+public class AvroFileWriter<T extends GenericRecord> implements DataWriter<ByteBuffer> {
 
     private final String codecName;
     private final Schema schema;
@@ -66,6 +67,10 @@ public class AvroFileWriter <T> implements DataWriter<ByteBuffer> {
         return true;
     }
 
+    public void writeDatum(T datum) throws IOException {
+        writer.append(datum);
+    }
+
 
     @Override
     public boolean write(List<ByteBuffer> batch) {
@@ -85,7 +90,7 @@ public class AvroFileWriter <T> implements DataWriter<ByteBuffer> {
     }
 
     @Override
-    public boolean close(){
+    public boolean close() {
         try {
             writer.close();
         } catch (IOException e) {
