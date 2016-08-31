@@ -24,8 +24,8 @@ import htsjdk.variant.vcf.VCFHeader;
 import htsjdk.variant.vcf.VCFHeaderVersion;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.NotImplementedException;
+import org.opencb.biodata.formats.variant.vcf4.FullVcfCodec;
 import org.opencb.commons.io.DataReader;
-import org.opencb.hpg.bigdata.core.converters.FullVcfCodec;
 
 import java.io.*;
 import java.nio.CharBuffer;

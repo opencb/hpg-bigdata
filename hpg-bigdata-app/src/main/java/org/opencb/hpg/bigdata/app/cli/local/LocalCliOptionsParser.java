@@ -33,6 +33,8 @@ public class LocalCliOptionsParser {
 
     private final CommonCommandOptions commonCommandOptions;
 
+    private AdminCommandOptions adminCommandOptions;
+
     // NGS Sequence command and subcommmands
     private SequenceCommandOptions sequenceCommandOptions;
 
@@ -49,6 +51,12 @@ public class LocalCliOptionsParser {
         commandOptions = new CommandOptions();
         commonCommandOptions = new CommonCommandOptions();
 
+        adminCommandOptions = new AdminCommandOptions();
+        jcommander.addCommand("admin", adminCommandOptions);
+        JCommander adminSubCommands = jcommander.getCommands().get("admin");
+        adminSubCommands.addCommand("server", adminCommandOptions.serverAdminCommandOptions);
+
+
         sequenceCommandOptions = new SequenceCommandOptions();
         jcommander.addCommand("sequence", sequenceCommandOptions);
         JCommander sequenceSubCommands = jcommander.getCommands().get("sequence");
@@ -61,11 +69,14 @@ public class LocalCliOptionsParser {
         alignmentSubCommands.addCommand("convert", alignmentCommandOptions.convertAlignmentCommandOptions);
         alignmentSubCommands.addCommand("stats", alignmentCommandOptions.statsAlignmentCommandOptions);
         alignmentSubCommands.addCommand("depth", alignmentCommandOptions.depthAlignmentCommandOptions);
+        alignmentSubCommands.addCommand("query", alignmentCommandOptions.queryAlignmentCommandOptions);
 
         variantCommandOptions = new VariantCommandOptions();
         jcommander.addCommand("variant", sequenceCommandOptions);
         JCommander variantSubCommands = jcommander.getCommands().get("variant");
         variantSubCommands.addCommand("convert", variantCommandOptions.convertVariantCommandOptions);
+        variantSubCommands.addCommand("annotate", variantCommandOptions.annotateVariantCommandOptions);
+        variantSubCommands.addCommand("query", variantCommandOptions.queryVariantCommandOptions);
 
     }
 
@@ -143,6 +154,32 @@ public class LocalCliOptionsParser {
 
     }
 
+    /*
+ * Sequence (FASTQ) CLI options
+ */
+    @Parameters(commandNames = {"admin"}, commandDescription = "Implements different tools for working with Fastq files")
+    public class AdminCommandOptions extends CommandOptions {
+
+        ServerAdminCommandOptions serverAdminCommandOptions;
+
+        public AdminCommandOptions() {
+            this.serverAdminCommandOptions = new ServerAdminCommandOptions();
+        }
+    }
+
+    @Parameters(commandNames = {"server"}, commandDescription = "Converts FastQ files to different big data formats such as Avro")
+    class ServerAdminCommandOptions {
+
+        @ParametersDelegate
+        public CommonCommandOptions commonOptions = commonCommandOptions;
+
+        @Parameter(names = {"-p", "--port"}, description = "Input file name, usually a gVCF/VCF but it can be an Avro file when converting to Parquet.",
+                required = true, arity = 1)
+        public int port = 1042;
+
+    }
+
+
 
     /*
      * Sequence (FASTQ) CLI options
@@ -210,11 +247,13 @@ public class LocalCliOptionsParser {
         ConvertAlignmentCommandOptions convertAlignmentCommandOptions;
         StatsAlignmentCommandOptions statsAlignmentCommandOptions;
         DepthAlignmentCommandOptions depthAlignmentCommandOptions;
+        QueryAlignmentCommandOptions queryAlignmentCommandOptions;
 
         public AlignmentCommandOptions() {
             this.convertAlignmentCommandOptions = new ConvertAlignmentCommandOptions();
             this.statsAlignmentCommandOptions = new StatsAlignmentCommandOptions();
             this.depthAlignmentCommandOptions = new DepthAlignmentCommandOptions();
+            this.queryAlignmentCommandOptions = new QueryAlignmentCommandOptions();
         }
     }
 
@@ -275,6 +314,55 @@ public class LocalCliOptionsParser {
         //public String filter = null;
     }
 
+    @Parameters(commandNames = {"query"}, commandDescription = "Command to execute queries against the Alignment input file (Avro or Parquet), the results will be saved into the output file.")
+    class QueryAlignmentCommandOptions {
+
+        @ParametersDelegate
+        public CommonCommandOptions commonOptions = commonCommandOptions;
+
+        @Parameter(names = {"-i", "--input"}, description = "Input file name (in Avro or Parquet format) that contains the alignments.",
+                required = true, arity = 1)
+        public String input;
+
+        @Parameter(names = {"-o", "--output"}, description = "Output file name.",
+                required = true, arity = 1)
+        public String output;
+
+        @Parameter(names = {"--region"}, description = "Query for region; comma separated list of regions, e.g.: 1:300000-400000000,15:343453463-8787665654", required = false)
+        public String regions;
+
+        @Parameter(names = {"--region-file"}, description = "Query for region; the list of regions is stored in this input file, one region (1:300000-400000000) per line", required = false)
+        public String regionFile;
+
+        @Parameter(names = {"--min-mapq"}, description = "Query for minimun mappging quality",
+                required = false, arity = 1)
+        public int minMapQ = 0;
+
+        @Parameter(names = {"--require-flags"}, description = "Query for alignments matching theses flags",
+                required = false, arity = 1)
+        public int requireFlags = 4095;
+
+        @Parameter(names = {"--filtering-flags"}, description = "Query for alignments not matching these flags",
+                required = false, arity = 1)
+        public int filteringFlags = 0;
+
+        @Parameter(names = {"--min-tlen"}, description = "Query for alignments with a template length greater than the minimun",
+                required = false, arity = 1)
+        public int minTLen = 0;
+
+        @Parameter(names = {"--max-tlen"}, description = "Query for alignments with a template length less than the maximum\"",
+                required = false, arity = 1)
+        public int maxTLen = Integer.MAX_VALUE;
+
+        @Parameter(names = {"--min-alen"}, description = "Query for alignments with an alignment length greater than the minimun",
+                required = false, arity = 1)
+        public int minALen = 0;
+
+        @Parameter(names = {"--max-alen"}, description = "Query for alignments with an alignment length less than the maximum\"",
+                required = false, arity = 1)
+        public int maxALen = Integer.MAX_VALUE;
+    }
+
 
     /*
      * Variant (VCF) CLI options
@@ -283,9 +371,13 @@ public class LocalCliOptionsParser {
     public class VariantCommandOptions extends CommandOptions {
 
         ConvertVariantCommandOptions convertVariantCommandOptions;
+        AnnotateVariantCommandOptions annotateVariantCommandOptions;
+        QueryVariantCommandOptions queryVariantCommandOptions;
 
         public VariantCommandOptions() {
             this.convertVariantCommandOptions = new ConvertVariantCommandOptions();
+            this.annotateVariantCommandOptions = new AnnotateVariantCommandOptions();
+            this.queryVariantCommandOptions = new QueryVariantCommandOptions();
         }
     }
 
@@ -295,39 +387,90 @@ public class LocalCliOptionsParser {
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
 
-        @Parameter(names = {"-i", "--input"}, description = "Input file in VCF/gVCF format", required = true, arity = 1)
+        @Parameter(names = {"-i", "--input"}, description = "Input file name, usually a gVCF/VCF but it can be an Avro file when converting to Parquet.",
+                required = true, arity = 1)
         public String input;
 
-        @Parameter(names = {"-o", "--output"}, description = "File where to store output", required = false, arity = 1)
-        public String output = "STDOUT";
+        @Parameter(names = {"--to"}, description = "Destination Serialization format. Accepted values: avro, parquet and json", required = true)
+        public String to;
+
+        @Parameter(names = {"-o", "--output"}, description = "Output file name.", required = false, arity = 1)
+        public String output;
+
+        @Parameter(names = {"-O"}, description = "Use the standard output.", required = false, arity = 0)
+        public boolean stdOutput;
+
+        @Parameter(names = {"--from"}, description = "Accepted values: vcf, avro", required = false)
+        public String from;
+
+        @Parameter(names = {"--region"}, description = "Filter variant by regions, comma separated list of regions, e.g.: 1:300000-400000000,15:343453463-8787665654", required = false)
+        public String regions;
 
         @Parameter(names = {"-d", "--data-model"}, description = "Only for 'to-json' and 'to-avro' options. 'to-protobuf' is only available with opencb data models. Values: opencb, ga4gh", required = false, arity = 1)
         public String dataModel = "opencb";
 
-        @Parameter(names = {"--to-json"}, description = "Whether output must be in protobuf format.", required = false)
-        public boolean toJson;
-
-        @Parameter(names = {"--to-avro"}, description = "Whether output must be in Avro format", required = false)
-        public boolean toAvro;
-
-        @Parameter(names = {"--to-protobuf"}, description = "Whether output must be in protobuf format. This option is only available with 'opencb' model", required = false)
-        public boolean toProtoBuf;
-
         @Parameter(names = {"-x", "--compression"}, description = "Available options for Avro are: : snappy, deflate, bzip2, xz. " +
-                "For JSON and ProtoBuf only 'gzip' is available. Mode 'auto' will infer compression from file extensions: .gz, .sz, ...", required = false, arity = 1)
-        public String compression = "auto";
+                "For JSON and ProtoBuf only 'gzip' is available. It compression is null,  it will be inferred compression from file extensions: .gz, .sz, ...", required = false, arity = 1)
+        public String compression = "deflate";
 
         @Parameter(names = {"-t", "--num-threads"}, description = "Number of threads to use, this must be less than the number of cores", required = false)
-        public int numThreads = 2;
+        public int numThreads = 1;
 
-        @Parameter(names = {"--from-avro"}, description = "Converts Avro format into JSON", required = false)
-        public boolean fromAvro;
-
-//        @Parameter(names = {"--to-parquet"}, description = "Whether output must be in parquet format", required = false)
-//        public boolean toParquet;
+        @Parameter(names = {"--skip-normalization"}, description = "Whether to skip variant normalization", required = false)
+        public boolean skipNormalization;
 
         @DynamicParameter(names = {"-D"}, hidden = true)
         public Map<String, String> options = new HashMap<>();
+    }
+
+
+    @Parameters(commandNames = {"annotate"}, commandDescription = "Convert gVCF/VCF files to different big data formats such as Avro and Parquet using GA4GH models")
+    class AnnotateVariantCommandOptions {
+
+        @ParametersDelegate
+        public CommonCommandOptions commonOptions = commonCommandOptions;
+
+        @Parameter(names = {"-i", "--input"}, description = "Input file name, usually a gVCF/VCF but it can be an Avro file when converting to Parquet.",
+                required = true, arity = 1)
+        public String input;
+
+        @Parameter(names = {"-o", "--output"}, description = "Input file name, usually a gVCF/VCF but it can be an Avro file when converting to Parquet.",
+                required = true, arity = 1)
+        public String ouput;
+    }
+
+    @Parameters(commandNames = {"query"}, commandDescription = "Command to execute queries against the input file (Avro or Parquet), the results will be saved into the output file.")
+    class QueryVariantCommandOptions {
+
+        @ParametersDelegate
+        public CommonCommandOptions commonOptions = commonCommandOptions;
+
+        @Parameter(names = {"-i", "--input"}, description = "Input file name (in Avro or Parquet format).",
+                required = true, arity = 1)
+        public String input;
+
+        @Parameter(names = {"-o", "--output"}, description = "Output file name.",
+                required = true, arity = 1)
+        public String output;
+
+        @Parameter(names = {"--id"}, description = "Query for ID; comma separated list of IDs, e.g.: \"rs312411,rs421225\"",
+                required = false, arity = 1)
+        public String ids;
+
+        @Parameter(names = {"--type"}, description = "Query for type; comma separated list of IDs, e.g.: \"SNP,SNV\"",
+                required = false, arity = 1)
+        public String types;
+
+        @Parameter(names = {"--region"}, description = "Query for region; comma separated list of regions, e.g.: 1:300000-400000000,15:343453463-8787665654", required = false)
+        public String regions;
+
+        @Parameter(names = {"--consequence-type-so-accession"}, description = "Query for Sequence Ontology (SO) term accession code; comma separated list of accession codes of the SO terms related to the variant consequence type, e.g.: SO:32234,SO:00124",
+                required = false, arity = 1)
+        public String so_accessions;
+
+        @Parameter(names = {"--consequence-type-so-name"}, description = "Query for Sequence Ontology (SO) term name; comma separated list of names of the SO terms related to the variant consequence type, e.g.:  \"transgenic insertion, genetic marker\"",
+                required = false, arity = 1)
+        public String so_names;
     }
 
 
@@ -404,6 +547,10 @@ public class LocalCliOptionsParser {
 
     public CommandOptions getCommandOptions() {
         return commandOptions;
+    }
+
+    public AdminCommandOptions getAdminCommandOptions() {
+        return adminCommandOptions;
     }
 
     public SequenceCommandOptions getSequenceCommandOptions() {

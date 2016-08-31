@@ -21,17 +21,28 @@ import htsjdk.samtools.util.LineReader;
 import htsjdk.samtools.util.StringLineReader;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.specific.SpecificDatumReader;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.spark.SparkConf;
+import org.apache.spark.SparkContext;
+import org.apache.spark.sql.SparkSession;
 import org.ga4gh.models.ReadAlignment;
+import org.opencb.biodata.models.core.Region;
 import org.opencb.biodata.tools.alignment.tasks.AlignmentStats;
 import org.opencb.biodata.tools.alignment.tasks.AlignmentStatsCalculator;
 import org.opencb.biodata.tools.alignment.tasks.RegionDepth;
 import org.opencb.biodata.tools.alignment.tasks.RegionDepthCalculator;
+import org.opencb.commons.utils.FileUtils;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
-import org.opencb.hpg.bigdata.core.NativeSupport;
+import org.opencb.hpg.bigdata.core.avro.AlignmentAvroSerializer;
 import org.opencb.hpg.bigdata.core.converters.SAMRecord2ReadAlignmentConverter;
+import org.opencb.hpg.bigdata.core.lib.AlignmentDataset;
+import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
 
 import java.io.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Created by imedina on 16/03/15.
@@ -49,7 +60,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
     /*
      * Parse specific 'alignment' command options
      */
-    public void execute() throws IOException {
+    public void execute() throws Exception {
         String subCommand = alignmentCommandOptions.getParsedSubCommand();
 
         switch (subCommand) {
@@ -71,6 +82,12 @@ public class AlignmentCommandExecutor extends CommandExecutor {
                         alignmentCommandOptions.depthAlignmentCommandOptions.commonOptions.conf);
                 depth();
                 break;
+            case "query":
+                init(alignmentCommandOptions.queryAlignmentCommandOptions.commonOptions.logLevel,
+                        alignmentCommandOptions.queryAlignmentCommandOptions.commonOptions.verbose,
+                        alignmentCommandOptions.queryAlignmentCommandOptions.commonOptions.conf);
+                query();
+                break;
             /*
             case "align":
                 System.out.println("Sub-command 'align': Not yet implemented for the command 'alignment' !");
@@ -88,7 +105,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
 
         // sanity check
         if (compressionCodecName.equals("null")) {
-            compressionCodecName = null;
+            compressionCodecName = "deflate";
         }
 
         if (alignmentCommandOptions.convertAlignmentCommandOptions.toBam) {
@@ -137,7 +154,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
         } else {
 
             // conversion: BAM -> GA4GH/Avro model
-            System.out.println("Loading library hpgbigdata...");
+/*            System.out.println("Loading library hpgbigdata...");
             System.out.println("\tjava.libary.path = " + System.getProperty("java.library.path"));
             System.loadLibrary("hpgbigdata");
             System.out.println("...done!");
@@ -156,6 +173,12 @@ public class AlignmentCommandExecutor extends CommandExecutor {
             } catch (IOException e) {
                 throw e;
             }
+*/
+
+            boolean adjustQuality = alignmentCommandOptions.convertAlignmentCommandOptions.adjustQuality;
+            AlignmentAvroSerializer avroSerializer = new AlignmentAvroSerializer(compressionCodecName);
+            avroSerializer.toAvro(input, output);
+
         }
     }
 
@@ -283,5 +306,73 @@ public class AlignmentCommandExecutor extends CommandExecutor {
         } catch (Exception e) {
             throw e;
         }
+    }
+
+    public void query() throws Exception {
+        // check mandatory parameter 'input file'
+        Path inputPath = Paths.get(alignmentCommandOptions.queryAlignmentCommandOptions.input);
+        FileUtils.checkFile(inputPath);
+
+        // TODO: to take the spark home from somewhere else
+        SparkConf sparkConf = SparkConfCreator.getConf("variant query", "local", 1,
+                true, "/home/jtarraga/soft/spark-2.0.0/");
+        System.out.println("sparkConf = " + sparkConf.toDebugString());
+        SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
+
+//        SparkConf sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "/home/jtarraga/soft/spark-2.0.0/");
+//        SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
+
+        AlignmentDataset ad = new AlignmentDataset();
+
+        ad.load(alignmentCommandOptions.queryAlignmentCommandOptions.input, sparkSession);
+        ad.createOrReplaceTempView("alignment");
+
+        // query for region
+        List<Region> regions = null;
+        if (StringUtils.isNotEmpty(alignmentCommandOptions.queryAlignmentCommandOptions.regions)) {
+            regions = Region.parseRegions(alignmentCommandOptions.queryAlignmentCommandOptions.regions);
+            ad.regionFilter(regions);
+        }
+
+        // query for region file
+        if (StringUtils.isNotEmpty(alignmentCommandOptions.queryAlignmentCommandOptions.regionFile)) {
+            logger.warn("Query for region file, not yet implemented.");
+        }
+
+        // query for minimun mapping quality
+        if (alignmentCommandOptions.queryAlignmentCommandOptions.minMapQ > 0) {
+            ad.mappingQualityFilter(">=" + alignmentCommandOptions.queryAlignmentCommandOptions.minMapQ);
+        }
+
+        // query for flags
+        if (alignmentCommandOptions.queryAlignmentCommandOptions.requireFlags != Integer.MAX_VALUE)  {
+            ad.flagFilter("" + alignmentCommandOptions.queryAlignmentCommandOptions.requireFlags, false);
+        }
+        if (alignmentCommandOptions.queryAlignmentCommandOptions.filteringFlags != 0) {
+            ad.flagFilter("" + alignmentCommandOptions.queryAlignmentCommandOptions.filteringFlags, true);
+        }
+
+        // query for template length
+        if (alignmentCommandOptions.queryAlignmentCommandOptions.minTLen != 0) {
+            ad.templateLengthFilter(">=" + alignmentCommandOptions.queryAlignmentCommandOptions.minTLen);
+        }
+        if (alignmentCommandOptions.queryAlignmentCommandOptions.maxTLen != Integer.MAX_VALUE) {
+            ad.templateLengthFilter("<=" + alignmentCommandOptions.queryAlignmentCommandOptions.maxTLen);
+        }
+
+        // query for alignment length
+        if (alignmentCommandOptions.queryAlignmentCommandOptions.minALen != 0) {
+            ad.alignmentLengthFilter(">=" + alignmentCommandOptions.queryAlignmentCommandOptions.minALen);
+        }
+        if (alignmentCommandOptions.queryAlignmentCommandOptions.maxALen != Integer.MAX_VALUE) {
+            ad.alignmentLengthFilter("<=" + alignmentCommandOptions.queryAlignmentCommandOptions.maxALen);
+        }
+
+        // apply previous filters
+        ad.update();
+
+        // save the dataset
+        logger.warn("The current query implementation saves the resulting dataset in Avro format.");
+        ad.write().format("com.databricks.spark.avro").save(alignmentCommandOptions.queryAlignmentCommandOptions.output);
     }
 }

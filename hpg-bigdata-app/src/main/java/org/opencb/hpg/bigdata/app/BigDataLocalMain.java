@@ -18,10 +18,7 @@ package org.opencb.hpg.bigdata.app;
 
 import com.beust.jcommander.ParameterException;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
-import org.opencb.hpg.bigdata.app.cli.local.AlignmentCommandExecutor;
-import org.opencb.hpg.bigdata.app.cli.local.LocalCliOptionsParser;
-import org.opencb.hpg.bigdata.app.cli.local.SequenceCommandExecutor;
-import org.opencb.hpg.bigdata.app.cli.local.VariantCommandExecutor;
+import org.opencb.hpg.bigdata.app.cli.local.*;
 
 /**
  * Created by hpccoll1 on 18/05/15.
@@ -75,6 +72,9 @@ public class BigDataLocalMain {
                     localCliOptionsParser.printUsage();
                 } else {
                     switch (parsedCommand) {
+                        case "admin":
+                            commandExecutor = new AdminCommandExecutor(localCliOptionsParser.getAdminCommandOptions());
+                            break;
                         case "sequence":
                             commandExecutor = new SequenceCommandExecutor(localCliOptionsParser.getSequenceCommandOptions());
                             break;
