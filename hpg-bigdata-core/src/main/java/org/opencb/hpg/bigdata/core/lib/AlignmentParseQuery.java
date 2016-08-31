@@ -87,74 +87,59 @@ public class AlignmentParseQuery extends ParseQuery {
         }
 
         if (exclude) {
-            flag ^= 0xFF;
+            flag ^= 0xFFFF;
         }
         //System.out.println("---------> flag = " + flag);
 
-        StringBuilder filter = new StringBuilder();
-
         if ((flag & 1) > 0) {
             // template having multiple segments in sequencing
-            System.err.println("Filter by SAM flag 1, not implemented yet. Aborting!");
-            //System.exit(-1);
+            filters.add("(numberReads > 0)");
         }
         if ((flag & 2) > 0) {
             // each segment properly aligned according to the aligner
-            System.err.println("Filter by SAM flag 1, not implemented yet. Aborting!");
-            //System.exit(-1);
+            filters.add("(improperPlacement = true)");
         }
         if ((flag & 4) > 0) {
             // segment unmapped
-            System.err.println("Filter by SAM flag 1, not implemented yet. Aborting!");
-            //System.exit(-1);
+            filters.add("(numberReads = 0)");
         }
         if ((flag & 8) > 0) {
             // next segment in the template unmapped
-            System.err.println("Filter by SAM flag 1, not implemented yet. Aborting!");
-            //System.exit(-1);
+            filters.add("(numberReads > 0 AND nextMatePosition IS NULL)");
         }
         if ((flag & 16) > 0) {
             // SEQ being reverse complemented
-            System.err.println("Filter by SAM flag 1, not implemented yet. Aborting!");
-            //System.exit(-1);
+            filters.add("(numberReads > 0 AND alignment.position.strand = 'NEG_STRAND')");
         }
         if ((flag & 32) > 0) {
             // SEQ of the next segment in the template being reverse complemented
-            System.err.println("Filter by SAM flag 1, not implemented yet. Aborting!");
-            //System.exit(-1);
+            filters.add("(nextMatePosition.strand = 'NEG_STRAND')");
         }
         if ((flag & 64) > 0) {
-            // the  rst segment in the template
-            System.err.println("Filter by SAM flag 1, not implemented yet. Aborting!");
-            //System.exit(-1);
+            // the first segment in the template
+            filters.add("(numberReads > 0 AND readNumber = 0)");
         }
         if ((flag & 128) > 0) {
             // the last segment in the template
-            System.err.println("Filter by SAM flag 1, not implemented yet. Aborting!");
+            filters.add("(numberReads > 0 AND readNumber = numberReads - 1)");
             //System.exit(-1);
         }
         if ((flag & 256) > 0) {
             // secondary alignment
-            System.err.println("Filter by SAM flag 1, not implemented yet. Aborting!");
-            //System.exit(-1);
+            filters.add("(secondaryAlignment = true)");
         }
         if ((flag & 512) > 0) {
             // not passing  lters, such as platform/vendor quality controls
-            System.err.println("Filter by SAM flag 1, not implemented yet. Aborting!");
-            //System.exit(-1);
+            filters.add("(failedVendorQualityChecks = true)");
         }
         if ((flag & 1024) > 0) {
             // PCR or optical duplicate
-            System.err.println("Filter by SAM flag 1, not implemented yet. Aborting!");
-            //System.exit(-1);
+            filters.add("(duplicateFragment = true)");
         }
         if ((flag & 2048) > 0) {
             // supplementary alignment
-            System.err.println("Filter by SAM flag 1, not implemented yet. Aborting!");
-            //System.exit(-1);
+            filters.add("(supplementaryAlignment = true)");
         }
-
-        filters.add(filter.toString());
     }
 }
 
