@@ -338,13 +338,13 @@ public class LocalCliOptionsParser {
                 required = false, arity = 1)
         public int minMapQ = 0;
 
-        @Parameter(names = {"--include-flags"}, description = "Query for alignments matching theses flags",
+        @Parameter(names = {"--require-flags"}, description = "Query for alignments matching theses flags",
                 required = false, arity = 1)
-        public int includeFlags = 4095;
+        public int requireFlags = 4095;
 
-        @Parameter(names = {"--exclude-flags"}, description = "Query for alignments not matching these flags",
+        @Parameter(names = {"--filtering-flags"}, description = "Query for alignments not matching these flags",
                 required = false, arity = 1)
-        public int excludeFlags = 0;
+        public int filteringFlags = 0;
 
         @Parameter(names = {"--min-tlen"}, description = "Query for alignments with a template length greater than the minimun",
                 required = false, arity = 1)

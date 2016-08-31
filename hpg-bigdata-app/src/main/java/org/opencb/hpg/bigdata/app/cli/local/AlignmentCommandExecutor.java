@@ -331,8 +331,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
         List<Region> regions = null;
         if (StringUtils.isNotEmpty(alignmentCommandOptions.queryAlignmentCommandOptions.regions)) {
             regions = Region.parseRegions(alignmentCommandOptions.queryAlignmentCommandOptions.regions);
-
-            logger.warn("Query region, not yet implemented.");
+            ad.regionFilter(regions);
         }
 
         // query for region file
@@ -342,25 +341,31 @@ public class AlignmentCommandExecutor extends CommandExecutor {
 
         // query for minimun mapping quality
         if (alignmentCommandOptions.queryAlignmentCommandOptions.minMapQ > 0) {
-            logger.warn("Query for minimum mapping quality, not yet implemented.");
+            ad.mappingQualityFilter(">=" + alignmentCommandOptions.queryAlignmentCommandOptions.minMapQ);
         }
 
         // query for flags
-        if (alignmentCommandOptions.queryAlignmentCommandOptions.includeFlags != Integer.MAX_VALUE
-                || alignmentCommandOptions.queryAlignmentCommandOptions.excludeFlags != 0) {
-            logger.warn("Query for flags, not yet implemented.");
+        if (alignmentCommandOptions.queryAlignmentCommandOptions.requireFlags != Integer.MAX_VALUE)  {
+            ad.flagFilter("" + alignmentCommandOptions.queryAlignmentCommandOptions.requireFlags, false);
+        }
+        if (alignmentCommandOptions.queryAlignmentCommandOptions.filteringFlags != 0) {
+            ad.flagFilter("" + alignmentCommandOptions.queryAlignmentCommandOptions.filteringFlags, true);
         }
 
         // query for template length
-        if (alignmentCommandOptions.queryAlignmentCommandOptions.minTLen != 0
-                || alignmentCommandOptions.queryAlignmentCommandOptions.maxTLen != Integer.MAX_VALUE) {
-            logger.warn("Query for template length, not yet implemented.");
+        if (alignmentCommandOptions.queryAlignmentCommandOptions.minTLen != 0) {
+            ad.templateLengthFilter(">=" + alignmentCommandOptions.queryAlignmentCommandOptions.minTLen);
+        }
+        if (alignmentCommandOptions.queryAlignmentCommandOptions.maxTLen != Integer.MAX_VALUE) {
+            ad.templateLengthFilter("<=" + alignmentCommandOptions.queryAlignmentCommandOptions.maxTLen);
         }
 
         // query for alignment length
-        if (alignmentCommandOptions.queryAlignmentCommandOptions.minALen != 0
-                || alignmentCommandOptions.queryAlignmentCommandOptions.maxALen != Integer.MAX_VALUE) {
-            logger.warn("Query for alignment length, not yet implemented.");
+        if (alignmentCommandOptions.queryAlignmentCommandOptions.minALen != 0) {
+            ad.alignmentLengthFilter(">=" + alignmentCommandOptions.queryAlignmentCommandOptions.minALen);
+        }
+        if (alignmentCommandOptions.queryAlignmentCommandOptions.maxALen != Integer.MAX_VALUE) {
+            ad.alignmentLengthFilter("<=" + alignmentCommandOptions.queryAlignmentCommandOptions.maxALen);
         }
 
         // apply previous filters
