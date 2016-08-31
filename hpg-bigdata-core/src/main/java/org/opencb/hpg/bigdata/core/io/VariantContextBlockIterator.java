@@ -15,13 +15,14 @@
  */
 
 /**
- * 
+ *
  */
-package org.opencb.hpg.bigdata.core.utils;
+package org.opencb.hpg.bigdata.core.io;
 
 import htsjdk.variant.variantcontext.LazyGenotypesContext;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFCodec;
+import org.opencb.biodata.tools.variant.converter.Converter;
 
 import java.nio.CharBuffer;
 import java.util.ArrayList;
@@ -31,42 +32,38 @@ import java.util.List;
  * @author mh719
  *
  */
-public class VariantContextBlockIterator {
+public class VariantContextBlockIterator implements Converter<CharSequence, VariantContext> {
 
-	private final VCFCodec codec;
-    private boolean decodeGenotypes = true;
+    private final VCFCodec codec;
+    private boolean decodeGenotypes = false;
 
-    /**
-	 * 
-	 * @param codec
-	 */
-	public VariantContextBlockIterator(VCFCodec codec) {
-		this.codec = codec;
-	}
-	
-	public List<VariantContext> convert(List<CharBuffer> block){
-		int size = block.size();
-		List<VariantContext> varList = new ArrayList<VariantContext>(size);
-		for(CharBuffer buff : block){
-			VariantContext ctx = convert(buff);
+    public VariantContextBlockIterator(VCFCodec codec) {
+        this.codec = codec;
+    }
+
+    public List<VariantContext> convert(List<CharBuffer> block) {
+        int size = block.size();
+        List<VariantContext> varList = new ArrayList<>(size);
+        for (CharBuffer buff : block) {
+            VariantContext ctx = convert(buff);
             if (decodeGenotypes) {
                 if (ctx.getGenotypes().isLazyWithData()) {
                     ((LazyGenotypesContext) ctx.getGenotypes()).decode();
                 }
             }
-			varList.add(ctx);
-		}		
-		return varList ;
-	}
+            varList.add(ctx);
+        }
+        return varList;
+    }
 
-	private VariantContext convert(CharBuffer buff) {
-		VariantContext ctx = getCodec().decode(buff.toString());
-		return ctx;
-	}
+    @Override
+    public VariantContext convert(CharSequence buff) {
+        return this.codec.decode(buff.toString());
+    }
 
-	public VCFCodec getCodec() {
-		return codec;
-	}
+    public VCFCodec getCodec() {
+        return codec;
+    }
 
     public boolean isDecodeGenotypes() {
         return decodeGenotypes;
@@ -75,6 +72,5 @@ public class VariantContextBlockIterator {
     public void setDecodeGenotypes(boolean decodeGenotypes) {
         this.decodeGenotypes = decodeGenotypes;
     }
-
 
 }

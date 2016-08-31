@@ -35,6 +35,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.opencb.hpg.bigdata.core.converters.FullVcfCodec;
+import org.opencb.hpg.bigdata.core.io.VariantContextBlockIterator;
 
 /**
  * @author mh719
@@ -55,13 +56,13 @@ public class VariantContextBlockIteratorTest {
 		rows = new LinkedList<CharBuffer>();
 		String inFile = "/"+this.getClass().getName().replaceAll("\\.", "/")+".vcf";
 		FullVcfCodec codec = new FullVcfCodec();
-		try(InputStream in = getStream(inFile);){
+		try(InputStream in = getStream(inFile)){
 			LineIterator iter = codec.makeSourceFromStream(in);
 			this.header = (VCFHeader) codec.readActualHeader(iter);
 			this.version = codec.getVCFHeaderVersion();
 			
 		}
-		try(InputStream in = getStream(inFile);){
+		try(InputStream in = getStream(inFile)){
 			List<String> lines = IOUtils.readLines(in);
 			for(String l : lines){
 				if(!l.startsWith("#")){

@@ -21,7 +21,7 @@
 
     <groupId>org.opencb.hpg-bigdata</groupId>
     <artifactId>hpg-bigdata</artifactId>
-    <version>0.5.1</version>
+    <version>0.6.0</version>
     <packaging>pom</packaging>
 
     <modules>
@@ -30,20 +30,22 @@
         <module>hpg-bigdata-tools</module>
     </modules>
 
-    <name>HPG Big data project</name>
-    <description>HPG Big data project aims to manage genomic big data in a Hadoop-based cluster</description>
+    <name>HPG BigData project</name>
+    <description>HPG BigData project aims to provide tools for processing genomic big data in a Hadoop cluster</description>
     <url>https://github.com/opencb/hpg-bigdata</url>
 
     <properties>
-        <hpg.version>0.5.1</hpg.version>
-        <ga4gh.version>0.5.1</ga4gh.version>
-        <biodata.version>0.5.1</biodata.version>
-        <datastore.version>0.4.0</datastore.version>
-        <commons-lib.version>3.0.0</commons-lib.version>
-        <hadoop.version>2.6.0</hadoop.version>
+        <hpg.version>0.6.0</hpg.version>
+        <ga4gh.version>0.6.0a5</ga4gh.version>
+        <biodata.version>0.8.0</biodata.version>
+        <commons-lib.version>3.3.0</commons-lib.version>
+        <hadoop.version>2.6.3</hadoop.version>
         <hbase.version>1.0.1</hbase.version>
+        <avro.version>1.7.7</avro.version>
+        <parquet.version>1.8.1</parquet.version>
+        <jackson.version>2.6.6</jackson.version>
+        <slf4j.version>1.7.21</slf4j.version>
         <compileSource>1.8</compileSource>
-        <build.dir>build</build.dir>
     </properties>
 
     <scm>
@@ -71,6 +73,11 @@
             <email>joaquintarraga@gmail.com</email>
         </developer>
         <developer>
+            <id>dapregi</id>
+            <name>Daniel</name>
+            <email>dperezgil89@gmail.com</email>
+        </developer>
+        <developer>
             <id>jcoll</id>
             <name>Jacobo</name>
             <email>jacobo167@gmail.com</email>
@@ -89,6 +96,17 @@
             <post>opencb@googlegroups.com</post>
         </mailingList>
     </mailingLists>
+
+    <repositories>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>daily</updatePolicy>
+            </snapshots>
+        </repository>
+    </repositories>
 
     <dependencyManagement>
         <dependencies>
@@ -114,59 +132,21 @@
                 <version>${commons-lib.version}</version>
             </dependency>
 
-
-            <dependency>
-                <groupId>org.apache.hbase</groupId>
-                <artifactId>hbase-common</artifactId>
-                <version>${hbase.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.hbase</groupId>
-                <artifactId>hbase-client</artifactId>
-                <version>${hbase.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.hbase</groupId>
-                <artifactId>hbase-server</artifactId>
-                <version>${hbase.version}</version>
-                <!-- 				<exclusions> -->
-                <!-- 					<exclusion> -->
-                <!-- 						<groupId>org.apache.hadoop</groupId> -->
-                <!-- 						<artifactId>hadoop-client</artifactId> -->
-                <!-- 					</exclusion> -->
-                <!-- 				</exclusions> -->
-            </dependency>
-            <dependency>
-                <groupId>org.apache.hadoop</groupId>
-                <artifactId>hadoop-client</artifactId>
-                <version>${hadoop.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.hadoop</groupId>
-                <artifactId>hadoop-common</artifactId>
-                <version>${hadoop.version}</version>
-            </dependency>
-
             <!-- General dependencies -->
-            <dependency>
-                <groupId>com.google.guava</groupId>
-                <artifactId>guava</artifactId>
-                <version>18.0</version>
-            </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
-                <version>1.7.12</version>
+                <version>${slf4j.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-simple</artifactId>
-                <version>1.7.12</version>
+                <version>${slf4j.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
-                <version>2.5.4</version>
+                <version>${jackson.version}</version>
             </dependency>
             <dependency>
                 <groupId>junit</groupId>
@@ -174,13 +154,6 @@
                 <version>4.12</version>
                 <scope>test</scope>
             </dependency>
-            <!-- 			<dependency> -->
-            <!-- 				<groupId>jdk.tools</groupId> -->
-            <!-- 				<artifactId>jdk.tools</artifactId> -->
-            <!-- 				<version>${compileSource}</version> -->
-            <!-- 				<scope>system</scope> -->
-            <!-- 				<systemPath>${java.home}/lib/tools.jar</systemPath> -->
-            <!-- 			</dependency> -->
         </dependencies>
     </dependencyManagement>
 
@@ -192,7 +165,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.2</version>
+                <version>3.5.1</version>
                 <configuration>
                     <source>${compileSource}</source>
                     <target>${compileSource}</target>
@@ -256,30 +229,30 @@
                 </configuration>
             </plugin>
             <!--<plugin>-->
-                <!--<groupId>org.apache.maven.plugins</groupId>-->
-                <!--<artifactId>maven-shade-plugin</artifactId>-->
-                <!--<version>2.4</version>-->
-                <!--<executions>-->
-                    <!--<execution>-->
-                        <!--<phase>package</phase>-->
-                        <!--<goals>-->
-                            <!--<goal>shade</goal>-->
-                        <!--</goals>-->
-                        <!--<configuration>-->
-                            <!--<artifactSet>-->
-                                <!--<includes>-->
-                                    <!--<include>org.apache.avro:avro</include>-->
-                                <!--</includes>-->
-                            <!--</artifactSet>-->
-                            <!--<relocations>-->
-                                <!--<relocation>-->
-                                    <!--<pattern>org.apache.avro</pattern>-->
-                                    <!--<shadedPattern>org.opencb.shaded.org.apache.avros</shadedPattern>-->
-                                <!--</relocation>-->
-                            <!--</relocations>-->
-                        <!--</configuration>-->
-                    <!--</execution>-->
-                <!--</executions>-->
+            <!--<groupId>org.apache.maven.plugins</groupId>-->
+            <!--<artifactId>maven-shade-plugin</artifactId>-->
+            <!--<version>2.4</version>-->
+            <!--<executions>-->
+            <!--<execution>-->
+            <!--<phase>package</phase>-->
+            <!--<goals>-->
+            <!--<goal>shade</goal>-->
+            <!--</goals>-->
+            <!--<configuration>-->
+            <!--<artifactSet>-->
+            <!--<includes>-->
+            <!--<include>org.apache.avro:avro</include>-->
+            <!--</includes>-->
+            <!--</artifactSet>-->
+            <!--<relocations>-->
+            <!--<relocation>-->
+            <!--<pattern>org.apache.avro</pattern>-->
+            <!--<shadedPattern>org.opencb.shaded.org.apache.avros</shadedPattern>-->
+            <!--</relocation>-->
+            <!--</relocations>-->
+            <!--</configuration>-->
+            <!--</execution>-->
+            <!--</executions>-->
             <!--</plugin>-->
             <!--
             <plugin>
@@ -307,6 +280,24 @@
                 </executions>
             </plugin>
              -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>2.16</version>
+                <executions>
+                    <execution>
+                        <id>validate</id>
+                        <phase>validate</phase>
+                        <configuration>
+                            <configLocation>checkstyle.xml</configLocation>
+                            <excludes>org/opencb/hpg/bigdata/app/cli/hadoop/CliOptionsParser.java,org/opencb/hpg/bigdata/app/cli/local/LocalCliOptionsParser.java</excludes>
+                        </configuration>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 

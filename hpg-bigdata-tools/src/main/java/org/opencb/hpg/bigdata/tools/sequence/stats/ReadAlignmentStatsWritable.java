@@ -16,118 +16,123 @@
 
 package org.opencb.hpg.bigdata.tools.sequence.stats;
 
+import org.apache.hadoop.io.Writable;
+import org.opencb.biodata.tools.alignment.tasks.AlignmentStats;
+import org.opencb.biodata.tools.sequence.tasks.SequenceStats;
+
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.HashMap;
 
-import org.apache.hadoop.io.Writable;
-import org.opencb.biodata.tools.alignment.tasks.AlignmentStats;
-import org.opencb.biodata.tools.sequence.tasks.SequenceStats;
-
 public class ReadAlignmentStatsWritable implements Writable {
 
-	public AlignmentStats stats;
+    private AlignmentStats stats;
 
-	public ReadAlignmentStatsWritable() { }
+    public ReadAlignmentStatsWritable() {
+    }
 
-	public ReadAlignmentStatsWritable(AlignmentStats stats) { setStats(stats); }
+    public ReadAlignmentStatsWritable(AlignmentStats stats) {
+        setStats(stats);
+    }
 
-	public AlignmentStats getStats() {
-			return stats;
-		}
+    public AlignmentStats getStats() {
+        return stats;
+    }
 
-	public void setStats(AlignmentStats stats) { this.stats = stats; }
+    public void setStats(AlignmentStats stats) {
+        this.stats = stats;
+    }
 
-	public void setSeqStats(SequenceStats seqStats) {	this.stats.seqStats = seqStats;	}
+    public void setSeqStats(SequenceStats seqStats) {
+        this.stats.seqStats = seqStats;
+    }
 
-	@Override
-	public void write(DataOutput out) throws IOException {
-		out.writeInt(stats.numMapped);
-		out.writeInt(stats.numUnmapped);
-		out.writeInt(stats.numPaired);
-		out.writeInt(stats.numMappedFirst);
-		out.writeInt(stats.numMappedSecond);
-		
-		out.writeInt(stats.NM);
+    @Override
+    public void write(DataOutput out) throws IOException {
+        out.writeInt(stats.numMapped);
+        out.writeInt(stats.numUnmapped);
+        out.writeInt(stats.numPaired);
+        out.writeInt(stats.numMappedFirst);
+        out.writeInt(stats.numMappedSecond);
 
-		out.writeInt(stats.numHardC);
-		out.writeInt(stats.numSoftC);
-		out.writeInt(stats.numIn);
-		out.writeInt(stats.numDel);
-		out.writeInt(stats.numPad);
-		out.writeInt(stats.numSkip);
+        out.writeInt(stats.NM);
 
-		out.writeInt(stats.accMappingQuality);
-		out.writeInt(stats.mappingQualityMap.size());
-		for(int key:stats.mappingQualityMap.keySet()) {
-			out.writeInt(key);
-			out.writeInt(stats.mappingQualityMap.get(key));
-		}
-		
-		out.writeInt(stats.accInsert);
-		out.writeInt(stats.insertMap.size());
-		for(int key:stats.insertMap.keySet()) {
-			out.writeInt(key);
-			out.writeInt(stats.insertMap.get(key));
-		}
+        out.writeInt(stats.numHardC);
+        out.writeInt(stats.numSoftC);
+        out.writeInt(stats.numIn);
+        out.writeInt(stats.numDel);
+        out.writeInt(stats.numPad);
+        out.writeInt(stats.numSkip);
+
+        out.writeInt(stats.accMappingQuality);
+        out.writeInt(stats.mappingQualityMap.size());
+        for (int key : stats.mappingQualityMap.keySet()) {
+            out.writeInt(key);
+            out.writeInt(stats.mappingQualityMap.get(key));
+        }
+
+        out.writeInt(stats.accInsert);
+        out.writeInt(stats.insertMap.size());
+        for (int key : stats.insertMap.keySet()) {
+            out.writeInt(key);
+            out.writeInt(stats.insertMap.get(key));
+        }
 /*
-		out.writeLong(pos);
-		out.writeInt(cigar.size());
-		for(CigarUnit cu: cigar) {
-			out.writeInt(cu.getOperation().ordinal());
-			out.writeLong(cu.getOperationLength());
-		}
-*/		
-		ReadStatsWritable aux = new ReadStatsWritable(stats.seqStats);
-		aux.write(out);
-	}
-
-	@Override
-	public void readFields(DataInput in) throws IOException {
-		int size;
-
-		stats = new AlignmentStats();
-
-		stats.numMapped = in.readInt();
-		stats.numUnmapped = in.readInt();
-		stats.numPaired = in.readInt();
-		stats.numMappedFirst = in.readInt();
-		stats.numMappedSecond = in.readInt();
-
-		stats.NM = in.readInt();
-
-		stats.numHardC = in.readInt();
-		stats.numSoftC = in.readInt();
-		stats.numIn = in.readInt();
-		stats.numDel = in.readInt();
-		stats.numPad = in.readInt();
-		stats.numSkip = in.readInt();
-
-		stats.accMappingQuality =  in.readInt();
-		size = in.readInt();
-		stats.mappingQualityMap = new HashMap<Integer, Integer>(size);
-		for (int i = 0; i < size; i++) {
-			stats.mappingQualityMap.put(in.readInt(), in.readInt());
-		}
-
-		stats.accInsert =  in.readInt();
-		size = in.readInt();
-		stats.insertMap = new HashMap<Integer, Integer>(size);
-		for (int i = 0; i < size; i++) {
-			stats.insertMap.put(in.readInt(), in.readInt());
-		}
-/*
-		pos = in.readLong();
-		size = in.readInt();
-		cigar = new ArrayList<CigarUnit>(size);
-		for(int i = 0; i < size; i++) {
-			CigarUnit cu = new CigarUnit(CigarOperation.values()[in.readInt()], in.readLong(), null);
-			cigar.add(cu);
-		}
+        out.writeLong(pos);
+        out.writeInt(cigar.size());
+        for(CigarUnit cu: cigar) {
+            out.writeInt(cu.getOperation().ordinal());
+            out.writeLong(cu.getOperationLength());
+        }
 */
-		ReadStatsWritable aux = new ReadStatsWritable();
-		aux.readFields(in);
-		setSeqStats(aux.getStats());
-	}
+        ReadStatsWritable aux = new ReadStatsWritable(stats.seqStats);
+        aux.write(out);
+    }
+
+    @Override
+    public void readFields(DataInput in) throws IOException {
+        int size;
+        stats = new AlignmentStats();
+        stats.numMapped = in.readInt();
+        stats.numUnmapped = in.readInt();
+        stats.numPaired = in.readInt();
+        stats.numMappedFirst = in.readInt();
+        stats.numMappedSecond = in.readInt();
+
+        stats.NM = in.readInt();
+
+        stats.numHardC = in.readInt();
+        stats.numSoftC = in.readInt();
+        stats.numIn = in.readInt();
+        stats.numDel = in.readInt();
+        stats.numPad = in.readInt();
+        stats.numSkip = in.readInt();
+
+        stats.accMappingQuality =  in.readInt();
+        size = in.readInt();
+        stats.mappingQualityMap = new HashMap<>(size);
+        for (int i = 0; i < size; i++) {
+            stats.mappingQualityMap.put(in.readInt(), in.readInt());
+        }
+
+        stats.accInsert =  in.readInt();
+        size = in.readInt();
+        stats.insertMap = new HashMap<>(size);
+        for (int i = 0; i < size; i++) {
+            stats.insertMap.put(in.readInt(), in.readInt());
+        }
+/*
+        pos = in.readLong();
+        size = in.readInt();
+        cigar = new ArrayList<CigarUnit>(size);
+        for(int i = 0; i < size; i++) {
+            CigarUnit cu = new CigarUnit(CigarOperation.values()[in.readInt()], in.readLong(), null);
+            cigar.add(cu);
+        }
+*/
+        ReadStatsWritable aux = new ReadStatsWritable();
+        aux.readFields(in);
+        setSeqStats(aux.getStats());
+    }
 }

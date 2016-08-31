@@ -135,11 +135,14 @@ public class CliOptionsParser {
         @Parameter(names = {"-h", "--help"},  description = "This parameter prints this help", help = true)
         public boolean help;
 
-        @Parameter(names = {"-L", "--log-level"}, description = "Set the level log, values: debug, info, warning, error, fatal", required = false, arity = 1)
+        @Parameter(names = {"-L", "--log-level"},
+                description = "Set the level log, values: debug, info, warning, error, fatal",
+                required = false, arity = 1)
         public String logLevel = "info";
 
         @Deprecated
-        @Parameter(names = {"-v", "--verbose"}, description = "This parameter set the level of the logging", required = false, arity = 1)
+        @Parameter(names = {"-v", "--verbose"},
+                description = "This parameter set the level of the logging", required = false, arity = 1)
         public boolean verbose;
 
         @Parameter(names = {"--conf"}, description = "Set the configuration file", required = false, arity = 1)
@@ -151,7 +154,8 @@ public class CliOptionsParser {
     /*
      * Sequence (FASTQ) CLI options
      */
-    @Parameters(commandNames = {"sequence"}, commandDescription = "Implements different tools for working with Fastq files")
+    @Parameters(commandNames = {"sequence"},
+            commandDescription = "Implements different tools for working with Fastq files")
     public class SequenceCommandOptions extends CommandOptions {
 
         ConvertSequenceCommandOptions convertSequenceCommandOptions;
@@ -165,19 +169,25 @@ public class CliOptionsParser {
         }
     }
 
-    @Parameters(commandNames = {"convert"}, commandDescription = "Converts FastQ files to different big data formats such as Avro")
+    @Parameters(commandNames = {"convert"},
+            commandDescription = "Converts FastQ files to different big data formats such as Avro")
     class ConvertSequenceCommandOptions {
 
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
 
-        @Parameter(names = {"-i", "--input"}, description = "HDFS input file in FastQ format", required = true, arity = 1)
+        @Parameter(names = {"-i", "--input"},
+                description = "HDFS input file in FastQ format", required = true, arity = 1)
         public String input = null;
 
-        @Parameter(names = {"-o", "--output"}, description = "HDFS output file to store the FastQ sequences according to the GA4GH/Avro model", required = true, arity = 1)
+        @Parameter(names = {"-o", "--output"},
+                description = "HDFS output file to store the FastQ sequences according to the GA4GH/Avro model",
+                required = true, arity = 1)
         public String output = null;
 
-        @Parameter(names = {"-x", "--compression"}, description = "Accepted values: snappy, deflate, bzip2, xz, null. Default: snappy", required = false, arity = 1)
+        @Parameter(names = {"-x", "--compression"},
+                description = "Accepted values: snappy, deflate, bzip2, xz, null. Default: snappy",
+                required = false, arity = 1)
         public String compression = "snappy";
 
         //@Parameter(names = {"--to-avro"}, description = "", required = false)
@@ -193,20 +203,26 @@ public class CliOptionsParser {
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
 
-        @Parameter(names = {"-i", "--input"}, description = "HDFS input file containing the FastQ sequences stored according to the GA4GH/Avro model)", required = true, arity = 1)
+        @Parameter(names = {"-i", "--input"},
+                description = "HDFS input file containing the FastQ sequences stored in GA4GH/Avro model)",
+                required = true, arity = 1)
         public String input = null;
 
-        @Parameter(names = {"-o", "--output"}, description = "Local output directory to save stats results in JSON format ", required = true, arity = 1)
+        @Parameter(names = {"-o", "--output"},
+                description = "Local output directory to save stats results in JSON format ",
+                required = true, arity = 1)
         public String output = null;
 
         //@Parameter(names = {"-f", "--filter"}, description = "", required = false, arity = 1)
         //public String filter = null;
 
-        @Parameter(names = {"-k", "--kmers"}, description = "Compute k-mers (according to the indicated length)", required = false, arity = 1)
+        @Parameter(names = {"-k", "--kmers"},
+                description = "Compute k-mers (according to the indicated length)", required = false, arity = 1)
         public Integer kmers = 0;
     }
 
-    @Parameters(commandNames = {"align"}, commandDescription = "Align reads to a reference genome using HPG Aligner in MapReduce")
+    @Parameters(commandNames = {"align"},
+            commandDescription = "Align reads to a reference genome using HPG Aligner in MapReduce")
     public class AlignSequenceCommandOptions {
 
         @ParametersDelegate
@@ -226,7 +242,8 @@ public class CliOptionsParser {
     /*
      * Alignment (BAM) CLI options
      */
-    @Parameters(commandNames = {"alignment"}, commandDescription = "Implements different tools for working with BAM files")
+    @Parameters(commandNames = {"alignment"},
+            commandDescription = "Implements different tools for working with BAM files")
     public class AlignmentCommandOptions extends CommandOptions {
 
         ConvertAlignmentCommandOptions convertAlignmentCommandOptions;
@@ -240,7 +257,8 @@ public class CliOptionsParser {
         }
     }
 
-    @Parameters(commandNames = {"convert"}, commandDescription = "Converts BAM files to different big data formats such as Avro and Parquet")
+    @Parameters(commandNames = {"convert"},
+            commandDescription = "Converts BAM files to different big data formats such as Avro and Parquet")
     class ConvertAlignmentCommandOptions {
 
         @ParametersDelegate
@@ -249,61 +267,78 @@ public class CliOptionsParser {
         @Parameter(names = {"-i", "--input"}, description = "HDFS input file in BAM format", required = true, arity = 1)
         public String input = null;
 
-        @Parameter(names = {"-o", "--output"}, description = "HDFS output file to store the BAM alignments according to the GA4GH/Avro model", required = true, arity = 1)
+        @Parameter(names = {"-o", "--output"},
+                description = "HDFS output file to store the BAM alignments according to the GA4GH/Avro model",
+                required = true, arity = 1)
         public String output = null;
 
-        @Parameter(names = {"-x", "--compression"}, description = "Accepted values: snappy, deflate, bzip2, xz, null. Default: snappy", required = false, arity = 1)
+        @Parameter(names = {"-x", "--compression"},
+                description = "Accepted values: snappy, deflate, bzip2, xz, null. Default: snappy",
+                required = false, arity = 1)
         public String compression = "snappy";
 
         //@Parameter(names = {"--to-avro"}, description = "", required = false)
         //public boolean toAvro;
 
-        @Parameter(names = {"--to-parquet"}, description = "To save the output file in Parquet format", required = false)
+        @Parameter(names = {"--to-parquet"}, description = "To save the output file in Parquet", required = false)
         public boolean toParquet;
 
         //@Parameter(names = {"--to-fastq"}, description = "", required = false)
         //public boolean toFastq;
 
-        @Parameter(names = {"--adjust-quality"}, description = "Compress quality field using 8 quality levels. Will loss information.", required = false)
+        @Parameter(names = {"--adjust-quality"},
+                description = "Compress quality field using 8 quality levels. Will loss information", required = false)
         public boolean adjustQuality;
     }
 
-    @Parameters(commandNames = {"stats"}, commandDescription = "Compute some stats for a file containing alignments according to the GA4GH/Avro model")
+    @Parameters(commandNames = {"stats"},
+            commandDescription = "Compute some stats for a file containing alignments in GA4GH/Avro model")
     class StatsAlignmentCommandOptions {
 
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
 
-        @Parameter(names = {"-i", "--input"}, description = "HDFS input file containing alignments stored according to the GA4GH/Avro model)", required = true, arity = 1)
+        @Parameter(names = {"-i", "--input"},
+                description = "HDFS input file containing alignments stored according to the GA4GH/Avro model)",
+                required = true, arity = 1)
         public String input = null;
 
-        @Parameter(names = {"-o", "--output"}, description = "Local output directory to save stats results in JSON format ", required = true, arity = 1)
+        @Parameter(names = {"-o", "--output"},
+                description = "Local output directory to save stats results in JSON format", required = true, arity = 1)
         public String output = null;
 
         //@Parameter(names = {"-f", "--filter"}, description = "", required = false, arity = 1)
         //public String filter = null;
     }
 
-    @Parameters(commandNames = {"depth"}, commandDescription = "Compute the depth (or coverage) for a given file containing alignments according to the GA4GH/Avro model")
+    @Parameters(commandNames = {"depth"},
+            commandDescription = "Compute the depth for a given file containing alignments in GA4GH/Avro model")
     class DepthAlignmentCommandOptions {
 
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
 
-        @Parameter(names = {"-i", "--input"}, description = "HDFS input file containing alignments stored according to the GA4GH/Avro model)", required = true, arity = 1)
+        @Parameter(names = {"-i", "--input"},
+                description = "HDFS input file containing alignments stored according to the GA4GH/Avro model)",
+                required = true, arity = 1)
         public String input = null;
 
-        @Parameter(names = {"-o", "--output"}, description = "Local output directory to save the depth in a text file", required = true, arity = 1)
+        @Parameter(names = {"-o", "--output"},
+                description = "Local output directory to save the depth in a text file", required = true, arity = 1)
         public String output = null;
 
-        //@Parameter(names = {"-f", "--filter"}, description = "", required = false, arity = 1)
-        //public String filter = null;
+        @Parameter(names = {"-r", "--regions"}, description = "Compute depth for the mentioned regions separated by commas. The region format is: chromosome:start-end. Example: 3:230000000-250000000,12:435050000-435100000", required = false, arity = 1)
+        public String regions = null;
+
+        @Parameter(names = {"-q", "--min-mapq"}, description = "Compute depth for alignments whose mapping quality is greater that this minimum mapping quality", required = false, arity = 1)
+        public int minMapQ = 0;
     }
 
     /*
      * Variant (VCF) CLI options
      */
-    @Parameters(commandNames = {"variant"}, commandDescription = "Implements different tools for working with gVCF/VCF files")
+    @Parameters(commandNames = {"variant"},
+            commandDescription = "Implements different tools for working with gVCF/VCF files")
     public class VariantCommandOptions extends CommandOptions {
 
         ConvertVariantCommandOptions convertVariantCommandOptions;
@@ -315,33 +350,42 @@ public class CliOptionsParser {
         }
     }
 
-    @Parameters(commandNames = {"convert"}, commandDescription = "Convert gVCF/VCF files to different big data formats such as Avro and Parquet using GA4GH models")
+    @Parameters(commandNames = {"convert"},
+            commandDescription = "Convert gVCF/VCF files to different data formats such as Avro/Parquet")
     class ConvertVariantCommandOptions {
 
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
 
-        @Parameter(names = {"-i", "--input"}, description = "HDFS input file (the BAM/SAM file must be stored in GA4GH/Avro model)", required = true, arity = 1)
+        @Parameter(names = {"-i", "--input"},
+                description = "HDFS input file (the BAM/SAM file must be stored in GA4GH/Avro model)",
+                required = true, arity = 1)
         public String input = null;
 
-        @Parameter(names = {"-o", "--output"}, description = "Local output directory to save results, summary, images...", required = false, arity = 1)
+        @Parameter(names = {"-o", "--output"},
+                description = "Local output directory to save results, summary, images...", required = false, arity = 1)
         public String output = null;
 
-        @Parameter(names = {"--to-avro"}, description = "Accepted values: sam2bam, sam2cram, bam2fastq", required = false)
+        @Parameter(names = {"--to-avro"},
+                description = "Accepted values: sam2bam, sam2cram, bam2fastq", required = false)
         public boolean toAvro;
 
         @Parameter(names = {"--from-avro"}, description = "Converts Avro format into JSON", required = false)
         public boolean fromAvro;
 
-        @Parameter(names = {"-x", "--compression"}, description = "Only for commands 'to-avro' and 'to-parquet'. Values: snappy, deflate, bzip2, xz", required = false, arity = 1)
+        @Parameter(names = {"-x", "--compression"},
+                description = "Only for commands 'to-avro' and 'to-parquet'. Values: snappy, deflate, bzip2, xz",
+                required = false, arity = 1)
         public String compression = "snappy";
 
-        @Parameter(names = {"--to-parquet"}, description = "Accepted values: sam2bam, sam2cram, bam2fastq", required = false)
+        @Parameter(names = {"--to-parquet"},
+                description = "Accepted values: sam2bam, sam2cram, bam2fastq", required = false)
         public boolean toParquet;
 
     }
 
-    @Parameters(commandNames = {"index"}, commandDescription = "Load avro gVCF/VCF files into different NoSQL, only HBase implemented so far")
+    @Parameters(commandNames = {"index"},
+            commandDescription = "Load avro gVCF/VCF files into different NoSQL, only HBase implemented so far")
     public class IndexVariantCommandOptions {
 
         @ParametersDelegate
@@ -353,13 +397,20 @@ public class CliOptionsParser {
         @Parameter(names = {"-t", "--type"}, description = "Type can be: vcf, bed, or gff", arity = 1)
         public String type = "vcf";
 
-        @Parameter(names = {"-se", "--storage-engine"}, description = "Database to load data, values: hbase, hive or impala", arity = 1)
+        @Parameter(names = {"-se", "--storage-engine"},
+                description = "Database, values: hbase, hive, impala", arity = 1)
         public String database = "hbase";
 
         @Parameter(names = {"-r", "--regions"}, description = "Database to load data, values: hbase", arity = 1)
         public String regions = null;
 
-        @Parameter(names = {"--credentials"}, description = "Database credentials: username, password, host, port", arity = 1)
+        @Parameter(names = {"-g", "--genome"}, description = "Load whole genome from gVCF - including non-variant regions", required = false, arity = 1)
+        public boolean includeNonVariants = false;
+
+        @Parameter(names = {"-e", "--expand"}, description = "Expand non-variant gVCF regions to one entry per base", required = false, arity = 1)
+        public boolean expand = false;
+
+        @Parameter(names = {"--credentials"}, description = "Database credentials: user, password, host, port", arity = 1)
         public String credentials;
 
     }
@@ -420,7 +471,8 @@ public class CliOptionsParser {
         for (ParameterDescription parameterDescription : commander.getParameters()) {
             String type = "";
             if (parameterDescription.getParameterized().getParameter().arity() > 0) {
-                type = parameterDescription.getParameterized().getGenericType().getTypeName().replace("java.lang.", "").toUpperCase();
+                type = parameterDescription.getParameterized().getGenericType().getTypeName()
+                        .replace("java.lang.", "").toUpperCase();
             }
             System.err.printf("%5s %-20s %-10s %s [%s]\n",
                     parameterDescription.getParameterized().getParameter().required() ? "*": "",

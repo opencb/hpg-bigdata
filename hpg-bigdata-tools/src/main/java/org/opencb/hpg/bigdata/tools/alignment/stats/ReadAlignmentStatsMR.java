@@ -16,8 +16,6 @@
 
 package org.opencb.hpg.bigdata.tools.alignment.stats;
 
-import java.io.IOException;
-
 import org.apache.avro.mapred.AvroKey;
 import org.apache.avro.mapreduce.AvroJob;
 import org.apache.avro.mapreduce.AvroKeyInputFormat;
@@ -37,88 +35,96 @@ import org.opencb.biodata.tools.alignment.tasks.AlignmentStatsCalculator;
 import org.opencb.hpg.bigdata.tools.sequence.stats.ReadAlignmentStatsWritable;
 import org.opencb.hpg.bigdata.tools.sequence.stats.ReadStatsWritable;
 
+import java.io.IOException;
+
 public class ReadAlignmentStatsMR {
 
-	public static class ReadAlignmentStatsMapper extends Mapper<AvroKey<ReadAlignment>, NullWritable, LongWritable, ReadAlignmentStatsWritable> {
+    public static class ReadAlignmentStatsMapper extends
+            Mapper<AvroKey<ReadAlignment>, NullWritable, LongWritable, ReadAlignmentStatsWritable> {
 
-		int newKey;
-		int numRecords;
-		final int MAX_NUM_AVRO_RECORDS = 1000;
+        private int newKey;
+        private int numRecords;
+        private final int MAX_NUM_AVRO_RECORDS = 1000;
 
-		public void setup(Context context) {
-			newKey = 0;
-			numRecords = 0;
-		}
+        public void setup(Context context) {
+            newKey = 0;
+            numRecords = 0;
+        }
 
-		@Override
-		public void map(AvroKey<ReadAlignment> key, NullWritable value, Context context) throws IOException, InterruptedException {
-			if (key.datum() == null) {
-				return;
-			}
-			AlignmentStats stats = new AlignmentStatsCalculator().compute(key.datum());
-			context.write(new LongWritable(newKey), new ReadAlignmentStatsWritable(stats));
+        @Override
+        public void map(AvroKey<ReadAlignment> key, NullWritable value, Context context) throws
+                IOException, InterruptedException {
+            if (key.datum() == null) {
+                return;
+            }
+            AlignmentStats stats = new AlignmentStatsCalculator().compute(key.datum());
+            context.write(new LongWritable(newKey), new ReadAlignmentStatsWritable(stats));
 
-			// count records and update new key
-			numRecords++;
-			if (numRecords >= MAX_NUM_AVRO_RECORDS) {
-				newKey++;
-				numRecords = 0;
-			}
-		}
-	}
+            // count records and update new key
+            numRecords++;
+            if (numRecords >= MAX_NUM_AVRO_RECORDS) {
+                newKey++;
+                numRecords = 0;
+            }
+        }
+    }
 
-	public static class ReadAlignmentStatsCombiner extends Reducer<LongWritable, ReadAlignmentStatsWritable, LongWritable, ReadAlignmentStatsWritable> {
+    public static class ReadAlignmentStatsCombiner extends
+            Reducer<LongWritable, ReadAlignmentStatsWritable, LongWritable, ReadAlignmentStatsWritable> {
 
-		public void reduce(LongWritable key, Iterable<ReadAlignmentStatsWritable> values, Context context) throws IOException, InterruptedException {
-			AlignmentStats stats = new AlignmentStats();
-			AlignmentStatsCalculator calculator = new AlignmentStatsCalculator();
-			for (ReadAlignmentStatsWritable value : values) {
-				calculator.update(value.getStats(), stats);
-			}
-			context.write(new LongWritable(1), new ReadAlignmentStatsWritable(stats));
-		}
-	}
+        public void reduce(LongWritable key, Iterable<ReadAlignmentStatsWritable> values, Context context) throws
+                IOException, InterruptedException {
+            AlignmentStats stats = new AlignmentStats();
+            AlignmentStatsCalculator calculator = new AlignmentStatsCalculator();
+            for (ReadAlignmentStatsWritable value : values) {
+                calculator.update(value.getStats(), stats);
+            }
+            context.write(new LongWritable(1), new ReadAlignmentStatsWritable(stats));
+        }
+    }
 
-	public static class ReadAlignmentStatsReducer extends Reducer<LongWritable, ReadAlignmentStatsWritable, Text, NullWritable> {
+    public static class ReadAlignmentStatsReducer extends
+            Reducer<LongWritable, ReadAlignmentStatsWritable, Text, NullWritable> {
 
-		public void reduce(LongWritable key, Iterable<ReadAlignmentStatsWritable> values, Context context) throws IOException, InterruptedException {
-			AlignmentStats stats = new AlignmentStats();
-			AlignmentStatsCalculator calculator = new AlignmentStatsCalculator();
-			for (ReadAlignmentStatsWritable value : values) {
-				calculator.update(value.getStats(), stats);
-			}
-			context.write(new Text(stats.toJSON()), NullWritable.get());
-		}
-	}
+        public void reduce(LongWritable key, Iterable<ReadAlignmentStatsWritable> values, Context context) throws
+                IOException, InterruptedException {
+            AlignmentStats stats = new AlignmentStats();
+            AlignmentStatsCalculator calculator = new AlignmentStatsCalculator();
+            for (ReadAlignmentStatsWritable value : values) {
+                calculator.update(value.getStats(), stats);
+            }
+            context.write(new Text(stats.toJSON()), NullWritable.get());
+        }
+    }
 
-	public static int run(String input, String output) throws Exception {
-		Configuration conf = new Configuration();
+    public static int run(String input, String output) throws Exception {
+        Configuration conf = new Configuration();
 
-		Job job = Job.getInstance(conf, "ReadAlignmentStatsMR");		
-		job.setJarByClass(ReadAlignmentStatsMR.class);
+        Job job = Job.getInstance(conf, "ReadAlignmentStatsMR");
+        job.setJarByClass(ReadAlignmentStatsMR.class);
 
-		// input
-		AvroJob.setInputKeySchema(job, ReadAlignment.getClassSchema());
-		FileInputFormat.setInputPaths(job, new Path(input));
-		job.setInputFormatClass(AvroKeyInputFormat.class);
-				
-		// output
-		FileOutputFormat.setOutputPath(job, new Path(output));
-		job.setOutputKeyClass(ReadStatsWritable.class);
-		job.setOutputValueClass(NullWritable.class);
-		
-		// mapper
-		job.setMapperClass(ReadAlignmentStatsMapper.class);
-		job.setMapOutputKeyClass(LongWritable.class);
-		job.setMapOutputValueClass(ReadAlignmentStatsWritable.class);
+        // input
+        AvroJob.setInputKeySchema(job, ReadAlignment.getClassSchema());
+        FileInputFormat.setInputPaths(job, new Path(input));
+        job.setInputFormatClass(AvroKeyInputFormat.class);
 
-		// combiner
-		job.setCombinerClass(ReadAlignmentStatsCombiner.class);
+        // output
+        FileOutputFormat.setOutputPath(job, new Path(output));
+        job.setOutputKeyClass(ReadStatsWritable.class);
+        job.setOutputValueClass(NullWritable.class);
 
-		// reducer
-		job.setReducerClass(ReadAlignmentStatsReducer.class);
-		job.setNumReduceTasks(1);
+        // mapper
+        job.setMapperClass(ReadAlignmentStatsMapper.class);
+        job.setMapOutputKeyClass(LongWritable.class);
+        job.setMapOutputValueClass(ReadAlignmentStatsWritable.class);
 
-		return (job.waitForCompletion(true) ? 0 : 1);
-	}
+        // combiner
+        job.setCombinerClass(ReadAlignmentStatsCombiner.class);
+
+        // reducer
+        job.setReducerClass(ReadAlignmentStatsReducer.class);
+        job.setNumReduceTasks(1);
+
+        return (job.waitForCompletion(true) ? 0 : 1);
+    }
 }

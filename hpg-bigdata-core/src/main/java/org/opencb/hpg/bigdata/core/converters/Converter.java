@@ -18,13 +18,17 @@ package org.opencb.hpg.bigdata.core.converters;
 
 /**
  * Converts between two Java classes.
- * 
+ *
  * @author Joaquín Tárraga Giménez &lt;joaquintarraga@gmail.com&gt;
  */
-public interface Converter<S, T> {
-	    
-	    public T forward(S obj);
-	    
-	    public S backward(T obj);
+public interface Converter<S, T> extends org.opencb.biodata.tools.variant.converter.Converter<S, T> {
+
+    T forward(S obj);
+
+    S backward(T obj);
+
+    default T convert(S obj) {
+        return forward(obj);
+    }
 
 }

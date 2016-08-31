@@ -16,52 +16,51 @@
 
 package org.opencb.hpg.bigdata.tools.sequence.stats;
 
+import org.apache.hadoop.io.Writable;
+import org.opencb.biodata.tools.sequence.tasks.SequenceKmers;
+
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.HashMap;
 
-import org.apache.hadoop.io.Writable;
-import org.opencb.biodata.tools.sequence.tasks.SequenceKmers;
-
 public class ReadKmersWritable implements Writable {
 
-	public SequenceKmers kmers;
+    private SequenceKmers kmers;
 
-	public ReadKmersWritable() { }
+    public ReadKmersWritable() {
+    }
 
-	public ReadKmersWritable(SequenceKmers kmers) {
-		setKmers(kmers);
-	}
+    public ReadKmersWritable(SequenceKmers kmers) {
+        setKmers(kmers);
+    }
 
-	public SequenceKmers getKmers() {
-		return kmers;
-	}
+    @Override
+    public void write(DataOutput out) throws IOException {
+        out.writeInt(kmers.kvalue);
+        out.writeInt(kmers.kmersMap.size());
+        for (String key:kmers.kmersMap.keySet()) {
+            out.writeUTF(key);
+            out.writeInt(kmers.kmersMap.get(key));
+        }
+    }
 
-	public void setKmers(SequenceKmers kmers) {
-		this.kmers = kmers;
-	}
+    @Override
+    public void readFields(DataInput in) throws IOException {
+        kmers = new SequenceKmers(in.readInt());
+        int size = in.readInt();
+        kmers.kmersMap = new HashMap<>(size);
+        for (int i = 0; i < size; i++) {
+            kmers.kmersMap.put(in.readUTF(), in.readInt());
+        }
+    }
 
-	@Override
-	public void write(DataOutput out) throws IOException {
-		out.writeInt(kmers.kvalue);
-		
-		out.writeInt(kmers.kmersMap.size());
-		for(String key:kmers.kmersMap.keySet()) {
-			out.writeUTF(key);
-			out.writeInt(kmers.kmersMap.get(key));
-		}
-	}
+    public SequenceKmers getKmers() {
+        return kmers;
+    }
 
-	@Override
-	public void readFields(DataInput in) throws IOException {
+    public void setKmers(SequenceKmers kmers) {
+        this.kmers = kmers;
+    }
 
-		kmers = new SequenceKmers(in.readInt());
-
-		int size = in.readInt();
-		kmers.kmersMap = new HashMap<String, Integer>(size);
-		for (int i = 0; i < size; i++) {
-			kmers.kmersMap.put(in.readUTF(), in.readInt());
-		}
-	}
 }

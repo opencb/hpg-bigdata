@@ -16,8 +16,13 @@
 
 package org.opencb.hpg.bigdata.app.cli.hadoop;
 
+import java.net.URI;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.hadoop.mapreduce.Job;
 import org.ga4gh.models.Variant;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
+import org.opencb.hpg.bigdata.tools.variant.Variant2HbaseMR;
 import org.opencb.hpg.bigdata.tools.variant.Vcf2AvroMR;
 import org.opencb.hpg.bigdata.tools.io.parquet.ParquetMR;
 
@@ -29,8 +34,7 @@ public class VariantCommandExecutor extends CommandExecutor {
     private CliOptionsParser.VariantCommandOptions variantCommandOptions;
 
     public VariantCommandExecutor(CliOptionsParser.VariantCommandOptions variantCommandOptions) {
-//		super(fastqCommandOptions.logLevel, fastqCommandOptions.verbose, fastqCommandOptions.conf);
-
+//      super(fastqCommandOptions.logLevel, fastqCommandOptions.verbose, fastqCommandOptions.conf);
         this.variantCommandOptions = variantCommandOptions;
     }
 
@@ -50,8 +54,33 @@ public class VariantCommandExecutor extends CommandExecutor {
                         variantCommandOptions.indexVariantCommandOptions.commonOptions.conf);
                 index();
                 break;
+            default:
+                break;
         }
     }
+
+    private void index() throws Exception {
+        String input = variantCommandOptions.indexVariantCommandOptions.input;
+        String db = variantCommandOptions.indexVariantCommandOptions.database;
+        boolean nonVar = variantCommandOptions.indexVariantCommandOptions.includeNonVariants;
+        boolean expand = variantCommandOptions.indexVariantCommandOptions.expand;
+
+        URI server = null;
+        // new URI("//who1:60000/VariantExpanded");
+        if (StringUtils.isNotBlank(db)) {
+            server = new URI(db);
+        }
+        Variant2HbaseMR.Builder builder = new Variant2HbaseMR.Builder(input, server);
+        builder.setExpand(expand);
+        builder.setNonVar(nonVar);
+        Job job = builder.build(true);
+
+        boolean fine = job.waitForCompletion(true);
+        if (!fine) {
+            throw new IllegalStateException("Variant 2 HBase failed!");
+        }
+    }
+
 
     private void convert() throws Exception {
         String input = variantCommandOptions.convertVariantCommandOptions.input;
@@ -79,10 +108,6 @@ public class VariantCommandExecutor extends CommandExecutor {
         } else {
             Vcf2AvroMR.run(input, output, compression);
         }
-    }
-
-    private void index() throws Exception {
-        System.out.println("Hello guys!!");
     }
 
 }

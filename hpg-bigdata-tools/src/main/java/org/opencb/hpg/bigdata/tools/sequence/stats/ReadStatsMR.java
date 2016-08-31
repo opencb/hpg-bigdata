@@ -37,112 +37,115 @@ import org.opencb.biodata.tools.sequence.tasks.SequenceStatsCalculator;
 
 public class ReadStatsMR {
 
-	public static class ReadStatsMapper extends Mapper<AvroKey<Read>, NullWritable, LongWritable, ReadStatsWritable> {
-		
-		int newKey;
-		int numRecords;
-		final int MAX_NUM_AVRO_RECORDS = 1000;
+    public static class ReadStatsMapper extends Mapper<AvroKey<Read>, NullWritable, LongWritable, ReadStatsWritable> {
+
+        private int newKey;
+        private int numRecords;
+        private final int MAX_NUM_AVRO_RECORDS = 1000;
 
         private static int kvalue = 0;
 
-		public void setup(Context context) {
-			Configuration conf = context.getConfiguration();
-			kvalue = Integer.parseInt(conf.get("kvalue"));
-			newKey = 0;
-			numRecords = 0;
+        public void setup(Context context) {
+            Configuration conf = context.getConfiguration();
+            kvalue = Integer.parseInt(conf.get("kvalue"));
+            newKey = 0;
+            numRecords = 0;
         }
-		
-		@Override
-		public void map(AvroKey<Read> key, NullWritable value, Context context) throws IOException, InterruptedException {
+
+        @Override
+        public void map(AvroKey<Read> key, NullWritable value, Context ctx) throws IOException, InterruptedException {
             SequenceStats stats = new SequenceStatsCalculator().compute(key.datum(), kvalue);
-			context.write(new LongWritable(newKey), new ReadStatsWritable(stats));
+            ctx.write(new LongWritable(newKey), new ReadStatsWritable(stats));
 
-			// count records and update new key
-			numRecords++;
-			if (numRecords >= MAX_NUM_AVRO_RECORDS) {
-				newKey++;
-				numRecords = 0;
-			}
-		}
-	}
-
-	public static class ReadStatsCombiner extends Reducer<LongWritable, ReadStatsWritable, LongWritable, ReadStatsWritable> {
-/*
-        // to find out why setup is not called !!!
-        private static int kvalue = 0;
-
-        public  void setup(Mapper.Context context) {
-            Configuration conf = context.getConfiguration();
-            kvalue = Integer.parseInt(conf.get("kvalue"));
-            System.out.println("****** =============> combiner setup kvalue = " + kvalue);
+            // count records and update new key
+            numRecords++;
+            if (numRecords >= MAX_NUM_AVRO_RECORDS) {
+                newKey++;
+                numRecords = 0;
+            }
         }
-*/
+    }
+
+    public static class ReadStatsCombiner extends
+            Reducer<LongWritable, ReadStatsWritable, LongWritable, ReadStatsWritable> {
+        /*
+                // to find out why setup is not called !!!
+                private static int kvalue = 0;
+
+                public  void setup(Mapper.Context context) {
+                    Configuration conf = context.getConfiguration();
+                    kvalue = Integer.parseInt(conf.get("kvalue"));
+                    System.out.println("****** =============> combiner setup kvalue = " + kvalue);
+                }
+        */
         @Override
-		public void reduce(LongWritable key, Iterable<ReadStatsWritable> values, Context context) throws IOException, InterruptedException {
+        public void reduce(LongWritable key, Iterable<ReadStatsWritable> values, Context context) throws
+                IOException, InterruptedException {
             // todo: set kvalue once in the setup function
             int kvalue = Integer.parseInt(context.getConfiguration().get("kvalue"));
             SequenceStats stats = new SequenceStats(kvalue);
             SequenceStatsCalculator calculator = new SequenceStatsCalculator();
-			for (ReadStatsWritable value : values) {
+            for (ReadStatsWritable value : values) {
                 calculator.update(value.getStats(), stats);
-			}
-			context.write(new LongWritable(1), new ReadStatsWritable(stats));
-		}
-	}
-
-	public static class ReadStatsReducer extends Reducer<LongWritable, ReadStatsWritable, Text, NullWritable> {
-/*
-        // to find out why setup is not called !!!
-        private static int kvalue = 0;
-
-        public  void setup(Mapper.Context context) {
-            Configuration conf = context.getConfiguration();
-            kvalue = Integer.parseInt(conf.get("kvalue"));
-            System.out.println("****** =============> reducer setup kvalue = " + kvalue);
+            }
+            context.write(new LongWritable(1), new ReadStatsWritable(stats));
         }
-*/
+    }
+
+    public static class ReadStatsReducer extends Reducer<LongWritable, ReadStatsWritable, Text, NullWritable> {
+        /*
+                // to find out why setup is not called !!!
+                private static int kvalue = 0;
+
+                public  void setup(Mapper.Context context) {
+                    Configuration conf = context.getConfiguration();
+                    kvalue = Integer.parseInt(conf.get("kvalue"));
+                    System.out.println("****** =============> reducer setup kvalue = " + kvalue);
+                }
+        */
         @Override
-		public void reduce(LongWritable key, Iterable<ReadStatsWritable> values, Context context) throws IOException, InterruptedException {
+        public void reduce(LongWritable key, Iterable<ReadStatsWritable> values, Context context) throws
+                IOException, InterruptedException {
             // todo: set kvalue once in the setup function
             int kvalue = Integer.parseInt(context.getConfiguration().get("kvalue"));
             SequenceStats stats = new SequenceStats(kvalue);
             SequenceStatsCalculator calculator = new SequenceStatsCalculator();
-			for (ReadStatsWritable value : values) {
+            for (ReadStatsWritable value : values) {
                 calculator.update(value.getStats(), stats);
-			}
-			context.write(new Text(stats.toJSON()), NullWritable.get());
-		}
-	}
-	
-	public static int run(String input, String output, int kvalue) throws Exception {
-		Configuration conf = new Configuration();
-		conf.set("kvalue", String.valueOf(kvalue));
+            }
+            context.write(new Text(stats.toJSON()), NullWritable.get());
+        }
+    }
 
-		Job job = Job.getInstance(conf, "ReadStatsMR");		
-		job.setJarByClass(ReadStatsMR.class);
+    public static int run(String input, String output, int kvalue) throws Exception {
+        Configuration conf = new Configuration();
+        conf.set("kvalue", String.valueOf(kvalue));
 
-		// input
-		FileInputFormat.setInputPaths(job, new Path(input));
-		job.setInputFormatClass(AvroKeyInputFormat.class);
-		AvroJob.setInputKeySchema(job, Read.SCHEMA$);
+        Job job = Job.getInstance(conf, "ReadStatsMR");
+        job.setJarByClass(ReadStatsMR.class);
 
-		// output
-		FileOutputFormat.setOutputPath(job, new Path(output));
-		job.setOutputKeyClass(ReadStatsWritable.class);
-		job.setOutputValueClass(NullWritable.class);
-		
-		// mapper
-		job.setMapperClass(ReadStatsMapper.class);
-		job.setMapOutputKeyClass(LongWritable.class);
-		job.setMapOutputValueClass(ReadStatsWritable.class);
+        // input
+        FileInputFormat.setInputPaths(job, new Path(input));
+        job.setInputFormatClass(AvroKeyInputFormat.class);
+        AvroJob.setInputKeySchema(job, Read.SCHEMA$);
 
-		// combiner
-		job.setCombinerClass(ReadStatsCombiner.class);
+        // output
+        FileOutputFormat.setOutputPath(job, new Path(output));
+        job.setOutputKeyClass(ReadStatsWritable.class);
+        job.setOutputValueClass(NullWritable.class);
 
-		// reducer
-		job.setReducerClass(ReadStatsReducer.class);
-		job.setNumReduceTasks(1);
+        // mapper
+        job.setMapperClass(ReadStatsMapper.class);
+        job.setMapOutputKeyClass(LongWritable.class);
+        job.setMapOutputValueClass(ReadStatsWritable.class);
 
-		return (job.waitForCompletion(true) ? 0 : 1);
-	}
+        // combiner
+        job.setCombinerClass(ReadStatsCombiner.class);
+
+        // reducer
+        job.setReducerClass(ReadStatsReducer.class);
+        job.setNumReduceTasks(1);
+
+        return (job.waitForCompletion(true) ? 0 : 1);
+    }
 }

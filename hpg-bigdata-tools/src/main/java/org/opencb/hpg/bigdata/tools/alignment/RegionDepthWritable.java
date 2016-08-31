@@ -16,51 +16,54 @@
 
 package org.opencb.hpg.bigdata.tools.alignment;
 
+import org.apache.hadoop.io.Writable;
+import org.opencb.biodata.tools.alignment.tasks.RegionDepth;
+
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-import org.apache.hadoop.io.Writable;
-import org.opencb.biodata.tools.alignment.tasks.RegionDepth;
-
 public class RegionDepthWritable implements Writable {
 
-	public RegionDepth regionDepth;
+    private RegionDepth regionDepth;
 
-	public RegionDepthWritable() { }
+    public RegionDepthWritable() {
+    }
 
-	public RegionDepthWritable(RegionDepth regionDepth) { setRegionDepth(regionDepth); }
+    public RegionDepthWritable(RegionDepth regionDepth) {
+        setRegionDepth(regionDepth);
+    }
 
-	public RegionDepth getRegionDepth() {
-		return regionDepth;
-	}
+    public RegionDepth getRegionDepth() {
+        return regionDepth;
+    }
 
-	public void setRegionDepth(RegionDepth regionDepth) {
-		this.regionDepth = regionDepth;
-	}
+    public void setRegionDepth(RegionDepth regionDepth) {
+        this.regionDepth = regionDepth;
+    }
 
     @Override
-	public void write(DataOutput out) throws IOException {
-		out.writeUTF(regionDepth.chrom);
-		out.writeLong(regionDepth.position);
-		out.writeLong(regionDepth.chunk);
-		out.writeInt(regionDepth.size);
-		for (int i = 0; i < regionDepth.size; i++) {
-			out.writeShort(regionDepth.array[i]);
-		}		
-	}
+    public void write(DataOutput out) throws IOException {
+        out.writeUTF(regionDepth.chrom);
+        out.writeInt(regionDepth.position);
+        out.writeInt(regionDepth.chunk);
+        out.writeInt(regionDepth.size);
+        for (int i = 0; i < regionDepth.size; i++) {
+            out.writeShort(regionDepth.array[i]);
+        }
+    }
 
-	@Override
-	public void readFields(DataInput in) throws IOException {
-		regionDepth = new RegionDepth();
+    @Override
+    public void readFields(DataInput in) throws IOException {
+        regionDepth = new RegionDepth();
 
-		regionDepth.chrom = in.readUTF();
-		regionDepth.position = in.readLong();
-		regionDepth.chunk = in.readLong();
-		regionDepth.size = in.readInt();
-		regionDepth.array = (regionDepth.size > 0 ? new short[regionDepth.size] : null);
-		for (int i = 0; i < regionDepth.size; i++) {
-			regionDepth.array[i] = in.readShort();
-		}		
-	}
+        regionDepth.chrom = in.readUTF();
+        regionDepth.position = in.readInt();
+        regionDepth.chunk = in.readInt();
+        regionDepth.size = in.readInt();
+        regionDepth.array = (regionDepth.size > 0 ? new short[regionDepth.size] : null);
+        for (int i = 0; i < regionDepth.size; i++) {
+            regionDepth.array[i] = in.readShort();
+        }
+    }
 }

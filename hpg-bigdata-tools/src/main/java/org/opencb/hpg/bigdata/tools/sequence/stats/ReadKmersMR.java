@@ -37,109 +37,113 @@ import org.opencb.biodata.tools.sequence.tasks.SequenceKmersCalculator;
 
 public class ReadKmersMR {
 
-	public static class ReadKmersMapper extends Mapper<AvroKey<Read>, NullWritable, LongWritable, ReadKmersWritable> {
+    public static class ReadKmersMapper extends Mapper<AvroKey<Read>, NullWritable, LongWritable, ReadKmersWritable> {
 
-		int kvalue = 0;
-		int newKey;
-		int numRecords;
-		final int MAX_NUM_AVRO_RECORDS = 1000;
+        private int kvalue = 0;
+        private int newKey;
+        private int numRecords;
 
-		public void setup(Context context) {
-			Configuration conf = context.getConfiguration();
-			kvalue = Integer.parseInt(conf.get("kvalue"));
-			System.out.println("setup mapper: kvalue = " + kvalue);
-			newKey = 0;
-			numRecords = 0;
-		}
+        private final int MAX_NUM_AVRO_RECORDS = 1000;
 
-		@Override
-		public void map(AvroKey<Read> key, NullWritable value, Context context) throws IOException, InterruptedException {
-			SequenceKmers kmers = new SequenceKmersCalculator().compute(key.datum(), kvalue);
-			context.write(new LongWritable(newKey), new ReadKmersWritable(kmers));
+        public void setup(Context context) {
+            Configuration conf = context.getConfiguration();
+            kvalue = Integer.parseInt(conf.get("kvalue"));
+            System.out.println("setup mapper: kvalue = " + kvalue);
+            newKey = 0;
+            numRecords = 0;
+        }
 
-			// count records and update new key
-			numRecords++;
-			if (numRecords >= MAX_NUM_AVRO_RECORDS) {
-				newKey++;
-				numRecords = 0;
-			}
-		}
-	}
+        @Override
+        public void map(AvroKey<Read> key, NullWritable value, Context ctx) throws IOException, InterruptedException {
+            SequenceKmers kmers = new SequenceKmersCalculator().compute(key.datum(), kvalue);
+            ctx.write(new LongWritable(newKey), new ReadKmersWritable(kmers));
 
-	public static class ReadKmersCombiner extends Reducer<LongWritable, ReadKmersWritable, LongWritable, ReadKmersWritable> {
+            // count records and update new key
+            numRecords++;
+            if (numRecords >= MAX_NUM_AVRO_RECORDS) {
+                newKey++;
+                numRecords = 0;
+            }
+        }
+    }
 
-		int kvalue = 0;
+    public static class ReadKmersCombiner extends
+            Reducer<LongWritable, ReadKmersWritable, LongWritable, ReadKmersWritable> {
 
-		public void setup(Mapper.Context context) {
-			Configuration conf = context.getConfiguration();
-			kvalue = Integer.parseInt(conf.get("kvalue"));
-			System.out.println("setup combiner: kvalue = " + kvalue);
-		}
+        private int kvalue = 0;
 
-		@Override
-		public void reduce(LongWritable key, Iterable<ReadKmersWritable> values, Context context) throws IOException, InterruptedException {
-			SequenceKmers kmers = new SequenceKmers(kvalue);
-			SequenceKmersCalculator calculator = new SequenceKmersCalculator();
-			for (ReadKmersWritable value : values) {
-				calculator.update(value.getKmers(), kmers);
-			}
-			context.write(new LongWritable(1), new ReadKmersWritable(kmers));
-		}
-	}
+        public void setup(Mapper.Context context) {
+            Configuration conf = context.getConfiguration();
+            kvalue = Integer.parseInt(conf.get("kvalue"));
+            System.out.println("setup combiner: kvalue = " + kvalue);
+        }
 
-	public static class ReadKmersReducer extends Reducer<LongWritable, ReadKmersWritable, Text, NullWritable> {
+        @Override
+        public void reduce(LongWritable key, Iterable<ReadKmersWritable> values, Context context) throws
+                IOException, InterruptedException {
+            SequenceKmers kmers = new SequenceKmers(kvalue);
+            SequenceKmersCalculator calculator = new SequenceKmersCalculator();
+            for (ReadKmersWritable value : values) {
+                calculator.update(value.getKmers(), kmers);
+            }
+            context.write(new LongWritable(1), new ReadKmersWritable(kmers));
+        }
+    }
 
-		int kvalue = 0;
+    public static class ReadKmersReducer extends Reducer<LongWritable, ReadKmersWritable, Text, NullWritable> {
 
-		public void setup(Mapper.Context context) {
-			Configuration conf = context.getConfiguration();
-			kvalue = Integer.parseInt(conf.get("kvalue"));
-			System.out.println("setup reducer: kvalue = " + kvalue);
-		}
+        private int kvalue = 0;
 
-		@Override
-		public void reduce(LongWritable key, Iterable<ReadKmersWritable> values, Context context) throws IOException, InterruptedException {
-			SequenceKmers kmers = new SequenceKmers(kvalue);
-			System.out.println("00 kvalue = " + kvalue + ", " + kmers.getKvalue());
-			SequenceKmersCalculator calculator = new SequenceKmersCalculator();
-			for (ReadKmersWritable value : values) {
-				calculator.update(value.getKmers(), kmers);
-			}
-			context.write(new Text(kmers.toJSON()), NullWritable.get());
-			System.out.println("11 kvalue = " + kvalue + ", " + kmers.getKvalue());
-		}
-	}
+        public void setup(Mapper.Context context) {
+            Configuration conf = context.getConfiguration();
+            kvalue = Integer.parseInt(conf.get("kvalue"));
+            System.out.println("setup reducer: kvalue = " + kvalue);
+        }
 
-	public static int run(String input, String output, int kvalue) throws Exception {
-		Configuration conf = new Configuration();
-		conf.set("kvalue", String.valueOf(kvalue));
-		System.out.println("run: kvalue = " + kvalue);
+        @Override
+        public void reduce(LongWritable key, Iterable<ReadKmersWritable> values, Context context) throws
+                IOException, InterruptedException {
+            SequenceKmers kmers = new SequenceKmers(kvalue);
+            System.out.println("00 kvalue = " + kvalue + ", " + kmers.getKvalue());
+            SequenceKmersCalculator calculator = new SequenceKmersCalculator();
+            for (ReadKmersWritable value : values) {
+                calculator.update(value.getKmers(), kmers);
+            }
+            context.write(new Text(kmers.toJSON()), NullWritable.get());
+            System.out.println("11 kvalue = " + kvalue + ", " + kmers.getKvalue());
+        }
+    }
 
-		Job job = Job.getInstance(conf, "ReadKmersMR");
-		job.setJarByClass(ReadKmersMR.class);
+    public static int run(String input, String output, int kvalue) throws Exception {
+        Configuration conf = new Configuration();
+        conf.set("kvalue", String.valueOf(kvalue));
+        System.out.println("run: kvalue = " + kvalue);
 
-		// input
-		AvroJob.setInputKeySchema(job, Read.getClassSchema());
-		FileInputFormat.setInputPaths(job, new Path(input));
-		job.setInputFormatClass(AvroKeyInputFormat.class);
+        Job job = Job.getInstance(conf, "ReadKmersMR");
+        job.setJarByClass(ReadKmersMR.class);
 
-		// output
-		FileOutputFormat.setOutputPath(job, new Path(output));
-		job.setOutputKeyClass(ReadKmersWritable.class);
-		job.setOutputValueClass(NullWritable.class);
+        // input
+        AvroJob.setInputKeySchema(job, Read.getClassSchema());
+        FileInputFormat.setInputPaths(job, new Path(input));
+        job.setInputFormatClass(AvroKeyInputFormat.class);
 
-		// mapper
-		job.setMapperClass(ReadKmersMapper.class);
-		job.setMapOutputKeyClass(LongWritable.class);
-		job.setMapOutputValueClass(ReadKmersWritable.class);
+        // output
+        FileOutputFormat.setOutputPath(job, new Path(output));
+        job.setOutputKeyClass(ReadKmersWritable.class);
+        job.setOutputValueClass(NullWritable.class);
 
-		// combiner
-		job.setCombinerClass(ReadKmersCombiner.class);
+        // mapper
+        job.setMapperClass(ReadKmersMapper.class);
+        job.setMapOutputKeyClass(LongWritable.class);
+        job.setMapOutputValueClass(ReadKmersWritable.class);
 
-		// reducer
-		job.setReducerClass(ReadKmersReducer.class);
-		job.setNumReduceTasks(1);
+        // combiner
+        job.setCombinerClass(ReadKmersCombiner.class);
 
-		return (job.waitForCompletion(true) ? 0 : 1);
-	}
+        // reducer
+        job.setReducerClass(ReadKmersReducer.class);
+        job.setNumReduceTasks(1);
+
+        return (job.waitForCompletion(true) ? 0 : 1);
+    }
 }
