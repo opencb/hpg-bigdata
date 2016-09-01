@@ -48,7 +48,7 @@ public class VariantDatasetTest {
 
         //String filename = "/home/imedina/data/CEU-1409-01_20000.vcf.avro";
         //String filename = "/home/jtarraga/data/spark/10k.variants.avro";
-        String filename = "/home/jtarraga/CAM/data/10k.variants.avro";
+        String filename = this.getClass().getResource("10k.variants.avro").getFile();
 
         long count;
 //        String filename = "/tmp/kk/xxx.avro";

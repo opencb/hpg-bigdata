@@ -35,8 +35,8 @@ public class AlignmentDatasetTest {
     public void initDataset() {
         ad = new AlignmentDataset();
         try {
-            String filename = "/home/jtarraga/CAM/data/test.bam.avro";
-            System.out.println(">>>> opening file " + filename);
+            String filename = this.getClass().getResource("test.bam.avro").getFile();
+            System.out.println("\n>>>> opening file " + filename);
             ad.load(filename, sparkSession);
             ad.printSchema();
             ad.createOrReplaceTempView("bam");
