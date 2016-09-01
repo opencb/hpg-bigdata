@@ -560,26 +560,18 @@ public class VariantCommandExecutor extends CommandExecutor {
             }
         }
 
-        // query for SO term name
-        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.so_names)) {
-            String[] names = StringUtils.split(variantCommandOptions.queryVariantCommandOptions.so_names, ",");
+        // query for SO term names or accession codes
+        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.consequenceTypes)) {
+            String[] items = StringUtils.split(variantCommandOptions.queryVariantCommandOptions.consequenceTypes, ",");
 
-            for (String name : names) {
-                vd.annotationFilter("consequenceTypes.sequenceOntologyTerms.name", name);
-                logger.warn("Query for multiple SO term names (consequence type), not yet implemented. "
-                        + "Currently, it queries for the first SO term name.");
-                break;
-            }
-        }
-
-        // query for SO term accession
-        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.so_accessions)) {
-            String[] accessions = StringUtils.split(variantCommandOptions.queryVariantCommandOptions.so_accessions, ",");
-
-            for (String accession : accessions) {
-                vd.annotationFilter("consequenceTypes.sequenceOntologyTerms.accession", accession);
-                logger.warn("Query for multiple SO term accessions (consequence type), not yet implemented. "
-                        + "Currently, it queries for the first SO term accession.");
+            for (String item : items) {
+                if (item.startsWith("SO:")) {
+                    vd.annotationFilter("consequenceTypes.sequenceOntologyTerms.accession", item);
+                } else {
+                    vd.annotationFilter("consequenceTypes.sequenceOntologyTerms.name", item);
+                }
+                logger.warn("Query for multiple consequence types, not yet implemented. "
+                        + "Currently, it queries for the first consequence type.");
                 break;
             }
         }

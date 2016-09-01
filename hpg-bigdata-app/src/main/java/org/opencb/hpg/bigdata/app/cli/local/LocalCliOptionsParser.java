@@ -457,20 +457,18 @@ public class LocalCliOptionsParser {
                 required = false, arity = 1)
         public String ids;
 
-        @Parameter(names = {"--type"}, description = "Query for type; comma separated list of IDs, e.g.: \"SNP,SNV\"",
+        @Parameter(names = {"--type"}, description = "Query for type; comma separated list of variant types, e.g.: \"SNP,SNV,SV,INDEL\"",
                 required = false, arity = 1)
         public String types;
 
         @Parameter(names = {"--region"}, description = "Query for region; comma separated list of regions, e.g.: 1:300000-400000000,15:343453463-8787665654", required = false)
         public String regions;
 
-        @Parameter(names = {"--consequence-type-so-accession"}, description = "Query for Sequence Ontology (SO) term accession code; comma separated list of accession codes of the SO terms related to the variant consequence type, e.g.: SO:32234,SO:00124",
+        @Parameter(names = {"--ct", "--consequence-type"}, description = "Query for Sequence Ontology (SO) term names or accession codes; comma separated list of names or accession codes of the SO terms related to the variant consequence type, e.g.: \"SO:32234,SO:00124,transgenic insertion\". Attention: for term names, you have to enclose your list with double quote marks (\")",
                 required = false, arity = 1)
-        public String so_accessions;
+        public String consequenceTypes;
 
-        @Parameter(names = {"--consequence-type-so-name"}, description = "Query for Sequence Ontology (SO) term name; comma separated list of names of the SO terms related to the variant consequence type, e.g.:  \"transgenic insertion, genetic marker\"",
-                required = false, arity = 1)
-        public String so_names;
+
     }
 
 
