@@ -38,7 +38,7 @@
         <hpg.version>1.0.0-alpha</hpg.version>
         <ga4gh.version>0.6.0a5</ga4gh.version>
         <biodata.version>0.8.0-SNAPSHOT</biodata.version>
-        <commons-lib.version>3.3.0-SNAPSHOT</commons-lib.version>
+        <commons-lib.version>3.4.0-SNAPSHOT</commons-lib.version>
         <hadoop.version>2.6.3</hadoop.version>
         <hbase.version>1.0.1</hbase.version>
         <avro.version>1.7.7</avro.version>
