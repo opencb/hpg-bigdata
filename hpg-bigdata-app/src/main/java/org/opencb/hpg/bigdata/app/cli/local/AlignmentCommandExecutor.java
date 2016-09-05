@@ -169,19 +169,14 @@ public class AlignmentCommandExecutor extends CommandExecutor {
         List<Region> regions = null;
         if (StringUtils.isNotEmpty(alignmentCommandOptions.convertAlignmentCommandOptions.regions)) {
             regions = Region.parseRegions(alignmentCommandOptions.convertAlignmentCommandOptions.regions);
-            for (Region region: regions) {
-                avroSerializer.addRegionFilter(region);
-            }
+            regions.forEach(r -> avroSerializer.addRegionFilter(r));
         }
 
         // set region filter from region file
         String regionFilename = alignmentCommandOptions.convertAlignmentCommandOptions.regionFilename;
         if (StringUtils.isNotEmpty(regionFilename)) {
             List<String> lines = Files.readAllLines(Paths.get(regionFilename));
-            for (String line: lines) {
-                Region region = new Region(line);
-                avroSerializer.addRegionFilter(region);
-            }
+            lines.forEach(l -> avroSerializer.addRegionFilter(new Region(l)));
         }
 
         long startTime, elapsedTime;
