@@ -1,7 +1,9 @@
 package org.opencb.hpg.bigdata.core.avro;
 
 import htsjdk.samtools.*;
+import org.apache.commons.lang3.StringUtils;
 import org.ga4gh.models.ReadAlignment;
+import org.opencb.biodata.models.core.Region;
 import org.opencb.hpg.bigdata.core.converters.SAMRecord2ReadAlignmentConverter;
 import org.opencb.hpg.bigdata.core.io.avro.AvroFileWriter;
 
@@ -12,12 +14,16 @@ import java.io.*;
  */
 public class AlignmentAvroSerializer extends AvroSerializer<ReadAlignment> {
 
+    private static String headerSuffix = ".header";
+    private boolean binQualities;
+
     public AlignmentAvroSerializer() {
-        this("deflate");
+        this("deflate", true);
     }
 
-    public AlignmentAvroSerializer(String compression) {
+    public AlignmentAvroSerializer(String compression, boolean binQualities) {
         super(compression);
+        this.binQualities = binQualities;
     }
 
     @Override
@@ -27,28 +33,40 @@ public class AlignmentAvroSerializer extends AvroSerializer<ReadAlignment> {
         SamReader reader = SamReaderFactory.makeDefault().open(new File(inputFilename));
 
         // writer
-        OutputStream outputStream = new FileOutputStream(outputFilename);
+        boolean stdout = false;
+        OutputStream outputStream;
+        if (StringUtils.isEmpty(outputFilename) || outputFilename.toUpperCase().equals("STDOUT")) {
+            outputStream = System.out;
+            stdout = true;
+        } else {
+            outputStream = new FileOutputStream(outputFilename);
+        }
         AvroFileWriter<ReadAlignment> avroFileWriter = new AvroFileWriter<>(ReadAlignment.SCHEMA$,
                                                                             compression, outputStream);
         avroFileWriter.open();
 
         // converter
-        SAMRecord2ReadAlignmentConverter converter = new SAMRecord2ReadAlignmentConverter();
+        SAMRecord2ReadAlignmentConverter converter = new SAMRecord2ReadAlignmentConverter(binQualities);
 
         // main loop
+        long counter = 0;
         SAMRecordIterator iterator = reader.iterator();
         while (iterator.hasNext()) {
             SAMRecord record = iterator.next();
             ReadAlignment readAlignment = converter.forward(record);
             if (filter(readAlignment)) {
                 avroFileWriter.writeDatum(readAlignment);
+                counter++;
             }
         }
+        System.out.println("Number of processed records: " + counter);
 
-        // save the SAM header in a separated file
-        PrintWriter pwriter = new PrintWriter(new FileWriter(outputFilename + ".header"));
-        pwriter.write(reader.getFileHeader().getTextHeader());
-        pwriter.close();
+        // save the SAM header in a separated file only when an output filename is provided
+        if (!stdout) {
+            PrintWriter pwriter = new PrintWriter(new FileWriter(outputFilename + headerSuffix));
+            pwriter.write(reader.getFileHeader().getTextHeader());
+            pwriter.close();
+        }
 
         // close
         reader.close();
@@ -59,5 +77,25 @@ public class AlignmentAvroSerializer extends AvroSerializer<ReadAlignment> {
     @Override
     public void toAvro(InputStream inputStream, String outputFilename) throws IOException {
         toAvro(inputStream.toString(), outputFilename);
+    }
+
+    public AlignmentAvroSerializer addRegionFilter(Region region) {
+        getFilters().add(a -> a.getAlignment() != null
+                && a.getAlignment().getPosition() != null
+                && a.getAlignment().getPosition().getReferenceName().equals(region.getChromosome())
+                && a.getAlignment().getPosition().getPosition() <= region.getEnd()
+                && (a.getAlignment().getPosition().getPosition() + a.getAlignedSequence().length())
+                >= region.getStart());
+        return this;
+    }
+
+    public AlignmentAvroSerializer addMinMapQFilter(int minMapQ) {
+        getFilters().add(a -> a.getAlignment() != null
+                && a.getAlignment().getMappingQuality() >= minMapQ);
+        return this;
+    }
+
+    public static String getHeaderSuffix() {
+        return headerSuffix;
     }
 }

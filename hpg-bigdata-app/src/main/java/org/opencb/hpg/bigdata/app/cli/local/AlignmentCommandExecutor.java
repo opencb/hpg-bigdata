@@ -16,12 +16,11 @@
 
 package org.opencb.hpg.bigdata.app.cli.local;
 
-import htsjdk.samtools.*;
-import htsjdk.samtools.util.LineReader;
-import htsjdk.samtools.util.StringLineReader;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.parquet.hadoop.ParquetWriter;
+import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
 import org.apache.spark.sql.SparkSession;
@@ -34,11 +33,12 @@ import org.opencb.biodata.tools.alignment.tasks.RegionDepthCalculator;
 import org.opencb.commons.utils.FileUtils;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
 import org.opencb.hpg.bigdata.core.avro.AlignmentAvroSerializer;
-import org.opencb.hpg.bigdata.core.converters.SAMRecord2ReadAlignmentConverter;
 import org.opencb.hpg.bigdata.core.lib.AlignmentDataset;
 import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
+import org.opencb.hpg.bigdata.core.parquet.AlignmentParquetConverter;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -99,87 +99,189 @@ public class AlignmentCommandExecutor extends CommandExecutor {
     }
 
     private void convert() throws IOException {
-        String input = alignmentCommandOptions.convertAlignmentCommandOptions.input;
+
+        // sanity check: paremeter 'to'
+        String to = alignmentCommandOptions.convertAlignmentCommandOptions.to.toLowerCase();
+        if (!to.equals("avro") && !to.equals("parquet")) {
+            throw new IllegalArgumentException("Unknown serialization format: " + to + ". Valid values: avro, parquet");
+        }
+        boolean toParquet = to.equals("parquet");
+
+        // sanity check: parameter 'compression'
+        String compressionCodecName = alignmentCommandOptions.convertAlignmentCommandOptions.compression.toLowerCase();
+        if (!compressionCodecName.equals("gzip")
+                && !compressionCodecName.equals("snappy")) {
+            throw new IllegalArgumentException("Unknown compression method: " + compressionCodecName
+                    + ". Valid values: gzip, snappy");
+        }
+
+        // sanity check: input file
+        Path inputPath = Paths.get(alignmentCommandOptions.convertAlignmentCommandOptions.input);
+        FileUtils.checkFile(inputPath);
+
+        // sanity check: output file
         String output = alignmentCommandOptions.convertAlignmentCommandOptions.output;
-        String compressionCodecName = alignmentCommandOptions.convertAlignmentCommandOptions.compression;
-
-        // sanity check
-        if (compressionCodecName.equals("null")) {
-            compressionCodecName = "deflate";
-        }
-
-        if (alignmentCommandOptions.convertAlignmentCommandOptions.toBam) {
-            // conversion: GA4GH/Avro model -> BAM
-
-            // header management: read it from a separate file
-            File file = new File(input + BAM_HEADER_SUFFIX);
-            FileInputStream fis = new FileInputStream(file);
-            byte[] data = new byte[(int) file.length()];
-            fis.read(data);
-            fis.close();
-
-            InputStream is = new FileInputStream(input);
-
-            String textHeader = new String(data);
-
-            LineReader lineReader = new StringLineReader(textHeader);
-            SAMFileHeader header = new SAMTextHeaderCodec().decode(lineReader, textHeader);
-
-            // reader
-            DataFileStream<ReadAlignment> reader = new DataFileStream<ReadAlignment>(is, new SpecificDatumReader<>(ReadAlignment.class));
-
-            // writer
-            OutputStream os = new FileOutputStream(new File(output));
-            SAMFileWriter writer = new SAMFileWriterFactory().makeBAMWriter(header, false, new File(output));
-
-            // main loop
-            int reads = 0;
-            SAMRecord samRecord;
-            SAMRecord2ReadAlignmentConverter converter = new SAMRecord2ReadAlignmentConverter();
-            for (ReadAlignment readAlignment : reader) {
-                samRecord = converter.backward(readAlignment);
-                samRecord.setHeader(header);
-                writer.addAlignment(samRecord);
-                if (++reads % 100_000 == 0) {
-                    System.out.println("Converted " + reads + " reads");
-                }
+        if (!output.isEmpty()) {
+            Path parent = Paths.get(output).toAbsolutePath().getParent();
+            if (parent != null) { // null if output is a file in the current directory
+                FileUtils.checkDirectory(parent, true); // Throws exception, if does not exist
             }
-
-            // close
-            reader.close();
-            writer.close();
-            os.close();
-            is.close();
-
         } else {
-
-            // conversion: BAM -> GA4GH/Avro model
-/*            System.out.println("Loading library hpgbigdata...");
-            System.out.println("\tjava.libary.path = " + System.getProperty("java.library.path"));
-            System.loadLibrary("hpgbigdata");
-            System.out.println("...done!");
-            new NativeSupport().bam2ga(input, output, compressionCodecName == null
-                    ? "snappy"
-                    : compressionCodecName, alignmentCommandOptions.convertAlignmentCommandOptions.adjustQuality);
-
-            try {
-                // header management: saved it in a separate file
-                SamReader reader = SamReaderFactory.makeDefault().open(new File(input));
-                SAMFileHeader header = reader.getFileHeader();
-                PrintWriter pwriter = null;
-                pwriter = new PrintWriter(new FileWriter(output + BAM_HEADER_SUFFIX));
-                pwriter.write(header.getTextHeader());
-                pwriter.close();
-            } catch (IOException e) {
-                throw e;
-            }
-*/
-
-            boolean adjustQuality = alignmentCommandOptions.convertAlignmentCommandOptions.adjustQuality;
-            AlignmentAvroSerializer avroSerializer = new AlignmentAvroSerializer(compressionCodecName);
-            avroSerializer.toAvro(input, output);
-
+            output = inputPath.toString() + "." + to;
         }
+
+        // sanity check: rowGroupSize and pageSize for parquet conversion
+        int rowGroupSize = ParquetWriter.DEFAULT_BLOCK_SIZE;
+        int pageSize = ParquetWriter.DEFAULT_PAGE_SIZE;
+        if (toParquet) {
+            rowGroupSize = alignmentCommandOptions.convertAlignmentCommandOptions.blockSize;
+            if (rowGroupSize <= 0) {
+                throw new IllegalArgumentException("Invalid block size: " + rowGroupSize
+                        + ". It must be greater than 0");
+            }
+            pageSize = alignmentCommandOptions.convertAlignmentCommandOptions.pageSize;
+            if (pageSize <= 0) {
+                throw new IllegalArgumentException("Invalid page size: " + pageSize
+                        + ". It must be greater than 0");
+            }
+        }
+
+        // for parquet conversion,
+        // first, to convert to avro with a temporary output filename name, and then to parquet using that temporary
+        // file as input
+        String tmpSuffix = ".avro.63432.tmp";
+        String tmpName = output;
+        if (toParquet) {
+            tmpName += tmpSuffix;
+        }
+
+        // convert to avro
+        AlignmentAvroSerializer avroSerializer;
+        boolean binQualities = alignmentCommandOptions.convertAlignmentCommandOptions.binQualities;
+        avroSerializer = new AlignmentAvroSerializer(compressionCodecName, binQualities);
+
+        // set minimum mapping quality filter
+        if (alignmentCommandOptions.convertAlignmentCommandOptions.minMapQ > 0) {
+            avroSerializer.addMinMapQFilter(alignmentCommandOptions.convertAlignmentCommandOptions.minMapQ);
+        }
+
+        // set region filter
+        List<Region> regions = null;
+        if (StringUtils.isNotEmpty(alignmentCommandOptions.convertAlignmentCommandOptions.regions)) {
+            regions = Region.parseRegions(alignmentCommandOptions.convertAlignmentCommandOptions.regions);
+            for (Region region: regions) {
+                avroSerializer.addRegionFilter(region);
+            }
+        }
+
+        // set region filter from region file
+        String regionFilename = alignmentCommandOptions.convertAlignmentCommandOptions.regionFilename;
+        if (StringUtils.isNotEmpty(regionFilename)) {
+            List<String> lines = Files.readAllLines(Paths.get(regionFilename));
+            for (String line: lines) {
+                Region region = new Region(line);
+                avroSerializer.addRegionFilter(region);
+            }
+        }
+
+        long startTime, elapsedTime;
+        System.out.println("\n\nStarting BAM->AVRO conversion...\n");
+        startTime = System.currentTimeMillis();
+        avroSerializer.toAvro(inputPath.toString(), tmpName);
+        elapsedTime = System.currentTimeMillis() - startTime;
+        System.out.println("\n\nFinish BAM->AVRO conversion in " + (elapsedTime / 1000F) + " sec\n");
+
+        // convert to parquet if required
+        if (toParquet) {
+            AlignmentParquetConverter parquetSerializer = new AlignmentParquetConverter(
+                    CompressionCodecName.fromConf(compressionCodecName), rowGroupSize, pageSize);
+            InputStream inputStream = new FileInputStream(tmpName);
+            System.out.println("\n\nStarting AVRO->PARQUET conversion...\n");
+            startTime = System.currentTimeMillis();
+            parquetSerializer.toParquet(inputStream, output);
+            elapsedTime = System.currentTimeMillis() - startTime;
+            System.out.println("\n\nFinish AVRO->PARQUET conversion in " + (elapsedTime / 1000F) + " sec\n");
+
+            // temporary file management
+            //new File(tmpName).delete();
+            String name = tmpName + AlignmentAvroSerializer.getHeaderSuffix();
+            new  File(name).renameTo(new File(name.replaceFirst(tmpSuffix, "")));
+        }
+
+
+
+//        if (alignmentCommandOptions.convertAlignmentCommandOptions.toBam) {
+//            // conversion: GA4GH/Avro model -> BAM
+//
+//            // header management: read it from a separate file
+//            File file = new File(input + BAM_HEADER_SUFFIX);
+//            FileInputStream fis = new FileInputStream(file);
+//            byte[] data = new byte[(int) file.length()];
+//            fis.read(data);
+//            fis.close();
+//
+//            InputStream is = new FileInputStream(input);
+//
+//            String textHeader = new String(data);
+//
+//            LineReader lineReader = new StringLineReader(textHeader);
+//            SAMFileHeader header = new SAMTextHeaderCodec().decode(lineReader, textHeader);
+//
+//            // reader
+//            DataFileStream<ReadAlignment> reader = new DataFileStream<ReadAlignment>(is, new SpecificDatumReader<>(ReadAlignment.class));
+//
+//            // writer
+//            OutputStream os = new FileOutputStream(new File(output));
+//            SAMFileWriter writer = new SAMFileWriterFactory().makeBAMWriter(header, false, new File(output));
+//
+//            // main loop
+//            int reads = 0;
+//            SAMRecord samRecord;
+//            SAMRecord2ReadAlignmentConverter converter = new SAMRecord2ReadAlignmentConverter();
+//            for (ReadAlignment readAlignment : reader) {
+//                samRecord = converter.backward(readAlignment);
+//                samRecord.setHeader(header);
+//                writer.addAlignment(samRecord);
+//                if (++reads % 100_000 == 0) {
+//                    System.out.println("Converted " + reads + " reads");
+//                }
+//            }
+//
+//            // close
+//            reader.close();
+//            writer.close();
+//            os.close();
+//            is.close();
+//
+//        } else {
+//
+//            // conversion: BAM -> GA4GH/Avro model
+///*            System.out.println("Loading library hpgbigdata...");
+//            System.out.println("\tjava.libary.path = " + System.getProperty("java.library.path"));
+//            System.loadLibrary("hpgbigdata");
+//            System.out.println("...done!");
+//            new NativeSupport().bam2ga(input, output, compressionCodecName == null
+//                    ? "snappy"
+//                    : compressionCodecName, alignmentCommandOptions.convertAlignmentCommandOptions.adjustQuality);
+//
+//            try {
+//                // header management: saved it in a separate file
+//                SamReader reader = SamReaderFactory.makeDefault().open(new File(input));
+//                SAMFileHeader header = reader.getFileHeader();
+//                PrintWriter pwriter = null;
+//                pwriter = new PrintWriter(new FileWriter(output + BAM_HEADER_SUFFIX));
+//                pwriter.write(header.getTextHeader());
+//                pwriter.close();
+//            } catch (IOException e) {
+//                throw e;
+//            }
+//*/
+//
+//            boolean adjustQuality = alignmentCommandOptions.convertAlignmentCommandOptions.adjustQuality;
+//            AlignmentAvroSerializer avroSerializer = new AlignmentAvroSerializer(compressionCodecName);
+//            avroSerializer.toAvro(input, output);
+//
+//        }
     }
 
     private void stats() throws IOException {

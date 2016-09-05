@@ -17,6 +17,7 @@
 package org.opencb.hpg.bigdata.app.cli.local;
 
 import com.beust.jcommander.*;
+import org.apache.parquet.hadoop.ParquetWriter;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -263,23 +264,38 @@ public class LocalCliOptionsParser {
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
 
-        @Parameter(names = {"-i", "--input"}, description = "Local input file in BAM format", required = true, arity = 1)
+        @Parameter(names = {"-i", "--input"}, description = "Input filename in BAM format", required = true, arity = 1)
         public String input = null;
 
-        @Parameter(names = {"-o", "--output"}, description = "Local output file to store the BAM alignments according to the GA4GH/Avro model", required = true, arity = 1)
+        @Parameter(names = {"-o", "--output"}, description = "Output filename to store the BAM alignments according to the GA4GH/Avro model", required = true, arity = 1)
         public String output = null;
 
-        @Parameter(names = {"-x", "--compression"}, description = "Accepted values: snappy, deflate, bzip2, xz. Default: snappy", required = false, arity = 1)
-        public String compression = "snappy";
+        @Parameter(names = {"-x", "--compression"}, description = "Compression method, accepted values: gzip, snappy", arity = 1)
+        public String compression = "gzip";
 
-        //@Parameter(names = {"--to-avro"}, description = "", required = false)
-        //public boolean toAvro;
+        @Parameter(names = {"--to"}, description = "Destination format, accepted values: avro, parquet", arity = 1)
+        public String to = "avro";
 
-        @Parameter(names = {"--to-bam"}, description = "Convert back to BAM format. In this case, the input file has to be saved in the GA4GH/Avro model, and the output file will be in BAM format", required = false)
-        public boolean toBam;
+//        @Parameter(names = {"--to-bam"}, description = "Convert back to BAM format. In this case, the input file has to be saved in the GA4GH/Avro model, and the output file will be in BAM format", required = false)
+//        public boolean toBam;
 
-        @Parameter(names = {"--adjust-quality"}, description = "Compress quality field using 8 quality levels. Will loss information.", required = false)
-        public boolean adjustQuality;
+        @Parameter(names = {"--bin-qualities"}, description = "Compress the nucleotide qualities by using 8 quality levels (there will be loss of information)")
+        public boolean binQualities = false;
+
+        @Parameter(names = {"--min-mapq"}, description = "Minimum mapping quality", arity = 1)
+        public int minMapQ = 20;
+
+        @Parameter(names = {"--region"}, description = "Comma separated list of regions, e.g.: 1:300000-400000000,15:343453463-8787665654", arity = 1)
+        public String regions = null;
+
+        @Parameter(names = {"--region-file"}, description = "Input filename with a list of regions. One region per line, e.g.: 1:300000-400000000", arity = 1)
+        public String regionFilename = null;
+
+        @Parameter(names = {"--page-size"}, description = "Page size, only for parquet conversions", arity = 1)
+        public int pageSize = ParquetWriter.DEFAULT_PAGE_SIZE;
+
+        @Parameter(names = {"--block-size"}, description = "Block size, only for parquet conversions", arity = 1)
+        public int blockSize = ParquetWriter.DEFAULT_BLOCK_SIZE;
     }
 
     @Parameters(commandNames = {"stats"}, commandDescription = "Compute some stats for a file containing alignments according to the GA4GH/Avro model")
