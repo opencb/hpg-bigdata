@@ -178,9 +178,9 @@
                                     <arg value="${build.dir}/bin/hpg-bigdata-local.sh"/>
                                 </exec>
 
-                                <echo>Building native code</echo>
-                                <exec executable="../hpg-bigdata-core/native/build.sh">
-                                </exec>
+                                <!--<echo>Building native code</echo>-->
+                                <!--<exec executable="../hpg-bigdata-core/native/build.sh">-->
+                                <!--</exec>-->
 
                                 <echo>Copying to ${build.dir}</echo>
                                 <exec executable="cp">
