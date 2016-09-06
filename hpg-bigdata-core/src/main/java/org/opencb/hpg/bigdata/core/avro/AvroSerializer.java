@@ -30,7 +30,7 @@ public abstract class AvroSerializer<T> {
 
     protected String compression;
 
-    protected List<Predicate<T>> filters;
+    protected List<List<Predicate<T>>> filters;
 
     public AvroSerializer() {
         this("deflate");
@@ -43,16 +43,44 @@ public abstract class AvroSerializer<T> {
     }
 
     public boolean filter(T record) {
-        for (Predicate filter: filters) {
-            if (!filter.test(record)) {
-                return false;
+        for (List<Predicate<T>> list: filters) {
+            if (list.size() == 1) {
+                if (!list.get(0).test(record)) {
+                    return false;
+                }
+            } else if (list.size() > 1) {
+                boolean or = false;
+                for (Predicate<T> filter: list) {
+                    if (filter.test(record)) {
+                        or = true;
+                        break;
+                    }
+                }
+                if (!or) {
+                    return false;
+                }
             }
         }
         return true;
     }
 
     public AvroSerializer addFilter(Predicate<T> predicate) {
-        getFilters().add(predicate);
+        List<Predicate<T>> list = new ArrayList<>();
+        list.add(predicate);
+        getFilters().add(list);
+        return this;
+    }
+
+    public AvroSerializer addFilter(List<Predicate<T>> predicates) {
+        return addFilter(predicates, false);
+    }
+
+    public AvroSerializer addFilter(List<Predicate<T>> predicates, boolean and) {
+        if (and) {
+            predicates.forEach(p -> addFilter(p));
+        } else {
+            getFilters().add(predicates);
+        }
         return this;
     }
 
@@ -73,11 +101,11 @@ public abstract class AvroSerializer<T> {
         return sb.toString();
     }
 
-    public List<Predicate<T>> getFilters() {
+    public List<List<Predicate<T>>> getFilters() {
         return filters;
     }
 
-    public AvroSerializer setFilters(List<Predicate<T>> filters) {
+    public AvroSerializer setFilters(List<List<Predicate<T>>> filters) {
         this.filters = filters;
         return this;
     }

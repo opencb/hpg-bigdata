@@ -8,6 +8,9 @@ import org.opencb.hpg.bigdata.core.converters.SAMRecord2ReadAlignmentConverter;
 import org.opencb.hpg.bigdata.core.io.avro.AvroFileWriter;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * Created by jtarraga on 03/08/16.
@@ -80,7 +83,7 @@ public class AlignmentAvroSerializer extends AvroSerializer<ReadAlignment> {
     }
 
     public AlignmentAvroSerializer addRegionFilter(Region region) {
-        getFilters().add(a -> a.getAlignment() != null
+        addFilter(a -> a.getAlignment() != null
                 && a.getAlignment().getPosition() != null
                 && a.getAlignment().getPosition().getReferenceName().equals(region.getChromosome())
                 && a.getAlignment().getPosition().getPosition() <= region.getEnd()
@@ -89,8 +92,20 @@ public class AlignmentAvroSerializer extends AvroSerializer<ReadAlignment> {
         return this;
     }
 
+    public AlignmentAvroSerializer addRegionFilter(List<Region> regions, boolean and) {
+        List<Predicate<ReadAlignment>> predicates = new ArrayList<>();
+        regions.forEach(r -> predicates.add(a -> a.getAlignment() != null
+                && a.getAlignment().getPosition() != null
+                && a.getAlignment().getPosition().getReferenceName().equals(r.getChromosome())
+                && a.getAlignment().getPosition().getPosition() <= r.getEnd()
+                && (a.getAlignment().getPosition().getPosition() + a.getAlignedSequence().length())
+                >= r.getStart()));
+        addFilter(predicates, and);
+        return this;
+    }
+
     public AlignmentAvroSerializer addMinMapQFilter(int minMapQ) {
-        getFilters().add(a -> a.getAlignment() != null
+        addFilter(a -> a.getAlignment() != null
                 && a.getAlignment().getMappingQuality() >= minMapQ);
         return this;
     }

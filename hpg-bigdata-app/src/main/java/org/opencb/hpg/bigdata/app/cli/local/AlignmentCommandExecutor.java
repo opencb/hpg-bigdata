@@ -41,6 +41,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -165,19 +166,27 @@ public class AlignmentCommandExecutor extends CommandExecutor {
             avroSerializer.addMinMapQFilter(alignmentCommandOptions.convertAlignmentCommandOptions.minMapQ);
         }
 
-        // set region filter
+        // region filter management,
+        // we use the same region list to store all regions from both parameter --regions and
+        // parameter --region-file
         List<Region> regions = null;
         if (StringUtils.isNotEmpty(alignmentCommandOptions.convertAlignmentCommandOptions.regions)) {
             regions = Region.parseRegions(alignmentCommandOptions.convertAlignmentCommandOptions.regions);
-            regions.forEach(r -> avroSerializer.addRegionFilter(r));
         }
-
-        // set region filter from region file
         String regionFilename = alignmentCommandOptions.convertAlignmentCommandOptions.regionFilename;
         if (StringUtils.isNotEmpty(regionFilename)) {
+            if (regions == null) {
+                regions = new ArrayList<>();
+            }
             List<String> lines = Files.readAllLines(Paths.get(regionFilename));
-            lines.forEach(l -> avroSerializer.addRegionFilter(new Region(l)));
+            for (String line: lines) {
+                regions.add(new Region(line));
+            }
         }
+        if (regions != null && regions.size() > 0) {
+            avroSerializer.addRegionFilter(regions, false);
+        }
+
 
         long startTime, elapsedTime;
         System.out.println("\n\nStarting BAM->AVRO conversion...\n");

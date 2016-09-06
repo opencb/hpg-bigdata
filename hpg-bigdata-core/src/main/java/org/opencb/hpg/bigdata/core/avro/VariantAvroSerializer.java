@@ -84,7 +84,7 @@ public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
     }
 
     public VariantAvroSerializer addRegionFilter(Region region) {
-        getFilters().add(v -> v.getChromosome().equals(region.getChromosome())
+        addFilter(v -> v.getChromosome().equals(region.getChromosome())
                 && v.getEnd() >= region.getStart()
                 && v.getStart() <= region.getEnd());
         return this;
