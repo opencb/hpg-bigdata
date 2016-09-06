@@ -43,15 +43,23 @@ public class VariantParseQuery extends ParseQuery {
     public String parse(Query query, QueryOptions queryOptions, String viewName) {
 
         Set<String> keySet = query.keySet();
+
         for (String key : keySet) {
+            String value = (String) query.get(key);
+
+            // sanity check
+            if (StringUtils.isEmpty(key) || StringUtils.isEmpty(value)) {
+                throw new IllegalArgumentException("key or value are null or empty (key = "
+                        + key + ", value = " + value + ")");
+            }
+
             String[] fields = key.split("\\.");
 
             // First we check if there is any ...
             if (fields.length == 0) {
+                System.out.println("length is 0, nothing to do");
                 return null;
             }
-
-            String value = (String) query.get(key);
 
             switch (fields[0]) {
                 case "id":

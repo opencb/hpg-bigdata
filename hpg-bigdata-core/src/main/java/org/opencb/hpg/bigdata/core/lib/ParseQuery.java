@@ -49,7 +49,8 @@ public abstract  class ParseQuery {
     protected String processFilter(String key, String value, boolean isString, boolean isArray) {
 
         if (StringUtils.isEmpty(key) || StringUtils.isEmpty(value)) {
-            throw new IllegalArgumentException("key or value are null or empty");
+            throw new IllegalArgumentException("key or value are null or empty (key = "
+                    + key + ", value = " + value + ")");
         }
 
         boolean or = value.contains(",");
