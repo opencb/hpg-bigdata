@@ -17,40 +17,28 @@
 package org.opencb.hpg.bigdata.app.cli.local;
 
 import htsjdk.variant.variantcontext.VariantContext;
-import htsjdk.variant.vcf.VCFCodec;
 import htsjdk.variant.vcf.VCFFileReader;
-import org.apache.avro.Schema;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.parquet.hadoop.ParquetWriter;
+import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
 import org.apache.spark.sql.SparkSession;
-import org.opencb.biodata.formats.variant.vcf4.FullVcfCodec;
 import org.opencb.biodata.models.core.Region;
 import org.opencb.biodata.models.variant.Variant;
-import org.opencb.biodata.models.variant.avro.VariantAvro;
-import org.opencb.biodata.models.variant.protobuf.VariantProto;
-import org.opencb.biodata.tools.variant.converter.Converter;
 import org.opencb.biodata.tools.variant.converter.VariantContextToVariantConverter;
-import org.opencb.biodata.tools.variant.converter.VariantContextToVariantProtoConverter;
-import org.opencb.commons.io.DataReader;
-import org.opencb.commons.run.ParallelTaskRunner;
 import org.opencb.commons.utils.FileUtils;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
+import org.opencb.hpg.bigdata.core.avro.AlignmentAvroSerializer;
 import org.opencb.hpg.bigdata.core.avro.VariantAvroAnnotator;
 import org.opencb.hpg.bigdata.core.avro.VariantAvroSerializer;
-import org.opencb.hpg.bigdata.core.converters.variation.ProtoEncoderTask;
-import org.opencb.hpg.bigdata.core.converters.variation.VariantAvroEncoderTask;
 import org.opencb.hpg.bigdata.core.converters.variation.VariantContext2VariantConverter;
-import org.opencb.hpg.bigdata.core.io.VariantContextBlockIterator;
-import org.opencb.hpg.bigdata.core.io.VcfBlockIterator;
-import org.opencb.hpg.bigdata.core.io.avro.AvroFileWriter;
 import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
 import org.opencb.hpg.bigdata.core.lib.VariantDataset;
 import org.opencb.hpg.bigdata.core.parquet.VariantParquetConverter;
 
 import java.io.*;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -97,63 +85,177 @@ public class VariantCommandExecutor extends CommandExecutor {
         }
     }
 
-    private void convert() throws Exception {
-        // check mandatory parameter 'input file'
+    private void convert() throws IOException {
+        // sanity check: paremeter 'to'
+        String to = variantCommandOptions.convertVariantCommandOptions.to.toLowerCase();
+        if (!to.equals("avro") && !to.equals("parquet")) {
+            throw new IllegalArgumentException("Unknown serialization format: " + to + ". Valid values: avro, parquet");
+        }
+        boolean toParquet = to.equals("parquet");
+
+        // sanity check: parameter 'compression'
+        String compressionCodecName = variantCommandOptions.convertVariantCommandOptions.compression.toLowerCase();
+        if (!compressionCodecName.equals("gzip")
+                && !compressionCodecName.equals("snappy")) {
+            throw new IllegalArgumentException("Unknown compression method: " + compressionCodecName
+                    + ". Valid values: gzip, snappy");
+        }
+
+        // sanity check: input file
         Path inputPath = Paths.get(variantCommandOptions.convertVariantCommandOptions.input);
         FileUtils.checkFile(inputPath);
 
-        // check mandatory parameter 'to'
-        String to = variantCommandOptions.convertVariantCommandOptions.to;
-        if (!to.equals("avro") && !to.equals("parquet") && !to.equals("json")) {
-            throw new IllegalArgumentException("Unknown serialization format: " + to + ". Valid values: avro, parquet and json");
-        }
-
-        // check output
+        // sanity check: output file
         String output = variantCommandOptions.convertVariantCommandOptions.output;
-        boolean stdOutput = variantCommandOptions.convertVariantCommandOptions.stdOutput;
-        OutputStream outputStream;
-        if (stdOutput) {
-            output = "STDOUT";
-        } else {
-            if (output != null && !output.isEmpty()) {
-                Path parent = Paths.get(output).toAbsolutePath().getParent();
-                if (parent != null) { // null if output is a file in the current directory
-                    FileUtils.checkDirectory(parent, true); // Throws exception, if does not exist
-                }
-            } else {
-                output = inputPath.toString() + "." + to;
+        if (!output.isEmpty()) {
+            Path parent = Paths.get(output).toAbsolutePath().getParent();
+            if (parent != null) { // null if output is a file in the current directory
+                FileUtils.checkDirectory(parent, true); // Throws exception, if does not exist
             }
-            outputStream = new FileOutputStream(output);
+        } else {
+            output = inputPath.toString() + "." + to;
         }
 
-        // compression
-        String compression = variantCommandOptions.convertVariantCommandOptions.compression;
+        // sanity check: rowGroupSize and pageSize for parquet conversion
+        int rowGroupSize = ParquetWriter.DEFAULT_BLOCK_SIZE;
+        int pageSize = ParquetWriter.DEFAULT_PAGE_SIZE;
+        if (toParquet) {
+            rowGroupSize = variantCommandOptions.convertVariantCommandOptions.blockSize;
+            if (rowGroupSize <= 0) {
+                throw new IllegalArgumentException("Invalid block size: " + rowGroupSize
+                        + ". It must be greater than 0");
+            }
+            pageSize = variantCommandOptions.convertVariantCommandOptions.pageSize;
+            if (pageSize <= 0) {
+                throw new IllegalArgumentException("Invalid page size: " + pageSize
+                        + ". It must be greater than 0");
+            }
+        }
 
-        // region filter
+        // for parquet conversion,
+        // first, to convert to avro with a temporary output filename name, and then to parquet using that temporary
+        // file as input
+        String tmpSuffix = ".avro.63432.tmp";
+        String tmpName = output;
+        if (toParquet) {
+            tmpName += tmpSuffix;
+        }
+
+        // convert to avro
+        VariantAvroSerializer avroSerializer = new VariantAvroSerializer(compressionCodecName);
+
+        if (variantCommandOptions.convertVariantCommandOptions.validId) {
+            avroSerializer.addValidIdFilter();
+        }
+
+//        // set minimum quality filter
+//        if (variantCommandOptions.convertVariantCommandOptions.minQuality > 0) {
+//            avroSerializer.addMinQualityFilter(variantCommandOptions.convertVariantCommandOptions.minQuality);
+//        }
+
+        // region filter management,
+        // we use the same region list to store all regions from both parameter --regions and
+        // parameter --region-file
         List<Region> regions = null;
         if (StringUtils.isNotEmpty(variantCommandOptions.convertVariantCommandOptions.regions)) {
             regions = Region.parseRegions(variantCommandOptions.convertVariantCommandOptions.regions);
         }
-
-        switch (variantCommandOptions.convertVariantCommandOptions.to) {
-            case "avro":
-                VariantAvroSerializer avroSerializer = new VariantAvroSerializer(compression);
-                if (regions != null) {
-                    regions.forEach(avroSerializer::addRegionFilter);
-                }
-                avroSerializer.toAvro(inputPath.toString(), output);
-                break;
-            case "parquet":
-                InputStream is = new FileInputStream(variantCommandOptions.convertVariantCommandOptions.input);
-                VariantParquetConverter parquetConverter = new VariantParquetConverter();
-                parquetConverter.toParquet(is, variantCommandOptions.convertVariantCommandOptions.output + "2");
-                break;
-            default:
-                System.out.println("No valid format: " + variantCommandOptions.convertVariantCommandOptions.to);
-                break;
+        String regionFilename = variantCommandOptions.convertVariantCommandOptions.regionFilename;
+        if (StringUtils.isNotEmpty(regionFilename)) {
+            if (regions == null) {
+                regions = new ArrayList<>();
+            }
+            List<String> lines = Files.readAllLines(Paths.get(regionFilename));
+            for (String line : lines) {
+                regions.add(new Region(line));
+            }
+        }
+        if (regions != null && regions.size() > 0) {
+            avroSerializer.addRegionFilter(regions, false);
         }
 
+        long startTime, elapsedTime;
+        System.out.println("\n\nStarting VCF->AVRO conversion...\n");
+        startTime = System.currentTimeMillis();
+        avroSerializer.toAvro(inputPath.toString(), tmpName);
+        elapsedTime = System.currentTimeMillis() - startTime;
+        System.out.println("\n\nFinish VCF->AVRO conversion in " + (elapsedTime / 1000F) + " sec\n");
+
+        // convert to parquet if required
+        if (toParquet) {
+            VariantParquetConverter parquetSerializer = new VariantParquetConverter(
+                    CompressionCodecName.fromConf(compressionCodecName), rowGroupSize, pageSize);
+            InputStream inputStream = new FileInputStream(tmpName);
+            System.out.println("\n\nStarting AVRO->PARQUET conversion...\n");
+            startTime = System.currentTimeMillis();
+            parquetSerializer.toParquet(inputStream, output);
+            elapsedTime = System.currentTimeMillis() - startTime;
+            System.out.println("\n\nFinish AVRO->PARQUET conversion in " + (elapsedTime / 1000F) + " sec\n");
+
+            // temporary file management
+            //new File(tmpName).delete();
+            String name = tmpName + AlignmentAvroSerializer.getHeaderSuffix();
+            new File(name).renameTo(new File(name.replaceFirst(tmpSuffix, "")));
+        }
     }
+
+//    private void convert3() throws Exception {
+//        // check mandatory parameter 'input file'
+//        Path inputPath = Paths.get(variantCommandOptions.convertVariantCommandOptions.input);
+//        FileUtils.checkFile(inputPath);
+//
+//        // check mandatory parameter 'to'
+//        String to = variantCommandOptions.convertVariantCommandOptions.to;
+//        if (!to.equals("avro") && !to.equals("parquet") && !to.equals("json")) {
+//            throw new IllegalArgumentException("Unknown serialization format: " + to + ". Valid values: avro, parquet and json");
+//        }
+//
+//        // check output
+//        String output = variantCommandOptions.convertVariantCommandOptions.output;
+//        boolean stdOutput = variantCommandOptions.convertVariantCommandOptions.stdOutput;
+//        OutputStream outputStream;
+//        if (stdOutput) {
+//            output = "STDOUT";
+//        } else {
+//            if (output != null && !output.isEmpty()) {
+//                Path parent = Paths.get(output).toAbsolutePath().getParent();
+//                if (parent != null) { // null if output is a file in the current directory
+//                    FileUtils.checkDirectory(parent, true); // Throws exception, if does not exist
+//                }
+//            } else {
+//                output = inputPath.toString() + "." + to;
+//            }
+//            outputStream = new FileOutputStream(output);
+//        }
+//
+//        // compression
+//        String compression = variantCommandOptions.convertVariantCommandOptions.compression;
+//
+//        // region filter
+//        List<Region> regions = null;
+//        if (StringUtils.isNotEmpty(variantCommandOptions.convertVariantCommandOptions.regions)) {
+//            regions = Region.parseRegions(variantCommandOptions.convertVariantCommandOptions.regions);
+//        }
+//
+//        switch (variantCommandOptions.convertVariantCommandOptions.to) {
+//            case "avro":
+//                VariantAvroSerializer avroSerializer = new VariantAvroSerializer(compression);
+//                if (regions != null) {
+//                    regions.forEach(avroSerializer::addRegionFilter);
+//                }
+//                avroSerializer.toAvro(inputPath.toString(), output);
+//                break;
+//            case "parquet":
+//                InputStream is = new FileInputStream(variantCommandOptions.convertVariantCommandOptions.input);
+//                VariantParquetConverter parquetConverter = new VariantParquetConverter();
+//                parquetConverter.toParquet(is, variantCommandOptions.convertVariantCommandOptions.output + "2");
+//                break;
+//            default:
+//                System.out.println("No valid format: " + variantCommandOptions.convertVariantCommandOptions.to);
+//                break;
+//        }
+//
+//    }
 
 //    private void convert2() throws Exception {
 //        Path inputPath = Paths.get(variantCommandOptions.convertVariantCommandOptions.input);
@@ -332,42 +434,42 @@ public class VariantCommandExecutor extends CommandExecutor {
     }
 
     private void convertToProtoBuf(Path inputPath, OutputStream outputStream) throws Exception {
-        // Creating reader
-        VcfBlockIterator iterator = (StringUtils.equals("-", inputPath.toAbsolutePath().toString()))
-                ? new VcfBlockIterator(new BufferedInputStream(System.in), new FullVcfCodec())
-                : new VcfBlockIterator(inputPath.toFile(), new FullVcfCodec());
-
-
-        LocalCliOptionsParser.ConvertVariantCommandOptions cliOptions = variantCommandOptions.convertVariantCommandOptions;
-        int numTasks = Math.max(cliOptions.numThreads, 1);
-        int batchSize = Integer.parseInt(cliOptions.options.getOrDefault("batch.size", "50"));
-        int bufferSize = Integer.parseInt(cliOptions.options.getOrDefault("buffer.size", "100000"));
-        int capacity = numTasks + 1;
-        ParallelTaskRunner.Config config = new ParallelTaskRunner.Config(numTasks, batchSize, capacity, true, false);
-
-        ParallelTaskRunner<CharSequence, ByteBuffer> runner = new ParallelTaskRunner<>(
-                iterator.toLineDataReader(),
-                () -> { //Task supplier. Will supply a task instance for each thread.
-
-                    //VCFCodec is not thread safe. MUST exist one instance per thread
-                    VCFCodec codec = new FullVcfCodec(iterator.getHeader(), iterator.getVersion());
-                    VariantContextBlockIterator blockIterator = new VariantContextBlockIterator(codec);
-                    Converter<VariantContext, VariantProto.Variant> converter = new VariantContextToVariantProtoConverter();
-                    return new ProtoEncoderTask<>(charBuffer -> converter.convert(blockIterator.convert(charBuffer)), bufferSize);
-                },
-                batch -> {
-                    batch.forEach(byteBuffer -> {
-                        try {
-                            outputStream.write(byteBuffer.array(), byteBuffer.arrayOffset(), byteBuffer.limit());
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-                    return true;
-                }, config
-        );
-        runner.run();
-        outputStream.close();
+//        // Creating reader
+//        VcfBlockIterator iterator = (StringUtils.equals("-", inputPath.toAbsolutePath().toString()))
+//                ? new VcfBlockIterator(new BufferedInputStream(System.in), new FullVcfCodec())
+//                : new VcfBlockIterator(inputPath.toFile(), new FullVcfCodec());
+//
+//
+//        LocalCliOptionsParser.ConvertVariantCommandOptions cliOptions = variantCommandOptions.convertVariantCommandOptions;
+//        int numTasks = Math.max(cliOptions.numThreads, 1);
+//        int batchSize = Integer.parseInt(cliOptions.options.getOrDefault("batch.size", "50"));
+//        int bufferSize = Integer.parseInt(cliOptions.options.getOrDefault("buffer.size", "100000"));
+//        int capacity = numTasks + 1;
+//        ParallelTaskRunner.Config config = new ParallelTaskRunner.Config(numTasks, batchSize, capacity, true, false);
+//
+//        ParallelTaskRunner<CharSequence, ByteBuffer> runner = new ParallelTaskRunner<>(
+//                iterator.toLineDataReader(),
+//                () -> { //Task supplier. Will supply a task instance for each thread.
+//
+//                    //VCFCodec is not thread safe. MUST exist one instance per thread
+//                    VCFCodec codec = new FullVcfCodec(iterator.getHeader(), iterator.getVersion());
+//                    VariantContextBlockIterator blockIterator = new VariantContextBlockIterator(codec);
+//                    Converter<VariantContext, VariantProto.Variant> converter = new VariantContextToVariantProtoConverter();
+//                    return new ProtoEncoderTask<>(charBuffer -> converter.convert(blockIterator.convert(charBuffer)), bufferSize);
+//                },
+//                batch -> {
+//                    batch.forEach(byteBuffer -> {
+//                        try {
+//                            outputStream.write(byteBuffer.array(), byteBuffer.arrayOffset(), byteBuffer.limit());
+//                        } catch (IOException e) {
+//                            throw new RuntimeException(e);
+//                        }
+//                    });
+//                    return true;
+//                }, config
+//        );
+//        runner.run();
+//        outputStream.close();
 
 //        InputStream inputStream = new FileInputStream(variantCommandOptions.convertVariantCommandOptions.output);
 //        if (outputStream instanceof GZIPOutputStream) {
@@ -417,70 +519,70 @@ public class VariantCommandExecutor extends CommandExecutor {
      */
 
     private void convertToAvro(Path inputPath, String compression, String dataModel, OutputStream outputStream) throws Exception {
-        // Creating reader
-        VcfBlockIterator iterator = (StringUtils.equals("-", inputPath.toAbsolutePath().toString()))
-                ? new VcfBlockIterator(new BufferedInputStream(System.in), new FullVcfCodec())
-                : new VcfBlockIterator(inputPath.toFile(), new FullVcfCodec());
-        DataReader<CharBuffer> vcfDataReader = iterator.toCharBufferDataReader();
-
-
-        ArrayList<String> sampleNamesInOrder = iterator.getHeader().getSampleNamesInOrder();
-//        System.out.println("sampleNamesInOrder = " + sampleNamesInOrder);
-
-        // main loop
-        int numTasks = Math.max(variantCommandOptions.convertVariantCommandOptions.numThreads, 1);
-        int batchSize = 1024 * 1024;  //Batch size in bytes
-        int capacity = numTasks + 1;
-//            VariantConverterContext variantConverterContext = new VariantConverterContext();
-
-//        long start = System.currentTimeMillis();
-
-//        final VariantContextToVariantConverter converter = new VariantContextToVariantConverter("", "", sampleNamesInOrder);
-//        List<CharBuffer> read;
-//        while ((read = vcfDataReader.read()) != null {
-//            converter.convert(read.)
+//        // Creating reader
+//        VcfBlockIterator iterator = (StringUtils.equals("-", inputPath.toAbsolutePath().toString()))
+//                ? new VcfBlockIterator(new BufferedInputStream(System.in), new FullVcfCodec())
+//                : new VcfBlockIterator(inputPath.toFile(), new FullVcfCodec());
+//        DataReader<CharBuffer> vcfDataReader = iterator.toCharBufferDataReader();
+//
+//
+//        ArrayList<String> sampleNamesInOrder = iterator.getHeader().getSampleNamesInOrder();
+////        System.out.println("sampleNamesInOrder = " + sampleNamesInOrder);
+//
+//        // main loop
+//        int numTasks = Math.max(variantCommandOptions.convertVariantCommandOptions.numThreads, 1);
+//        int batchSize = 1024 * 1024;  //Batch size in bytes
+//        int capacity = numTasks + 1;
+////            VariantConverterContext variantConverterContext = new VariantConverterContext();
+//
+////        long start = System.currentTimeMillis();
+//
+////        final VariantContextToVariantConverter converter = new VariantContextToVariantConverter("", "", sampleNamesInOrder);
+////        List<CharBuffer> read;
+////        while ((read = vcfDataReader.read()) != null {
+////            converter.convert(read.)
+////        }
+//
+////        Old implementation:
+//
+//        ParallelTaskRunner.Config config = new ParallelTaskRunner.Config(numTasks, batchSize, capacity, false);
+//        ParallelTaskRunner<CharBuffer, ByteBuffer> runner;
+//        switch (dataModel.toLowerCase()) {
+//            case "opencb": {
+//                Schema classSchema = VariantAvro.getClassSchema();
+//                // Converter
+//                final VariantContextToVariantConverter converter = new VariantContextToVariantConverter("", "", sampleNamesInOrder);
+//                // Writer
+//                AvroFileWriter<VariantAvro> avroFileWriter = new AvroFileWriter<>(classSchema, compression, outputStream);
+//
+//                runner = new ParallelTaskRunner<>(
+//                        vcfDataReader,
+//                        () -> new VariantAvroEncoderTask<>(iterator.getHeader(), iterator.getVersion(),
+//                                variantContext -> converter.convert(variantContext).getImpl(), classSchema),
+//                        avroFileWriter, config);
+//                break;
+//            }
+//            case "ga4gh": {
+//                Schema classSchema = org.ga4gh.models.Variant.getClassSchema();
+//                // Converter
+//                final VariantContext2VariantConverter converter = new VariantContext2VariantConverter();
+//                converter.setVariantSetId("");  //TODO: Set VariantSetId
+//                // Writer
+//                AvroFileWriter<org.ga4gh.models.Variant> avroFileWriter = new AvroFileWriter<>(classSchema, compression, outputStream);
+//
+//                runner = new ParallelTaskRunner<>(
+//                        vcfDataReader,
+//                        () -> new VariantAvroEncoderTask<>(iterator.getHeader(), iterator.getVersion(), converter, classSchema),
+//                        avroFileWriter, config);
+//                break;
+//            }
+//            default:
+//                throw new IllegalArgumentException("Unknown dataModel \"" + dataModel + "\"");
 //        }
-
-//        Old implementation:
-
-        ParallelTaskRunner.Config config = new ParallelTaskRunner.Config(numTasks, batchSize, capacity, false);
-        ParallelTaskRunner<CharBuffer, ByteBuffer> runner;
-        switch (dataModel.toLowerCase()) {
-            case "opencb": {
-                Schema classSchema = VariantAvro.getClassSchema();
-                // Converter
-                final VariantContextToVariantConverter converter = new VariantContextToVariantConverter("", "", sampleNamesInOrder);
-                // Writer
-                AvroFileWriter<VariantAvro> avroFileWriter = new AvroFileWriter<>(classSchema, compression, outputStream);
-
-                runner = new ParallelTaskRunner<>(
-                        vcfDataReader,
-                        () -> new VariantAvroEncoderTask<>(iterator.getHeader(), iterator.getVersion(),
-                                variantContext -> converter.convert(variantContext).getImpl(), classSchema),
-                        avroFileWriter, config);
-                break;
-            }
-            case "ga4gh": {
-                Schema classSchema = org.ga4gh.models.Variant.getClassSchema();
-                // Converter
-                final VariantContext2VariantConverter converter = new VariantContext2VariantConverter();
-                converter.setVariantSetId("");  //TODO: Set VariantSetId
-                // Writer
-                AvroFileWriter<org.ga4gh.models.Variant> avroFileWriter = new AvroFileWriter<>(classSchema, compression, outputStream);
-
-                runner = new ParallelTaskRunner<>(
-                        vcfDataReader,
-                        () -> new VariantAvroEncoderTask<>(iterator.getHeader(), iterator.getVersion(), converter, classSchema),
-                        avroFileWriter, config);
-                break;
-            }
-            default:
-                throw new IllegalArgumentException("Unknown dataModel \"" + dataModel + "\"");
-        }
-        long start = System.currentTimeMillis();
-        runner.run();
-
-        logger.debug("Time " + (System.currentTimeMillis() - start) / 1000.0 + "s");
+//        long start = System.currentTimeMillis();
+//        runner.run();
+//
+//        logger.debug("Time " + (System.currentTimeMillis() - start) / 1000.0 + "s");
     }
 /*
     private void writeAvroStats(AvroFileWriter<VariantFileMetadata> aw, String file) throws IOException {

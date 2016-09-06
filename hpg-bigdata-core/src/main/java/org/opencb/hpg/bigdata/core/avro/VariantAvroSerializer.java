@@ -14,7 +14,9 @@ import org.opencb.biodata.tools.variant.stats.VariantGlobalStatsCalculator;
 import org.opencb.hpg.bigdata.core.io.avro.AvroFileWriter;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * Created by jtarraga on 03/08/16.
@@ -51,6 +53,7 @@ public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
         statsCalculator.pre();
 
         // main loop
+        long counter = 0;
         List<Variant> variants;
         while (true) {
             variants = vcfReader.read(1000);
@@ -60,11 +63,13 @@ public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
             // write variants and update stats
             for (Variant variant: variants) {
                 if (filter(variant.getImpl())) {
+                    counter++;
                     avroFileWriter.writeDatum(variant.getImpl());
                     statsCalculator.updateGlobalStats(variant);
                 }
             }
         }
+        System.out.println("Number of processed records: " + counter);
 
         ObjectMapper mapper = new ObjectMapper();
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
@@ -87,6 +92,20 @@ public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
         addFilter(v -> v.getChromosome().equals(region.getChromosome())
                 && v.getEnd() >= region.getStart()
                 && v.getStart() <= region.getEnd());
+        return this;
+    }
+
+    public VariantAvroSerializer addRegionFilter(List<Region> regions, boolean and) {
+        List<Predicate<VariantAvro>> predicates = new ArrayList<>();
+        regions.forEach(r -> predicates.add(v -> v.getChromosome().equals(r.getChromosome())
+                && v.getEnd() >= r.getStart()
+                && v.getStart() <= r.getEnd()));
+        addFilter(predicates, and);
+        return this;
+    }
+
+    public VariantAvroSerializer addValidIdFilter() {
+        addFilter(v -> v.getId() != null && !v.getId().isEmpty() && !v.getId().equals("."));
         return this;
     }
 }

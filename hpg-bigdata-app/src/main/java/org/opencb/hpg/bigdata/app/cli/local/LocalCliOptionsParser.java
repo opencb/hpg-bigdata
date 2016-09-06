@@ -397,46 +397,65 @@ public class LocalCliOptionsParser {
         }
     }
 
-    @Parameters(commandNames = {"convert"}, commandDescription = "Convert gVCF/VCF files to different big data formats such as Avro and Parquet using GA4GH models")
+    @Parameters(commandNames = {"convert"}, commandDescription = "Convert gVCF/VCF files to different big data formats such as Avro and Parquet using OpenCB models")
     class ConvertVariantCommandOptions {
 
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
 
-        @Parameter(names = {"-i", "--input"}, description = "Input file name, usually a gVCF/VCF but it can be an Avro file when converting to Parquet.",
+        @Parameter(names = {"-i", "--input"}, description = "Input gVCF/VCF file name",
+//        @Parameter(names = {"-i", "--input"}, description = "Input file name, usually a gVCF/VCF but it can be an Avro file when converting to Parquet.",
                 required = true, arity = 1)
         public String input;
 
-        @Parameter(names = {"--to"}, description = "Destination Serialization format. Accepted values: avro, parquet and json", required = true)
-        public String to;
+        @Parameter(names = {"--to"}, description = "Destination format, accepted values: avro, parquet", arity = 1)
+        public String to = "avro";
 
-        @Parameter(names = {"-o", "--output"}, description = "Output file name.", required = false, arity = 1)
-        public String output;
+        @Parameter(names = {"-o", "--output"}, description = "Output file name", required = true, arity = 1)
+        public String output = null;
 
-        @Parameter(names = {"-O"}, description = "Use the standard output.", required = false, arity = 0)
-        public boolean stdOutput;
+//        @Parameter(names = {"-O"}, description = "Use the standard output.", required = false, arity = 0)
+//        public boolean stdOutput;
 
-        @Parameter(names = {"--from"}, description = "Accepted values: vcf, avro", required = false)
-        public String from;
+//        @Parameter(names = {"--from"}, description = "Accepted values: vcf, avro", required = false)
+//        public String from;
 
-        @Parameter(names = {"--region"}, description = "Filter variant by regions, comma separated list of regions, e.g.: 1:300000-400000000,15:343453463-8787665654", required = false)
-        public String regions;
+//        @Parameter(names = {"-d", "--data-model"}, description = "Only for 'to-json' and 'to-avro' options. 'to-protobuf' is only available with opencb data models. Values: opencb, ga4gh", required = false, arity = 1)
+//        public String dataModel = "opencb";
 
-        @Parameter(names = {"-d", "--data-model"}, description = "Only for 'to-json' and 'to-avro' options. 'to-protobuf' is only available with opencb data models. Values: opencb, ga4gh", required = false, arity = 1)
-        public String dataModel = "opencb";
+//        @Parameter(names = {"-x", "--compression"}, description = "Available options for Avro are: : snappy, deflate, bzip2, xz. " +
+//                "For JSON and ProtoBuf only 'gzip' is available. It compression is null,  it will be inferred compression from file extensions: .gz, .sz, ...", required = false, arity = 1)
+//        public String compression = "deflate";
 
-        @Parameter(names = {"-x", "--compression"}, description = "Available options for Avro are: : snappy, deflate, bzip2, xz. " +
-                "For JSON and ProtoBuf only 'gzip' is available. It compression is null,  it will be inferred compression from file extensions: .gz, .sz, ...", required = false, arity = 1)
-        public String compression = "deflate";
+        @Parameter(names = {"-x", "--compression"}, description = "Compression method, acepted values: : snappy, gzip, bzip2, xz", arity = 1)
+        public String compression = "gzip";
 
-        @Parameter(names = {"-t", "--num-threads"}, description = "Number of threads to use, this must be less than the number of cores", required = false)
-        public int numThreads = 1;
+        @Parameter(names = {"--only-with-id"}, description = "Variants with IDs (variants with missing IDs will be discarded)")
+        public boolean validId = false;
 
-        @Parameter(names = {"--skip-normalization"}, description = "Whether to skip variant normalization", required = false)
-        public boolean skipNormalization;
+//        @Parameter(names = {"--min-quality"}, description = "Minimum quality", arity = 1)
+//        public int minQuality = 20;
 
-        @DynamicParameter(names = {"-D"}, hidden = true)
-        public Map<String, String> options = new HashMap<>();
+        @Parameter(names = {"--region"}, description = "Comma separated list of regions, e.g.: 1:300000-400000000,15:343453463-8787665654", arity = 1)
+        public String regions = null;
+
+        @Parameter(names = {"--region-file"}, description = "Input filename with a list of regions. One region per line, e.g.: 1:300000-400000000", arity = 1)
+        public String regionFilename = null;
+
+        @Parameter(names = {"--page-size"}, description = "Page size, only for parquet conversions", arity = 1)
+        public int pageSize = ParquetWriter.DEFAULT_PAGE_SIZE;
+
+        @Parameter(names = {"--block-size"}, description = "Block size, only for parquet conversions", arity = 1)
+        public int blockSize = ParquetWriter.DEFAULT_BLOCK_SIZE;
+
+//        @Parameter(names = {"-t", "--num-threads"}, description = "Number of threads to use, this must be less than the number of cores", required = false)
+//        public int numThreads = 1;
+
+//        @Parameter(names = {"--skip-normalization"}, description = "Whether to skip variant normalization", required = false)
+//        public boolean skipNormalization;
+
+//        @DynamicParameter(names = {"-D"}, hidden = true)
+//        public Map<String, String> options = new HashMap<>();
     }
 
 
