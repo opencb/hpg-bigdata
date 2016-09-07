@@ -161,7 +161,7 @@ public class VariantCommandExecutor extends CommandExecutor {
             regions = Region.parseRegions(variantCommandOptions.convertVariantCommandOptions.regions);
         }
         String regionFilename = variantCommandOptions.convertVariantCommandOptions.regionFilename;
-        if (StringUtils.isNotEmpty(regionFilename)) {
+        if (StringUtils.isNotEmpty(regionFilename) && new File(regionFilename).exists()) {
             if (regions == null) {
                 regions = new ArrayList<>();
             }
@@ -611,7 +611,7 @@ public class VariantCommandExecutor extends CommandExecutor {
 */
 
     public void query() throws Exception {
-        // check mandatory parameter 'input file'
+        // sanity check: input file
         Path inputPath = Paths.get(variantCommandOptions.queryVariantCommandOptions.input);
         FileUtils.checkFile(inputPath);
 
@@ -629,61 +629,99 @@ public class VariantCommandExecutor extends CommandExecutor {
         vd.load(variantCommandOptions.queryVariantCommandOptions.input, sparkSession);
         vd.createOrReplaceTempView("vcf");
 
-        // query for id
+        // query for ID (list and file)
+        List<String> list = null;
         if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.ids)) {
-            String[] ids = StringUtils.split(variantCommandOptions.queryVariantCommandOptions.ids, ",");
-
-            for (String id : ids) {
-                vd.idFilter(id);
-                logger.warn("Query for multiple IDs, not yet implemented. Currently, it queries for the first ID.");
-                break;
+            list = new ArrayList<>(Arrays.asList(
+                    StringUtils.split(variantCommandOptions.queryVariantCommandOptions.ids, ",")));
+        }
+        String idFilename = variantCommandOptions.queryVariantCommandOptions.idFilename;
+        if (StringUtils.isNotEmpty(idFilename) && new File(idFilename).exists()) {
+            if (list == null) {
+                list = Files.readAllLines(Paths.get(idFilename));
+            } else {
+                list.addAll(Files.readAllLines(Paths.get(idFilename)));
             }
+        }
+        if (list != null) {
+            vd.idFilter(list, false);
         }
 
         // query for type
         if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.types)) {
-            String[] types = StringUtils.split(variantCommandOptions.queryVariantCommandOptions.types, ",");
-
-            if (types.length == 1) {
-                vd.typeFilter(types[0]);
-            } else {
-                vd.typeFilter(new ArrayList<>(Arrays.asList(types)));
-            }
+            vd.typeFilter(new ArrayList<>(Arrays.asList(
+                    StringUtils.split(variantCommandOptions.queryVariantCommandOptions.types, ","))));
         }
 
-        // query for region
+        // query for biotype
+        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.biotypes)) {
+            vd.annotationFilter("biotype", new ArrayList<>(Arrays.asList(
+                    StringUtils.split(variantCommandOptions.queryVariantCommandOptions.biotypes, ","))));
+        }
+
+        // query for study
+        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.studies)) {
+            vd.studyFilter("studyId", new ArrayList<>(Arrays.asList(
+                    StringUtils.split(variantCommandOptions.queryVariantCommandOptions.studies, ","))));
+        }
+
+//        // query for maf (study:cohort)
+//        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.maf)) {
+//            vd.annotationFilter("populationFrequencies.minorAlleleFreq", variantCommandOptions.queryVariantCommandOptions.maf);
+//        }
+//
+//        // query for mgf (study:cohort)
+//        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.maf)) {
+//            vd.annotationFilter("populationFrequencies.mgf", variantCommandOptions.queryVariantCommandOptions.mgf);
+//        }
+
+        // query for region (list and file)
         List<Region> regions = null;
         if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.regions)) {
             regions = Region.parseRegions(variantCommandOptions.queryVariantCommandOptions.regions);
-
-            for (Region region : regions) {
-                logger.warn("Query for region, not yet implemented.");
-                break;
+        }
+        String regionFilename = variantCommandOptions.queryVariantCommandOptions.regionFilename;
+        if (StringUtils.isNotEmpty(regionFilename) && new File(regionFilename).exists()) {
+            if (regions == null) {
+                regions = new ArrayList<>();
+            }
+            List<String> lines = Files.readAllLines(Paths.get(regionFilename));
+            for (String line : lines) {
+                regions.add(new Region(line));
             }
         }
-
-        // query for SO term name
-        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.so_names)) {
-            String[] names = StringUtils.split(variantCommandOptions.queryVariantCommandOptions.so_names, ",");
-
-            for (String name : names) {
-                vd.annotationFilter("consequenceTypes.sequenceOntologyTerms.name", name);
-                logger.warn("Query for multiple SO term names (consequence type), not yet implemented. "
-                        + "Currently, it queries for the first SO term name.");
-                break;
-            }
+        if (regions != null && regions.size() > 0) {
+            vd.regionFilter(regions);
         }
 
-        // query for SO term accession
-        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.so_accessions)) {
-            String[] accessions = StringUtils.split(variantCommandOptions.queryVariantCommandOptions.so_accessions, ",");
+        // query for consequence type (Sequence Ontology term names and accession codes)
+        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.consequenceTypes)) {
+            vd.annotationFilter("consequenceTypes.sequenceOntologyTerms", new ArrayList<>(Arrays.asList(
+                    StringUtils.split(variantCommandOptions.queryVariantCommandOptions.consequenceTypes, ","))));
+        }
 
-            for (String accession : accessions) {
-                vd.annotationFilter("consequenceTypes.sequenceOntologyTerms.accession", accession);
-                logger.warn("Query for multiple SO term accessions (consequence type), not yet implemented. "
-                        + "Currently, it queries for the first SO term accession.");
-                break;
-            }
+        // query for clinvar (accession)
+        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.clinvar)) {
+            vd.annotationFilter("variantTraitAssociation.clinvar.accession", new ArrayList<>(Arrays.asList(
+                    StringUtils.split(variantCommandOptions.queryVariantCommandOptions.clinvar, ","))));
+        }
+
+        // query for cosmic (mutation ID)
+        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.cosmic)) {
+            vd.annotationFilter("variantTraitAssociation.cosmic.mutationId", new ArrayList<>(Arrays.asList(
+                    StringUtils.split(variantCommandOptions.queryVariantCommandOptions.cosmic, ","))));
+        }
+
+        // query for conservation (phastCons, phylop, gerp)
+        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.conservScores)) {
+            vd.annotationFilter("conservation", new ArrayList<>(Arrays.asList(
+                    StringUtils.split(variantCommandOptions.queryVariantCommandOptions.conservScores, ","))));
+        }
+
+        // query for protein substitution scores (polyphen, sift)
+        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.substScores)) {
+            vd.annotationFilter("proteinVariantAnnotation.substitutionScores", new ArrayList<>(Arrays.asList(
+                    StringUtils.split(variantCommandOptions.queryVariantCommandOptions.substScores, ","))));
         }
 
         // apply previous filters

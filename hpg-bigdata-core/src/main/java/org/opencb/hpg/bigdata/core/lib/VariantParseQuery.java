@@ -35,6 +35,7 @@ public class VariantParseQuery extends ParseQuery {
             Pattern.compile("^([^=<>]+.*)(<=?|>=?|!=|!?=?~|==?)([^=<>]+.*)$");
 
     private static final String CONSERVATION_VIEW = "cons";
+    private static final String SUBSTITUTION_VIEW = "subst";
 
     public VariantParseQuery() {
         super();
@@ -200,10 +201,24 @@ public class VariantParseQuery extends ParseQuery {
                         filters.add(processFilter("so." + field, value, true, false));
                         break;
                     default:
-                        // error!!
+                        if (value.startsWith("SO:")) {
+                            filters.add(processFilter("so.accession", value, true, false));
+                        } else {
+                            filters.add(processFilter("so.name", value, true, false));
+                        }
                         break;
                 }
                 break;
+
+            // sequenceOntologyTerms is also an array and therefore we have to use explode function
+            case "consequenceTypes.proteinVariantAnnotation.substitutionScores": {
+                auxAddFilters(value, SUBSTITUTION_VIEW, "protein substitution scores");
+                // we add both explode (order is kept) to the set (no repetitions allowed)
+                explodes.add("LATERAL VIEW explode(annotation.consequenceTypes) act as ct");
+                explodes.add("LATERAL VIEW explode(ct.proteinVariantAnnotation.substitutionScores) ctpvass as "
+                        + SUBSTITUTION_VIEW);
+                break;
+            }
 
             case "populationFrequencies": {
                 explodes.add("LATERAL VIEW explode(annotation.populationFrequencies) apf as popfreq");
@@ -256,50 +271,7 @@ public class VariantParseQuery extends ParseQuery {
             }
 
             case "conservation": {
-                if (StringUtils.isEmpty(value)) {
-                    throw new IllegalArgumentException("value is null or empty for conservation");
-                }
-
-                boolean or = value.contains(",");
-                boolean and = value.contains(";");
-                if (or && and) {
-                    throw new IllegalArgumentException("Command and semi-colon cannot be mixed: " + value);
-                }
-                String logicalComparator = or ? " OR " : " AND ";
-
-                String[] values = value.split("[,;]");
-
-                where = new StringBuilder();
-                if (values == null) {
-                    matcher = CONSERVATION_PATTERN.matcher(value);
-                    if (matcher.find()) {
-                        updateConsWhereString(matcher, where);
-                    } else {
-                        // error
-                        System.err.format("error: invalid expresion %s: abort!", value);
-                    }
-                } else {
-                    matcher = CONSERVATION_PATTERN.matcher(values[0]);
-                    if (matcher.find()) {
-                        where.append("(");
-                        updateConsWhereString(matcher, where);
-                        for (int i = 1; i < values.length; i++) {
-                            matcher = CONSERVATION_PATTERN.matcher(values[i]);
-                            if (matcher.find()) {
-                                where.append(logicalComparator);
-                                updateConsWhereString(matcher, where);
-                            } else {
-                                // error
-                                System.err.format("Error: invalid expresion %s: abort!", values[i]);
-                            }
-                        }
-                        where.append(")");
-                    } else {
-                        // error
-                        System.err.format("Error: invalid expresion %s: abort!", values[0]);
-                    }
-                }
-                filters.add(where.toString());
+                auxAddFilters(value, CONSERVATION_VIEW, "conservation");
                 explodes.add("LATERAL VIEW explode(annotation.conservation) acons as " + CONSERVATION_VIEW);
                 break;
             }
@@ -323,6 +295,55 @@ public class VariantParseQuery extends ParseQuery {
         }
     }
 
+    private void auxAddFilters(String value, String view, String label) {
+        if (StringUtils.isEmpty(value)) {
+            throw new IllegalArgumentException("value is null or empty for " + label);
+        }
+
+        boolean or = value.contains(",");
+        boolean and = value.contains(";");
+        if (or && and) {
+            throw new IllegalArgumentException("Command and semi-colon cannot be mixed: " + value);
+        }
+        String logicalComparator = or ? " OR " : " AND ";
+
+        String[] values = value.split("[,;]");
+
+        Matcher matcher;
+        StringBuilder where = new StringBuilder();
+
+        if (values == null) {
+            matcher = CONSERVATION_PATTERN.matcher(value);
+            if (matcher.find()) {
+                updateWhereString(view, matcher, where);
+            } else {
+                // error
+                System.err.format("error: invalid expresion %s: abort!", value);
+            }
+        } else {
+            matcher = CONSERVATION_PATTERN.matcher(values[0]);
+            if (matcher.find()) {
+                where.append("(");
+                updateWhereString(view, matcher, where);
+                for (int i = 1; i < values.length; i++) {
+                    matcher = CONSERVATION_PATTERN.matcher(values[i]);
+                    if (matcher.find()) {
+                        where.append(logicalComparator);
+                        updateWhereString(view, matcher, where);
+                    } else {
+                        // error
+                        System.err.format("Error: invalid expresion %s: abort!", values[i]);
+                    }
+                }
+                where.append(")");
+            } else {
+                // error
+                System.err.format("Error: invalid expresion %s: abort!", values[0]);
+            }
+        }
+        filters.add(where.toString());
+    }
+
     private void updatePopWhereString(String field, String viewName, Matcher matcher, StringBuilder where) {
         where.append("(").append(viewName).append(".study = '").append(matcher.group(1).trim())
                 .append("' AND ").append(viewName).append(".population = '").append(matcher.group(2).trim())
@@ -330,9 +351,9 @@ public class VariantParseQuery extends ParseQuery {
                 .append(matcher.group(4).trim()).append(")");
     }
 
-    private void updateConsWhereString(Matcher matcher, StringBuilder where) {
-        where.append("(").append(CONSERVATION_VIEW).append(".source = '").append(matcher.group(1).trim())
-                .append("' AND ").append(CONSERVATION_VIEW).append(".score")
+    private void updateWhereString(String view, Matcher matcher, StringBuilder where) {
+        where.append("(").append(view).append(".source = '").append(matcher.group(1).trim())
+                .append("' AND ").append(view).append(".score")
                 .append(matcher.group(2).trim()).append(matcher.group(3).trim()).append(")");
     }
 }

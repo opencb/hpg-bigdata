@@ -489,23 +489,62 @@ public class LocalCliOptionsParser {
         public String output;
 
         @Parameter(names = {"--id"}, description = "Query for ID; comma separated list of IDs, e.g.: \"rs312411,rs421225\"",
-                required = false, arity = 1)
+                arity = 1)
         public String ids;
 
-        @Parameter(names = {"--type"}, description = "Query for type; comma separated list of IDs, e.g.: \"SNP,SNV\"",
-                required = false, arity = 1)
+        @Parameter(names = {"--id-file"}, description = "Query for ID that are stored in a file, one ID per line, e.g.: rs312411",
+                arity = 1)
+        public String idFilename;
+
+        @Parameter(names = {"--type"}, description = "Query for type; comma separated list of IDs, e.g.: \"INDEL,SNP,SNV\"",
+                arity = 1)
         public String types;
 
-        @Parameter(names = {"--region"}, description = "Query for region; comma separated list of regions, e.g.: 1:300000-400000000,15:343453463-8787665654", required = false)
+        @Parameter(names = {"--study"}, description = "Query for study; comma separated list of study names",
+                arity = 1)
+        public String studies;
+
+        @Parameter(names = {"--biotype"}, description = "Query for biotype; comma separated list of biotype names, e.g.: protein_coding, pseudogene",
+                arity = 1)
+        public String biotypes;
+
+        @Parameter(names = {"--region"}, description = "Query for region; comma separated list of regions, e.g.: 1:300000-400000000,15:343453463-8787665654",
+                arity = 1)
         public String regions;
 
-        @Parameter(names = {"--consequence-type-so-accession"}, description = "Query for Sequence Ontology (SO) term accession code; comma separated list of accession codes of the SO terms related to the variant consequence type, e.g.: SO:32234,SO:00124",
-                required = false, arity = 1)
-        public String so_accessions;
+        @Parameter(names = {"--region-file"}, description = "Query for regions that are stored in a file, one region per line,  e.g.: 1:6700000-560000000",
+                arity = 1)
+        public String regionFilename;
 
-        @Parameter(names = {"--consequence-type-so-name"}, description = "Query for Sequence Ontology (SO) term name; comma separated list of names of the SO terms related to the variant consequence type, e.g.:  \"transgenic insertion, genetic marker\"",
-                required = false, arity = 1)
-        public String so_names;
+        @Parameter(names = {"--ct", "--consequence-type"}, description = "Query for Sequence Ontology term names or accession codes; comma separated (if you provide term names, please use double quotes), e.g.: \"transgenic insertion,SO:32234,SO:00124\"",
+                arity = 1)
+        public String consequenceTypes;
+
+//        @Parameter(names = {"--maf"}, description = "Query for the Minor Allele Frequency of a given <study>:<cohort>, e.g.: 1000g:all>0.4",
+//                arity = 1)
+//        public String maf;
+//
+//        @Parameter(names = {"--mgf"}, description = "Query for the Minor Genotype Frequency of a given <study>:<cohort>, e.g.: 1000g:all<=0.3",
+//                arity = 1)
+//        public String mgf;
+
+        @Parameter(names = {"--clinvar"}, description = "Query for clinvar (accession); comma separated list of accessions", arity = 1)
+        public String clinvar;
+
+        @Parameter(names = {"--cosmic"}, description = "Query for cosmic (mutation ID); comma separated list of mutations IDs", arity = 1)
+        public String cosmic;
+
+
+//        @Parameter(names = {"--gwas"}, description = "Query for gwas (traits); comma separated list of traits",  arity = 1)
+//        public String gwas;
+
+        @Parameter(names = {"--conservation"}, description = "Query for conservation scores (phastCons, phylop, gerp); comma separated list of scores, e.g.: phylop<0.3,phastCons<0.1",
+                arity = 1)
+        public String conservScores;
+
+        @Parameter(names = {"--prot-subst"}, description = "Query for protein substitution scores (polyphen, sift); comma separated list of scores, e.g.: polyphen>0.3,sift>0.6",
+                arity = 1)
+        public String substScores;
     }
 
 
