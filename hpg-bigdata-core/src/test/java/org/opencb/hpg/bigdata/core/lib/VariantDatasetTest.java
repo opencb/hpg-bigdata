@@ -50,7 +50,7 @@ public class VariantDatasetTest {
         //String filename = "/home/jtarraga/data/spark/10k.variants.avro";
         String filename = this.getClass().getResource("100.variants.avro").getFile();
 
-        long count;
+        long count = 0;
 //        String filename = "/tmp/kk/xxx.avro";
         VariantDataset vd = new VariantDataset();
         try {
@@ -59,6 +59,11 @@ public class VariantDatasetTest {
 
             vd.createOrReplaceTempView("vcf");
             System.out.println("--------------------------------------");
+
+            //vd.studyFilter("stats.maf", "1000g::all<=0.4").show();
+            //vd.studyFilter("stats.maf", "hgva@hsapiens_grch37:1000GENOMES_phase_3::ASW==0.008196721").show();
+            vd.studyFilter("stats.refAlleleCount", "hgva@hsapiens_grch37:1000GENOMES_phase_3::ASW==121").show();
+
 //            long count = vd.annotationfilter("consequenceTypes.sequenceOntologyTerms.accession", "SO:0001566").count();
 
 //            count = vd.annotationFilter("populationFrequencies.altAlleleFreq", "1000G:CEU < 1.2,1000G:ASW < 1.25")
@@ -77,8 +82,8 @@ public class VariantDatasetTest {
 //            count = vd.idFilter(Arrays.asList(StringUtils.split(ids, ","))).count();
 
 //            count = vd.annotationFilter("conservation", "phylop<0.3,phastCons<0.1").count();
-            String types = "SNP,SNV";
-            count = vd.typeFilter(new ArrayList<>(Arrays.asList(StringUtils.split(types, ",")))).count();
+//            String types = "SNP,SNV";
+//            count = vd.typeFilter(new ArrayList<>(Arrays.asList(StringUtils.split(types, ",")))).count();
 
 //            System.out.println(vd.annotationfilter("consequenceTypes.sequenceOntologyTerms.name", "missense_variant")
 //                    .select("annotation.consequenceTypes.sequenceOntologyTerms").count());

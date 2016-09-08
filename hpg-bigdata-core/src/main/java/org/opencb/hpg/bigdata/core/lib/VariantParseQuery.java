@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
 public class VariantParseQuery extends ParseQuery {
 
     private static final Pattern POPULATION_PATTERN =
-            Pattern.compile("^([^=<>:]+.*):([^=<>:]+.*)(<=?|>=?|!=|!?=?~|==?)([^=<>:]+.*)$");
+            Pattern.compile("^([^=<>]+.*)::([^=<>]+.*)(<=|>=|!=|=~|==)([^=<>]+.*)$");
     private static final Pattern CONSERVATION_PATTERN =
             Pattern.compile("^([^=<>]+.*)(<=?|>=?|!=|!?=?~|==?)([^=<>]+.*)$");
 
@@ -133,6 +133,13 @@ public class VariantParseQuery extends ParseQuery {
                 // investigate how to query GT
                 break;
 
+            case "stats":
+                auxAddPopulationFilters("study.studyId", "study_stats_key", "study_stats." + field,
+                        (String) value, "population frequencies");
+                explodes.add("LATERAL VIEW explode(studies) act as study");
+                explodes.add("LATERAL VIEW explode(study.stats) act as study_stats_key, study_stats");
+                break;
+
             default:
                 break;
         }
@@ -221,52 +228,9 @@ public class VariantParseQuery extends ParseQuery {
             }
 
             case "populationFrequencies": {
+                auxAddPopulationFilters("popfreq.study", "popfreq.study", "popfreq." + field,
+                        value, "population frequencies");
                 explodes.add("LATERAL VIEW explode(annotation.populationFrequencies) apf as popfreq");
-
-                if (StringUtils.isEmpty(value)) {
-                    throw new IllegalArgumentException("value is null or empty for population frequencies");
-                }
-
-                boolean or = value.contains(",");
-                boolean and = value.contains(";");
-                if (or && and) {
-                    throw new IllegalArgumentException("Command and semi-colon cannot be mixed: " + value);
-                }
-                String logicalComparator = or ? " OR " : " AND ";
-
-                String[] values = value.split("[,;]");
-
-                where = new StringBuilder();
-                if (values == null) {
-                    matcher = POPULATION_PATTERN.matcher((String) value);
-                    if (matcher.find()) {
-                        updatePopWhereString(field, "popfreq", matcher, where);
-                    } else {
-                        // error
-                        System.err.format("error: invalid expresion for population frequencies %s: abort!", value);
-                    }
-                } else {
-                    matcher = POPULATION_PATTERN.matcher(values[0]);
-                    if (matcher.find()) {
-                        where.append("(");
-                        updatePopWhereString(field, "popfreq", matcher, where);
-                        for (int i = 1; i < values.length; i++) {
-                            matcher = POPULATION_PATTERN.matcher(values[i]);
-                            if (matcher.find()) {
-                                where.append(logicalComparator);
-                                updatePopWhereString(field, "popfreq", matcher, where);
-                            } else {
-                                // error
-                                System.err.format("Error: invalid expresion %s: abort!", values[i]);
-                            }
-                        }
-                        where.append(")");
-                    } else {
-                        // error
-                        System.err.format("Error: invalid expresion %s: abort!", values[0]);
-                    }
-                }
-                filters.add(where.toString());
                 break;
             }
 
@@ -344,12 +308,73 @@ public class VariantParseQuery extends ParseQuery {
         filters.add(where.toString());
     }
 
-    private void updatePopWhereString(String field, String viewName, Matcher matcher, StringBuilder where) {
-        where.append("(").append(viewName).append(".study = '").append(matcher.group(1).trim())
-                .append("' AND ").append(viewName).append(".population = '").append(matcher.group(2).trim())
-                .append("' AND ").append(viewName).append(".").append(field).append(matcher.group(3).trim())
+
+    private void auxAddPopulationFilters(String fieldName1, String fieldName2, String fieldName3,
+                                         String value, String label) {
+        if (StringUtils.isEmpty(value)) {
+            throw new IllegalArgumentException("value is null or empty for " + label);
+        }
+
+        boolean or = value.contains(",");
+        boolean and = value.contains(";");
+        if (or && and) {
+            throw new IllegalArgumentException("Command and semi-colon cannot be mixed: " + value);
+        }
+        String logicalComparator = or ? " OR " : " AND ";
+
+        String[] values = value.split("[,;]");
+        Matcher matcher;
+        StringBuilder where = new StringBuilder();
+        if (values == null) {
+            matcher = POPULATION_PATTERN.matcher(value);
+
+            if (matcher.find()) {
+                updatePopWhereString(fieldName1, fieldName2, fieldName3, matcher, where);
+            } else {
+                // error
+                System.err.format("error: invalid expresion for " + label + " %s: abort!", value);
+            }
+        } else {
+            matcher = POPULATION_PATTERN.matcher(values[0]);
+            if (matcher.find()) {
+                where.append("(");
+                updatePopWhereString(fieldName1, fieldName2, fieldName3, matcher, where);
+                for (int i = 1; i < values.length; i++) {
+                    matcher = POPULATION_PATTERN.matcher(values[i]);
+                    if (matcher.find()) {
+                        where.append(logicalComparator);
+                        updatePopWhereString(fieldName1, fieldName2, fieldName3, matcher, where);
+                    } else {
+                        // error
+                        System.err.format("Error: invalid expresion %s: abort!", values[i]);
+                    }
+                }
+                where.append(")");
+            } else {
+                // error
+                System.err.format("Error: invalid expresion %s: abort!", values[0]);
+            }
+        }
+        filters.add(where.toString());
+    }
+
+    private void updatePopWhereString(String fieldName1, String fieldName2, String fieldName3,
+                                      Matcher matcher, StringBuilder where) {
+        where.append("(")
+                .append(fieldName1).append(" = '").append(matcher.group(1).trim())
+                .append("' AND ")
+                .append(fieldName2).append(" = '").append(matcher.group(2).trim())
+                .append("' AND ")
+                .append(fieldName3).append(matcher.group(3).trim())
                 .append(matcher.group(4).trim()).append(")");
     }
+
+//    private void updatePopWhereString(String field, String viewName, Matcher matcher, StringBuilder where) {
+//        where.append("(").append(viewName).append(".study = '").append(matcher.group(1).trim())
+//                .append("' AND ").append(viewName).append(".population = '").append(matcher.group(2).trim())
+//                .append("' AND ").append(viewName).append(".").append(field).append(matcher.group(3).trim())
+//                .append(matcher.group(4).trim()).append(")");
+//    }
 
     private void updateWhereString(String view, Matcher matcher, StringBuilder where) {
         where.append("(").append(view).append(".source = '").append(matcher.group(1).trim())
