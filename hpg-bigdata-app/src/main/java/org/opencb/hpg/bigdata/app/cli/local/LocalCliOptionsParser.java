@@ -500,7 +500,7 @@ public class LocalCliOptionsParser {
                 arity = 1)
         public String types;
 
-        @Parameter(names = {"--study"}, description = "Query for study; comma separated list of study names",
+        @Parameter(names = {"--s", "--study"}, description = "Query for study; comma separated list of study names",
                 arity = 1)
         public String studies;
 
@@ -508,7 +508,7 @@ public class LocalCliOptionsParser {
                 arity = 1)
         public String biotypes;
 
-        @Parameter(names = {"--region"}, description = "Query for region; comma separated list of regions, e.g.: 1:300000-400000000,15:343453463-8787665654",
+        @Parameter(names = {"-r", "--region"}, description = "Query for region; comma separated list of regions, e.g.: 1:300000-400000000,15:343453463-8787665654",
                 arity = 1)
         public String regions;
 
@@ -516,7 +516,7 @@ public class LocalCliOptionsParser {
                 arity = 1)
         public String regionFilename;
 
-        @Parameter(names = {"--ct", "--consequence-type"}, description = "Query for Sequence Ontology term names or accession codes; comma separated (if you provide term names, please use double quotes), e.g.: \"transgenic insertion,SO:32234,SO:00124\"",
+        @Parameter(names = {"--ct", "--consequence-type"}, description = "Query for Sequence Ontology term names or accession codes; comma separated (use double quotes if you provide term names), e.g.: \"transgenic insertion,SO:32234,SO:00124\"",
                 arity = 1)
         public String consequenceTypes;
 
@@ -538,11 +538,11 @@ public class LocalCliOptionsParser {
 //        @Parameter(names = {"--gwas"}, description = "Query for gwas (traits); comma separated list of traits",  arity = 1)
 //        public String gwas;
 
-        @Parameter(names = {"--conservation"}, description = "Query for conservation scores (phastCons, phylop, gerp); comma separated list of scores, e.g.: phylop<0.3,phastCons<0.1",
+        @Parameter(names = {"--conservation"}, description = "Query for conservation scores (phastCons, phylop, gerp); comma separated list of scores and enclosed with double quotes, e.g.: \"phylop<0.3,phastCons<0.1\"",
                 arity = 1)
         public String conservScores;
 
-        @Parameter(names = {"--prot-subst"}, description = "Query for protein substitution scores (polyphen, sift); comma separated list of scores, e.g.: polyphen>0.3,sift>0.6",
+        @Parameter(names = {"--ps", "--protein-substitution"}, description = "Query for protein substitution scores (polyphen, sift); comma separated list of scores and enclosed with double quotes, e.g.: \"polyphen>0.3,sift>0.6\"",
                 arity = 1)
         public String substScores;
 
