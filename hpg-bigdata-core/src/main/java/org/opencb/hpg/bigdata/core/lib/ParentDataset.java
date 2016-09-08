@@ -162,7 +162,7 @@ public abstract class ParentDataset<T> {
         return ds.columns();
     }
 
-    long count() {
+    public long count() {
         updateDataset(query);
         return ds.count();
     }

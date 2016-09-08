@@ -553,6 +553,9 @@ public class LocalCliOptionsParser {
         @Parameter(names = {"--pmaf", "--population-maf"}, description = "Query for population minor allele frequency of a given study. Use the following the format enclosed with double quotes: \"study_name:population_name[<|>|<=|>=]frequency_value\", e.g.: \"1000g:PJL<=0.25\"",
                 arity = 1)
         public String pmaf;
+
+        @Parameter(names = {"--count"}, description = "Display the number of output records")
+        public boolean count = false;
     }
 
 
