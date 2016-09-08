@@ -743,6 +743,11 @@ public class VariantCommandExecutor extends CommandExecutor {
         logger.warn("The current query implementation saves the resulting dataset in Avro format.");
         vd.write().format("com.databricks.spark.avro").save(variantCommandOptions.queryVariantCommandOptions.output);
 
+        // show output records
+        if (variantCommandOptions.queryVariantCommandOptions.show > 0) {
+            vd.show(variantCommandOptions.queryVariantCommandOptions.show);
+        }
+
         // count output records
         if (variantCommandOptions.queryVariantCommandOptions.count) {
             System.out.println("----------------------------------------------");

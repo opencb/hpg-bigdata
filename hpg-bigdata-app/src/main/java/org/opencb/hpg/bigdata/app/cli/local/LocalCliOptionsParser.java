@@ -554,6 +554,9 @@ public class LocalCliOptionsParser {
                 arity = 1)
         public String pmaf;
 
+        @Parameter(names = {"--show"}, description = "Display the first output records", arity = 1)
+        public int show = 0;
+
         @Parameter(names = {"--count"}, description = "Display the number of output records")
         public boolean count = false;
     }
