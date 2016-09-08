@@ -545,6 +545,14 @@ public class LocalCliOptionsParser {
         @Parameter(names = {"--prot-subst"}, description = "Query for protein substitution scores (polyphen, sift); comma separated list of scores, e.g.: polyphen>0.3,sift>0.6",
                 arity = 1)
         public String substScores;
+
+        @Parameter(names = {"--pf", "--population-frequency"}, description = "Query for alternate population frequency of a given study. Use the following format enclosed with double quotes: \"study_name:population_name[<|>|<=|>=]frequency_value\", e.g.: \"1000g:CEU<0.4\"",
+                arity = 1)
+        public String pf;
+
+        @Parameter(names = {"--pmaf", "--population-maf"}, description = "Query for population minor allele frequency of a given study. Use the following the format enclosed with double quotes: \"study_name:population_name[<|>|<=|>=]frequency_value\", e.g.: \"1000g:PJL<=0.25\"",
+                arity = 1)
+        public String pmaf;
     }
 
 

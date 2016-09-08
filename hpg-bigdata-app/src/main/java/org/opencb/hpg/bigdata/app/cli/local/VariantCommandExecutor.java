@@ -724,6 +724,18 @@ public class VariantCommandExecutor extends CommandExecutor {
                     StringUtils.split(variantCommandOptions.queryVariantCommandOptions.substScores, ","))));
         }
 
+        // query for alternate population frequency (study:population)
+        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.pf)) {
+            vd.annotationFilter("populationFrequencies.altAlleleFreq",
+                    variantCommandOptions.queryVariantCommandOptions.pf);
+        }
+
+        // query for population minor allele frequency (study:population)
+        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.pmaf)) {
+            vd.annotationFilter("populationFrequencies.refAlleleFreq",
+                    variantCommandOptions.queryVariantCommandOptions.pmaf);
+        }
+
         // apply previous filters
         vd.update();
 
