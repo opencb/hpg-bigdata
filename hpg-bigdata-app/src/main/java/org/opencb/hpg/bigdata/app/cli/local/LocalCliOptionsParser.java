@@ -516,24 +516,31 @@ public class LocalCliOptionsParser {
                 arity = 1)
         public String regionFilename;
 
+        @Parameter(names = {"--maf"}, description = "Query for the Minor Allele Frequency of a given study and cohort. Use the following format enclosed with double quotes: \"study_name::cohort_name[<|>|<=|>=|==|!=]value\", e.g.: \"1000g::all>0.4\"",
+                arity = 1)
+        public String maf;
+
+        @Parameter(names = {"--mgf"}, description = "Query for the Minor Genotype Frequency of a given study and cohort. Use the following format enclosed with double quotes: \"study_name::cohort_name[<|>|<=|>=|==|!=]value\", e.g.: \"1000g::all>0.18198\"",
+                arity = 1)
+        public String mgf;
+
+        @Parameter(names = {"--missing-allele"}, description = "Query for the number of missing alleles of a given study and cohort. Use the following format enclosed with double quotes: \"study_name::cohort_name[<|>|<=|>=|==|!=]value\", e.g.: \"1000g::all==5\"",
+                arity = 1)
+        public String missingAlleles;
+
+        @Parameter(names = {"--missing-genotype"}, description = "Query for the number of missing genotypes of a given study and cohort. Use the following format enclosed with double quotes: \"study_name::cohort_name[<|>|<=|>=|==|!=]value\", e.g.: \"1000g::all!=0\"",
+                arity = 1)
+        public String missingGenotypes;
+
         @Parameter(names = {"--ct", "--consequence-type"}, description = "Query for Sequence Ontology term names or accession codes; comma separated (use double quotes if you provide term names), e.g.: \"transgenic insertion,SO:32234,SO:00124\"",
                 arity = 1)
         public String consequenceTypes;
-
-//        @Parameter(names = {"--maf"}, description = "Query for the Minor Allele Frequency of a given <study>:<cohort>, e.g.: 1000g:all>0.4",
-//                arity = 1)
-//        public String maf;
-//
-//        @Parameter(names = {"--mgf"}, description = "Query for the Minor Genotype Frequency of a given <study>:<cohort>, e.g.: 1000g:all<=0.3",
-//                arity = 1)
-//        public String mgf;
 
         @Parameter(names = {"--clinvar"}, description = "Query for clinvar (accession); comma separated list of accessions", arity = 1)
         public String clinvar;
 
         @Parameter(names = {"--cosmic"}, description = "Query for cosmic (mutation ID); comma separated list of mutations IDs", arity = 1)
         public String cosmic;
-
 
 //        @Parameter(names = {"--gwas"}, description = "Query for gwas (traits); comma separated list of traits",  arity = 1)
 //        public String gwas;
@@ -546,11 +553,11 @@ public class LocalCliOptionsParser {
                 arity = 1)
         public String substScores;
 
-        @Parameter(names = {"--pf", "--population-frequency"}, description = "Query for alternate population frequency of a given study. Use the following format enclosed with double quotes: \"study_name:population_name[<|>|<=|>=]frequency_value\", e.g.: \"1000g:CEU<0.4\"",
+        @Parameter(names = {"--pf", "--population-frequency"}, description = "Query for alternate population frequency of a given study. Use the following format enclosed with double quotes: \"study_name::population_name[<|>|<=|>=|==|!=]frequency_value\", e.g.: \"1000g::CEU<0.4\"",
                 arity = 1)
         public String pf;
 
-        @Parameter(names = {"--pmaf", "--population-maf"}, description = "Query for population minor allele frequency of a given study. Use the following the format enclosed with double quotes: \"study_name:population_name[<|>|<=|>=]frequency_value\", e.g.: \"1000g:PJL<=0.25\"",
+        @Parameter(names = {"--pmaf", "--population-maf"}, description = "Query for population minor allele frequency of a given study. Use the following the format enclosed with double quotes: \"study_name::population_name[<|>|<=|>=|==|!=]frequency_value\", e.g.: \"1000g::PJL<=0.25\"",
                 arity = 1)
         public String pmaf;
 

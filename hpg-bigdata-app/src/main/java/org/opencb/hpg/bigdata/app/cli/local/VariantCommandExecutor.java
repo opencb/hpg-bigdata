@@ -665,15 +665,25 @@ public class VariantCommandExecutor extends CommandExecutor {
                     StringUtils.split(variantCommandOptions.queryVariantCommandOptions.studies, ","))));
         }
 
-//        // query for maf (study:cohort)
-//        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.maf)) {
-//            vd.annotationFilter("populationFrequencies.minorAlleleFreq", variantCommandOptions.queryVariantCommandOptions.maf);
-//        }
-//
-//        // query for mgf (study:cohort)
-//        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.maf)) {
-//            vd.annotationFilter("populationFrequencies.mgf", variantCommandOptions.queryVariantCommandOptions.mgf);
-//        }
+        // query for maf (study:cohort)
+        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.maf)) {
+            vd.studyFilter("stats.maf", variantCommandOptions.queryVariantCommandOptions.maf);
+        }
+
+        // query for mgf (study:cohort)
+        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.mgf)) {
+            vd.studyFilter("stats.mgf", variantCommandOptions.queryVariantCommandOptions.mgf);
+        }
+
+        // query for number of missing alleles (study:cohort)
+        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.missingAlleles)) {
+            vd.studyFilter("stats.missingAlleles", variantCommandOptions.queryVariantCommandOptions.missingAlleles);
+        }
+
+        // query for number of missing genotypes (study:cohort)
+        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.missingGenotypes)) {
+            vd.studyFilter("stats.missingGenotypes", variantCommandOptions.queryVariantCommandOptions.missingGenotypes);
+        }
 
         // query for region (list and file)
         List<Region> regions = null;
