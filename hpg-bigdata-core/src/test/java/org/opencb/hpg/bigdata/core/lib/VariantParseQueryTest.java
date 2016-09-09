@@ -114,7 +114,7 @@ public class VariantParseQueryTest {
                 "OR (popfreq.study = '1000G' AND popfreq.population = 'ASW' AND popfreq.altAlleleFreq<1.25))";
 
         Query query = new Query();
-        query.put("annotation.populationFrequencies.altAlleleFreq", "1000G:CEU<1.2,1000G:ASW<1.25");
+        query.put("annotation.populationFrequencies.altAlleleFreq", "1000G::CEU<1.2,1000G::ASW<1.25");
 
         String test = variantParseQuery.parse(query, null, "test");
         assertEquals("SQL query does not match", result, test);
@@ -127,7 +127,7 @@ public class VariantParseQueryTest {
                 "AND (popfreq.study = '1000G' AND popfreq.population = 'ASW' AND popfreq.altAlleleFreq<1.25))";
 
         Query query = new Query();
-        query.put("annotation.populationFrequencies.altAlleleFreq", "1000G:CEU<1.2;1000G:ASW<1.25");
+        query.put("annotation.populationFrequencies.altAlleleFreq", "1000G::CEU<1.2;1000G::ASW<1.25");
 
         String test = variantParseQuery.parse(query, null, "test");
         assertEquals("SQL query does not match", result, test);

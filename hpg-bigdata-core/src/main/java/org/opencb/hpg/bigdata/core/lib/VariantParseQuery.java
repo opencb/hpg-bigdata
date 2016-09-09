@@ -29,8 +29,10 @@ import java.util.regex.Pattern;
  */
 public class VariantParseQuery extends ParseQuery {
 
+//    private static final Pattern POPULATION_PATTERN =
+//            Pattern.compile("^([^=<>]+)::([^=<>]+)(<=|>=|!=|=~|==|<|>)([^=<>]+)$");
     private static final Pattern POPULATION_PATTERN =
-            Pattern.compile("^([^=<>]+.*)::([^=<>]+.*)(<=|>=|!=|=~|==)([^=<>]+.*)$");
+            Pattern.compile("^([^=<>]+)::([^=<>]+)(<=?|>=?|!=|!?=?~|==?)([^=<>]+)$");
     private static final Pattern CONSERVATION_PATTERN =
             Pattern.compile("^([^=<>]+.*)(<=?|>=?|!=|!?=?~|==?)([^=<>]+.*)$");
 
@@ -228,7 +230,7 @@ public class VariantParseQuery extends ParseQuery {
             }
 
             case "populationFrequencies": {
-                auxAddPopulationFilters("popfreq.study", "popfreq.study", "popfreq." + field,
+                auxAddPopulationFilters("popfreq.study", "popfreq.population", "popfreq." + field,
                         value, "population frequencies");
                 explodes.add("LATERAL VIEW explode(annotation.populationFrequencies) apf as popfreq");
                 break;
@@ -282,7 +284,7 @@ public class VariantParseQuery extends ParseQuery {
                 updateWhereString(view, matcher, where);
             } else {
                 // error
-                System.err.format("error: invalid expresion %s: abort!", value);
+                System.err.format("error: invalid expresion %s: abort!\n", value);
             }
         } else {
             matcher = CONSERVATION_PATTERN.matcher(values[0]);
@@ -296,13 +298,13 @@ public class VariantParseQuery extends ParseQuery {
                         updateWhereString(view, matcher, where);
                     } else {
                         // error
-                        System.err.format("Error: invalid expresion %s: abort!", values[i]);
+                        System.err.format("Error: invalid expresion %s: abort!\n", values[i]);
                     }
                 }
                 where.append(")");
             } else {
                 // error
-                System.err.format("Error: invalid expresion %s: abort!", values[0]);
+                System.err.format("Error: invalid expresion %s: abort!\n", values[0]);
             }
         }
         filters.add(where.toString());
@@ -332,7 +334,8 @@ public class VariantParseQuery extends ParseQuery {
                 updatePopWhereString(fieldName1, fieldName2, fieldName3, matcher, where);
             } else {
                 // error
-                System.err.format("error: invalid expresion for " + label + " %s: abort!", value);
+                System.err.format("Error: invalid expresion for %s: %s (pattern %s). Abort!\n",
+                        label, value, matcher.pattern());
             }
         } else {
             matcher = POPULATION_PATTERN.matcher(values[0]);
@@ -346,13 +349,15 @@ public class VariantParseQuery extends ParseQuery {
                         updatePopWhereString(fieldName1, fieldName2, fieldName3, matcher, where);
                     } else {
                         // error
-                        System.err.format("Error: invalid expresion %s: abort!", values[i]);
+                        System.err.format("Error: invalid expresion for %s: %s (pattern %s). Abort!\n",
+                                label, values[i], matcher.pattern());
                     }
                 }
                 where.append(")");
             } else {
                 // error
-                System.err.format("Error: invalid expresion %s: abort!", values[0]);
+                System.err.format("Error: invalid expresion for %s: %s (pattern %s). Abort!\n",
+                        label, values[0], matcher.pattern());
             }
         }
         filters.add(where.toString());
