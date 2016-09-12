@@ -274,7 +274,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
 
     public void sort() throws Exception {
         // check mandatory parameter 'input file'
-        Path inputPath = Paths.get(alignmentCommandOptions.queryAlignmentCommandOptions.input);
+        Path inputPath = Paths.get(alignmentCommandOptions.sortAlignmentCommandOptions.input);
         FileUtils.checkFile(inputPath);
 
         // TODO: to take the spark home from somewhere else
@@ -288,13 +288,14 @@ public class AlignmentCommandExecutor extends CommandExecutor {
 
         AlignmentDataset ad = new AlignmentDataset();
 
-        ad.load(alignmentCommandOptions.queryAlignmentCommandOptions.input, sparkSession);
+        ad.load(alignmentCommandOptions.sortAlignmentCommandOptions.input, sparkSession);
 
         // sort
+        ad.orderBy("alignment.position.referenceName", "alignment.position.position");
 
         // save the dataset
         logger.warn("The current query implementation saves the resulting dataset in Avro format.");
-        Utils.saveDatasetAsOneAvroFile(ad, alignmentCommandOptions.queryAlignmentCommandOptions.output);
+        Utils.saveDatasetAsOneAvroFile(ad, alignmentCommandOptions.sortAlignmentCommandOptions.output);
     }
 
     private void stats() throws IOException {

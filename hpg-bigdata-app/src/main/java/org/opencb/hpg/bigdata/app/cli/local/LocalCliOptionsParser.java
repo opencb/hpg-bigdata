@@ -68,7 +68,7 @@ public class LocalCliOptionsParser {
         jcommander.addCommand("alignment", sequenceCommandOptions);
         JCommander alignmentSubCommands = jcommander.getCommands().get("alignment");
         alignmentSubCommands.addCommand("convert", alignmentCommandOptions.convertAlignmentCommandOptions);
-        alignmentSubCommands.addCommand("sort", alignmentCommandOptions.statsAlignmentCommandOptions);
+        alignmentSubCommands.addCommand("sort", alignmentCommandOptions.sortAlignmentCommandOptions);
         alignmentSubCommands.addCommand("stats", alignmentCommandOptions.statsAlignmentCommandOptions);
         alignmentSubCommands.addCommand("depth", alignmentCommandOptions.depthAlignmentCommandOptions);
         alignmentSubCommands.addCommand("query", alignmentCommandOptions.queryAlignmentCommandOptions);
