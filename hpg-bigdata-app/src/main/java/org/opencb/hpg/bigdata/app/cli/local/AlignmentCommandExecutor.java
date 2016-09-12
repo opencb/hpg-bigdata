@@ -68,6 +68,12 @@ public class AlignmentCommandExecutor extends CommandExecutor {
                         alignmentCommandOptions.convertAlignmentCommandOptions.commonOptions.conf);
                 convert();
                 break;
+            case "sort":
+                init(alignmentCommandOptions.sortAlignmentCommandOptions.commonOptions.logLevel,
+                        alignmentCommandOptions.sortAlignmentCommandOptions.commonOptions.verbose,
+                        alignmentCommandOptions.sortAlignmentCommandOptions.commonOptions.conf);
+                sort();
+                break;
             case "stats":
                 init(alignmentCommandOptions.statsAlignmentCommandOptions.commonOptions.logLevel,
                         alignmentCommandOptions.statsAlignmentCommandOptions.commonOptions.verbose,
@@ -264,6 +270,31 @@ public class AlignmentCommandExecutor extends CommandExecutor {
 //            avroSerializer.toAvro(input, output);
 //
 //        }
+    }
+
+    public void sort() throws Exception {
+        // check mandatory parameter 'input file'
+        Path inputPath = Paths.get(alignmentCommandOptions.queryAlignmentCommandOptions.input);
+        FileUtils.checkFile(inputPath);
+
+        // TODO: to take the spark home from somewhere else
+        SparkConf sparkConf = SparkConfCreator.getConf("variant query", "local", 1,
+                true, "/home/jtarraga/soft/spark-2.0.0/");
+        System.out.println("sparkConf = " + sparkConf.toDebugString());
+        SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
+
+//        SparkConf sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "/home/jtarraga/soft/spark-2.0.0/");
+//        SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
+
+        AlignmentDataset ad = new AlignmentDataset();
+
+        ad.load(alignmentCommandOptions.queryAlignmentCommandOptions.input, sparkSession);
+
+        // sort
+
+        // save the dataset
+        logger.warn("The current query implementation saves the resulting dataset in Avro format.");
+        Utils.saveDatasetAsOneAvroFile(ad, alignmentCommandOptions.queryAlignmentCommandOptions.output);
     }
 
     private void stats() throws IOException {

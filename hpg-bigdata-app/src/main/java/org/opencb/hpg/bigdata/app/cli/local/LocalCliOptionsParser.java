@@ -68,6 +68,7 @@ public class LocalCliOptionsParser {
         jcommander.addCommand("alignment", sequenceCommandOptions);
         JCommander alignmentSubCommands = jcommander.getCommands().get("alignment");
         alignmentSubCommands.addCommand("convert", alignmentCommandOptions.convertAlignmentCommandOptions);
+        alignmentSubCommands.addCommand("sort", alignmentCommandOptions.statsAlignmentCommandOptions);
         alignmentSubCommands.addCommand("stats", alignmentCommandOptions.statsAlignmentCommandOptions);
         alignmentSubCommands.addCommand("depth", alignmentCommandOptions.depthAlignmentCommandOptions);
         alignmentSubCommands.addCommand("query", alignmentCommandOptions.queryAlignmentCommandOptions);
@@ -246,12 +247,14 @@ public class LocalCliOptionsParser {
     public class AlignmentCommandOptions extends CommandOptions {
 
         ConvertAlignmentCommandOptions convertAlignmentCommandOptions;
+        SortAlignmentCommandOptions sortAlignmentCommandOptions;
         StatsAlignmentCommandOptions statsAlignmentCommandOptions;
         DepthAlignmentCommandOptions depthAlignmentCommandOptions;
         QueryAlignmentCommandOptions queryAlignmentCommandOptions;
 
         public AlignmentCommandOptions() {
             this.convertAlignmentCommandOptions = new ConvertAlignmentCommandOptions();
+            this.sortAlignmentCommandOptions = new SortAlignmentCommandOptions();
             this.statsAlignmentCommandOptions = new StatsAlignmentCommandOptions();
             this.depthAlignmentCommandOptions = new DepthAlignmentCommandOptions();
             this.queryAlignmentCommandOptions = new QueryAlignmentCommandOptions();
@@ -296,6 +299,19 @@ public class LocalCliOptionsParser {
 
         @Parameter(names = {"--block-size"}, description = "Block size, only for parquet conversions", arity = 1)
         public int blockSize = ParquetWriter.DEFAULT_BLOCK_SIZE;
+    }
+
+    @Parameters(commandNames = {"sort"}, commandDescription = "Sort alignments of a GA4GH/Avro file")
+    class SortAlignmentCommandOptions {
+
+        @ParametersDelegate
+        public CommonCommandOptions commonOptions = commonCommandOptions;
+
+        @Parameter(names = {"-i", "--input"}, description = "Input filename containing alignments to sort (GA4GH/Avro format)", required = true, arity = 1)
+        public String input = null;
+
+        @Parameter(names = {"-o", "--output"}, description = "Output filename to store the alignments sorted (GA4GH/Avro format)", required = true, arity = 1)
+        public String output = null;
     }
 
     @Parameters(commandNames = {"stats"}, commandDescription = "Compute some stats for a file containing alignments according to the GA4GH/Avro model")
