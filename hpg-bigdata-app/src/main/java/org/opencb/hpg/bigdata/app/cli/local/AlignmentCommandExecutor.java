@@ -18,7 +18,6 @@ package org.opencb.hpg.bigdata.app.cli.local;
 
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.specific.SpecificDatumReader;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.apache.spark.SparkConf;
@@ -38,10 +37,8 @@ import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
 import org.opencb.hpg.bigdata.core.parquet.AlignmentParquetConverter;
 
 import java.io.*;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -121,15 +118,8 @@ public class AlignmentCommandExecutor extends CommandExecutor {
         FileUtils.checkFile(inputPath);
 
         // sanity check: output file
-        String output = alignmentCommandOptions.convertAlignmentCommandOptions.output;
-        if (!output.isEmpty()) {
-            Path parent = Paths.get(output).toAbsolutePath().getParent();
-            if (parent != null) { // null if output is a file in the current directory
-                FileUtils.checkDirectory(parent, true); // Throws exception, if does not exist
-            }
-        } else {
-            output = inputPath.toString() + "." + to;
-        }
+        String output = Utils.getOutputFilename(alignmentCommandOptions.convertAlignmentCommandOptions.input,
+                alignmentCommandOptions.convertAlignmentCommandOptions.output, to);
 
         // sanity check: rowGroupSize and pageSize for parquet conversion
         int rowGroupSize = ParquetWriter.DEFAULT_BLOCK_SIZE;
@@ -169,20 +159,8 @@ public class AlignmentCommandExecutor extends CommandExecutor {
         // region filter management,
         // we use the same region list to store all regions from both parameter --regions and
         // parameter --region-file
-        List<Region> regions = null;
-        if (StringUtils.isNotEmpty(alignmentCommandOptions.convertAlignmentCommandOptions.regions)) {
-            regions = Region.parseRegions(alignmentCommandOptions.convertAlignmentCommandOptions.regions);
-        }
-        String regionFilename = alignmentCommandOptions.convertAlignmentCommandOptions.regionFilename;
-        if (StringUtils.isNotEmpty(regionFilename)) {
-            if (regions == null) {
-                regions = new ArrayList<>();
-            }
-            List<String> lines = Files.readAllLines(Paths.get(regionFilename));
-            for (String line: lines) {
-                regions.add(new Region(line));
-            }
-        }
+        List<Region> regions = Utils.getRegionList(alignmentCommandOptions.convertAlignmentCommandOptions.regions,
+                alignmentCommandOptions.convertAlignmentCommandOptions.regionFilename);
         if (regions != null && regions.size() > 0) {
             avroSerializer.addRegionFilter(regions, false);
         }
@@ -434,15 +412,10 @@ public class AlignmentCommandExecutor extends CommandExecutor {
         ad.createOrReplaceTempView("alignment");
 
         // query for region
-        List<Region> regions = null;
-        if (StringUtils.isNotEmpty(alignmentCommandOptions.queryAlignmentCommandOptions.regions)) {
-            regions = Region.parseRegions(alignmentCommandOptions.queryAlignmentCommandOptions.regions);
+        List<Region> regions = Utils.getRegionList(alignmentCommandOptions.queryAlignmentCommandOptions.regions,
+                alignmentCommandOptions.queryAlignmentCommandOptions.regionFile);
+        if (regions != null && regions.size() > 0) {
             ad.regionFilter(regions);
-        }
-
-        // query for region file
-        if (StringUtils.isNotEmpty(alignmentCommandOptions.queryAlignmentCommandOptions.regionFile)) {
-            logger.warn("Query for region file, not yet implemented.");
         }
 
         // query for minimun mapping quality

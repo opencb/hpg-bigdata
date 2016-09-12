@@ -106,15 +106,8 @@ public class VariantCommandExecutor extends CommandExecutor {
         FileUtils.checkFile(inputPath);
 
         // sanity check: output file
-        String output = variantCommandOptions.convertVariantCommandOptions.output;
-        if (!output.isEmpty()) {
-            Path parent = Paths.get(output).toAbsolutePath().getParent();
-            if (parent != null) { // null if output is a file in the current directory
-                FileUtils.checkDirectory(parent, true); // Throws exception, if does not exist
-            }
-        } else {
-            output = inputPath.toString() + "." + to;
-        }
+        String output = Utils.getOutputFilename(variantCommandOptions.convertVariantCommandOptions.input,
+                variantCommandOptions.convertVariantCommandOptions.output, to);
 
         // sanity check: rowGroupSize and pageSize for parquet conversion
         int rowGroupSize = ParquetWriter.DEFAULT_BLOCK_SIZE;
@@ -156,20 +149,8 @@ public class VariantCommandExecutor extends CommandExecutor {
         // region filter management,
         // we use the same region list to store all regions from both parameter --regions and
         // parameter --region-file
-        List<Region> regions = null;
-        if (StringUtils.isNotEmpty(variantCommandOptions.convertVariantCommandOptions.regions)) {
-            regions = Region.parseRegions(variantCommandOptions.convertVariantCommandOptions.regions);
-        }
-        String regionFilename = variantCommandOptions.convertVariantCommandOptions.regionFilename;
-        if (StringUtils.isNotEmpty(regionFilename) && new File(regionFilename).exists()) {
-            if (regions == null) {
-                regions = new ArrayList<>();
-            }
-            List<String> lines = Files.readAllLines(Paths.get(regionFilename));
-            for (String line : lines) {
-                regions.add(new Region(line));
-            }
-        }
+        List<Region> regions = Utils.getRegionList(variantCommandOptions.convertVariantCommandOptions.regions,
+                variantCommandOptions.convertVariantCommandOptions.regionFilename);
         if (regions != null && regions.size() > 0) {
             avroSerializer.addRegionFilter(regions, false);
         }
@@ -686,20 +667,8 @@ public class VariantCommandExecutor extends CommandExecutor {
         }
 
         // query for region (list and file)
-        List<Region> regions = null;
-        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.regions)) {
-            regions = Region.parseRegions(variantCommandOptions.queryVariantCommandOptions.regions);
-        }
-        String regionFilename = variantCommandOptions.queryVariantCommandOptions.regionFilename;
-        if (StringUtils.isNotEmpty(regionFilename) && new File(regionFilename).exists()) {
-            if (regions == null) {
-                regions = new ArrayList<>();
-            }
-            List<String> lines = Files.readAllLines(Paths.get(regionFilename));
-            for (String line : lines) {
-                regions.add(new Region(line));
-            }
-        }
+        List<Region> regions = Utils.getRegionList(variantCommandOptions.queryVariantCommandOptions.regions,
+                variantCommandOptions.queryVariantCommandOptions.regionFilename);
         if (regions != null && regions.size() > 0) {
             vd.regionFilter(regions);
         }
