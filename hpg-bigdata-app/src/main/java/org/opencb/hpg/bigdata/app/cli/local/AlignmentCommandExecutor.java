@@ -479,6 +479,6 @@ public class AlignmentCommandExecutor extends CommandExecutor {
 
         // save the dataset
         logger.warn("The current query implementation saves the resulting dataset in Avro format.");
-        ad.write().format("com.databricks.spark.avro").save(alignmentCommandOptions.queryAlignmentCommandOptions.output);
+        Utils.saveDatasetAsOneAvroFile(ad, alignmentCommandOptions.queryAlignmentCommandOptions.output);
     }
 }
