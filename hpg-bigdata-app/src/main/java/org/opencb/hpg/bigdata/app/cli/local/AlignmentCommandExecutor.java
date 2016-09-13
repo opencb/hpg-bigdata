@@ -307,6 +307,18 @@ public class AlignmentCommandExecutor extends CommandExecutor {
 
         HashMap<String, Integer> regionLength = new HashMap<>();
 
+        // region filter management,
+        // we use the same region list to store all regions from both parameter --regions and
+        // parameter --region-file
+        List<Region> regions = Utils.getRegionList(alignmentCommandOptions.depthAlignmentCommandOptions.regions,
+                alignmentCommandOptions.depthAlignmentCommandOptions.regionFilename);
+
+        AlignmentAvroSerializer serializer = null;
+        if (regions != null && regions.size() > 0) {
+            serializer = new AlignmentAvroSerializer();
+            serializer.addRegionFilter(regions, false);
+        }
+
         try {
             // header management
             BufferedReader br = new BufferedReader(new FileReader(input + BAM_HEADER_SUFFIX));
@@ -346,6 +358,12 @@ public class AlignmentCommandExecutor extends CommandExecutor {
             chromDepth = null;
             for (ReadAlignment readAlignment : reader) {
                 if (readAlignment.getAlignment() != null) {
+
+                    // discard alignment by region filter if necessary
+                    if (serializer != null && !serializer.filter(readAlignment)) {
+                        continue;
+                    }
+
                     regionDepth = calculator.compute(readAlignment);
                     if (chromDepth == null) {
                         chromName = regionDepth.chrom;
@@ -375,11 +393,30 @@ public class AlignmentCommandExecutor extends CommandExecutor {
                     prevPos = regionDepth.position;
                 }
             }
+
             // write depth
-            int length = chromDepth.length;
-            for (int i = 0; i < length; i++) {
-                if (chromDepth[i] > 0) {
-                    writer.write(chromName + "\t" + (i + 1) + "\t" + chromDepth[i] + "\n");
+            if (chromDepth != null) {
+                int length = chromDepth.length;
+                if (serializer != null) {
+                    for (int i = 0; i < length; i++) {
+                        if (chromDepth[i] > 0) {
+                            pos = i + 1;
+                            for (Region region: regions) {
+                                if (region.getChromosome().equals(chromName)
+                                        && region.getStart() <= pos && region.getEnd() >= pos) {
+                                    writer.write(chromName + "\t" + pos + "\t" + chromDepth[i] + "\n");
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                } else {
+                    for (int i = 0; i < length; i++) {
+                        if (chromDepth[i] > 0) {
+                            writer.write(chromName + "\t" + (i + 1) + "\t" + chromDepth[i] + "\n");
+                        }
+                    }
                 }
             }
 
