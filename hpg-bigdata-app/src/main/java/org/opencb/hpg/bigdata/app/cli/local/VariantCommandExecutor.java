@@ -763,20 +763,26 @@ public class VariantCommandExecutor extends CommandExecutor {
         DataFileStream<VariantAvro> reader = new DataFileStream<>(is,
                  new SpecificDatumReader<>(VariantAvro.class));
 
-        // main
-        long counter = 0;
         ObjectMapper mapper = new ObjectMapper();
-        System.out.println("[");
-        for (VariantAvro variant : reader) {
+        if (variantCommandOptions.viewVariantCommandOptions.schema) {
+            // schema
             System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(
-                    mapper.readValue(variant.toString(), Object.class)));
-            counter++;
-            if (head > 0 && counter == head) {
-                break;
+                    mapper.readValue(reader.getSchema().toString(), Object.class)));
+        } else {
+            // main
+            long counter = 0;
+            System.out.println("[");
+            for (VariantAvro variant : reader) {
+                System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(
+                        mapper.readValue(variant.toString(), Object.class)));
+                counter++;
+                if (head > 0 && counter == head) {
+                    break;
+                }
+                System.out.println(",");
             }
-            System.out.println(",");
+            System.out.println("]");
         }
-        System.out.println("]");
 
         // close
         reader.close();

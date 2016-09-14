@@ -318,6 +318,9 @@ public class LocalCliOptionsParser {
         @Parameter(names = {"--head"}, description = "Output the first alignments of the file",
                 arity = 1)
         public int head;
+
+        @Parameter(names = {"--schema"}, description = "Display the Avro schema")
+        public boolean schema = false;
     }
 
     @Parameters(commandNames = {"sort"}, commandDescription = "Sort alignments of a GA4GH/Avro file")
@@ -527,6 +530,9 @@ public class LocalCliOptionsParser {
         @Parameter(names = {"--head"}, description = "Output the first variants of the file",
                 arity = 1)
         public int head;
+
+        @Parameter(names = {"--schema"}, description = "Display the Avro schema")
+        public boolean schema = false;
     }
 
     @Parameters(commandNames = {"query"}, commandDescription = "Command to execute queries against the input file (Avro or Parquet) saving the results in the output file.")

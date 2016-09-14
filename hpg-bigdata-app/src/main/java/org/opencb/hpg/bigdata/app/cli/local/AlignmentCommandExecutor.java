@@ -540,20 +540,26 @@ public class AlignmentCommandExecutor extends CommandExecutor {
         DataFileStream<ReadAlignment> reader = new DataFileStream<>(is,
                 new SpecificDatumReader<>(ReadAlignment.class));
 
-        // main
-        long counter = 0;
         ObjectMapper mapper = new ObjectMapper();
-        System.out.println("[");
-        for (ReadAlignment alignment: reader) {
+        if (alignmentCommandOptions.viewAlignmentCommandOptions.schema) {
+            // schema
             System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(
-                    mapper.readValue(alignment.toString(), Object.class)));
-            counter++;
-            if (head > 0 && counter == head) {
-                break;
+                    mapper.readValue(reader.getSchema().toString(), Object.class)));
+        } else {
+            // main
+            long counter = 0;
+            System.out.println("[");
+            for (ReadAlignment alignment : reader) {
+                System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(
+                        mapper.readValue(alignment.toString(), Object.class)));
+                counter++;
+                if (head > 0 && counter == head) {
+                    break;
+                }
+                System.out.println(",");
             }
-            System.out.println(",");
+            System.out.println("]");
         }
-        System.out.println("]");
 
         // close
         reader.close();
