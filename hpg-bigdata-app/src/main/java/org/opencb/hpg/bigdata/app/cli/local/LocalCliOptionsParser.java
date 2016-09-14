@@ -533,6 +533,12 @@ public class LocalCliOptionsParser {
 
         @Parameter(names = {"--schema"}, description = "Display the Avro schema")
         public boolean schema = false;
+
+        @Parameter(names = {"--exclude-samples"}, description = "Sample data are not displayed")
+        public boolean excludeSamples = false;
+
+        @Parameter(names = {"--exclude-annotations"}, description = "Annotations are not displayed")
+        public boolean excludeAnnotations = false;
     }
 
     @Parameters(commandNames = {"query"}, commandDescription = "Command to execute queries against the input file (Avro or Parquet) saving the results in the output file.")

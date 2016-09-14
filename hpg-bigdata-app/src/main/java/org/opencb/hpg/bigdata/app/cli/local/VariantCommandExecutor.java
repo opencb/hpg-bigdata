@@ -29,6 +29,7 @@ import org.apache.spark.SparkContext;
 import org.apache.spark.sql.SparkSession;
 import org.opencb.biodata.models.core.Region;
 import org.opencb.biodata.models.variant.Variant;
+import org.opencb.biodata.models.variant.avro.StudyEntry;
 import org.opencb.biodata.models.variant.avro.VariantAvro;
 import org.opencb.biodata.tools.variant.converter.VariantContextToVariantConverter;
 import org.opencb.commons.utils.FileUtils;
@@ -773,6 +774,17 @@ public class VariantCommandExecutor extends CommandExecutor {
             long counter = 0;
             System.out.println("[");
             for (VariantAvro variant : reader) {
+                // remove annotations ?
+                if (variantCommandOptions.viewVariantCommandOptions.excludeAnnotations) {
+                    variant.setAnnotation(null);
+                }
+
+                // remove samples ?
+                if (variantCommandOptions.viewVariantCommandOptions.excludeSamples) {
+                    for (StudyEntry study: variant.getStudies()) {
+                        study.setSamplesData(null);
+                    }
+                }
                 System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(
                         mapper.readValue(variant.toString(), Object.class)));
                 counter++;
