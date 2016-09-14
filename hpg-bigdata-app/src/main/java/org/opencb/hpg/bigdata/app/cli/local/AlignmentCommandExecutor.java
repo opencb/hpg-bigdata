@@ -16,6 +16,7 @@
 
 package org.opencb.hpg.bigdata.app.cli.local;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.parquet.hadoop.ParquetWriter;
@@ -91,6 +92,12 @@ public class AlignmentCommandExecutor extends CommandExecutor {
                         alignmentCommandOptions.queryAlignmentCommandOptions.commonOptions.verbose,
                         alignmentCommandOptions.queryAlignmentCommandOptions.commonOptions.conf);
                 query();
+                break;
+            case "view":
+                init(alignmentCommandOptions.queryAlignmentCommandOptions.commonOptions.logLevel,
+                        alignmentCommandOptions.queryAlignmentCommandOptions.commonOptions.verbose,
+                        alignmentCommandOptions.queryAlignmentCommandOptions.commonOptions.conf);
+                view();
                 break;
             /*
             case "align":
@@ -523,4 +530,33 @@ public class AlignmentCommandExecutor extends CommandExecutor {
         logger.warn("The current query implementation saves the resulting dataset in Avro format.");
         Utils.saveDatasetAsOneAvroFile(ad, alignmentCommandOptions.queryAlignmentCommandOptions.output);
     }
+
+    public void view() throws Exception {
+        Path input = Paths.get(alignmentCommandOptions.viewAlignmentCommandOptions.input);
+        int head = alignmentCommandOptions.viewAlignmentCommandOptions.head;
+
+        // open
+        InputStream is = new FileInputStream(input.toFile());
+        DataFileStream<ReadAlignment> reader = new DataFileStream<>(is,
+                new SpecificDatumReader<>(ReadAlignment.class));
+
+        // main
+        long counter = 0;
+        ObjectMapper mapper = new ObjectMapper();
+        System.out.println("[");
+        for (ReadAlignment alignment: reader) {
+            System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(
+                    mapper.readValue(alignment.toString(), Object.class)));
+            counter++;
+            if (head > 0 && counter == head) {
+                break;
+            }
+            System.out.println(",");
+        }
+        System.out.println("]");
+
+        // close
+        reader.close();
+    }
+
 }

@@ -68,6 +68,7 @@ public class LocalCliOptionsParser {
         jcommander.addCommand("alignment", sequenceCommandOptions);
         JCommander alignmentSubCommands = jcommander.getCommands().get("alignment");
         alignmentSubCommands.addCommand("convert", alignmentCommandOptions.convertAlignmentCommandOptions);
+        alignmentSubCommands.addCommand("view", alignmentCommandOptions.viewAlignmentCommandOptions);
         alignmentSubCommands.addCommand("sort", alignmentCommandOptions.sortAlignmentCommandOptions);
         alignmentSubCommands.addCommand("stats", alignmentCommandOptions.statsAlignmentCommandOptions);
         alignmentSubCommands.addCommand("depth", alignmentCommandOptions.depthAlignmentCommandOptions);
@@ -248,6 +249,7 @@ public class LocalCliOptionsParser {
     public class AlignmentCommandOptions extends CommandOptions {
 
         ConvertAlignmentCommandOptions convertAlignmentCommandOptions;
+        ViewAlignmentCommandOptions viewAlignmentCommandOptions;
         SortAlignmentCommandOptions sortAlignmentCommandOptions;
         StatsAlignmentCommandOptions statsAlignmentCommandOptions;
         DepthAlignmentCommandOptions depthAlignmentCommandOptions;
@@ -255,6 +257,7 @@ public class LocalCliOptionsParser {
 
         public AlignmentCommandOptions() {
             this.convertAlignmentCommandOptions = new ConvertAlignmentCommandOptions();
+            this.viewAlignmentCommandOptions = new ViewAlignmentCommandOptions();
             this.sortAlignmentCommandOptions = new SortAlignmentCommandOptions();
             this.statsAlignmentCommandOptions = new StatsAlignmentCommandOptions();
             this.depthAlignmentCommandOptions = new DepthAlignmentCommandOptions();
@@ -300,6 +303,21 @@ public class LocalCliOptionsParser {
 
         @Parameter(names = {"--block-size"}, description = "Block size, only for parquet conversions", arity = 1)
         public int blockSize = ParquetWriter.DEFAULT_BLOCK_SIZE;
+    }
+
+    @Parameters(commandNames = {"view"}, commandDescription = "Display alignment Avro/Parquet files")
+    class ViewAlignmentCommandOptions {
+
+        @ParametersDelegate
+        public CommonCommandOptions commonOptions = commonCommandOptions;
+
+        @Parameter(names = {"-i", "--input"}, description = "Input file name (Avro/Parquet format)",
+                required = true, arity = 1)
+        public String input;
+
+        @Parameter(names = {"--head"}, description = "Output the first alignments of the file",
+                arity = 1)
+        public int head;
     }
 
     @Parameters(commandNames = {"sort"}, commandDescription = "Sort alignments of a GA4GH/Avro file")
