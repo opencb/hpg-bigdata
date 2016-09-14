@@ -78,6 +78,7 @@ public class LocalCliOptionsParser {
         JCommander variantSubCommands = jcommander.getCommands().get("variant");
         variantSubCommands.addCommand("convert", variantCommandOptions.convertVariantCommandOptions);
         variantSubCommands.addCommand("annotate", variantCommandOptions.annotateVariantCommandOptions);
+        variantSubCommands.addCommand("view", variantCommandOptions.viewVariantCommandOptions);
         variantSubCommands.addCommand("query", variantCommandOptions.queryVariantCommandOptions);
 
     }
@@ -407,11 +408,13 @@ public class LocalCliOptionsParser {
 
         ConvertVariantCommandOptions convertVariantCommandOptions;
         AnnotateVariantCommandOptions annotateVariantCommandOptions;
+        ViewVariantCommandOptions viewVariantCommandOptions;
         QueryVariantCommandOptions queryVariantCommandOptions;
 
         public VariantCommandOptions() {
             this.convertVariantCommandOptions = new ConvertVariantCommandOptions();
             this.annotateVariantCommandOptions = new AnnotateVariantCommandOptions();
+            this.viewVariantCommandOptions = new ViewVariantCommandOptions();
             this.queryVariantCommandOptions = new QueryVariantCommandOptions();
         }
     }
@@ -484,7 +487,7 @@ public class LocalCliOptionsParser {
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
 
-        @Parameter(names = {"-i", "--input"}, description = "Input file name, usually a gVCF/VCF but it can be an Avro file when converting to Parquet.",
+        @Parameter(names = {"-i", "--input"}, description = "0000 Input file name, usually a gVCF/VCF but it can be an Avro file when converting to Parquet.",
                 required = true, arity = 1)
         public String input;
 
@@ -493,7 +496,22 @@ public class LocalCliOptionsParser {
         public String ouput;
     }
 
-    @Parameters(commandNames = {"query"}, commandDescription = "Command to execute queries against the input file (Avro or Parquet), the results will be saved into the output file.")
+    @Parameters(commandNames = {"view"}, commandDescription = "Display variant Avro/Parquet files")
+    class ViewVariantCommandOptions {
+
+        @ParametersDelegate
+        public CommonCommandOptions commonOptions = commonCommandOptions;
+
+        @Parameter(names = {"-i", "--input"}, description = "Input file name (Avro/Parquet format)",
+                required = true, arity = 1)
+        public String input;
+
+        @Parameter(names = {"--head"}, description = "Output the first variants of the file",
+                arity = 1)
+        public int head;
+    }
+
+    @Parameters(commandNames = {"query"}, commandDescription = "Command to execute queries against the input file (Avro or Parquet) saving the results in the output file.")
     class QueryVariantCommandOptions {
 
         @ParametersDelegate

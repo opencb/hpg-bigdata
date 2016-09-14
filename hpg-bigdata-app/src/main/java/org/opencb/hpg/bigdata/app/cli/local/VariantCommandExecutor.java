@@ -16,8 +16,11 @@
 
 package org.opencb.hpg.bigdata.app.cli.local;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFFileReader;
+import org.apache.avro.file.DataFileStream;
+import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
@@ -26,6 +29,7 @@ import org.apache.spark.SparkContext;
 import org.apache.spark.sql.SparkSession;
 import org.opencb.biodata.models.core.Region;
 import org.opencb.biodata.models.variant.Variant;
+import org.opencb.biodata.models.variant.avro.VariantAvro;
 import org.opencb.biodata.tools.variant.converter.VariantContextToVariantConverter;
 import org.opencb.commons.utils.FileUtils;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
@@ -74,6 +78,13 @@ public class VariantCommandExecutor extends CommandExecutor {
                         variantCommandOptions.convertVariantCommandOptions.commonOptions.verbose,
                         variantCommandOptions.convertVariantCommandOptions.commonOptions.conf);
                 annotate();
+                break;
+            case "view":
+                init(variantCommandOptions.viewVariantCommandOptions.commonOptions.logLevel,
+                        variantCommandOptions.viewVariantCommandOptions.commonOptions.verbose,
+                        variantCommandOptions.viewVariantCommandOptions.commonOptions.conf);
+                view();
+                break;
             case "query":
                 init(variantCommandOptions.queryVariantCommandOptions.commonOptions.logLevel,
                         variantCommandOptions.queryVariantCommandOptions.commonOptions.verbose,
@@ -743,4 +754,31 @@ public class VariantCommandExecutor extends CommandExecutor {
         variantAvroAnnotator.annotate(input, output);
     }
 
+    public void view() throws Exception {
+        Path input = Paths.get(variantCommandOptions.viewVariantCommandOptions.input);
+        int head = variantCommandOptions.viewVariantCommandOptions.head;
+
+        // open
+        InputStream is = new FileInputStream(input.toFile());
+        DataFileStream<VariantAvro> reader = new DataFileStream<>(is,
+                 new SpecificDatumReader<>(VariantAvro.class));
+
+        // main
+        long counter = 0;
+        ObjectMapper mapper = new ObjectMapper();
+        System.out.println("[");
+        for (VariantAvro variant : reader) {
+            System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(
+                    mapper.readValue(variant.toString(), Object.class)));
+            counter++;
+            if (head > 0 && counter == head) {
+                break;
+            }
+            System.out.println(",");
+        }
+        System.out.println("]");
+
+        // close
+        reader.close();
+    }
 }
