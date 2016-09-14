@@ -36,6 +36,7 @@ import org.opencb.hpg.bigdata.core.avro.AlignmentAvroSerializer;
 import org.opencb.hpg.bigdata.core.lib.AlignmentDataset;
 import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
 import org.opencb.hpg.bigdata.core.parquet.AlignmentParquetConverter;
+import org.opencb.hpg.bigdata.core.utils.ReadAlignmentUtils;
 
 import java.io.*;
 import java.nio.file.Path;
@@ -540,14 +541,30 @@ public class AlignmentCommandExecutor extends CommandExecutor {
         DataFileStream<ReadAlignment> reader = new DataFileStream<>(is,
                 new SpecificDatumReader<>(ReadAlignment.class));
 
+        long counter = 0;
         ObjectMapper mapper = new ObjectMapper();
-        if (alignmentCommandOptions.viewAlignmentCommandOptions.schema) {
+        if (alignmentCommandOptions.viewAlignmentCommandOptions.sam) {
+            // sam
+            // first, header
+            File headerFile = new File(input.toString() + ".header");
+            if (headerFile.exists()) {
+                System.out.println(org.apache.commons.io.FileUtils.readFileToString(headerFile).trim());
+            }
+
+            // and then, alignments
+            for (ReadAlignment alignment : reader) {
+                System.out.println(ReadAlignmentUtils.getSamString(alignment));
+                counter++;
+                if (head > 0 && counter == head) {
+                    break;
+                }
+            }
+        } else if (alignmentCommandOptions.viewAlignmentCommandOptions.schema) {
             // schema
             System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(
                     mapper.readValue(reader.getSchema().toString(), Object.class)));
         } else {
             // main
-            long counter = 0;
             System.out.println("[");
             for (ReadAlignment alignment : reader) {
                 // remove nucleotide sequences ?

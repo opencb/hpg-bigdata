@@ -327,6 +327,9 @@ public class LocalCliOptionsParser {
 
         @Parameter(names = {"--exclude-qualities"}, description = "Quality sequences are not displayed")
         public boolean excludeQualities = false;
+
+        @Parameter(names = {"--sam"}, description = "Alignments are displayed in SAM format")
+        public boolean sam = false;
     }
 
     @Parameters(commandNames = {"sort"}, commandDescription = "Sort alignments of a GA4GH/Avro file")
