@@ -321,6 +321,12 @@ public class LocalCliOptionsParser {
 
         @Parameter(names = {"--schema"}, description = "Display the Avro schema")
         public boolean schema = false;
+
+        @Parameter(names = {"--exclude-sequences"}, description = "Nucleotide sequences are not displayed")
+        public boolean excludeSequences = false;
+
+        @Parameter(names = {"--exclude-qualities"}, description = "Quality sequences are not displayed")
+        public boolean excludeQualities = false;
     }
 
     @Parameters(commandNames = {"sort"}, commandDescription = "Sort alignments of a GA4GH/Avro file")

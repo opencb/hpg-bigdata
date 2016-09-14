@@ -550,6 +550,16 @@ public class AlignmentCommandExecutor extends CommandExecutor {
             long counter = 0;
             System.out.println("[");
             for (ReadAlignment alignment : reader) {
+                // remove nucleotide sequences ?
+                if (alignmentCommandOptions.viewAlignmentCommandOptions.excludeSequences) {
+                    alignment.setAlignedSequence(null);
+                }
+
+                // remove quality sequences ?
+                if (alignmentCommandOptions.viewAlignmentCommandOptions.excludeQualities) {
+                    alignment.setAlignedQuality(null);
+                }
+
                 System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(
                         mapper.readValue(alignment.toString(), Object.class)));
                 counter++;
