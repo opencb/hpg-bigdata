@@ -342,8 +342,11 @@ public class LocalCliOptionsParser {
         @Parameter(names = {"-o", "--output"}, description = "Local output directory to save the depth in a text file", required = true, arity = 1)
         public String output = null;
 
-        //@Parameter(names = {"-f", "--filter"}, description = "", required = false, arity = 1)
-        //public String filter = null;
+        @Parameter(names = {"--region"}, description = "Comma separated list of regions, e.g.: 1:300000-400000000,15:343453463-8787665654", arity = 1)
+        public String regions = null;
+
+        @Parameter(names = {"--region-file"}, description = "Input filename with a list of regions. One region per line, e.g.: 1:300000-400000000", arity = 1)
+        public String regionFilename = null;
     }
 
     @Parameters(commandNames = {"query"}, commandDescription = "Command to execute queries against the Alignment input file (Avro or Parquet), the results will be saved into the output file.")
