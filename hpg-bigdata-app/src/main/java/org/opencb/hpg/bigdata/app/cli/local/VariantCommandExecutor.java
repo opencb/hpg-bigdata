@@ -107,7 +107,7 @@ public class VariantCommandExecutor extends CommandExecutor {
 
         String from = variantCommandOptions.convertVariantCommandOptions.from.toLowerCase();
         if (!from.equals("vcf") && !from.equals("avro")) {
-            throw new IllegalArgumentException("Unknown input format: " + to + ". Valid values: vcf, avro");
+            throw new IllegalArgumentException("Unknown input format: " + from + ". Valid values: vcf, avro");
         }
         boolean fromAvro = from.equals("avro");
 
