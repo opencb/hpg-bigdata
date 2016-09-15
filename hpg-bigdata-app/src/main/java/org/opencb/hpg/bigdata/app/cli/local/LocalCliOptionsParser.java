@@ -548,6 +548,9 @@ public class LocalCliOptionsParser {
 
         @Parameter(names = {"--exclude-annotations"}, description = "Annotations are not displayed")
         public boolean excludeAnnotations = false;
+
+        @Parameter(names = {"--vcf"}, description = "Variants are displayed in VCF format")
+        public boolean vcf = false;
     }
 
     @Parameters(commandNames = {"query"}, commandDescription = "Command to execute queries against the input file (Avro or Parquet) saving the results in the output file.")

@@ -764,14 +764,20 @@ public class VariantCommandExecutor extends CommandExecutor {
         DataFileStream<VariantAvro> reader = new DataFileStream<>(is,
                  new SpecificDatumReader<>(VariantAvro.class));
 
+        long counter = 0;
         ObjectMapper mapper = new ObjectMapper();
-        if (variantCommandOptions.viewVariantCommandOptions.schema) {
+        if (variantCommandOptions.viewVariantCommandOptions.vcf) {
+            // vcf format
+            // first, header
+
+            // and then, variant
+            System.err.println("Warning: VCF output format is not implemented yet!");
+        } else if (variantCommandOptions.viewVariantCommandOptions.schema) {
             // schema
             System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(
                     mapper.readValue(reader.getSchema().toString(), Object.class)));
         } else {
             // main
-            long counter = 0;
             System.out.println("[");
             for (VariantAvro variant : reader) {
                 // remove annotations ?
