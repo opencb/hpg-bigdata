@@ -30,6 +30,7 @@ import org.opencb.biodata.models.core.Region;
 import org.opencb.biodata.models.variant.Variant;
 import org.opencb.biodata.models.variant.avro.StudyEntry;
 import org.opencb.biodata.models.variant.avro.VariantAvro;
+import org.opencb.biodata.models.variant.avro.VariantFileMetadata;
 import org.opencb.biodata.tools.variant.converter.VariantContextToVariantConverter;
 import org.opencb.commons.utils.FileUtils;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
@@ -104,6 +105,12 @@ public class VariantCommandExecutor extends CommandExecutor {
         }
         boolean toParquet = to.equals("parquet");
 
+        String from = variantCommandOptions.convertVariantCommandOptions.from.toLowerCase();
+        if (!from.equals("vcf") && !from.equals("avro")) {
+            throw new IllegalArgumentException("Unknown input format: " + to + ". Valid values: vcf, avro");
+        }
+        boolean fromAvro = from.equals("avro");
+
         // sanity check: parameter 'compression'
         String compressionCodecName = variantCommandOptions.convertVariantCommandOptions.compression.toLowerCase();
         if (!compressionCodecName.equals("gzip")
@@ -124,8 +131,6 @@ public class VariantCommandExecutor extends CommandExecutor {
 
         // convert to parquet if required
         if (toParquet) {
-            // convert to VCF -> PARQUET
-
             // sanity check: rowGroupSize and pageSize for parquet conversion
             int rowGroupSize = variantCommandOptions.convertVariantCommandOptions.blockSize;
             if (rowGroupSize <= 0) {
@@ -160,14 +165,40 @@ public class VariantCommandExecutor extends CommandExecutor {
                 parquetConverter.addRegionFilter(regions, false);
             }
 
-            VariantParquetConverter parquetSerializer = new VariantParquetConverter(
-                    CompressionCodecName.fromConf(compressionCodecName), rowGroupSize, pageSize);
             InputStream inputStream = new FileInputStream(inputPath.toString());
-            System.out.println("\n\nStarting VCF->PARQUET conversion...\n");
-            startTime = System.currentTimeMillis();
-            parquetConverter.toParquetFromVcf(inputStream, output);
-            elapsedTime = System.currentTimeMillis() - startTime;
-            System.out.println("\n\nFinish VCF->PARQUET conversion in " + (elapsedTime / 1000F) + " sec\n");
+            if (fromAvro) {
+                // convert to AVRO -> PARQUET
+                System.out.println("\n\nStarting AVRO->PARQUET conversion...\n");
+                startTime = System.currentTimeMillis();
+                parquetConverter.toParquetFromAvro(inputStream, output);
+                elapsedTime = System.currentTimeMillis() - startTime;
+                System.out.println("\n\nFinish AVRO->PARQUET conversion in " + (elapsedTime / 1000F) + " sec\n");
+
+                // metadata file management
+                File metaFile = new File(inputPath.toString() + ".meta.json");
+                if (metaFile.exists()) {
+                    File outMetaFile = new File(output + ".meta.json");
+
+                    // read metadata JSON to update filename
+                    ObjectMapper mapper = new ObjectMapper();
+                    //mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+                    VariantFileMetadata data = mapper.readValue(metaFile, VariantFileMetadata.class);
+                    data.setFileName(outMetaFile.toString());
+
+                    // write the metadata
+                    PrintWriter writer = new PrintWriter(new FileOutputStream(outMetaFile));
+                    writer.write(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(
+                            mapper.readValue(data.toString(), Object.class)));
+                    writer.close();
+                }
+            } else {
+                // convert to VCF -> PARQUET
+                System.out.println("\n\nStarting VCF->PARQUET conversion...\n");
+                startTime = System.currentTimeMillis();
+                parquetConverter.toParquetFromVcf(inputStream, output);
+                elapsedTime = System.currentTimeMillis() - startTime;
+                System.out.println("\n\nFinish VCF->PARQUET conversion in " + (elapsedTime / 1000F) + " sec\n");
+            }
         } else {
             // convert to VCF -> AVRO
 

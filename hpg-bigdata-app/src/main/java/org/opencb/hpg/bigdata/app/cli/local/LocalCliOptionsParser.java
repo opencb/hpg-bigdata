@@ -463,6 +463,9 @@ public class LocalCliOptionsParser {
         @Parameter(names = {"--to"}, description = "Destination format, accepted values: avro, parquet", arity = 1)
         public String to = "avro";
 
+        @Parameter(names = {"--from"}, description = "Input file format, accepted values: vcf, avro", arity = 1)
+        public String from = "vcf";
+
         @Parameter(names = {"-o", "--output"}, description = "Output file name", required = true, arity = 1)
         public String output = null;
 
