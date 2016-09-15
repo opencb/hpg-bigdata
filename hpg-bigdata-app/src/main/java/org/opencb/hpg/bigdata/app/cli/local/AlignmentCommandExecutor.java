@@ -19,7 +19,6 @@ package org.opencb.hpg.bigdata.app.cli.local;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.specific.SpecificDatumReader;
-import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
@@ -135,73 +134,72 @@ public class AlignmentCommandExecutor extends CommandExecutor {
         String output = Utils.getOutputFilename(alignmentCommandOptions.convertAlignmentCommandOptions.input,
                 alignmentCommandOptions.convertAlignmentCommandOptions.output, to);
 
-        // sanity check: rowGroupSize and pageSize for parquet conversion
-        int rowGroupSize = ParquetWriter.DEFAULT_BLOCK_SIZE;
-        int pageSize = ParquetWriter.DEFAULT_PAGE_SIZE;
+        long startTime, elapsedTime;
+        boolean binQualities = alignmentCommandOptions.convertAlignmentCommandOptions.binQualities;
+
+        // convert to parquet if required
         if (toParquet) {
-            rowGroupSize = alignmentCommandOptions.convertAlignmentCommandOptions.blockSize;
+            // sanity check: rowGroupSize and pageSize for parquet conversion
+            int rowGroupSize = alignmentCommandOptions.convertAlignmentCommandOptions.blockSize;
             if (rowGroupSize <= 0) {
                 throw new IllegalArgumentException("Invalid block size: " + rowGroupSize
                         + ". It must be greater than 0");
             }
-            pageSize = alignmentCommandOptions.convertAlignmentCommandOptions.pageSize;
+            int pageSize = alignmentCommandOptions.convertAlignmentCommandOptions.pageSize;
             if (pageSize <= 0) {
                 throw new IllegalArgumentException("Invalid page size: " + pageSize
                         + ". It must be greater than 0");
             }
-        }
 
-        // for parquet conversion,
-        // first, to convert to avro with a temporary output filename name, and then to parquet using that temporary
-        // file as input
-        String tmpSuffix = ".avro.63432.tmp";
-        String tmpName = output;
-        if (toParquet) {
-            tmpName += tmpSuffix;
-        }
+            // create the Parquet writer and add the necessary filters
+            AlignmentParquetConverter parquetConverter = new AlignmentParquetConverter(
+                    CompressionCodecName.fromConf(compressionCodecName), binQualities, rowGroupSize, pageSize);
 
-        // convert to avro
-        AlignmentAvroSerializer avroSerializer;
-        boolean binQualities = alignmentCommandOptions.convertAlignmentCommandOptions.binQualities;
-        avroSerializer = new AlignmentAvroSerializer(compressionCodecName, binQualities);
+            // set minimum mapping quality filter
+            if (alignmentCommandOptions.convertAlignmentCommandOptions.minMapQ > 0) {
+                parquetConverter.addMinMapQFilter(alignmentCommandOptions.convertAlignmentCommandOptions.minMapQ);
+            }
 
-        // set minimum mapping quality filter
-        if (alignmentCommandOptions.convertAlignmentCommandOptions.minMapQ > 0) {
-            avroSerializer.addMinMapQFilter(alignmentCommandOptions.convertAlignmentCommandOptions.minMapQ);
-        }
+            // region filter management,
+            // we use the same region list to store all regions from both parameter --regions and
+            // parameter --region-file
+            List<Region> regions = Utils.getRegionList(alignmentCommandOptions.convertAlignmentCommandOptions.regions,
+                    alignmentCommandOptions.convertAlignmentCommandOptions.regionFilename);
+            if (regions != null && regions.size() > 0) {
+                parquetConverter.addRegionFilter(regions, false);
+            }
 
-        // region filter management,
-        // we use the same region list to store all regions from both parameter --regions and
-        // parameter --region-file
-        List<Region> regions = Utils.getRegionList(alignmentCommandOptions.convertAlignmentCommandOptions.regions,
-                alignmentCommandOptions.convertAlignmentCommandOptions.regionFilename);
-        if (regions != null && regions.size() > 0) {
-            avroSerializer.addRegionFilter(regions, false);
-        }
-
-
-        long startTime, elapsedTime;
-        System.out.println("\n\nStarting BAM->AVRO conversion...\n");
-        startTime = System.currentTimeMillis();
-        avroSerializer.toAvro(inputPath.toString(), tmpName);
-        elapsedTime = System.currentTimeMillis() - startTime;
-        System.out.println("\n\nFinish BAM->AVRO conversion in " + (elapsedTime / 1000F) + " sec\n");
-
-        // convert to parquet if required
-        if (toParquet) {
-            AlignmentParquetConverter parquetSerializer = new AlignmentParquetConverter(
-                    CompressionCodecName.fromConf(compressionCodecName), rowGroupSize, pageSize);
-            InputStream inputStream = new FileInputStream(tmpName);
-            System.out.println("\n\nStarting AVRO->PARQUET conversion...\n");
+            // convert to BAM -> PARQUET
+            System.out.println("\n\nStarting BAM->PARQUET conversion...\n");
             startTime = System.currentTimeMillis();
-            parquetSerializer.toParquetFromAvro(inputStream, output);
+            parquetConverter.toParquetFromBam(inputPath.toString(), output);
             elapsedTime = System.currentTimeMillis() - startTime;
-            System.out.println("\n\nFinish AVRO->PARQUET conversion in " + (elapsedTime / 1000F) + " sec\n");
+            System.out.println("\n\nFinish BAM->PARQUET conversion in " + (elapsedTime / 1000F) + " sec\n");
+        } else {
+            // convert to BAM -> AVRO
 
-            // temporary file management
-            //new File(tmpName).delete();
-            String name = tmpName + AlignmentAvroSerializer.getHeaderSuffix();
-            new  File(name).renameTo(new File(name.replaceFirst(tmpSuffix, "")));
+            AlignmentAvroSerializer avroSerializer;
+            avroSerializer = new AlignmentAvroSerializer(compressionCodecName, binQualities);
+
+            // set minimum mapping quality filter
+            if (alignmentCommandOptions.convertAlignmentCommandOptions.minMapQ > 0) {
+                avroSerializer.addMinMapQFilter(alignmentCommandOptions.convertAlignmentCommandOptions.minMapQ);
+            }
+
+            // region filter management,
+            // we use the same region list to store all regions from both parameter --regions and
+            // parameter --region-file
+            List<Region> regions = Utils.getRegionList(alignmentCommandOptions.convertAlignmentCommandOptions.regions,
+                    alignmentCommandOptions.convertAlignmentCommandOptions.regionFilename);
+            if (regions != null && regions.size() > 0) {
+                avroSerializer.addRegionFilter(regions, false);
+            }
+
+            System.out.println("\n\nStarting BAM->AVRO conversion...\n");
+            startTime = System.currentTimeMillis();
+            avroSerializer.toAvro(inputPath.toString(), output);
+            elapsedTime = System.currentTimeMillis() - startTime;
+            System.out.println("\n\nFinish BAM->AVRO conversion in " + (elapsedTime / 1000F) + " sec\n");
         }
 
 
