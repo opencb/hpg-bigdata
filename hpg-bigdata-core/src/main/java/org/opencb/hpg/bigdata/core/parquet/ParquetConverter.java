@@ -43,7 +43,7 @@ public abstract class ParquetConverter<T extends IndexedRecord> {
 
     protected Schema schema;
 
-    protected List<Predicate<T>> filters;
+    protected List<List<Predicate<T>>> filters;
 
     public ParquetConverter() {
         this(CompressionCodecName.GZIP, ParquetWriter.DEFAULT_BLOCK_SIZE, ParquetWriter.DEFAULT_PAGE_SIZE);
@@ -58,20 +58,48 @@ public abstract class ParquetConverter<T extends IndexedRecord> {
     }
 
     public boolean filter(T record) {
-        for (Predicate filter: filters) {
-            if (!filter.test(record)) {
-                return false;
+        for (List<Predicate<T>> list: filters) {
+            if (list.size() == 1) {
+                if (!list.get(0).test(record)) {
+                    return false;
+                }
+            } else if (list.size() > 1) {
+                boolean or = false;
+                for (Predicate<T> filter: list) {
+                    if (filter.test(record)) {
+                        or = true;
+                        break;
+                    }
+                }
+                if (!or) {
+                    return false;
+                }
             }
         }
         return true;
     }
 
     public ParquetConverter addFilter(Predicate<T> predicate) {
-        getFilters().add(predicate);
+        List<Predicate<T>> list = new ArrayList<>();
+        list.add(predicate);
+        getFilters().add(list);
         return this;
     }
 
-    public void toParquet(InputStream inputStream, String outputFilename) throws IOException {
+    public ParquetConverter addFilter(List<Predicate<T>> predicates) {
+        return addFilter(predicates, false);
+    }
+
+    public ParquetConverter addFilter(List<Predicate<T>> predicates, boolean and) {
+        if (and) {
+            predicates.forEach(p -> addFilter(p));
+        } else {
+            getFilters().add(predicates);
+        }
+        return this;
+    }
+
+    public void toParquetFromAvro(InputStream inputStream, String outputFilename) throws IOException {
         DatumReader<T> datumReader = new SpecificDatumReader<>(schema);
         DataFileStream<T> dataFileStream = new DataFileStream<>(inputStream, datumReader);
 
@@ -104,7 +132,6 @@ public abstract class ParquetConverter<T extends IndexedRecord> {
         dataFileStream.close();
     }
 
-
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("ParquetConverter{");
@@ -117,13 +144,12 @@ public abstract class ParquetConverter<T extends IndexedRecord> {
         return sb.toString();
     }
 
-    public List<Predicate<T>> getFilters() {
+    public List<List<Predicate<T>>> getFilters() {
         return filters;
     }
 
-    public ParquetConverter setFilters(List<Predicate<T>> filters) {
+    public ParquetConverter setFilters(List<List<Predicate<T>>> filters) {
         this.filters = filters;
         return this;
     }
-
 }

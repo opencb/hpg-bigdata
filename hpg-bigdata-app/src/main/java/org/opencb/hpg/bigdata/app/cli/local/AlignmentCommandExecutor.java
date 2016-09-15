@@ -194,7 +194,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
             InputStream inputStream = new FileInputStream(tmpName);
             System.out.println("\n\nStarting AVRO->PARQUET conversion...\n");
             startTime = System.currentTimeMillis();
-            parquetSerializer.toParquet(inputStream, output);
+            parquetSerializer.toParquetFromAvro(inputStream, output);
             elapsedTime = System.currentTimeMillis() - startTime;
             System.out.println("\n\nFinish AVRO->PARQUET conversion in " + (elapsedTime / 1000F) + " sec\n");
 

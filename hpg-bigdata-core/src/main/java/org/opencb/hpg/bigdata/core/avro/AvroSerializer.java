@@ -94,7 +94,7 @@ public abstract class AvroSerializer<T> {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("AvroSerializer{");
+        final StringBuilder sb = new StringBuilder("ParquetSerializer{");
         sb.append("compression=").append(compression);
         sb.append(", filters=").append(filters);
         sb.append('}');

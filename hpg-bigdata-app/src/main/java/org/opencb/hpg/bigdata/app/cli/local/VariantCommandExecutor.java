@@ -22,7 +22,6 @@ import htsjdk.variant.vcf.VCFFileReader;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
@@ -34,7 +33,6 @@ import org.opencb.biodata.models.variant.avro.VariantAvro;
 import org.opencb.biodata.tools.variant.converter.VariantContextToVariantConverter;
 import org.opencb.commons.utils.FileUtils;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
-import org.opencb.hpg.bigdata.core.avro.AlignmentAvroSerializer;
 import org.opencb.hpg.bigdata.core.avro.VariantAvroAnnotator;
 import org.opencb.hpg.bigdata.core.avro.VariantAvroSerializer;
 import org.opencb.hpg.bigdata.core.converters.variation.VariantContext2VariantConverter;
@@ -45,11 +43,12 @@ import org.opencb.hpg.bigdata.core.parquet.VariantParquetConverter;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
+import static java.nio.file.Paths.get;
 
 /**
  * Created by imedina on 25/06/15.
@@ -114,81 +113,90 @@ public class VariantCommandExecutor extends CommandExecutor {
         }
 
         // sanity check: input file
-        Path inputPath = Paths.get(variantCommandOptions.convertVariantCommandOptions.input);
+        Path inputPath = get(variantCommandOptions.convertVariantCommandOptions.input);
         FileUtils.checkFile(inputPath);
 
         // sanity check: output file
         String output = Utils.getOutputFilename(variantCommandOptions.convertVariantCommandOptions.input,
                 variantCommandOptions.convertVariantCommandOptions.output, to);
 
-        // sanity check: rowGroupSize and pageSize for parquet conversion
-        int rowGroupSize = ParquetWriter.DEFAULT_BLOCK_SIZE;
-        int pageSize = ParquetWriter.DEFAULT_PAGE_SIZE;
+        long startTime, elapsedTime;
+
+        // convert to parquet if required
         if (toParquet) {
-            rowGroupSize = variantCommandOptions.convertVariantCommandOptions.blockSize;
+            // convert to VCF -> PARQUET
+
+            // sanity check: rowGroupSize and pageSize for parquet conversion
+            int rowGroupSize = variantCommandOptions.convertVariantCommandOptions.blockSize;
             if (rowGroupSize <= 0) {
                 throw new IllegalArgumentException("Invalid block size: " + rowGroupSize
-                        + ". It must be greater than 0");
+                            + ". It must be greater than 0");
             }
-            pageSize = variantCommandOptions.convertVariantCommandOptions.pageSize;
+            int pageSize = variantCommandOptions.convertVariantCommandOptions.pageSize;
             if (pageSize <= 0) {
                 throw new IllegalArgumentException("Invalid page size: " + pageSize
-                        + ". It must be greater than 0");
+                            + ". It must be greater than 0");
             }
-        }
 
-        // for parquet conversion,
-        // first, to convert to avro with a temporary output filename name, and then to parquet using that temporary
-        // file as input
-        String tmpSuffix = ".avro.63432.tmp";
-        String tmpName = output;
-        if (toParquet) {
-            tmpName += tmpSuffix;
-        }
+            // create the Parquet writer and add the necessary filters
+            VariantParquetConverter parquetConverter = new VariantParquetConverter(
+                    CompressionCodecName.fromConf(compressionCodecName), rowGroupSize, pageSize);
 
-        // convert to avro
-        VariantAvroSerializer avroSerializer = new VariantAvroSerializer(compressionCodecName);
+            // valid id filter
+            if (variantCommandOptions.convertVariantCommandOptions.validId) {
+                parquetConverter.addValidIdFilter();
+            }
 
-        if (variantCommandOptions.convertVariantCommandOptions.validId) {
-            avroSerializer.addValidIdFilter();
-        }
+//        // set minimum quality filter
+//        if (variantCommandOptions.convertVariantCommandOptions.minQuality > 0) {
+//            parquetConverter.addMinQualityFilter(variantCommandOptions.convertVariantCommandOptions.minQuality);
+//        }
+
+            // region filter management,
+            // we use the same region list to store all regions from both parameter --regions and --region-file
+            List<Region> regions = Utils.getRegionList(variantCommandOptions.convertVariantCommandOptions.regions,
+                    variantCommandOptions.convertVariantCommandOptions.regionFilename);
+            if (regions != null && regions.size() > 0) {
+                parquetConverter.addRegionFilter(regions, false);
+            }
+
+            VariantParquetConverter parquetSerializer = new VariantParquetConverter(
+                    CompressionCodecName.fromConf(compressionCodecName), rowGroupSize, pageSize);
+            InputStream inputStream = new FileInputStream(inputPath.toString());
+            System.out.println("\n\nStarting VCF->PARQUET conversion...\n");
+            startTime = System.currentTimeMillis();
+            parquetConverter.toParquetFromVcf(inputStream, output);
+            elapsedTime = System.currentTimeMillis() - startTime;
+            System.out.println("\n\nFinish VCF->PARQUET conversion in " + (elapsedTime / 1000F) + " sec\n");
+        } else {
+            // convert to VCF -> AVRO
+
+            // create the Avro writer and add the necessary filters
+            VariantAvroSerializer avroSerializer = new VariantAvroSerializer(compressionCodecName);
+
+            // valid id filter
+            if (variantCommandOptions.convertVariantCommandOptions.validId) {
+                avroSerializer.addValidIdFilter();
+            }
 
 //        // set minimum quality filter
 //        if (variantCommandOptions.convertVariantCommandOptions.minQuality > 0) {
 //            avroSerializer.addMinQualityFilter(variantCommandOptions.convertVariantCommandOptions.minQuality);
 //        }
 
-        // region filter management,
-        // we use the same region list to store all regions from both parameter --regions and
-        // parameter --region-file
-        List<Region> regions = Utils.getRegionList(variantCommandOptions.convertVariantCommandOptions.regions,
-                variantCommandOptions.convertVariantCommandOptions.regionFilename);
-        if (regions != null && regions.size() > 0) {
-            avroSerializer.addRegionFilter(regions, false);
-        }
+            // region filter management,
+            // we use the same region list to store all regions from both parameter --regions and --region-file
+            List<Region> regions = Utils.getRegionList(variantCommandOptions.convertVariantCommandOptions.regions,
+                    variantCommandOptions.convertVariantCommandOptions.regionFilename);
+            if (regions != null && regions.size() > 0) {
+                avroSerializer.addRegionFilter(regions, false);
+            }
 
-        long startTime, elapsedTime;
-        System.out.println("\n\nStarting VCF->AVRO conversion...\n");
-        startTime = System.currentTimeMillis();
-        avroSerializer.toAvro(inputPath.toString(), tmpName);
-        elapsedTime = System.currentTimeMillis() - startTime;
-        System.out.println("\n\nFinish VCF->AVRO conversion in " + (elapsedTime / 1000F) + " sec\n");
-
-        // convert to parquet if required
-        if (toParquet) {
-            VariantParquetConverter parquetSerializer = new VariantParquetConverter(
-                    CompressionCodecName.fromConf(compressionCodecName), rowGroupSize, pageSize);
-            InputStream inputStream = new FileInputStream(tmpName);
-            System.out.println("\n\nStarting AVRO->PARQUET conversion...\n");
+            System.out.println("\n\nStarting VCF->AVRO conversion...\n");
             startTime = System.currentTimeMillis();
-            parquetSerializer.toParquet(inputStream, output);
+            avroSerializer.toAvro(inputPath.toString(), output);
             elapsedTime = System.currentTimeMillis() - startTime;
-            System.out.println("\n\nFinish AVRO->PARQUET conversion in " + (elapsedTime / 1000F) + " sec\n");
-
-            // temporary file management
-            //new File(tmpName).delete();
-            String name = tmpName + AlignmentAvroSerializer.getHeaderSuffix();
-            new File(name).renameTo(new File(name.replaceFirst(tmpSuffix, "")));
+            System.out.println("\n\nFinish VCF->AVRO conversion in " + (elapsedTime / 1000F) + " sec\n");
         }
     }
 
@@ -232,7 +240,7 @@ public class VariantCommandExecutor extends CommandExecutor {
 //
 //        switch (variantCommandOptions.convertVariantCommandOptions.to) {
 //            case "avro":
-//                VariantAvroSerializer avroSerializer = new VariantAvroSerializer(compression);
+//                VariantParquetSerializer avroSerializer = new VariantParquetSerializer(compression);
 //                if (regions != null) {
 //                    regions.forEach(avroSerializer::addRegionFilter);
 //                }
@@ -362,7 +370,7 @@ public class VariantCommandExecutor extends CommandExecutor {
 //            }
 //
 //            System.out.println("compression = " + compression);
-//            VariantAvroSerializer avroSerializer = new VariantAvroSerializer(compression);
+//            VariantParquetSerializer avroSerializer = new VariantParquetSerializer(compression);
 //            avroSerializer.toAvro(inputPath.toString(), output);
 //
 //            /*
@@ -605,12 +613,12 @@ public class VariantCommandExecutor extends CommandExecutor {
 
     public void query() throws Exception {
         // sanity check: input file
-        Path inputPath = Paths.get(variantCommandOptions.queryVariantCommandOptions.input);
+        Path inputPath = get(variantCommandOptions.queryVariantCommandOptions.input);
         FileUtils.checkFile(inputPath);
 
         // TODO: to take the spark home from somewhere else
         SparkConf sparkConf = SparkConfCreator.getConf("variant query", "local", 1,
-                    true, "/home/jtarraga/soft/spark-2.0.0/");
+                true, "/home/jtarraga/soft/spark-2.0.0/");
         System.out.println("sparkConf = " + sparkConf.toDebugString());
         SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
 
@@ -631,9 +639,9 @@ public class VariantCommandExecutor extends CommandExecutor {
         String idFilename = variantCommandOptions.queryVariantCommandOptions.idFilename;
         if (StringUtils.isNotEmpty(idFilename) && new File(idFilename).exists()) {
             if (list == null) {
-                list = Files.readAllLines(Paths.get(idFilename));
+                list = Files.readAllLines(get(idFilename));
             } else {
-                list.addAll(Files.readAllLines(Paths.get(idFilename)));
+                list.addAll(Files.readAllLines(get(idFilename)));
             }
         }
         if (list != null) {
@@ -750,19 +758,19 @@ public class VariantCommandExecutor extends CommandExecutor {
     public void annotate() throws IOException {
         VariantAvroAnnotator variantAvroAnnotator = new VariantAvroAnnotator();
 
-        Path input = Paths.get(variantCommandOptions.annotateVariantCommandOptions.input);
-        Path output = Paths.get(variantCommandOptions.annotateVariantCommandOptions.ouput);
+        Path input = get(variantCommandOptions.annotateVariantCommandOptions.input);
+        Path output = get(variantCommandOptions.annotateVariantCommandOptions.ouput);
         variantAvroAnnotator.annotate(input, output);
     }
 
     public void view() throws Exception {
-        Path input = Paths.get(variantCommandOptions.viewVariantCommandOptions.input);
+        Path input = get(variantCommandOptions.viewVariantCommandOptions.input);
         int head = variantCommandOptions.viewVariantCommandOptions.head;
 
         // open
         InputStream is = new FileInputStream(input.toFile());
         DataFileStream<VariantAvro> reader = new DataFileStream<>(is,
-                 new SpecificDatumReader<>(VariantAvro.class));
+                new SpecificDatumReader<>(VariantAvro.class));
 
         long counter = 0;
         ObjectMapper mapper = new ObjectMapper();

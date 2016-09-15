@@ -37,7 +37,7 @@ public class AlignmentParquetConverter extends ParquetConverter<ReadAlignment> {
     }
 
     public AlignmentParquetConverter addQualityFilter(int quality) {
-        getFilters().add(a -> !a.getImproperPlacement() && a.getAlignment().getMappingQuality() >= quality);
+        addFilter(a -> !a.getImproperPlacement() && a.getAlignment().getMappingQuality() >= quality);
         return this;
     }
 
