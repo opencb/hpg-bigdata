@@ -183,8 +183,6 @@ public class LocalCliOptionsParser {
 
     }
 
-
-
     /*
      * Sequence (FASTQ) CLI options
      */
@@ -265,7 +263,7 @@ public class LocalCliOptionsParser {
         }
     }
 
-    @Parameters(commandNames = {"convert"}, commandDescription = "Converts BAM files to different big data formats such as Avro")
+    @Parameters(commandNames = {"convert"}, commandDescription = "Converts BAM files to different big data formats such as Avro, Parquet")
     class ConvertAlignmentCommandOptions {
 
         @ParametersDelegate
@@ -283,8 +281,8 @@ public class LocalCliOptionsParser {
         @Parameter(names = {"--to"}, description = "Destination format, accepted values: avro, parquet", arity = 1)
         public String to = "avro";
 
-//        @Parameter(names = {"--to-bam"}, description = "Convert back to BAM format. In this case, the input file has to be saved in the GA4GH/Avro model, and the output file will be in BAM format", required = false)
-//        public boolean toBam;
+        @Parameter(names = {"--from"}, description = "Input file format, accepted values: bam, avro", arity = 1)
+        public String from = "bam";
 
         @Parameter(names = {"--bin-qualities"}, description = "Compress the nucleotide qualities by using 8 quality levels (there will be loss of information)")
         public boolean binQualities = false;

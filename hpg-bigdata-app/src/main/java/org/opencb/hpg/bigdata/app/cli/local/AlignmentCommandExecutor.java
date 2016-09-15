@@ -38,6 +38,7 @@ import org.opencb.hpg.bigdata.core.parquet.AlignmentParquetConverter;
 import org.opencb.hpg.bigdata.core.utils.ReadAlignmentUtils;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -118,6 +119,12 @@ public class AlignmentCommandExecutor extends CommandExecutor {
         }
         boolean toParquet = to.equals("parquet");
 
+        String from = alignmentCommandOptions.convertAlignmentCommandOptions.from.toLowerCase();
+        if (!from.equals("bam") && !from.equals("avro")) {
+            throw new IllegalArgumentException("Unknown input format: " + from + ". Valid values: bam, avro");
+        }
+        boolean fromAvro = from.equals("avro");
+
         // sanity check: parameter 'compression'
         String compressionCodecName = alignmentCommandOptions.convertAlignmentCommandOptions.compression.toLowerCase();
         if (!compressionCodecName.equals("gzip")
@@ -169,12 +176,29 @@ public class AlignmentCommandExecutor extends CommandExecutor {
                 parquetConverter.addRegionFilter(regions, false);
             }
 
-            // convert to BAM -> PARQUET
-            System.out.println("\n\nStarting BAM->PARQUET conversion...\n");
-            startTime = System.currentTimeMillis();
-            parquetConverter.toParquetFromBam(inputPath.toString(), output);
-            elapsedTime = System.currentTimeMillis() - startTime;
-            System.out.println("\n\nFinish BAM->PARQUET conversion in " + (elapsedTime / 1000F) + " sec\n");
+            if (fromAvro) {
+                // convert to AVRO -> PARQUET
+                InputStream inputStream = new FileInputStream(inputPath.toString());
+                System.out.println("\n\nStarting AVRO->PARQUET conversion...\n");
+                startTime = System.currentTimeMillis();
+                parquetConverter.toParquetFromAvro(inputStream, output);
+                elapsedTime = System.currentTimeMillis() - startTime;
+                System.out.println("\n\nFinish AVRO->PARQUET conversion in " + (elapsedTime / 1000F) + " sec\n");
+
+                // header file management
+                File headerFile = new File(inputPath.toString() + ".header");
+                if (headerFile.exists()) {
+                    File outHeaderFile = new File(output + ".header");
+                    Files.copy(headerFile.toPath(), new FileOutputStream(outHeaderFile));
+                }
+            } else {
+                // convert to BAM -> PARQUET
+                System.out.println("\n\nStarting BAM->PARQUET conversion...\n");
+                startTime = System.currentTimeMillis();
+                parquetConverter.toParquetFromBam(inputPath.toString(), output);
+                elapsedTime = System.currentTimeMillis() - startTime;
+                System.out.println("\n\nFinish BAM->PARQUET conversion in " + (elapsedTime / 1000F) + " sec\n");
+            }
         } else {
             // convert to BAM -> AVRO
 
