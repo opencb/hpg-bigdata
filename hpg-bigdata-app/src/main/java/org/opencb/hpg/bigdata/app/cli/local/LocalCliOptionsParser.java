@@ -81,7 +81,7 @@ public class LocalCliOptionsParser {
         variantSubCommands.addCommand("annotate", variantCommandOptions.annotateVariantCommandOptions);
         variantSubCommands.addCommand("view", variantCommandOptions.viewVariantCommandOptions);
         variantSubCommands.addCommand("query", variantCommandOptions.queryVariantCommandOptions);
-
+        variantSubCommands.addCommand("metadata", variantCommandOptions.metadataVariantCommandOptions);
     }
 
     public void parse(String[] args) throws ParameterException {
@@ -438,12 +438,14 @@ public class LocalCliOptionsParser {
         AnnotateVariantCommandOptions annotateVariantCommandOptions;
         ViewVariantCommandOptions viewVariantCommandOptions;
         QueryVariantCommandOptions queryVariantCommandOptions;
+        MetadataVariantCommandOptions metadataVariantCommandOptions;
 
         public VariantCommandOptions() {
             this.convertVariantCommandOptions = new ConvertVariantCommandOptions();
             this.annotateVariantCommandOptions = new AnnotateVariantCommandOptions();
             this.viewVariantCommandOptions = new ViewVariantCommandOptions();
             this.queryVariantCommandOptions = new QueryVariantCommandOptions();
+            this.metadataVariantCommandOptions = new MetadataVariantCommandOptions();
         }
     }
 
@@ -554,7 +556,7 @@ public class LocalCliOptionsParser {
         public boolean vcf = false;
     }
 
-    @Parameters(commandNames = {"query"}, commandDescription = "Command to execute queries against the input file (Avro or Parquet) saving the results in the output file.")
+    @Parameters(commandNames = {"query"}, commandDescription = "Execute queries against the input file (Avro or Parquet) saving the results in the output file")
     class QueryVariantCommandOptions {
 
         @ParametersDelegate
@@ -680,6 +682,27 @@ public class LocalCliOptionsParser {
                 System.err.println("");
             }
         }
+    }
+
+    @Parameters(commandNames = {"metadata"}, commandDescription = "Manage metadata information")
+    class MetadataVariantCommandOptions {
+
+        @ParametersDelegate
+        public CommonCommandOptions commonOptions = commonCommandOptions;
+
+        @Parameter(names = {"-i", "--input"}, description = "Input file name (Avro/Parquet format)",
+                required = true, arity = 1)
+        public String input;
+
+        @Parameter(names = {"--pedigree-file"}, description = "Input file with information about family relationships, sex,... (extended PED format)",
+                arity = 1)
+        public String pedigreeFilename = null;
+
+        @Parameter(names = {"--create-cohort"}, description = "Create new cohort")
+        public String cohortName = null;
+
+        @Parameter(names = {"--rename-dataset"}, description = "Rename dataset. Expected value format is: old_name::new_name")
+        public String renameDataset = null;
     }
 
     private void printMainUsage() {

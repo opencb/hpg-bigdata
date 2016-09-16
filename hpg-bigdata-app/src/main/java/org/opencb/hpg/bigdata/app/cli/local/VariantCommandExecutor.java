@@ -92,6 +92,12 @@ public class VariantCommandExecutor extends CommandExecutor {
                         variantCommandOptions.queryVariantCommandOptions.commonOptions.conf);
                 query();
                 break;
+            case "metadata":
+                init(variantCommandOptions.queryVariantCommandOptions.commonOptions.logLevel,
+                        variantCommandOptions.queryVariantCommandOptions.commonOptions.verbose,
+                        variantCommandOptions.queryVariantCommandOptions.commonOptions.conf);
+                metadata();
+                break;
             default:
                 break;
         }
@@ -843,5 +849,43 @@ public class VariantCommandExecutor extends CommandExecutor {
 
         // close
         reader.close();
+    }
+
+    public void metadata() throws Exception {
+        // sanity check
+        Path input = get(variantCommandOptions.metadataVariantCommandOptions.input);
+
+
+        // metadata file management
+        File metaFile = new File(input.toString() + ".meta.json");
+        if (metaFile.exists()) {
+            // read metadata JSON to update filename
+            ObjectMapper mapper = new ObjectMapper();
+            //mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+            VariantFileMetadata metadata = mapper.readValue(metaFile, VariantFileMetadata.class);
+
+            if (variantCommandOptions.metadataVariantCommandOptions.pedigreeFilename != null) {
+                System.out.println("Warning: load a pedigree file is not yet implemented !");
+                System.exit(-1);
+            }
+
+            if (variantCommandOptions.metadataVariantCommandOptions.cohortName != null) {
+                System.out.println("Warning: create cohort is not yet implemented !");
+                System.exit(-1);
+            }
+
+            if (variantCommandOptions.metadataVariantCommandOptions.renameDataset != null) {
+                System.out.println("Warning: rename dataset is not yet implemented !");
+                System.exit(-1);
+            }
+
+            // write the metadata
+            PrintWriter writer = new PrintWriter(new FileOutputStream(metaFile));
+            writer.write(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(
+                    mapper.readValue(metadata.toString(), Object.class)));
+            writer.close();
+        } else {
+            System.out.println("Error: metafile does not exist, " + metaFile.getAbsolutePath());
+        }
     }
 }
