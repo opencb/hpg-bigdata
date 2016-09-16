@@ -146,14 +146,14 @@ public class LocalCliOptionsParser {
         @Parameter(names = {"-h", "--help"},  description = "This parameter prints this help", help = true)
         public boolean help;
 
-        @Parameter(names = {"-L", "--log-level"}, description = "Set the level log, values: debug, info, warning, error, fatal", required = false, arity = 1)
+        @Parameter(names = {"-L", "--log-level"}, description = "Set the level log, values: debug, info, warning, error, fatal", arity = 1)
         public String logLevel = "info";
 
         @Deprecated
-        @Parameter(names = {"-v", "--verbose"}, description = "This parameter set the level of the logging", required = false, arity = 1)
+        @Parameter(names = {"-v", "--verbose"}, description = "This parameter set the level of the logging", arity = 1)
         public boolean verbose;
 
-        @Parameter(names = {"--conf"}, description = "Set the configuration file", required = false, arity = 1)
+        @Parameter(names = {"--conf"}, description = "Set the configuration file", arity = 1)
         public String conf;
 
     }
@@ -210,7 +210,7 @@ public class LocalCliOptionsParser {
         @Parameter(names = {"-o", "--output"}, description = "Local output file to store the FastQ sequences according to the GA4GH/Avro model", required = true, arity = 1)
         public String output = null;
 
-        @Parameter(names = {"-x", "--compression"}, description = "Accepted values: snappy, deflate, bzip2, xz, null. Default: snappy", required = false, arity = 1)
+        @Parameter(names = {"-x", "--compression"}, description = "Accepted values: snappy, deflate, bzip2, xz, null. Default: snappy", arity = 1)
         public String compression = "snappy";
 
         //@Parameter(names = {"--to-avro"}, description = "", required = false)
@@ -235,7 +235,7 @@ public class LocalCliOptionsParser {
         //@Parameter(names = {"-f", "--filter"}, description = "", required = false, arity = 1)
         //public String filter = null;
 
-        @Parameter(names = {"-k", "--kmers"}, description = "Compute k-mers (according to the indicated length)", required = false, arity = 1)
+        @Parameter(names = {"-k", "--kmers"}, description = "Compute k-mers (according to the indicated length)", arity = 1)
         public Integer kmers = 0;
     }
 
@@ -392,38 +392,38 @@ public class LocalCliOptionsParser {
                 required = true, arity = 1)
         public String output;
 
-        @Parameter(names = {"--region"}, description = "Query for region; comma separated list of regions, e.g.: 1:300000-400000000,15:343453463-8787665654", required = false)
+        @Parameter(names = {"--region"}, description = "Query for region; comma separated list of regions, e.g.: 1:300000-400000000,15:343453463-8787665654")
         public String regions;
 
-        @Parameter(names = {"--region-file"}, description = "Query for region; the list of regions is stored in this input file, one region (1:300000-400000000) per line", required = false)
+        @Parameter(names = {"--region-file"}, description = "Query for region; the list of regions is stored in this input file, one region (1:300000-400000000) per line")
         public String regionFile;
 
         @Parameter(names = {"--min-mapq"}, description = "Query for minimun mappging quality",
-                required = false, arity = 1)
+                arity = 1)
         public int minMapQ = 0;
 
         @Parameter(names = {"--require-flags"}, description = "Query for alignments matching theses flags",
-                required = false, arity = 1)
+                arity = 1)
         public int requireFlags = 4095;
 
         @Parameter(names = {"--filtering-flags"}, description = "Query for alignments not matching these flags",
-                required = false, arity = 1)
+                arity = 1)
         public int filteringFlags = 0;
 
         @Parameter(names = {"--min-tlen"}, description = "Query for alignments with a template length greater than the minimun",
-                required = false, arity = 1)
+                arity = 1)
         public int minTLen = 0;
 
         @Parameter(names = {"--max-tlen"}, description = "Query for alignments with a template length less than the maximum\"",
-                required = false, arity = 1)
+                arity = 1)
         public int maxTLen = Integer.MAX_VALUE;
 
         @Parameter(names = {"--min-alen"}, description = "Query for alignments with an alignment length greater than the minimun",
-                required = false, arity = 1)
+                arity = 1)
         public int minALen = 0;
 
         @Parameter(names = {"--max-alen"}, description = "Query for alignments with an alignment length less than the maximum\"",
-                required = false, arity = 1)
+                arity = 1)
         public int maxALen = Integer.MAX_VALUE;
     }
 
@@ -738,7 +738,6 @@ public class LocalCliOptionsParser {
         }
     }
 
-
     public GeneralOptions getGeneralOptions() {
         return generalOptions;
     }
@@ -766,5 +765,4 @@ public class LocalCliOptionsParser {
     public VariantCommandOptions getVariantCommandOptions() {
         return variantCommandOptions;
     }
-
 }
