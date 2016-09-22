@@ -729,11 +729,12 @@ public class VariantCommandExecutor extends CommandExecutor {
         }
 
         // query for consequence type (Sequence Ontology term names and accession codes)
-        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.consequenceTypes)) {
-//            vd.annotationFilter("consequenceTypes.sequenceOntologyTerms", new ArrayList<>(Arrays.asList(
-//                    StringUtils.split(variantCommandOptions.queryVariantCommandOptions.consequenceTypes, ","))));
-            vd.annotationFilter("consequenceTypes.sequenceOntologyTerms", variantCommandOptions.queryVariantCommandOptions.consequenceTypes);
-        }
+//        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.consequenceTypes)) {
+////            vd.annotationFilter("consequenceTypes.sequenceOntologyTerms", new ArrayList<>(Arrays.asList(
+////                    StringUtils.split(variantCommandOptions.queryVariantCommandOptions.consequenceTypes, ","))));
+//            vd.annotationFilter("consequenceTypes.sequenceOntologyTerms", variantCommandOptions.queryVariantCommandOptions.consequenceTypes);
+//        }
+        annotationFilterNotEmpty("consequenceTypes.sequenceOntologyTerms", variantCommandOptions.queryVariantCommandOptions.consequenceTypes, vd);
 
         // query for clinvar (accession)
         if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.clinvar)) {
@@ -883,6 +884,13 @@ public class VariantCommandExecutor extends CommandExecutor {
             writer.close();
         } else {
             System.out.println("Error: metafile does not exist, " + metaFile.getAbsolutePath());
+        }
+    }
+
+
+    private void annotationFilterNotEmpty (String key, String value, VariantDataset vd) {
+        if (StringUtils.isNotEmpty(value)) {
+            vd.annotationFilter(key, value);
         }
     }
 }

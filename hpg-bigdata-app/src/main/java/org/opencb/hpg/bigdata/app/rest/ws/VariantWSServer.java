@@ -19,14 +19,13 @@ package org.opencb.hpg.bigdata.app.rest.ws;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import org.apache.spark.sql.Dataset;
 import org.opencb.commons.datastore.core.Query;
+import org.opencb.hpg.bigdata.core.lib.VariantDataset;
 import org.opencb.hpg.bigdata.core.lib.VariantParseQuery;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -88,4 +87,31 @@ public class VariantWSServer {
         }
     }
 
+    @GET
+    @Path("/query")
+    public Response query(@ApiParam(value = "table", required = true) @QueryParam("table") String table,
+                          @ApiParam(value = "id") @QueryParam("id") String id,
+                          @ApiParam(value = "ancestralAllele") @QueryParam("ancestralAllele") String ancestralAllele,
+                          @ApiParam(value = "displayConsequenceType")
+                              @QueryParam("displayConsequenceType") String displayConsequenceType,
+                          @ApiParam(value = "xrefs") @QueryParam("xrefs") String xrefs,
+                          @ApiParam(value = "hgvs") @QueryParam("hgvs") String hgvs,
+                          @ApiParam(value = "consequenceTypes") @QueryParam("consequenceTypes") String consequenceTypes,
+                          @ApiParam(value = "consequenceTypes.sequenceOntologyTerms.accession")
+                              @QueryParam("consequenceTypes.sequenceOntologyTerms.accession") String consequenceSoAccession,
+                          @ApiParam(value = "consequenceTypes.sequenceOntologyTerms.name")
+                              @QueryParam("consequenceTypes.sequenceOntologyTerms.name") String consequenceSoName,
+                          @ApiParam(value = "populationFrequencies")
+                              @QueryParam("populationFrequencies") String populationFrequencies,
+                          @ApiParam(value = "conservation") @QueryParam("conservation") String conservation,
+                          @ApiParam(value = "variantTraitAssociation")
+                              @QueryParam("variantTraitAssociation") String variantTraitAssociation) {
+
+        VariantDataset variantDataset = new VariantDataset();
+        // ... filters
+        variantDataset.update();
+
+        Dataset<String> stringDataset = variantDataset.toJSON();
+        return Response.ok(stringDataset.toString()).build();
+    }
 }
