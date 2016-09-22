@@ -658,9 +658,6 @@ public class VariantCommandExecutor extends CommandExecutor {
         logger.debug("sparkConf = {}", sparkConf.toDebugString());
         SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
 
-//        SparkConf sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "/home/jtarraga/soft/spark-2.0.0/");
-//        SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
-
         VariantDataset vd = new VariantDataset(sparkSession);
         vd.load(variantCommandOptions.queryVariantCommandOptions.input);
         vd.createOrReplaceTempView("vcf");
@@ -732,9 +729,11 @@ public class VariantCommandExecutor extends CommandExecutor {
 //        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.consequenceTypes)) {
 ////            vd.annotationFilter("consequenceTypes.sequenceOntologyTerms", new ArrayList<>(Arrays.asList(
 ////                    StringUtils.split(variantCommandOptions.queryVariantCommandOptions.consequenceTypes, ","))));
-//            vd.annotationFilter("consequenceTypes.sequenceOntologyTerms", variantCommandOptions.queryVariantCommandOptions.consequenceTypes);
+//            vd.annotationFilter("consequenceTypes.sequenceOntologyTerms",
+// variantCommandOptions.queryVariantCommandOptions.consequenceTypes);
 //        }
-        annotationFilterNotEmpty("consequenceTypes.sequenceOntologyTerms", variantCommandOptions.queryVariantCommandOptions.consequenceTypes, vd);
+        annotationFilterNotEmpty("consequenceTypes.sequenceOntologyTerms",
+                variantCommandOptions.queryVariantCommandOptions.consequenceTypes, vd);
 
         // query for clinvar (accession)
         if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.clinvar)) {
@@ -774,8 +773,13 @@ public class VariantCommandExecutor extends CommandExecutor {
         vd.update();
 
         // save the dataset
-        logger.warn("The current query implementation saves the resulting dataset in Avro format.");
-        Utils.saveDatasetAsOneAvroFile(vd, variantCommandOptions.queryVariantCommandOptions.output);
+        logger.warn("The current query implementation saves the resulting dataset in Avro or JSON format.");
+        String output = variantCommandOptions.queryVariantCommandOptions.output;
+        if (output.endsWith(".json")) {
+            Utils.saveDatasetAsOneFile(vd, "json", output);
+        } else {
+            Utils.saveDatasetAsOneFile(vd, "avro", output);
+        }
 
         // show output records
         if (variantCommandOptions.queryVariantCommandOptions.show > 0) {
@@ -887,8 +891,7 @@ public class VariantCommandExecutor extends CommandExecutor {
         }
     }
 
-
-    private void annotationFilterNotEmpty (String key, String value, VariantDataset vd) {
+    private void annotationFilterNotEmpty(String key, String value, VariantDataset vd) {
         if (StringUtils.isNotEmpty(value)) {
             vd.annotationFilter(key, value);
         }

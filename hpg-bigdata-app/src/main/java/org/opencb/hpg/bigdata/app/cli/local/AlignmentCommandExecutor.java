@@ -325,7 +325,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
 
         // save the dataset
         logger.warn("The current query implementation saves the resulting dataset in Avro format.");
-        Utils.saveDatasetAsOneAvroFile(ad, alignmentCommandOptions.sortAlignmentCommandOptions.output);
+        Utils.saveDatasetAsOneFile(ad, "avro", alignmentCommandOptions.sortAlignmentCommandOptions.output);
     }
 
     private void stats() throws IOException {
@@ -551,7 +551,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
 
         // save the dataset
         logger.warn("The current query implementation saves the resulting dataset in Avro format.");
-        Utils.saveDatasetAsOneAvroFile(ad, alignmentCommandOptions.queryAlignmentCommandOptions.output);
+        Utils.saveDatasetAsOneFile(ad, "avro", alignmentCommandOptions.queryAlignmentCommandOptions.output);
     }
 
     public void view() throws Exception {
