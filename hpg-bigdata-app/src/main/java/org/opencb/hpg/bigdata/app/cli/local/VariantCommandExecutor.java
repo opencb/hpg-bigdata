@@ -44,6 +44,7 @@ import org.opencb.hpg.bigdata.core.parquet.VariantParquetConverter;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -126,7 +127,7 @@ public class VariantCommandExecutor extends CommandExecutor {
         }
 
         // sanity check: input file
-        Path inputPath = get(variantCommandOptions.convertVariantCommandOptions.input);
+        Path inputPath = Paths.get(variantCommandOptions.convertVariantCommandOptions.input);
         FileUtils.checkFile(inputPath);
 
         // sanity check: output file
@@ -650,21 +651,18 @@ public class VariantCommandExecutor extends CommandExecutor {
 
     public void query() throws Exception {
         // sanity check: input file
-        Path inputPath = get(variantCommandOptions.queryVariantCommandOptions.input);
+        Path inputPath = Paths.get(variantCommandOptions.queryVariantCommandOptions.input);
         FileUtils.checkFile(inputPath);
 
-        // TODO: to take the spark home from somewhere else
-        SparkConf sparkConf = SparkConfCreator.getConf("variant query", "local", 1,
-                true, "/home/jtarraga/soft/spark-2.0.0/");
-        System.out.println("sparkConf = " + sparkConf.toDebugString());
+        SparkConf sparkConf = SparkConfCreator.getConf("variant query", "local", 1, true);
+        logger.debug("sparkConf = {}", sparkConf.toDebugString());
         SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
 
 //        SparkConf sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "/home/jtarraga/soft/spark-2.0.0/");
 //        SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
 
-        VariantDataset vd = new VariantDataset();
-
-        vd.load(variantCommandOptions.queryVariantCommandOptions.input, sparkSession);
+        VariantDataset vd = new VariantDataset(sparkSession);
+        vd.load(variantCommandOptions.queryVariantCommandOptions.input);
         vd.createOrReplaceTempView("vcf");
 
         // query for ID (list and file)
@@ -732,8 +730,9 @@ public class VariantCommandExecutor extends CommandExecutor {
 
         // query for consequence type (Sequence Ontology term names and accession codes)
         if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.consequenceTypes)) {
-            vd.annotationFilter("consequenceTypes.sequenceOntologyTerms", new ArrayList<>(Arrays.asList(
-                    StringUtils.split(variantCommandOptions.queryVariantCommandOptions.consequenceTypes, ","))));
+//            vd.annotationFilter("consequenceTypes.sequenceOntologyTerms", new ArrayList<>(Arrays.asList(
+//                    StringUtils.split(variantCommandOptions.queryVariantCommandOptions.consequenceTypes, ","))));
+            vd.annotationFilter("consequenceTypes.sequenceOntologyTerms", variantCommandOptions.queryVariantCommandOptions.consequenceTypes);
         }
 
         // query for clinvar (accession)
@@ -762,14 +761,12 @@ public class VariantCommandExecutor extends CommandExecutor {
 
         // query for alternate population frequency (study:population)
         if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.pf)) {
-            vd.annotationFilter("populationFrequencies.altAlleleFreq",
-                    variantCommandOptions.queryVariantCommandOptions.pf);
+            vd.annotationFilter("populationFrequencies.altAlleleFreq", variantCommandOptions.queryVariantCommandOptions.pf);
         }
 
         // query for population minor allele frequency (study:population)
         if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.pmaf)) {
-            vd.annotationFilter("populationFrequencies.refAlleleFreq",
-                    variantCommandOptions.queryVariantCommandOptions.pmaf);
+            vd.annotationFilter("populationFrequencies.refAlleleFreq", variantCommandOptions.queryVariantCommandOptions.pmaf);
         }
 
         // apply previous filters

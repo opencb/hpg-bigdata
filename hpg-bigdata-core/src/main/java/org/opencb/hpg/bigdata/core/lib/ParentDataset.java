@@ -50,6 +50,27 @@ public abstract class ParentDataset<T> {
         query = new Query();
     }
 
+    public ParentDataset(SparkSession sparkSession) {
+        this.sparkSession = sparkSession;
+        ds = null;
+        sqlContext = null;
+
+        query = new Query();
+    }
+
+    public void load(String filename) throws Exception {
+        sqlContext = new SQLContext(sparkSession);
+
+        if (StringUtils.endsWithAny(filename, "avro", "avro.gz", "avro.sz")) {
+            ds = sqlContext.read().format("com.databricks.spark.avro").load(filename);
+        } else if (StringUtils.endsWithAny(filename, "json", "json.gz")) {
+            ds = sqlContext.read().json(filename);
+        } else {
+            ds = sqlContext.read().load(filename);
+        }
+    }
+
+    @Deprecated
     public void load(String filename, SparkSession sparkSession) throws Exception {
         this.sparkSession = sparkSession;
         sqlContext = new SQLContext(sparkSession);

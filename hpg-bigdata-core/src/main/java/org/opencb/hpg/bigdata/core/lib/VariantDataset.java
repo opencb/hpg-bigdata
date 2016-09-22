@@ -16,8 +16,12 @@
 
 package org.opencb.hpg.bigdata.core.lib;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.spark.sql.SparkSession;
 import org.opencb.commons.datastore.core.Query;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -29,6 +33,10 @@ public class VariantDataset extends ParentDataset<VariantDataset> {
     private String sql;
 
     public VariantDataset() {
+        variantParseQuery = new VariantParseQuery();
+    }
+
+    public VariantDataset(SparkSession sparkSession) {
         variantParseQuery = new VariantParseQuery();
     }
 
@@ -101,8 +109,14 @@ public class VariantDataset extends ParentDataset<VariantDataset> {
 
     // annotation filter
     public VariantDataset annotationFilter(String key, String value) {
-        query.put("annotation." + key, value);
-        return this;
+//        query.put("annotation." + key, value);
+//        return this;
+        if (!value.contains(",")) {
+            query.put("annotation." + key, value);
+            return this;
+        } else {
+            return annotationFilter(key, new ArrayList<>(Arrays.asList(StringUtils.split(value, ","))));
+        }
     }
 
     public VariantDataset annotationFilter(String key, List<String> values) {
