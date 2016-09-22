@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.opencb.biodata.models.core.Region;
 import org.opencb.commons.utils.FileUtils;
 import org.opencb.hpg.bigdata.core.lib.ParentDataset;
+import org.slf4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -48,11 +49,13 @@ public class Utils {
         return list;
     }
 
-    public static void saveDatasetAsOneFile(ParentDataset ds, String format, String filename) {
+    public static void saveDatasetAsOneFile(ParentDataset ds, String format, String filename, Logger logger) {
         String tmpDir = filename + ".tmp";
 
         if ("json".equals(format)) {
             ds.coalesce(1).write().format("json").save(tmpDir);
+        } else if ("parquet".equals(format)) {
+            ds.coalesce(1).write().format("parquet").save(tmpDir);
         } else {
             ds.coalesce(1).write().format("com.databricks.spark.avro").save(tmpDir);
             format = "avro";
@@ -77,7 +80,7 @@ public class Utils {
         }
         if (!found) {
             // error management
-            System.err.println("Error: pattern 'part-r-*" + format + "' was not found");
+            logger.error("Error: pattern 'part-r-*" + format + "' was not found");
             return;
         }
         dir.delete();

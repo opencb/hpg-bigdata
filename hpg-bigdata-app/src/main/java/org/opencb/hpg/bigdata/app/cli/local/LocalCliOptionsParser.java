@@ -566,7 +566,7 @@ public class LocalCliOptionsParser {
                 required = true, arity = 1)
         public String input;
 
-        @Parameter(names = {"-o", "--output"}, description = "Output file name.",
+        @Parameter(names = {"-o", "--output"}, description = "Output file name. Its extension .json, .parquet and .avro, indicates the output format.",
                 required = true, arity = 1)
         public String output;
 

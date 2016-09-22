@@ -773,12 +773,13 @@ public class VariantCommandExecutor extends CommandExecutor {
         vd.update();
 
         // save the dataset
-        logger.warn("The current query implementation saves the resulting dataset in Avro or JSON format.");
         String output = variantCommandOptions.queryVariantCommandOptions.output;
         if (output.endsWith(".json")) {
-            Utils.saveDatasetAsOneFile(vd, "json", output);
+            Utils.saveDatasetAsOneFile(vd, "json", output, logger);
+        } else if (output.endsWith(".parquet")) {
+            Utils.saveDatasetAsOneFile(vd, "parquet", output, logger);
         } else {
-            Utils.saveDatasetAsOneFile(vd, "avro", output);
+            Utils.saveDatasetAsOneFile(vd, "avro", output, logger);
         }
 
         // show output records
