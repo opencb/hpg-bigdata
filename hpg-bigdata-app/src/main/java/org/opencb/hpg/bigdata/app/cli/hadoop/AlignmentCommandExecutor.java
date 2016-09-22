@@ -117,7 +117,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
                 String outRawFileName =  output + "/stats.json";
                 fs.copyToLocalFile(outFile, new Path(outRawFileName));
 
-                //Utils.parseStatsFile(outRawFileName, out);
+                //CliUtils.parseStatsFile(outRawFileName, out);
             }
             fs.delete(new Path(outHdfsDirname), true);
         } catch (IOException e) {
@@ -156,7 +156,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
 //                String outRawFileName =  output + ".depth.txt";
 //                fs.copyToLocalFile(depthOutFile, new Path(outRawFileName));
 //
-//                //Utils.parseStatsFile(outRawFileName, out);
+//                //CliUtils.parseStatsFile(outRawFileName, out);
 //            }
 //            fs.delete(new Path(tmpOutDirName), true);
 //        } catch (IOException e) {

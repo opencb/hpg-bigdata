@@ -138,7 +138,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
         FileUtils.checkFile(inputPath);
 
         // sanity check: output file
-        String output = Utils.getOutputFilename(alignmentCommandOptions.convertAlignmentCommandOptions.input,
+        String output = CliUtils.getOutputFilename(alignmentCommandOptions.convertAlignmentCommandOptions.input,
                 alignmentCommandOptions.convertAlignmentCommandOptions.output, to);
 
         long startTime, elapsedTime;
@@ -170,7 +170,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
             // region filter management,
             // we use the same region list to store all regions from both parameter --regions and
             // parameter --region-file
-            List<Region> regions = Utils.getRegionList(alignmentCommandOptions.convertAlignmentCommandOptions.regions,
+            List<Region> regions = CliUtils.getRegionList(alignmentCommandOptions.convertAlignmentCommandOptions.regions,
                     alignmentCommandOptions.convertAlignmentCommandOptions.regionFilename);
             if (regions != null && regions.size() > 0) {
                 parquetConverter.addRegionFilter(regions, false);
@@ -213,7 +213,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
             // region filter management,
             // we use the same region list to store all regions from both parameter --regions and
             // parameter --region-file
-            List<Region> regions = Utils.getRegionList(alignmentCommandOptions.convertAlignmentCommandOptions.regions,
+            List<Region> regions = CliUtils.getRegionList(alignmentCommandOptions.convertAlignmentCommandOptions.regions,
                     alignmentCommandOptions.convertAlignmentCommandOptions.regionFilename);
             if (regions != null && regions.size() > 0) {
                 avroSerializer.addRegionFilter(regions, false);
@@ -325,7 +325,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
 
         // save the dataset
         logger.warn("The current query implementation saves the resulting dataset in Avro format.");
-        Utils.saveDatasetAsOneFile(ad, "avro", alignmentCommandOptions.sortAlignmentCommandOptions.output, logger);
+        CliUtils.saveDatasetAsOneFile(ad, "avro", alignmentCommandOptions.sortAlignmentCommandOptions.output, logger);
     }
 
     private void stats() throws IOException {
@@ -372,7 +372,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
         // region filter management,
         // we use the same region list to store all regions from both parameter --regions and
         // parameter --region-file
-        List<Region> regions = Utils.getRegionList(alignmentCommandOptions.depthAlignmentCommandOptions.regions,
+        List<Region> regions = CliUtils.getRegionList(alignmentCommandOptions.depthAlignmentCommandOptions.regions,
                 alignmentCommandOptions.depthAlignmentCommandOptions.regionFilename);
 
         AlignmentAvroSerializer serializer = null;
@@ -511,7 +511,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
         ad.createOrReplaceTempView("alignment");
 
         // query for region
-        List<Region> regions = Utils.getRegionList(alignmentCommandOptions.queryAlignmentCommandOptions.regions,
+        List<Region> regions = CliUtils.getRegionList(alignmentCommandOptions.queryAlignmentCommandOptions.regions,
                 alignmentCommandOptions.queryAlignmentCommandOptions.regionFile);
         if (regions != null && regions.size() > 0) {
             ad.regionFilter(regions);
@@ -551,7 +551,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
 
         // save the dataset
         logger.warn("The current query implementation saves the resulting dataset in Avro format.");
-        Utils.saveDatasetAsOneFile(ad, "avro", alignmentCommandOptions.queryAlignmentCommandOptions.output, logger);
+        CliUtils.saveDatasetAsOneFile(ad, "avro", alignmentCommandOptions.queryAlignmentCommandOptions.output, logger);
     }
 
     public void view() throws Exception {

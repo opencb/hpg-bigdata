@@ -85,6 +85,7 @@ public abstract class ParentDataset<T> {
     }
 
     protected abstract void updateDataset(Query query);
+    public abstract String getSql();
 
     public void update() {
         updateDataset(query);

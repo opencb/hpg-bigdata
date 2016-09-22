@@ -109,7 +109,7 @@ public class SequenceCommandExecutor extends CommandExecutor {
                 String outRawFileName =  output + "/stats.json";
                 fs.copyToLocalFile(outFile, new Path(outRawFileName));
 
-                //Utils.parseStatsFile(outRawFileName, out);
+                //CliUtils.parseStatsFile(outRawFileName, out);
             }
             fs.delete(new Path(outHdfsDirname), true);
         } catch (IOException e) {

@@ -62,6 +62,10 @@ public class VariantDataset extends ParentDataset<VariantDataset> {
         }
     }
 
+    @Override
+    public String getSql() {
+        return variantParseQuery.parse(query, null, viewName);
+    }
 
     // id filter
     public VariantDataset idFilter(String value) {

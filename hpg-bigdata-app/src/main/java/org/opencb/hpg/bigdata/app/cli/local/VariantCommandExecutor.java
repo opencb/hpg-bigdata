@@ -21,7 +21,6 @@ import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFFileReader;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.specific.SpecificDatumReader;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
@@ -42,11 +41,8 @@ import org.opencb.hpg.bigdata.core.lib.VariantDataset;
 import org.opencb.hpg.bigdata.core.parquet.VariantParquetConverter;
 
 import java.io.*;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -63,7 +59,6 @@ public class VariantCommandExecutor extends CommandExecutor {
 //      super(variantCommandOptions.c, fastqCommandOptions.verbose, fastqCommandOptions.conf);
         this.variantCommandOptions = variantCommandOptions;
     }
-
 
     @Override
     public void execute() throws Exception {
@@ -131,7 +126,7 @@ public class VariantCommandExecutor extends CommandExecutor {
         FileUtils.checkFile(inputPath);
 
         // sanity check: output file
-        String output = Utils.getOutputFilename(variantCommandOptions.convertVariantCommandOptions.input,
+        String output = CliUtils.getOutputFilename(variantCommandOptions.convertVariantCommandOptions.input,
                 variantCommandOptions.convertVariantCommandOptions.output, to);
 
         long startTime, elapsedTime;
@@ -166,7 +161,7 @@ public class VariantCommandExecutor extends CommandExecutor {
 
             // region filter management,
             // we use the same region list to store all regions from both parameter --regions and --region-file
-            List<Region> regions = Utils.getRegionList(variantCommandOptions.convertVariantCommandOptions.regions,
+            List<Region> regions = CliUtils.getRegionList(variantCommandOptions.convertVariantCommandOptions.regions,
                     variantCommandOptions.convertVariantCommandOptions.regionFilename);
             if (regions != null && regions.size() > 0) {
                 parquetConverter.addRegionFilter(regions, false);
@@ -224,7 +219,7 @@ public class VariantCommandExecutor extends CommandExecutor {
 
             // region filter management,
             // we use the same region list to store all regions from both parameter --regions and --region-file
-            List<Region> regions = Utils.getRegionList(variantCommandOptions.convertVariantCommandOptions.regions,
+            List<Region> regions = CliUtils.getRegionList(variantCommandOptions.convertVariantCommandOptions.regions,
                     variantCommandOptions.convertVariantCommandOptions.regionFilename);
             if (regions != null && regions.size() > 0) {
                 avroSerializer.addRegionFilter(regions, false);
@@ -662,96 +657,8 @@ public class VariantCommandExecutor extends CommandExecutor {
         vd.load(variantCommandOptions.queryVariantCommandOptions.input);
         vd.createOrReplaceTempView("vcf");
 
-        // query for ID (list and file)
-        List<String> list = null;
-        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.ids)) {
-            list = new ArrayList<>(Arrays.asList(
-                    StringUtils.split(variantCommandOptions.queryVariantCommandOptions.ids, ",")));
-        }
-        String idFilename = variantCommandOptions.queryVariantCommandOptions.idFilename;
-        if (StringUtils.isNotEmpty(idFilename) && new File(idFilename).exists()) {
-            if (list == null) {
-                list = Files.readAllLines(get(idFilename));
-            } else {
-                list.addAll(Files.readAllLines(get(idFilename)));
-            }
-        }
-        if (list != null) {
-            vd.idFilter(list, false);
-        }
-
-        // query for type
-        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.types)) {
-            vd.typeFilter(new ArrayList<>(Arrays.asList(
-                    StringUtils.split(variantCommandOptions.queryVariantCommandOptions.types, ","))));
-        }
-
-        // query for biotype
-        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.biotypes)) {
-            vd.annotationFilter("biotype", new ArrayList<>(Arrays.asList(
-                    StringUtils.split(variantCommandOptions.queryVariantCommandOptions.biotypes, ","))));
-        }
-
-        // query for study
-        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.studies)) {
-            vd.studyFilter("studyId", new ArrayList<>(Arrays.asList(
-                    StringUtils.split(variantCommandOptions.queryVariantCommandOptions.studies, ","))));
-        }
-
-        // query for maf (study:cohort)
-        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.maf)) {
-            vd.studyFilter("stats.maf", variantCommandOptions.queryVariantCommandOptions.maf);
-        }
-
-        // query for mgf (study:cohort)
-        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.mgf)) {
-            vd.studyFilter("stats.mgf", variantCommandOptions.queryVariantCommandOptions.mgf);
-        }
-
-        // query for number of missing alleles (study:cohort)
-        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.missingAlleles)) {
-            vd.studyFilter("stats.missingAlleles", variantCommandOptions.queryVariantCommandOptions.missingAlleles);
-        }
-
-        // query for number of missing genotypes (study:cohort)
-        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.missingGenotypes)) {
-            vd.studyFilter("stats.missingGenotypes", variantCommandOptions.queryVariantCommandOptions.missingGenotypes);
-        }
-
-        // query for region (list and file)
-        List<Region> regions = Utils.getRegionList(variantCommandOptions.queryVariantCommandOptions.regions,
-                variantCommandOptions.queryVariantCommandOptions.regionFilename);
-        if (regions != null && regions.size() > 0) {
-            vd.regionFilter(regions);
-        }
-
-        // query for consequence type (Sequence Ontology term names and accession codes)
-        annotationFilterNotEmpty("consequenceTypes.sequenceOntologyTerms",
-                variantCommandOptions.queryVariantCommandOptions.consequenceTypes, vd);
-
-        // query for clinvar (accession)
-        annotationFilterNotEmpty("variantTraitAssociation.clinvar.accession",
-                variantCommandOptions.queryVariantCommandOptions.clinvar, vd);
-
-        // query for cosmic (mutation ID)
-        annotationFilterNotEmpty("variantTraitAssociation.cosmic.mutationId",
-                variantCommandOptions.queryVariantCommandOptions.cosmic, vd);
-
-        // query for conservation (phastCons, phylop, gerp)
-        annotationFilterNotEmpty("conservation",
-                variantCommandOptions.queryVariantCommandOptions.conservScores, vd);
-
-        // query for protein substitution scores (polyphen, sift)
-        annotationFilterNotEmpty("proteinVariantAnnotation.substitutionScores",
-                variantCommandOptions.queryVariantCommandOptions.substScores, vd);
-
-        // query for alternate population frequency (study:population)
-        annotationFilterNotEmpty("populationFrequencies.altAlleleFreq",
-                variantCommandOptions.queryVariantCommandOptions.pf, vd);
-
-        // query for population minor allele frequency (study:population)
-        annotationFilterNotEmpty("variantCommandOptions.queryVariantCommandOptions.pmaf",
-                variantCommandOptions.queryVariantCommandOptions.pmaf, vd);
+        // add filters
+        CliUtils.addVariantFilters(variantCommandOptions, vd);
 
         // apply previous filters
         vd.update();
@@ -759,11 +666,11 @@ public class VariantCommandExecutor extends CommandExecutor {
         // save the dataset
         String output = variantCommandOptions.queryVariantCommandOptions.output;
         if (output.endsWith(".json")) {
-            Utils.saveDatasetAsOneFile(vd, "json", output, logger);
+            CliUtils.saveDatasetAsOneFile(vd, "json", output, logger);
         } else if (output.endsWith(".parquet")) {
-            Utils.saveDatasetAsOneFile(vd, "parquet", output, logger);
+            CliUtils.saveDatasetAsOneFile(vd, "parquet", output, logger);
         } else {
-            Utils.saveDatasetAsOneFile(vd, "avro", output, logger);
+            CliUtils.saveDatasetAsOneFile(vd, "avro", output, logger);
         }
 
         // show output records
@@ -873,12 +780,6 @@ public class VariantCommandExecutor extends CommandExecutor {
             writer.close();
         } else {
             System.out.println("Error: metafile does not exist, " + metaFile.getAbsolutePath());
-        }
-    }
-
-    private void annotationFilterNotEmpty(String key, String value, VariantDataset vd) {
-        if (StringUtils.isNotEmpty(value)) {
-            vd.annotationFilter(key, value);
         }
     }
 }
