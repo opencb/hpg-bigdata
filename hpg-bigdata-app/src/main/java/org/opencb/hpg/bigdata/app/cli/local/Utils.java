@@ -48,9 +48,15 @@ public class Utils {
         return list;
     }
 
-    public static void saveDatasetAsOneAvroFile(ParentDataset ds, String filename) {
+    public static void saveDatasetAsOneFile(ParentDataset ds, String format, String filename) {
         String tmpDir = filename + ".tmp";
-        ds.coalesce(1).write().format("com.databricks.spark.avro").save(tmpDir);
+
+        if ("json".equals(format)) {
+            ds.coalesce(1).write().format("json").save(tmpDir);
+        } else {
+            ds.coalesce(1).write().format("com.databricks.spark.avro").save(tmpDir);
+            format = "avro";
+        }
 
         File dir = new File(tmpDir);
         if (!dir.isDirectory()) {
@@ -63,7 +69,7 @@ public class Utils {
         Boolean found = false;
         String[] list = dir.list();
         for (String name: list) {
-            if (name.startsWith("part-r-") && name.endsWith("avro")) {
+            if (name.startsWith("part-r-") && name.endsWith(format)) {
                 new File(tmpDir + "/" + name).renameTo(new File(filename));
                 found = true;
                 break;
@@ -71,7 +77,7 @@ public class Utils {
         }
         if (!found) {
             // error management
-            System.err.println("Error: pattern 'part-r-*avro' was not found");
+            System.err.println("Error: pattern 'part-r-*" + format + "' was not found");
             return;
         }
         dir.delete();

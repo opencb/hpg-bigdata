@@ -22,8 +22,11 @@ import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.SparkSession;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.regex.Matcher;
@@ -34,30 +37,109 @@ import java.util.regex.Pattern;
  */
 public class VariantDatasetTest {
 
-    @Test
-    public void execute() {
-        System.out.println(">>>> Running VariantDatasetTest 0000...");
+    static VariantDataset vd;
+    static SparkConf sparkConf;
+    static SparkSession sparkSession;
+
+    @BeforeClass
+    public static void setup() {
+        sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "/home/joaquin/softs/spark-2.0.0-bin-hadoop2.7/bin");
+
+//        sparkConf.set("spark.broadcast.compress", "true");
+//        sparkConf.set("spark.io.compression.codec", "org.apache.spark.io.SnappyCompressionCodec");
+//
+//        sparkConf.set("spark.hadoop.mapred.output.compression.codec", "true");
+//        sparkConf.set("spark.hadoop.mapred.output.compression.codec", "org.apache.hadoop.io.compress.GzipCodec");
+//        sparkConf.set("spark.hadoop.mapred.output.compression.type", "BLOCK");
+
 //        SparkConf sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "/home/imedina/soft/spark-1.6.2");
-        SparkConf sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "/home/imedina/soft/spark-2.0.0");
+        //SparkConf sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "/home/imedina/soft/spark-2.0.0");
 
-//        SparkConf sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "/home/joaquin/softs/spark-2.0.0-bin-hadoop2.7/bin");
         System.out.println("sparkConf = " + sparkConf.toDebugString());
-        SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
+        sparkSession = new SparkSession(new SparkContext(sparkConf));
+    }
 
-        System.out.println(">>>> opening file...");
+    @AfterClass
+    public static void shutdown() {
+        vd.sparkSession.sparkContext().stop();
+    }
 
-        //String filename = "/home/imedina/data/CEU-1409-01_20000.vcf.avro";
-        //String filename = "/home/jtarraga/data/spark/10k.variants.avro";
-        String filename = this.getClass().getResource("100.variants.avro").getFile();
-
-        long count = 0;
-//        String filename = "/tmp/kk/xxx.avro";
-        VariantDataset vd = new VariantDataset();
+    public void initDataset() {
+        vd = new VariantDataset();
         try {
+            String filename = this.getClass().getResource("100.variants.avro").getFile();
+            System.out.println(">>>> opening file " + filename);
             vd.load(filename, sparkSession);
             vd.printSchema();
-
             vd.createOrReplaceTempView("vcf");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void outputFormats() {
+        long count = 0;
+        try {
+            initDataset();
+            System.out.println("--------------------------------------");
+
+            //vd.studyFilter("stats.maf", "1000g::all<=0.4").show();
+            //vd.studyFilter("stats.maf", "hgva@hsapiens_grch37:1000GENOMES_phase_3::ASW==0.008196721").show();
+            vd.studyFilter("stats.refAlleleCount", "hgva@hsapiens_grch37:1000GENOMES_phase_3::ASW==121");
+
+            vd.update();
+
+            // save the dataset according to the output format
+//            String format = "avro";
+//            String format = "parquet";
+            String format = "json";
+            String filename = "/tmp/query.out." + format;
+            String tmpDir = filename + ".tmp";
+            if ("json".equals(format)) {
+                vd.coalesce(1).write().format("json").option("", "true").save(tmpDir);
+            } else if ("parquet".equals(format)) {
+                vd.coalesce(1).write().format("parquet").save(tmpDir);
+            } else {
+                //vd.coalesce(1).write().format("avro").save(tmpDir);
+                vd.coalesce(1).write().format("com.databricks.spark.avro").save(tmpDir);
+            }
+
+            File dir = new File(tmpDir);
+            if (!dir.isDirectory()) {
+                // error management
+                System.err.println("Error: a directory was expected but " + tmpDir);
+                return;
+            }
+
+            // list out all the file name and filter by the extension
+            Boolean found = false;
+            String[] list = dir.list();
+            for (String name: list) {
+                if (name.startsWith("part-r-") && name.endsWith(format)) {
+                    new File(tmpDir + "/" + name).renameTo(new File(filename));
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                // error management
+                System.err.println("Error: pattern 'part-r-*avro' was not found");
+                return;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        vd.sparkSession.sparkContext().stop();
+    }
+
+    @Test
+    public void filters() {
+
+        long count = 0;
+        try {
+            initDataset();
             System.out.println("--------------------------------------");
 
             //vd.studyFilter("stats.maf", "1000g::all<=0.4").show();
@@ -110,150 +192,5 @@ public class VariantDatasetTest {
         }
 
         vd.sparkSession.sparkContext().stop();
-
-        /*
-            JavaRDD<Row> rdd = vd.javaRDD();
-            System.out.println("--------------------------------------");
-            System.out.println("------> initial count: " + rdd.count());
-            long finalCount = rdd.filter(new Function<Row, Boolean> () {
-                @Override
-                public Boolean call(Row row) throws Exception {
-                    int index = row.fieldIndex("studies");
-                    List<Row> studies = row.getList(index);
-                    System.out.println("--> index studies: " + index + ", size: " + studies.size());
-                    for(int i = 0; i < studies.size(); i++) {
-                        Row study = studies.get(i);
-                        index = study.fieldIndex("stats");
-                        Map stats = study.getMap(index);
-                        System.out.println("----> index stats: " + index + ", size: " + stats.size());
-                        java.util.Map<String, Row> statsMap = JavaConversions.asJavaMap(stats);
-                        for (String key: statsMap.keySet()) {
-                            Row stat = statsMap.get(key);
-                            float maf = stat.getFloat(stat.fieldIndex("maf"));
-                            if (maf > 0.0f) {
-                                System.out.println("------> " + statsMap.get(key) + " ==> " + key + ": maf = " + maf);
-                                return true;
-                            }
-                        }
-                    }
-                    return false;
-                }
-            }).count();
-            System.out.println("------> final count: " + finalCount);
-            System.out.println("--------------------------------------");
-*/
-  /*
-            vd.toJavaRDD().map(new Function<Row, Row>() {
-                Boolean first = true;
-                @Override
-                public Row call(Row row) throws Exception {
-                    System.out.println("index studies = " + row.fieldIndex("studies"));
-                    System.out.println("index studies = " + row.fieldIndex("studies"));
-                    Row rStudies = (Row) row.getList(row.fieldIndex("studies")).get(0);
-                    Row rStats =
-                    Boolean found = true;
-                    if (first) {
-                        System.out.println(r.toString());
-                        //System.out.println("\n---> row: " + row.mkString());
-                        first = false;
-                    }
-                    //Map m = (Map) row.getList(0).get(0);
-                    //System.out.println("\n---> map: " + m.mkString());
-
-                    System.out.println("\n---> keySet = " + map.keySet().mkString());
-                    java.util.Map<String, Row> javaMap = JavaConversions.asJavaMap(map);
-                    System.out.println("map size = " + map.keySet().size());
-                    for (String key: javaMap.keySet()) {
-                        Row r = javaMap.get(key);
-                        float maf = r.getFloat(r.fieldIndex("maf"));
-                        if (maf > 0.0f) {
-                            found = true;
-                            System.out.println("*** " + javaMap.get(key));
-                            System.out.println(key + ": maf = " + maf);
-                            break;
-                        }
-                    }
-                    return (found ? row : null);
-                }
-            }).reduce(new Function2<Row, Row, Row>() {
-                @Override
-                public Row call(Row r1, Row r2) throws Exception {
-                    return null;
-                }
-            });
- */
-            /*
-            Row row = vd.select("studies.stats").first();
-            row.schema().printTreeString();
-            System.out.println("----> " + row.get(0).toString());
-            Map map = (Map) row.getList(0).get(0);
-            System.out.println("\n---> map: " + map.mkString());
-            System.out.println("\n---> keySet = " + map.keySet().mkString());
-            java.util.Map<String, Row> javaMap = JavaConversions.asJavaMap(map);
-            System.out.println("map size = " + map.keySet().size());
-            for (String key: javaMap.keySet()) {
-                Row r = javaMap.get(key);
-                float maf = r.getFloat(r.fieldIndex("maf"));
-                if (maf > 0.0f) {
-                    System.out.println("*** " + javaMap.get(key));
-                    System.out.println(key + ": maf = " + maf);
-                }
-            }
-            //System.out.println("----> " + row.getAs);
-  /*
-            Row row = vd.select("studies.files").first();
-            row.schema().printTreeString();
-            System.out.println("row = " + row.mkString());
-            System.out.println("row.0 = " + row.getList(0).get(0));
-            System.out.println("row.0.0 = " + ((Seq) row.getList(0).get(0))get(0));
-
-/*
-            List list = row.getList(0);
-            List wa = ((WrappedArray) list.get(0)).toList();
-            System.out.println("0 = " + wa.get(0));
-            System.out.println("1 = " + wa.get(1));
-            System.out.println("2 = " + wa.get(2));
-            //System.out.println("----> " + row.getList(0).get(1));
-
-/*
-            for (Row row: rows) {
-                System.out.println("----> " + row.mkString());
-
-                System.out.println("------> " + row.get(0));
-                System.out.println("------> " + row.get(1));
-                System.out.println("------> " + row.get(2));
-                Map map = row.getMap(2);
-                Iterator it = map.keysIterator();
-                while (it.hasNext()) {
-                    //String key = (String) it.next();
-                    System.out.println("--> " + it.next());
-
-                    //System.out.println("key:" + key + " --> value:" + map.get(key));
-                }
-            }
-*/
-
-
-//
-//            try {
-//                vd.load("/home/jtarraga/data/spark/episodes.avro", sparkContext);
-//                vd.filter("doctor > 5").filter("doctor < 11").show();
-//                vd.filter("doctor > 5").filter("doctor < 11").showMe();
-//                //vd.select("title").show(); //write().text("/tmp/output/vd.episodes");
-//                //.write().format("com.databricks.spark.avro").save("/tmp/output");
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-//
-//            AlignmentDataset ad = new AlignmentDataset();
-//            try {
-//                ad.load("/home/jtarraga/data/spark/episodes.avro", sparkContext);
-//                ad.filter("doctor > 5").filter("doctor < 11").show();
-//                ad.filter("doctor > 5").filter("doctor < 11").showMe();
-//                //vd.select("title").show(); //write().text("/tmp/output/ad.episodes");
-//                //.write().format("com.databricks.spark.avro").save("/tmp/output");
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
     }
 }

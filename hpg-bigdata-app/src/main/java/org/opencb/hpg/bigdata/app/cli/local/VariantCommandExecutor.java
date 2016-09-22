@@ -656,8 +656,15 @@ public class VariantCommandExecutor extends CommandExecutor {
         // TODO: to take the spark home from somewhere else
         SparkConf sparkConf = SparkConfCreator.getConf("variant query", "local", 1,
                 true, "/home/jtarraga/soft/spark-2.0.0/");
+//        SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
         System.out.println("sparkConf = " + sparkConf.toDebugString());
-        SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
+
+        sparkConf = new SparkConf()
+                //.setSparkHome(sparkHome)
+                .setAppName("variant-query")
+                .setMaster("local[1]");
+        SparkContext sc = new SparkContext(sparkConf);
+        SparkSession sparkSession = new SparkSession(sc);
 
 //        SparkConf sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "/home/jtarraga/soft/spark-2.0.0/");
 //        SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
@@ -776,8 +783,13 @@ public class VariantCommandExecutor extends CommandExecutor {
         vd.update();
 
         // save the dataset
-        logger.warn("The current query implementation saves the resulting dataset in Avro format.");
-        Utils.saveDatasetAsOneAvroFile(vd, variantCommandOptions.queryVariantCommandOptions.output);
+        logger.warn("The current query implementation saves the resulting dataset in Avro or JSON format.");
+        String output = variantCommandOptions.queryVariantCommandOptions.output;
+        if (output.endsWith(".json")) {
+            Utils.saveDatasetAsOneFile(vd, "json", output);
+        } else {
+            Utils.saveDatasetAsOneFile(vd, "avro", output);
+        }
 
         // show output records
         if (variantCommandOptions.queryVariantCommandOptions.show > 0) {
