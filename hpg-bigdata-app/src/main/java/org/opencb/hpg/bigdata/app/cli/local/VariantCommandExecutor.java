@@ -726,48 +726,32 @@ public class VariantCommandExecutor extends CommandExecutor {
         }
 
         // query for consequence type (Sequence Ontology term names and accession codes)
-//        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.consequenceTypes)) {
-////            vd.annotationFilter("consequenceTypes.sequenceOntologyTerms", new ArrayList<>(Arrays.asList(
-////                    StringUtils.split(variantCommandOptions.queryVariantCommandOptions.consequenceTypes, ","))));
-//            vd.annotationFilter("consequenceTypes.sequenceOntologyTerms",
-// variantCommandOptions.queryVariantCommandOptions.consequenceTypes);
-//        }
         annotationFilterNotEmpty("consequenceTypes.sequenceOntologyTerms",
                 variantCommandOptions.queryVariantCommandOptions.consequenceTypes, vd);
 
         // query for clinvar (accession)
-        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.clinvar)) {
-            vd.annotationFilter("variantTraitAssociation.clinvar.accession", new ArrayList<>(Arrays.asList(
-                    StringUtils.split(variantCommandOptions.queryVariantCommandOptions.clinvar, ","))));
-        }
+        annotationFilterNotEmpty("variantTraitAssociation.clinvar.accession",
+                variantCommandOptions.queryVariantCommandOptions.clinvar, vd);
 
         // query for cosmic (mutation ID)
-        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.cosmic)) {
-            vd.annotationFilter("variantTraitAssociation.cosmic.mutationId", new ArrayList<>(Arrays.asList(
-                    StringUtils.split(variantCommandOptions.queryVariantCommandOptions.cosmic, ","))));
-        }
+        annotationFilterNotEmpty("variantTraitAssociation.cosmic.mutationId",
+                variantCommandOptions.queryVariantCommandOptions.cosmic, vd);
 
         // query for conservation (phastCons, phylop, gerp)
-        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.conservScores)) {
-            vd.annotationFilter("conservation", new ArrayList<>(Arrays.asList(
-                    StringUtils.split(variantCommandOptions.queryVariantCommandOptions.conservScores, ","))));
-        }
+        annotationFilterNotEmpty("conservation",
+                variantCommandOptions.queryVariantCommandOptions.conservScores, vd);
 
         // query for protein substitution scores (polyphen, sift)
-        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.substScores)) {
-            vd.annotationFilter("proteinVariantAnnotation.substitutionScores", new ArrayList<>(Arrays.asList(
-                    StringUtils.split(variantCommandOptions.queryVariantCommandOptions.substScores, ","))));
-        }
+        annotationFilterNotEmpty("proteinVariantAnnotation.substitutionScores",
+                variantCommandOptions.queryVariantCommandOptions.substScores, vd);
 
         // query for alternate population frequency (study:population)
-        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.pf)) {
-            vd.annotationFilter("populationFrequencies.altAlleleFreq", variantCommandOptions.queryVariantCommandOptions.pf);
-        }
+        annotationFilterNotEmpty("populationFrequencies.altAlleleFreq",
+                variantCommandOptions.queryVariantCommandOptions.pf, vd);
 
         // query for population minor allele frequency (study:population)
-        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.pmaf)) {
-            vd.annotationFilter("populationFrequencies.refAlleleFreq", variantCommandOptions.queryVariantCommandOptions.pmaf);
-        }
+        annotationFilterNotEmpty("variantCommandOptions.queryVariantCommandOptions.pmaf",
+                variantCommandOptions.queryVariantCommandOptions.pmaf, vd);
 
         // apply previous filters
         vd.update();
