@@ -713,6 +713,9 @@ public class LocalCliOptionsParser {
 
         @Parameter(names = {"--rename-dataset"}, description = "Rename dataset. Expected value format is: old_name::new_name")
         public String renameDataset = null;
+
+        @Parameter(names = {"--summary"}, description = "Output metadata summary")
+        public boolean summary = false;
     }
 
     private void printMainUsage() {

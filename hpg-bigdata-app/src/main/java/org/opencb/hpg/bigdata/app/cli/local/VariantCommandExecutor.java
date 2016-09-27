@@ -754,6 +754,7 @@ public class VariantCommandExecutor extends CommandExecutor {
         // sanity check
         Path input = get(variantCommandOptions.metadataVariantCommandOptions.input);
 
+        boolean updated = false;
 
         // metadata file management
         File metaFile = new File(input.toString() + ".meta.json");
@@ -775,10 +776,17 @@ public class VariantCommandExecutor extends CommandExecutor {
             if (variantCommandOptions.metadataVariantCommandOptions.renameDataset != null) {
                 String[] names = variantCommandOptions.metadataVariantCommandOptions.renameDataset.split("::");
                 metadataManager.renameDataset(names[0], names[1]);
+                updated = true;
             }
 
-            // write the metadata
-            metadataManager.save();
+            if (variantCommandOptions.metadataVariantCommandOptions.summary) {
+                System.out.println(metadataManager.summary());
+            }
+
+            if (updated) {
+                // write the metadata
+                metadataManager.save();
+            }
         } else {
             System.out.println("Error: metafile does not exist, " + metaFile.getAbsolutePath());
         }
