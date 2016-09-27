@@ -27,6 +27,7 @@ import org.apache.spark.SparkContext;
 import org.apache.spark.sql.SparkSession;
 import org.opencb.biodata.models.core.Region;
 import org.opencb.biodata.models.variant.Variant;
+import org.opencb.biodata.models.variant.VariantMetadataManager;
 import org.opencb.biodata.models.variant.avro.StudyEntry;
 import org.opencb.biodata.models.variant.avro.VariantAvro;
 import org.opencb.biodata.models.variant.avro.VariantFileMetadata;
@@ -757,10 +758,9 @@ public class VariantCommandExecutor extends CommandExecutor {
         // metadata file management
         File metaFile = new File(input.toString() + ".meta.json");
         if (metaFile.exists()) {
-            // read metadata JSON to update filename
-            ObjectMapper mapper = new ObjectMapper();
-            //mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-            VariantFileMetadata metadata = mapper.readValue(metaFile, VariantFileMetadata.class);
+
+            VariantMetadataManager metadataManager = new VariantMetadataManager();
+            metadataManager.load(metaFile.getPath());
 
             if (variantCommandOptions.metadataVariantCommandOptions.pedigreeFilename != null) {
                 System.out.println("Warning: load a pedigree file is not yet implemented !");
@@ -773,15 +773,12 @@ public class VariantCommandExecutor extends CommandExecutor {
             }
 
             if (variantCommandOptions.metadataVariantCommandOptions.renameDataset != null) {
-                System.out.println("Warning: rename dataset is not yet implemented !");
-                System.exit(-1);
+                String[] names = variantCommandOptions.metadataVariantCommandOptions.renameDataset.split("::");
+                metadataManager.renameDataset(names[0], names[1]);
             }
 
             // write the metadata
-            PrintWriter writer = new PrintWriter(new FileOutputStream(metaFile));
-            writer.write(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(
-                    mapper.readValue(metadata.toString(), Object.class)));
-            writer.close();
+            metadataManager.save();
         } else {
             System.out.println("Error: metafile does not exist, " + metaFile.getAbsolutePath());
         }
