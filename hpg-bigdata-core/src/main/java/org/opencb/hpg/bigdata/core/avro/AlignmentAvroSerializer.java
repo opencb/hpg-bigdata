@@ -77,11 +77,6 @@ public class AlignmentAvroSerializer extends AvroSerializer<ReadAlignment> {
         outputStream.close();
     }
 
-    @Override
-    public void toAvro(InputStream inputStream, String outputFilename) throws IOException {
-        toAvro(inputStream.toString(), outputFilename);
-    }
-
     public AlignmentAvroSerializer addRegionFilter(Region region) {
         addFilter(a -> a.getAlignment() != null
                 && a.getAlignment().getPosition() != null

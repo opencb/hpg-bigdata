@@ -205,7 +205,11 @@ public class VariantCommandExecutor extends CommandExecutor {
             // convert to VCF -> AVRO
 
             // create the Avro writer and add the necessary filters
-            VariantAvroSerializer avroSerializer = new VariantAvroSerializer(compressionCodecName);
+            VariantAvroSerializer avroSerializer = new VariantAvroSerializer(
+                    variantCommandOptions.convertVariantCommandOptions.species,
+                    variantCommandOptions.convertVariantCommandOptions.assembly,
+                    variantCommandOptions.convertVariantCommandOptions.dataset,
+                    compressionCodecName);
 
             // valid id filter
             if (variantCommandOptions.convertVariantCommandOptions.validId) {

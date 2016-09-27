@@ -503,6 +503,16 @@ public class LocalCliOptionsParser {
         @Parameter(names = {"--block-size"}, description = "Block size, only for parquet conversions", arity = 1)
         public int blockSize = ParquetWriter.DEFAULT_BLOCK_SIZE;
 
+        @Parameter(names = {"--species"}, description = "Species name", arity = 1)
+        public String species = "unknown";
+
+        @Parameter(names = {"--assembly"}, description = "Assembly name", arity = 1)
+        public String assembly = "unknown";
+
+        @Parameter(names = {"--dataset"}, description = "Dataset name", arity = 1)
+        public String dataset = "noname";
+
+
 //        @Parameter(names = {"-t", "--num-threads"}, description = "Number of threads to use, this must be less than the number of cores", required = false)
 //        public int numThreads = 1;
 

@@ -16,24 +16,16 @@
 
 package org.opencb.hpg.bigdata.core.parquet;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
 import org.apache.hadoop.fs.Path;
 import org.apache.parquet.avro.AvroParquetWriter;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.opencb.biodata.models.core.Region;
 import org.opencb.biodata.models.variant.Variant;
-import org.opencb.biodata.models.variant.VariantSource;
 import org.opencb.biodata.models.variant.avro.VariantAvro;
 import org.opencb.biodata.tools.variant.VariantVcfHtsjdkReader;
-import org.opencb.biodata.tools.variant.stats.VariantGlobalStatsCalculator;
 
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
@@ -64,8 +56,7 @@ public class VariantParquetConverter extends ParquetConverter<VariantAvro> {
     public void toParquetFromVcf(InputStream inputStream, String outputFilename) throws IOException {
         // reader
         String metaFilename = outputFilename + ".meta";
-        VariantSource variantSource = new VariantSource(metaFilename, "0", "0", "s");
-        VariantVcfHtsjdkReader vcfReader = new VariantVcfHtsjdkReader(inputStream, variantSource, null);
+        VariantVcfHtsjdkReader vcfReader = new VariantVcfHtsjdkReader(inputStream, null);
         vcfReader.open();
         vcfReader.pre();
 
@@ -74,8 +65,8 @@ public class VariantParquetConverter extends ParquetConverter<VariantAvro> {
                 new AvroParquetWriter(new Path(outputFilename), schema, compressionCodecName, rowGroupSize, pageSize);
 
         // init stats
-        VariantGlobalStatsCalculator statsCalculator = new VariantGlobalStatsCalculator(vcfReader.getSource());
-        statsCalculator.pre();
+        //VariantGlobalStatsCalculator statsCalculator = new VariantGlobalStatsCalculator(vcfReader.getSource());
+        //statsCalculator.pre();
 
         // main loop
         long counter = 0;
@@ -90,21 +81,11 @@ public class VariantParquetConverter extends ParquetConverter<VariantAvro> {
                 if (filter(variant.getImpl())) {
                     counter++;
                     parquetFileWriter.write(variant.getImpl());
-                    statsCalculator.updateGlobalStats(variant);
+                    //statsCalculator.updateGlobalStats(variant);
                 }
             }
         }
         System.out.println("Number of processed records: " + counter);
-
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        mapper.configure(MapperFeature.REQUIRE_SETTERS_FOR_GETTERS, true);
-
-        ObjectWriter writer = mapper.writer();
-        PrintWriter pwriter = new PrintWriter(new FileWriter(metaFilename + ".json"));
-        pwriter.write(writer.withDefaultPrettyPrinter().writeValueAsString(variantSource.getImpl()));
-        pwriter.close();
-
 
         // close
         vcfReader.post();

@@ -16,9 +16,7 @@
 
 package org.opencb.hpg.bigdata.core.avro;
 
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
@@ -84,13 +82,7 @@ public abstract class AvroSerializer<T> {
         return this;
     }
 
-    public void toAvro(String inputFilename, String outputFilename) throws IOException {
-        InputStream inputStream = new FileInputStream(inputFilename);
-        toAvro(inputStream, outputFilename);
-        inputStream.close();
-    }
-
-    public abstract void toAvro(InputStream inputStream, String outputFilename) throws IOException;
+    public abstract void toAvro(String inputFilename, String outputFilename) throws IOException;
 
     @Override
     public String toString() {
