@@ -44,6 +44,7 @@ import org.opencb.hpg.bigdata.core.lib.VariantDataset;
 import org.opencb.hpg.bigdata.core.parquet.VariantParquetConverter;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -773,7 +774,14 @@ public class VariantCommandExecutor extends CommandExecutor {
 
             if (variantCommandOptions.metadataVariantCommandOptions.createCohort != null) {
                 String[] names = variantCommandOptions.metadataVariantCommandOptions.createCohort.split("::");
-                List<String> sampleIds = Arrays.asList(StringUtils.split(names[2], ","));
+
+                List<String> sampleIds;
+                if (new File(names[2]).exists()) {
+                    sampleIds = Files.readAllLines(Paths.get(names[2]));
+                } else {
+                    sampleIds = Arrays.asList(StringUtils.split(names[2], ","));
+                }
+
                 metadataManager.createCohort(names[0], names[1], sampleIds, SampleSetType.MISCELLANEOUS);
                 updated = true;
             }
