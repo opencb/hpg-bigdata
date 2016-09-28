@@ -21,11 +21,13 @@ import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFFileReader;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.specific.SpecificDatumReader;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
 import org.apache.spark.sql.SparkSession;
 import org.opencb.biodata.models.core.Region;
+import org.opencb.biodata.models.metadata.SampleSetType;
 import org.opencb.biodata.models.variant.Variant;
 import org.opencb.biodata.models.variant.VariantMetadataManager;
 import org.opencb.biodata.models.variant.avro.StudyEntry;
@@ -44,6 +46,7 @@ import org.opencb.hpg.bigdata.core.parquet.VariantParquetConverter;
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -768,9 +771,11 @@ public class VariantCommandExecutor extends CommandExecutor {
                 System.exit(-1);
             }
 
-            if (variantCommandOptions.metadataVariantCommandOptions.cohortName != null) {
-                System.out.println("Warning: create cohort is not yet implemented !");
-                System.exit(-1);
+            if (variantCommandOptions.metadataVariantCommandOptions.createCohort != null) {
+                String[] names = variantCommandOptions.metadataVariantCommandOptions.createCohort.split("::");
+                List<String> sampleIds = Arrays.asList(StringUtils.split(names[2], ","));
+                metadataManager.createCohort(names[0], names[1], sampleIds, SampleSetType.MISCELLANEOUS);
+                updated = true;
             }
 
             if (variantCommandOptions.metadataVariantCommandOptions.renameDataset != null) {
