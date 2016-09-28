@@ -711,6 +711,9 @@ public class LocalCliOptionsParser {
         @Parameter(names = {"--create-cohort"}, description = "Create new cohort. Expected value format is: dataset_name::cohort_name::sample_name1,sample_name2,... or dataset_name::cohort_name::sample_name_file\"")
         public String createCohort = null;
 
+        @Parameter(names = {"--rename-cohort"}, description = "Rename cohort. Expected value format is: dataset_name::old_name::new_name")
+        public String renameCohort = null;
+
         @Parameter(names = {"--rename-dataset"}, description = "Rename dataset. Expected value format is: old_name::new_name")
         public String renameDataset = null;
 

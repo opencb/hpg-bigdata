@@ -786,6 +786,12 @@ public class VariantCommandExecutor extends CommandExecutor {
                 updated = true;
             }
 
+            if (variantCommandOptions.metadataVariantCommandOptions.renameCohort != null) {
+                String[] names = variantCommandOptions.metadataVariantCommandOptions.renameCohort.split("::");
+                metadataManager.renameCohort(names[0], names[1], names[2]);
+                updated = true;
+            }
+
             if (variantCommandOptions.metadataVariantCommandOptions.renameDataset != null) {
                 String[] names = variantCommandOptions.metadataVariantCommandOptions.renameDataset.split("::");
                 metadataManager.renameDataset(names[0], names[1]);
