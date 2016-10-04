@@ -94,7 +94,7 @@ public class VariantParseQuery extends ParseQuery {
 
         // Build the SQL string from the processed query using explodes and filters
         buildQueryString(viewName, queryOptions);
-
+        System.out.println(sqlQueryString.toString());
         return sqlQueryString.toString();
     }
 
@@ -219,13 +219,34 @@ public class VariantParseQuery extends ParseQuery {
                 }
                 break;
 
-            // sequenceOntologyTerms is also an array and therefore we have to use explode function
-            case "consequenceTypes.proteinVariantAnnotation.substitutionScores": {
-                auxAddFilters(value, SUBSTITUTION_VIEW, "protein substitution scores");
+            case "consequenceTypes.proteinVariantAnnotation": {
                 // we add both explode (order is kept) to the set (no repetitions allowed)
                 explodes.add("LATERAL VIEW explode(annotation.consequenceTypes) act as ct");
-                explodes.add("LATERAL VIEW explode(ct.proteinVariantAnnotation.substitutionScores) ctpvass as "
-                        + SUBSTITUTION_VIEW);
+
+                switch (field) {
+                    case "uniprotAccession":
+                    case "uniprotName":
+                    case "position":
+                    case "reference":
+                    case "alternate":
+                    case "uniprotVariantId":
+                    case "functionalDescription":
+                        filters.add(processFilter("ct.proteinVariantAnnotation." + field, value, true, false));
+                        break;
+                    case "substitutionScores": {
+                        auxAddFilters(value, SUBSTITUTION_VIEW, "protein substitution scores");
+                        // substitutionScores is also an array and therefore we have to use explode function
+                        // we add both explode (order is kept) to the set (no repetitions allowed)
+                        explodes.add("LATERAL VIEW explode(ct.proteinVariantAnnotation.substitutionScores) ctpvass as "
+                                + SUBSTITUTION_VIEW);
+                        break;
+                    }
+                    default: {
+                        // error
+                        System.err.format("Error: queries for '" + path + "." + field + "' not yet implemented!\n");
+                        break;
+                    }
+                }
                 break;
             }
 
