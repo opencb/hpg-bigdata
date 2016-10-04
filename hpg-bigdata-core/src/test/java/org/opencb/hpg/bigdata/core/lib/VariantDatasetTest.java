@@ -193,4 +193,28 @@ public class VariantDatasetTest {
 
         vd.sparkSession.sparkContext().stop();
     }
+
+    @Test
+    public void groupby() {
+
+        long count = 0;
+        try {
+            initDataset();
+            System.out.println(">>>>> GROUPBY --------------------------------------");
+            vd
+            //.studyFilter("stats.refAlleleCount", "hgva@hsapiens_grch37:1000GENOMES_phase_3::ASW==121")
+                    .annotationFilter("consequenceTypes.proteinVariantAnnotation.substitutionScores", "sift< 0.2")
+                    //.annotationFilter("conservation", "phylop<0.3,phastCons<0.1")
+            //.annotationFilter("consequenceTypes.geneName", "O")
+                    .groupBy("geneName").count().show();
+              //      .groupBy("ct.geneName").count()
+              //      .show();
+            System.out.println("----------------------------------------------------");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        vd.sparkSession.sparkContext().stop();
+    }
+
 }
