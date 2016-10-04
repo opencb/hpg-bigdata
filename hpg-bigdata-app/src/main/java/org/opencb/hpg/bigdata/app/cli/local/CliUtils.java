@@ -95,8 +95,7 @@ public class CliUtils {
         // query for ID (list and file)
         List<String> list = null;
         if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.ids)) {
-            list = new ArrayList<>(Arrays.asList(
-                    StringUtils.split(variantCommandOptions.queryVariantCommandOptions.ids, ",")));
+            list = Arrays.asList(StringUtils.split(variantCommandOptions.queryVariantCommandOptions.ids, ","));
         }
         String idFilename = variantCommandOptions.queryVariantCommandOptions.idFilename;
         if (StringUtils.isNotEmpty(idFilename) && new File(idFilename).exists()) {

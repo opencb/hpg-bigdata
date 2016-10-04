@@ -20,7 +20,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.spark.sql.SparkSession;
 import org.opencb.commons.datastore.core.Query;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -119,7 +118,7 @@ public class VariantDataset extends ParentDataset<VariantDataset> {
             query.put("annotation." + key, value);
             return this;
         } else {
-            return annotationFilter(key, new ArrayList<>(Arrays.asList(StringUtils.split(value, ","))));
+            return annotationFilter(key, Arrays.asList(StringUtils.split(value, ",")));
         }
     }
 
