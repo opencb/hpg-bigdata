@@ -38,6 +38,7 @@ public class VariantParseQuery extends ParseQuery {
 
     private static final String CONSERVATION_VIEW = "cons";
     private static final String SUBSTITUTION_VIEW = "subst";
+    private static final String STUDY_VIEW = "study";
 
     public VariantParseQuery() {
         super();
@@ -94,7 +95,6 @@ public class VariantParseQuery extends ParseQuery {
 
         // Build the SQL string from the processed query using explodes and filters
         buildQueryString(viewName, queryOptions);
-        System.out.println(sqlQueryString.toString());
         return sqlQueryString.toString();
     }
 
@@ -107,6 +107,8 @@ public class VariantParseQuery extends ParseQuery {
 
         String path = StringUtils.join(fields, ".", 1, fields.length - 1);
         String field = fields[fields.length - 1];
+
+        explodes.add("LATERAL VIEW explode(studies) act as " + this.STUDY_VIEW);
 
         switch (path) {
             case "studyId":
@@ -131,14 +133,22 @@ public class VariantParseQuery extends ParseQuery {
                 break;
 
             case "samplesData":
-                explodes.add("LATERAL VIEW explode(studies.samplesData) act as sd");
-                // investigate how to query GT
+                switch (field) {
+                    case "GT":
+                        // genotype filter,
+                        // e.g.: field = GT, value = 0:0|0;3:1|0,1|1
+                        auxAddGenotypeFilters((String) value);
+                        break;
+                    default:
+                        // error
+                        System.err.format("Error: queries for '" + path + "." + field + "' not yet implemented!\n");
+                        break;
+                }
                 break;
 
             case "stats":
                 auxAddPopulationFilters("study.studyId", "study_stats_key", "study_stats." + field,
                         (String) value, "population frequencies");
-                explodes.add("LATERAL VIEW explode(studies) act as study");
                 explodes.add("LATERAL VIEW explode(study.stats) act as study_stats_key, study_stats");
                 break;
 
@@ -329,6 +339,46 @@ public class VariantParseQuery extends ParseQuery {
             }
         }
         filters.add(where.toString());
+    }
+
+    private void auxAddGenotypeFilters(String value) {
+        // e.g.: field = GT, value = 0:0|0;3:1|0,1|1
+        String[] values = value.split("[;]");
+        StringBuilder where = new StringBuilder();
+        if (values == null) {
+            where.append(getGenotypeWhere(value));
+        } else {
+            where.append("(");
+            where.append(getGenotypeWhere(values[0]));
+            for (int i = 1; i < values.length; i++) {
+                where.append(" AND ");
+                where.append(getGenotypeWhere(values[i]));
+            }
+            where.append(")");
+        }
+        filters.add(where.toString());
+    }
+
+    private String getGenotypeWhere(String value) {
+        StringBuilder where = new StringBuilder("");
+        String[] genotypes;
+        String[] subvalues = value.split("[:]");
+        if (subvalues == null) {
+            // error
+            System.err.format("Error: invalid expresion %s for sample genotypes: abort!\n", value);
+        } else {
+            where.append("(");
+            genotypes = subvalues[1].split("[,]");
+            where.append("study.samplesData[").append(subvalues[0]).append("][0] = '");
+            where.append(genotypes[0]).append("'");
+            for (int i = 1; i < genotypes.length; i++) {
+                where.append(" OR ");
+                where.append("study.samplesData[").append(subvalues[0]).append("][0] = '");
+                where.append(genotypes[i]).append("'");
+            }
+            where.append(")");
+        }
+        return where.toString();
     }
 
 

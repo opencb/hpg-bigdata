@@ -115,6 +115,28 @@ public class VariantDataset extends ParentDataset<VariantDataset> {
         return this;
     }
 
+    // sample filter
+    public VariantDataset sampleFilter(String key, String value) {
+        String format = key.toUpperCase();
+        switch (format) {
+            case "GT":
+                query.put("studies.samplesData." + key, value);
+                break;
+            default:
+                // error
+                System.out.println("Error: unknown format '" + format + "' when filtering by samples, "
+                        + " supported format is GT");
+                break;
+        }
+        return this;
+    }
+
+    public VariantDataset sampleFilter(String key, List<String> values) {
+        updateQuery("studies.samplesData." + key, values, true);
+        return this;
+    }
+
+
     // annotation filter
     public VariantDataset annotationFilter(String key, String value) {
 //        query.put("annotation." + key, value);

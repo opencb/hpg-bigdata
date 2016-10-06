@@ -653,6 +653,10 @@ public class LocalCliOptionsParser {
                 arity = 1)
         public String pmaf;
 
+        @Parameter(names = {"--sample-genotype"}, description = "Query for sample genotypes. Use the following the format enclosed with double quotes: \"sample_index1:genotype1,genotype;sample_index2:genotype1\", e.g.: \"0:0/0;2:1/0,1/1\"",
+                arity = 1)
+        public String sampleGenotypes;
+
         @Parameter(names = {"--show"}, description = "Display the first output records", arity = 1)
         public int show = 0;
 

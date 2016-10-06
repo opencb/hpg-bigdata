@@ -154,6 +154,11 @@ public class CliUtils {
             vd.regionFilter(regions);
         }
 
+        // query for sample genotypes
+        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.sampleGenotypes)) {
+            vd.sampleFilter("GT", variantCommandOptions.queryVariantCommandOptions.sampleGenotypes);
+        }
+
         // query for consequence type (Sequence Ontology term names and accession codes)
         annotationFilterNotEmpty("consequenceTypes.sequenceOntologyTerms",
                 variantCommandOptions.queryVariantCommandOptions.consequenceTypes, vd);
