@@ -100,7 +100,7 @@ public class VariantParseQuery extends ParseQuery {
 
     protected void buildQueryString(String viewName, QueryOptions queryOptions) {
         String countBy = null;
-        if (queryOptions != null || queryOptions.containsKey("countBy")) {
+        if (queryOptions != null && queryOptions.containsKey("countBy")) {
             countBy = (String) queryOptions.get("countBy");
         }
 
