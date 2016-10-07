@@ -670,7 +670,11 @@ public class VariantCommandExecutor extends CommandExecutor {
         CliUtils.addVariantFilters(variantCommandOptions, vd);
 
         // apply previous filters
-        vd.update();
+        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.groupBy)) {
+            vd.countBy(variantCommandOptions.queryVariantCommandOptions.groupBy);
+        } else {
+            vd.update();
+        }
 
         // save the dataset
         String output = variantCommandOptions.queryVariantCommandOptions.output;

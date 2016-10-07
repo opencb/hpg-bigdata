@@ -98,6 +98,48 @@ public class VariantParseQuery extends ParseQuery {
         return sqlQueryString.toString();
     }
 
+    protected void buildQueryString(String viewName, QueryOptions queryOptions) {
+        String countBy = null;
+        if (queryOptions != null || queryOptions.containsKey("countBy")) {
+            countBy = (String) queryOptions.get("countBy");
+        }
+
+        if (countBy != null) {
+            StringBuilder prefix = new StringBuilder("");
+            StringBuilder suffix = new StringBuilder("");
+            switch (countBy) {
+                case "gene":
+                    explodes.add("LATERAL VIEW explode(annotation.consequenceTypes) act as ct");
+                    prefix.append("SELECT geneName as gene_name, count(geneName) as counter FROM (")
+                            .append("SELECT id, chromosome, start, end, alternate, ct.geneName ");
+                    suffix.append(" GROUP BY id, chromosome, start, end, alternate, ct.geneName ")
+                            .append(") t2 GROUP BY geneName");
+                    break;
+                case "consequence_type":
+                    prefix.append("SELECT dct as consequence_type, count(dct) as counter FROM (")
+                            .append("SELECT id, chromosome, start, end, alternate, annotation.displayConsequenceType as dct ");
+                    suffix.append(" GROUP BY id, chromosome, start, end, alternate, annotation.displayConsequenceType ")
+                            .append(") t2 GROUP BY dct");
+                    break;
+                default:
+                    System.out.println("\nError: unknown countBy column '"
+                            + countBy + "'. Valid columns: gene, consequence_type\n");
+                    System.exit(-1);
+                    break;
+            }
+            sqlQueryString.append(prefix);
+            sqlQueryString.append("FROM ").append(viewName).append(" ").append(StringUtils.join(explodes.toArray(), " ")).append(" ");
+            if (filters.size() > 0) {
+                sqlQueryString.append("WHERE ").append(StringUtils.join(filters, " AND "));
+            }
+            sqlQueryString.append(suffix);
+        } else {
+            buildSimpleQueryString(viewName, queryOptions);
+        }
+
+        System.err.println(sqlQueryString.toString());
+    }
+
     private void processStudyQuery(String[] fields, Object value) {
 
         // sanity check, if there is any ...

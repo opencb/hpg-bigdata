@@ -657,6 +657,10 @@ public class LocalCliOptionsParser {
                 arity = 1)
         public String sampleGenotypes;
 
+        @Parameter(names = {"--group-by"}, description = "Display the number of output records grouped by 'gene' or 'consequence_type'",
+                arity = 1)
+        public String groupBy;
+
         @Parameter(names = {"--show"}, description = "Display the first output records", arity = 1)
         public int show = 0;
 

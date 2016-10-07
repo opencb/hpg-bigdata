@@ -43,14 +43,16 @@ public class VariantDataset extends ParentDataset<VariantDataset> {
     @Override
     protected void updateDataset(Query query) {
         if (this.sql == null) {
-            this.sql = variantParseQuery.parse(query, null, viewName);
+            this.sql = variantParseQuery.parse(query, queryOptions, viewName);
             this.ds = this.sqlContext.sql(this.sql);
 
-            for (String item: variantParseQuery.getExplodes()) {
-                String[] fields = item.split(" as ");
-                this.ds = this.ds.drop(fields[1]);
+            if ((boolean) queryOptions.get("toClean")) {
+                for (String item : variantParseQuery.getExplodes()) {
+                    String[] fields = item.split(" as ");
+                    this.ds = this.ds.drop(fields[1]);
+                }
+                this.ds = this.ds.dropDuplicates("id");
             }
-            this.ds = this.ds.dropDuplicates("id");
         }
     }
 

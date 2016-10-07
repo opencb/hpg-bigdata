@@ -24,6 +24,7 @@ import org.apache.spark.sql.types.StructType;
 import org.apache.spark.storage.StorageLevel;
 import org.opencb.biodata.models.core.Region;
 import org.opencb.commons.datastore.core.Query;
+import org.opencb.commons.datastore.core.QueryOptions;
 import scala.Symbol;
 import scala.Tuple2;
 import scala.collection.Seq;
@@ -38,16 +39,15 @@ import java.util.Map;
 public abstract class ParentDataset<T> {
 
     protected Query query;
+    protected QueryOptions queryOptions;
     protected String viewName;
     protected Dataset<Row> ds;
     protected SQLContext sqlContext;
     protected SparkSession sparkSession;
 
-    public ParentDataset() {
-        ds = null;
-        sqlContext = null;
 
-        query = new Query();
+    public ParentDataset() {
+        this(null);
     }
 
     public ParentDataset(SparkSession sparkSession) {
@@ -56,6 +56,8 @@ public abstract class ParentDataset<T> {
         sqlContext = null;
 
         query = new Query();
+        queryOptions = new QueryOptions();
+        queryOptions.put("toClean", true);
     }
 
     public void load(String filename) throws Exception {
@@ -89,6 +91,20 @@ public abstract class ParentDataset<T> {
 
     public void update() {
         updateDataset(query);
+    }
+
+    public ParentDataset<T> countBy(String field) {
+        if (!queryOptions.containsKey("countBy")) {
+            queryOptions.put("countBy", field);
+            queryOptions.put("toClean", false);
+            updateDataset(query);
+        } else {
+            // error
+            System.err.println("\nError: nested countBy are not allowed!\n");
+            System.exit(-1);
+
+        }
+        return this;
     }
 
     // region filter
