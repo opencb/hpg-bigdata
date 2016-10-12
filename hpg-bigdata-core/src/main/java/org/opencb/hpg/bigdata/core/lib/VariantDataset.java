@@ -32,11 +32,8 @@ public class VariantDataset extends ParentDataset<VariantDataset> {
     private VariantParseQuery variantParseQuery;
     private String sql;
 
-    public VariantDataset() {
-        variantParseQuery = new VariantParseQuery();
-    }
-
     public VariantDataset(SparkSession sparkSession) {
+        super(sparkSession);
         variantParseQuery = new VariantParseQuery();
     }
 

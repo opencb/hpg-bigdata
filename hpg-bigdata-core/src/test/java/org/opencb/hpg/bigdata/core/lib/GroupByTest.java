@@ -67,7 +67,7 @@ public class GroupByTest {
     }
 
     public void initDataset() {
-        vd = new VariantDataset();
+        vd = new VariantDataset(sparkSession);
         try {
             String filename = this.getClass().getResource("100.variants.avro").getFile();
 //            String filename = "/home/jtarraga/data150/spark/variant-test-file-head-200.vcf.annot.avro";

@@ -65,7 +65,7 @@ public class VariantDatasetTest {
     }
 
     public void initDataset() {
-        vd = new VariantDataset();
+        vd = new VariantDataset(sparkSession);
         try {
             String filename = this.getClass().getResource("100.variants.avro").getFile();
             System.out.println(">>>> opening file " + filename);
