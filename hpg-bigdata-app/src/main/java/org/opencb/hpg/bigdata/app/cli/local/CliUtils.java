@@ -176,7 +176,7 @@ public class CliUtils {
                 variantCommandOptions.queryVariantCommandOptions.conservScores, vd);
 
         // query for protein substitution scores (polyphen, sift)
-        annotationFilterNotEmpty("proteinVariantAnnotation.substitutionScores",
+        annotationFilterNotEmpty("consequenceTypes.proteinVariantAnnotation.substitutionScores",
                 variantCommandOptions.queryVariantCommandOptions.substScores, vd);
 
         // query for alternate population frequency (study:population)
@@ -184,7 +184,7 @@ public class CliUtils {
                 variantCommandOptions.queryVariantCommandOptions.pf, vd);
 
         // query for population minor allele frequency (study:population)
-        annotationFilterNotEmpty("variantCommandOptions.queryVariantCommandOptions.pmaf",
+        annotationFilterNotEmpty("populationFrequencies.refAlleleFreq",
                 variantCommandOptions.queryVariantCommandOptions.pmaf, vd);
     }
 

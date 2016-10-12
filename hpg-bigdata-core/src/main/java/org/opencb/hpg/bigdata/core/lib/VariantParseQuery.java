@@ -138,6 +138,7 @@ public class VariantParseQuery extends ParseQuery {
         }
 
         System.err.println(sqlQueryString.toString());
+//        System.exit(0);
     }
 
     private void processStudyQuery(String[] fields, Object value) {
@@ -243,6 +244,16 @@ public class VariantParseQuery extends ParseQuery {
                         break;
                     case "transcriptAnnotationFlags":
                         filters.add(processFilter("ct.transcriptAnnotationFlags", value, true, true));
+                        break;
+                    case "sequenceOntologyTerms":
+                        // we add both explode (order is kept) to the set (no repetitions allowed)
+                        explodes.add("LATERAL VIEW explode(annotation.consequenceTypes) act as ct");
+                        explodes.add("LATERAL VIEW explode(ct.sequenceOntologyTerms) ctso as so");
+                        if (value.startsWith("SO:")) {
+                            filters.add(processFilter("so.accession", value, true, false));
+                        } else {
+                            filters.add(processFilter("so.name", value, true, false));
+                        }
                         break;
                     default:
                         // error!!
