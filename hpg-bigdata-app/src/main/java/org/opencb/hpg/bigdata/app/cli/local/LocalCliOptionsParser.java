@@ -661,8 +661,8 @@ public class LocalCliOptionsParser {
                 arity = 1)
         public String groupBy;
 
-        @Parameter(names = {"--show"}, description = "Display the first output records", arity = 1)
-        public int show = 0;
+        @Parameter(names = {"--limit"}, description = "Display the first output records", arity = 1)
+        public int limit = 0;
 
         @Parameter(names = {"--count"}, description = "Display the number of output records")
         public boolean count = false;

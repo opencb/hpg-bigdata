@@ -655,8 +655,8 @@ public class VariantCommandExecutor extends CommandExecutor {
 
     public void query() throws Exception {
         // sanity check: input file
-        Path inputPath = Paths.get(variantCommandOptions.queryVariantCommandOptions.input);
-        FileUtils.checkFile(inputPath);
+        //Path inputPath = Paths.get(variantCommandOptions.queryVariantCommandOptions.input);
+        //FileUtils.checkFile(inputPath);
 
         SparkConf sparkConf = SparkConfCreator.getConf("variant query", "local", 1, true);
         logger.debug("sparkConf = {}", sparkConf.toDebugString());
@@ -678,23 +678,26 @@ public class VariantCommandExecutor extends CommandExecutor {
 
         // save the dataset
         String output = variantCommandOptions.queryVariantCommandOptions.output;
-        if (output.endsWith(".json")) {
-            CliUtils.saveDatasetAsOneFile(vd, "json", output, logger);
-        } else if (output.endsWith(".parquet")) {
-            CliUtils.saveDatasetAsOneFile(vd, "parquet", output, logger);
-        } else {
-            CliUtils.saveDatasetAsOneFile(vd, "avro", output, logger);
+        if (output != null) {
+            if (output.endsWith(".json")) {
+                CliUtils.saveDatasetAsOneFile(vd, "json", output, logger);
+            } else if (output.endsWith(".parquet")) {
+                CliUtils.saveDatasetAsOneFile(vd, "parquet", output, logger);
+            } else {
+                CliUtils.saveDatasetAsOneFile(vd, "avro", output, logger);
+            }
         }
 
         // show output records
-        if (variantCommandOptions.queryVariantCommandOptions.show > 0) {
-            vd.show(variantCommandOptions.queryVariantCommandOptions.show);
+        if (variantCommandOptions.queryVariantCommandOptions.limit > 0) {
+            vd.show(variantCommandOptions.queryVariantCommandOptions.limit);
         }
 
         // count output records
         if (variantCommandOptions.queryVariantCommandOptions.count) {
+            long count = vd.count();
             System.out.println("----------------------------------------------");
-            System.out.println("Number of output records: " + vd.count());
+            System.out.println("Number of output records: " + count);
             System.out.println("----------------------------------------------");
         }
     }
