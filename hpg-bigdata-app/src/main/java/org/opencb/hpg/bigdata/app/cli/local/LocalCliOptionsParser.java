@@ -577,7 +577,7 @@ public class LocalCliOptionsParser {
         public String input;
 
         @Parameter(names = {"-o", "--output"}, description = "Output file name. Its extension .json, .parquet and .avro, indicates the output format.",
-                required = true, arity = 1)
+                arity = 1)
         public String output;
 
         @Parameter(names = {"--id"}, description = "Query for ID; comma separated list of IDs, e.g.: \"rs312411,rs421225\"",
