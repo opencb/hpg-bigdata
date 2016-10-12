@@ -51,7 +51,7 @@ public class VariantQueryCLITest {
         execute(commandLine.toString());
     }
 
-    @Test
+//    @Test
     public void query3() {
         StringBuilder commandLine = new StringBuilder();
         commandLine.append(" variant query");
@@ -81,4 +81,15 @@ public class VariantQueryCLITest {
         execute(commandLine.toString());
     }
 
+    @Test
+    public void query5() {
+        StringBuilder commandLine = new StringBuilder();
+        commandLine.append(" variant query");
+        commandLine.append(" --log-level ERROR");
+        commandLine.append(" -i ").append(inputFilename);
+        commandLine.append(" --sample-genotype \"0:0|0;3:1|0,1|1\"");
+        commandLine.append(" --limit 10");
+
+        execute(commandLine.toString());
+    }
 }
