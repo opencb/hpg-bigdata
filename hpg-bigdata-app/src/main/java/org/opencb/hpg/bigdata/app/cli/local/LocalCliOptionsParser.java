@@ -628,6 +628,10 @@ public class LocalCliOptionsParser {
                 arity = 1)
         public String consequenceTypes;
 
+        @Parameter(names = {"--gene"}, description = "Query for gene; comma separated list of gene names, e.g.: \"BIN3,ZNF517\"",
+                arity = 1)
+        public String genes;
+
         @Parameter(names = {"--clinvar"}, description = "Query for clinvar (accession); comma separated list of accessions", arity = 1)
         public String clinvar;
 

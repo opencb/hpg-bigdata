@@ -163,6 +163,10 @@ public class CliUtils {
         annotationFilterNotEmpty("consequenceTypes.sequenceOntologyTerms",
                 variantCommandOptions.queryVariantCommandOptions.consequenceTypes, vd);
 
+        // query for consequence type (gene names)
+        annotationFilterNotEmpty("consequenceTypes.geneName",
+                variantCommandOptions.queryVariantCommandOptions.genes, vd);
+
         // query for clinvar (accession)
         annotationFilterNotEmpty("variantTraitAssociation.clinvar.accession",
                 variantCommandOptions.queryVariantCommandOptions.clinvar, vd);

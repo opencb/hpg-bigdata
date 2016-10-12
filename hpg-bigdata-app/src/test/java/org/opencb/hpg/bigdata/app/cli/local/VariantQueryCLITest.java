@@ -37,7 +37,7 @@ public class VariantQueryCLITest {
         execute(commandLine.toString());
     }
 
-    @Test
+//    @Test
     public void query2() {
         StringBuilder commandLine = new StringBuilder();
         commandLine.append(" variant query");
@@ -50,4 +50,35 @@ public class VariantQueryCLITest {
 
         execute(commandLine.toString());
     }
+
+    @Test
+    public void query3() {
+        StringBuilder commandLine = new StringBuilder();
+        commandLine.append(" variant query");
+        commandLine.append(" --log-level ERROR");
+        commandLine.append(" -i ").append(inputFilename);
+        commandLine.append(" --population-maf \"1000GENOMES_phase_3::ALL<0.01,EXAC::ALL<0.01\"");
+        commandLine.append(" --protein-substitution \"sift<0.2\"");
+        commandLine.append(" --consequence-type \"missense_variant\"");
+        commandLine.append(" --gene \"BIN3,ZNF517\"");
+        commandLine.append(" --count");
+
+        execute(commandLine.toString());
+    }
+
+//    @Test
+    public void query4() {
+        StringBuilder commandLine = new StringBuilder();
+        commandLine.append(" variant query");
+        commandLine.append(" --log-level ERROR");
+        commandLine.append(" -i ").append(inputFilename);
+        commandLine.append(" --population-maf \"1000GENOMES_phase_3::ALL<0.01,EXAC::ALL<0.01\"");
+        commandLine.append(" --protein-substitution \"sift<0.2\"");
+        commandLine.append(" --consequence-type \"missense_variant\"");
+        commandLine.append(" --limit 100");
+        commandLine.append(" --group-by gene");
+
+        execute(commandLine.toString());
+    }
+
 }
