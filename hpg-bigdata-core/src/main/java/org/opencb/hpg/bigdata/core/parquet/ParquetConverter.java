@@ -25,12 +25,20 @@ import org.apache.hadoop.fs.Path;
 import org.apache.parquet.avro.AvroParquetWriter;
 import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
+import org.opencb.commons.io.DataReader;
+import org.opencb.commons.io.DataWriter;
+import org.opencb.commons.run.ParallelTaskRunner;
+import org.opencb.hpg.bigdata.core.io.avro.AvroReader;
+import org.opencb.hpg.bigdata.core.utils.FilterTask;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 /**
  * Created by hpccoll1 on 05/05/15.
@@ -106,14 +114,6 @@ public abstract class ParquetConverter<T extends IndexedRecord> {
         AvroParquetWriter parquetWriter =
                 new AvroParquetWriter(new Path(outputFilename), schema, compressionCodecName, rowGroupSize, pageSize);
 
-        // This code is correct for parquet 1.8.1. Scala is still using parquet 1.7.0
-//        ParquetWriter<Object> parquetWriter2 = AvroParquetWriter.builder(new Path(outputFilename))
-//                .withSchema(schema)
-//                .withCompressionCodec(compressionCodecName)
-//                .withRowGroupSize(rowGroupSize)
-//                .withPageSize(pageSize)
-//                .build();
-
         int numRecords = 0;
         T record = null;
         while (dataFileStream.hasNext()) {
@@ -130,6 +130,40 @@ public abstract class ParquetConverter<T extends IndexedRecord> {
 
         parquetWriter.close();
         dataFileStream.close();
+    }
+
+    public void toParquetFromAvro(InputStream inputStream, String outputFilename, int numThreads) throws IOException {
+
+        // config
+        ParallelTaskRunner.Config config = ParallelTaskRunner.Config.builder()
+                .setNumTasks(numThreads)
+                .setBatchSize(100)
+                .setSorted(true)
+                .build();
+
+        // reader
+        DataReader dataReader = new AvroReader<T>(inputStream, schema);
+
+        // writer
+        DataWriter dataWriter = new ParquetFileWriter(outputFilename, schema, compressionCodecName,
+                rowGroupSize, pageSize);
+
+        // filtering
+        Supplier<FilterTask<T>> taskSupplier;
+        taskSupplier = () -> new FilterTask<>(filters);
+
+        // parallel task runner
+        ParallelTaskRunner<String, ByteBuffer> ptr;
+        try {
+            ptr = new ParallelTaskRunner<>(dataReader, taskSupplier, dataWriter, config);
+        } catch (Exception e) {
+            throw new IOException("Error while creating ParallelTaskRunner", e);
+        }
+        try {
+            ptr.run();
+        } catch (ExecutionException e) {
+            throw new IOException("Error while converting Avro to Parquet in ParallelTaskRunner", e);
+        }
     }
 
     @Override

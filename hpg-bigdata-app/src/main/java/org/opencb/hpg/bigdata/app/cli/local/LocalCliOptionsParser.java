@@ -512,9 +512,8 @@ public class LocalCliOptionsParser {
         @Parameter(names = {"--dataset"}, description = "Dataset name", arity = 1)
         public String dataset = "noname";
 
-
-//        @Parameter(names = {"-t", "--num-threads"}, description = "Number of threads to use, this must be less than the number of cores", required = false)
-//        public int numThreads = 1;
+        @Parameter(names = {"-t", "--num-threads"}, description = "Number of threads to use, usually this must be less than the number of cores")
+        public int numThreads = 1;
 
 //        @Parameter(names = {"--skip-normalization"}, description = "Whether to skip variant normalization", required = false)
 //        public boolean skipNormalization;

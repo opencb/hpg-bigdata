@@ -177,13 +177,20 @@ public class VariantCommandExecutor extends CommandExecutor {
                 // convert to AVRO -> PARQUET
                 System.out.println("\n\nStarting AVRO->PARQUET conversion...\n");
                 startTime = System.currentTimeMillis();
-                parquetConverter.toParquetFromAvro(inputStream, output);
+
+                if (variantCommandOptions.convertVariantCommandOptions.numThreads > 1) {
+                    parquetConverter.toParquetFromAvro(inputStream, output,
+                            variantCommandOptions.convertVariantCommandOptions.numThreads);
+                } else {
+                    parquetConverter.toParquetFromAvro(inputStream, output);
+                }
+
                 elapsedTime = System.currentTimeMillis() - startTime;
                 System.out.println("\n\nFinish AVRO->PARQUET conversion in " + (elapsedTime / 1000F) + " sec\n");
 
                 // metadata file management
                 File metaFile = new File(inputPath.toString() + ".meta.json");
-                if (metaFile.exists()) {
+                if (1 == 0 && metaFile.exists()) {
                     File outMetaFile = new File(output + ".meta.json");
 
                     // read metadata JSON to update filename
