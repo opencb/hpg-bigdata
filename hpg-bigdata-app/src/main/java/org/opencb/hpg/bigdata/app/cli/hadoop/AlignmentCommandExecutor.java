@@ -22,7 +22,6 @@ import org.apache.hadoop.fs.Path;
 import org.ga4gh.models.ReadAlignment;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
 import org.opencb.hpg.bigdata.tools.alignment.Bam2AvroMR;
-import org.opencb.hpg.bigdata.tools.alignment.stats.ReadAlignmentDepthMR;
 import org.opencb.hpg.bigdata.tools.alignment.stats.ReadAlignmentStatsMR;
 import org.opencb.hpg.bigdata.tools.io.parquet.ParquetMR;
 
@@ -139,7 +138,8 @@ public class AlignmentCommandExecutor extends CommandExecutor {
         FileSystem fs = FileSystem.get(conf);
 
         // run MapReduce job to compute stats
-        ReadAlignmentDepthMR.run(input, output, regions, minMapQ);
+        // TODO fixi it!
+//        ReadAlignmentDepthMR.run(input, output, regions, minMapQ);
 
 //        String tmpOutDirName = output + "_" + Long.toString(new Date().getTime());
 //

@@ -17,8 +17,8 @@
 package org.opencb.hpg.bigdata.tools.sequence.stats;
 
 import org.apache.hadoop.io.Writable;
-import org.opencb.biodata.tools.alignment.tasks.AlignmentStats;
-import org.opencb.biodata.tools.sequence.tasks.SequenceStats;
+import org.opencb.biodata.tools.alignment.stats.AlignmentGlobalStats;
+import org.opencb.biodata.tools.alignment.stats.SequenceStats;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -27,20 +27,20 @@ import java.util.HashMap;
 
 public class ReadAlignmentStatsWritable implements Writable {
 
-    private AlignmentStats stats;
+    private AlignmentGlobalStats stats;
 
     public ReadAlignmentStatsWritable() {
     }
 
-    public ReadAlignmentStatsWritable(AlignmentStats stats) {
+    public ReadAlignmentStatsWritable(AlignmentGlobalStats stats) {
         setStats(stats);
     }
 
-    public AlignmentStats getStats() {
+    public AlignmentGlobalStats getStats() {
         return stats;
     }
 
-    public void setStats(AlignmentStats stats) {
+    public void setStats(AlignmentGlobalStats stats) {
         this.stats = stats;
     }
 
@@ -93,7 +93,7 @@ public class ReadAlignmentStatsWritable implements Writable {
     @Override
     public void readFields(DataInput in) throws IOException {
         int size;
-        stats = new AlignmentStats();
+        stats = new AlignmentGlobalStats();
         stats.numMapped = in.readInt();
         stats.numUnmapped = in.readInt();
         stats.numPaired = in.readInt();

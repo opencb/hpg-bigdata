@@ -25,10 +25,9 @@ import org.apache.spark.SparkContext;
 import org.apache.spark.sql.SparkSession;
 import org.ga4gh.models.ReadAlignment;
 import org.opencb.biodata.models.core.Region;
-import org.opencb.biodata.tools.alignment.tasks.AlignmentStats;
-import org.opencb.biodata.tools.alignment.tasks.AlignmentStatsCalculator;
-import org.opencb.biodata.tools.alignment.tasks.RegionDepth;
-import org.opencb.biodata.tools.alignment.tasks.RegionDepthCalculator;
+import org.opencb.biodata.tools.alignment.stats.AlignmentGlobalStats;
+import org.opencb.biodata.tools.alignment.stats.AlignmentGlobalStatsCalculator;
+import org.opencb.biodata.tools.alignment.stats.AvroAlignmentGlobalStatsCalculator;
 import org.opencb.commons.utils.FileUtils;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
 import org.opencb.hpg.bigdata.core.avro.AlignmentAvroSerializer;
@@ -338,9 +337,9 @@ public class AlignmentCommandExecutor extends CommandExecutor {
             InputStream is = new FileInputStream(input);
             DataFileStream<ReadAlignment> reader = new DataFileStream<>(is, new SpecificDatumReader<>(ReadAlignment.class));
 
-            AlignmentStats stats;
-            AlignmentStats totalStats = new AlignmentStats();
-            AlignmentStatsCalculator calculator = new AlignmentStatsCalculator();
+            AlignmentGlobalStats stats;
+            AlignmentGlobalStats totalStats = new AlignmentGlobalStats();
+            AlignmentGlobalStatsCalculator calculator = new AvroAlignmentGlobalStatsCalculator();
 
             // main loop
             for (ReadAlignment readAlignment : reader) {
@@ -369,126 +368,90 @@ public class AlignmentCommandExecutor extends CommandExecutor {
 
         HashMap<String, Integer> regionLength = new HashMap<>();
 
-        // region filter management,
-        // we use the same region list to store all regions from both parameter --regions and
-        // parameter --region-file
-        List<Region> regions = CliUtils.getRegionList(alignmentCommandOptions.depthAlignmentCommandOptions.regions,
-                alignmentCommandOptions.depthAlignmentCommandOptions.regionFilename);
-
-        AlignmentAvroSerializer serializer = null;
-        if (regions != null && regions.size() > 0) {
-            serializer = new AlignmentAvroSerializer();
-            serializer.addRegionFilter(regions, false);
-        }
-
-        try {
-            // header management
-            BufferedReader br = new BufferedReader(new FileReader(input + BAM_HEADER_SUFFIX));
-            String line, fieldName, fieldLength;
-            String[] fields;
-            String[] subfields;
-            while ((line = br.readLine()) != null) {
-                if (line.startsWith("@SQ")) {
-                    fields = line.split("\t");
-                    subfields = fields[1].split(":");
-                    fieldName = subfields[1];
-                    subfields = fields[2].split(":");
-                    fieldLength = subfields[1];
-
-                    regionLength.put(fieldName, Integer.parseInt(fieldLength));
-                }
-            }
-            br.close();
-
-            // reader
-            InputStream is = new FileInputStream(input);
-            DataFileStream<ReadAlignment> reader = new DataFileStream<>(is, new SpecificDatumReader<>(ReadAlignment.class));
-
-            // writer
-            PrintWriter writer = new PrintWriter(new File(output + "/depth.txt"));
-
-            String chromName = "";
-            int[] chromDepth;
-
-            RegionDepth regionDepth;
-            RegionDepthCalculator calculator = new RegionDepthCalculator();
-
-            int pos;
-            long prevPos = 0L;
-
-            // main loop
-            chromDepth = null;
-            for (ReadAlignment readAlignment : reader) {
-                if (readAlignment.getAlignment() != null) {
-
-                    // discard alignment by region filter if necessary
-                    if (serializer != null && !serializer.filter(readAlignment)) {
-                        continue;
-                    }
-
-                    regionDepth = calculator.compute(readAlignment);
-                    if (chromDepth == null) {
-                        chromName = regionDepth.chrom;
-                        chromDepth = new int[regionLength.get(regionDepth.chrom)];
-                    }
-                    if (!chromName.equals(regionDepth.chrom)) {
-                        // write depth
-                        int length = chromDepth.length;
-                        for (int i = 0; i < length; i++) {
-                            writer.write(chromName + "\t" + (i + 1) + "\t" + chromDepth[i] + "\n");
-                        }
-
-                        // init
-                        prevPos = 0L;
-                        chromName = regionDepth.chrom;
-                        chromDepth = new int[regionLength.get(regionDepth.chrom)];
-                    }
-                    if (prevPos > regionDepth.position) {
-                        throw new IOException("Error: the input file (" + input + ") is not sorted (reads out of order).");
-                    }
-
-                    pos = (int) regionDepth.position;
-                    for (int i: regionDepth.array) {
-                        chromDepth[pos] += regionDepth.array[i];
-                        pos++;
-                    }
-                    prevPos = regionDepth.position;
-                }
-            }
-
-            // write depth
-            if (chromDepth != null) {
-                int length = chromDepth.length;
-                if (serializer != null) {
-                    for (int i = 0; i < length; i++) {
-                        if (chromDepth[i] > 0) {
-                            pos = i + 1;
-                            for (Region region: regions) {
-                                if (region.getChromosome().equals(chromName)
-                                        && region.getStart() <= pos && region.getEnd() >= pos) {
-                                    writer.write(chromName + "\t" + pos + "\t" + chromDepth[i] + "\n");
-                                    break;
-                                }
-                            }
-                        }
-                    }
-
-                } else {
-                    for (int i = 0; i < length; i++) {
-                        if (chromDepth[i] > 0) {
-                            writer.write(chromName + "\t" + (i + 1) + "\t" + chromDepth[i] + "\n");
-                        }
-                    }
-                }
-            }
-
-            // close
-            reader.close();
-            is.close();
-            writer.close();
-        } catch (Exception e) {
-            throw e;
-        }
+        //TODO: fix using the new RegionCoverage, JT
+//        try {
+//            // header management
+//            BufferedReader br = new BufferedReader(new FileReader(input + BAM_HEADER_SUFFIX));
+//            String line, fieldName, fieldLength;
+//            String[] fields;
+//            String[] subfields;
+//            while ((line = br.readLine()) != null) {
+//                if (line.startsWith("@SQ")) {
+//                    fields = line.split("\t");
+//                    subfields = fields[1].split(":");
+//                    fieldName = subfields[1];
+//                    subfields = fields[2].split(":");
+//                    fieldLength = subfields[1];
+//
+//                    regionLength.put(fieldName, Integer.parseInt(fieldLength));
+//                }
+//            }
+//            br.close();
+//
+//            // reader
+//            InputStream is = new FileInputStream(input);
+//            DataFileStream<ReadAlignment> reader = new DataFileStream<>(is, new SpecificDatumReader<>(ReadAlignment.class));
+//
+//            // writer
+//            PrintWriter writer = new PrintWriter(new File(output + "/depth.txt"));
+//
+//            String chromName = "";
+//            int[] chromDepth;
+//
+//            RegionDepth regionDepth;
+//            RegionDepthCalculator calculator = new RegionDepthCalculator();
+//
+//            int pos;
+//            long prevPos = 0L;
+//
+//            // main loop
+//            chromDepth = null;
+//            for (ReadAlignment readAlignment : reader) {
+//                if (readAlignment.getAlignment() != null) {
+//                    regionDepth = calculator.compute(readAlignment);
+//                    if (chromDepth == null) {
+//                        chromName = regionDepth.chrom;
+//                        chromDepth = new int[regionLength.get(regionDepth.chrom)];
+//                    }
+//                    if (!chromName.equals(regionDepth.chrom)) {
+//                        // write depth
+//                        int length = chromDepth.length;
+//                        for (int i = 0; i < length; i++) {
+//                            writer.write(chromName + "\t" + (i + 1) + "\t" + chromDepth[i] + "\n");
+//                        }
+//
+//                        // init
+//                        prevPos = 0L;
+//                        chromName = regionDepth.chrom;
+//                        chromDepth = new int[regionLength.get(regionDepth.chrom)];
+//                    }
+//                    if (prevPos > regionDepth.position) {
+//                        throw new IOException("Error: the input file (" + input + ") is not sorted (reads out of order).");
+//                    }
+//
+//                    pos = (int) regionDepth.position;
+//                    for (int i: regionDepth.array) {
+//                        chromDepth[pos] += regionDepth.array[i];
+//                        pos++;
+//                    }
+//                    prevPos = regionDepth.position;
+//                }
+//            }
+//            // write depth
+//            int length = chromDepth.length;
+//            for (int i = 0; i < length; i++) {
+//                if (chromDepth[i] > 0) {
+//                    writer.write(chromName + "\t" + (i + 1) + "\t" + chromDepth[i] + "\n");
+//                }
+//            }
+//
+//            // close
+//            reader.close();
+//            is.close();
+//            writer.close();
+//        } catch (Exception e) {
+//            throw e;
+//        }
     }
 
     public void query() throws Exception {

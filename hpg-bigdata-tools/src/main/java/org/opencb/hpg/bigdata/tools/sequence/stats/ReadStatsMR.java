@@ -32,8 +32,8 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.opencb.biodata.models.sequence.Read;
-import org.opencb.biodata.tools.sequence.tasks.SequenceStats;
-import org.opencb.biodata.tools.sequence.tasks.SequenceStatsCalculator;
+import org.opencb.biodata.tools.alignment.stats.SequenceStats;
+import org.opencb.biodata.tools.alignment.stats.SequenceStatsCalculator;
 
 public class ReadStatsMR {
 

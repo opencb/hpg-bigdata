@@ -44,7 +44,6 @@ import org.ga4gh.models.CallSet;
 import org.ga4gh.models.Variant;
 import org.ga4gh.models.VariantSet;
 import org.opencb.biodata.formats.variant.vcf4.FullVcfCodec;
-import org.opencb.biodata.tools.alignment.tasks.RegionDepth;
 import org.opencb.hpg.bigdata.core.converters.variation.Genotype2CallSet;
 import org.opencb.hpg.bigdata.core.converters.variation.VariantContext2VariantConverter;
 import org.opencb.hpg.bigdata.core.converters.variation.VariantConverterContext;
@@ -122,8 +121,9 @@ public class Vcf2AvroMR {
             ChunkKey newKey;
 
             VariantContext variantContext = value.get();
-            int startChunk = variantContext.getStart() / RegionDepth.CHUNK_SIZE;
-            int endChunk = variantContext.getEnd() / RegionDepth.CHUNK_SIZE;
+            //TODO: fix, JT
+            int startChunk = 0; //variantContext.getStart() / RegionCoverage.CHUNK_SIZE;
+            int endChunk = 0; //variantContext.getEnd() / RegionDepth.CHUNK_SIZE;
             newKey = new ChunkKey(variantContext.getContig(), startChunk);
             Variant variant = converter.forward(variantContext);
             context.write(newKey, new AvroValue<>(variant));

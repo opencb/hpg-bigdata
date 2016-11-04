@@ -17,7 +17,7 @@
 package org.opencb.hpg.bigdata.tools.sequence.stats;
 
 import org.apache.hadoop.io.Writable;
-import org.opencb.biodata.tools.sequence.tasks.SequenceKmers;
+import org.opencb.biodata.tools.alignment.stats.SequenceKmers;
 
 import java.io.DataInput;
 import java.io.DataOutput;

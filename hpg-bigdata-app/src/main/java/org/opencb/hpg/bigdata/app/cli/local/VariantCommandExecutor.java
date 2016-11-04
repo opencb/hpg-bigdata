@@ -483,7 +483,7 @@ public class VariantCommandExecutor extends CommandExecutor {
         reader.close();
     }
 
-    private void convertToProtoBuf(Path inputPath, OutputStream outputStream) throws Exception {
+//    private void convertToProtoBuf(Path inputPath, OutputStream outputStream) throws Exception {
 //        // Creating reader
 //        VcfBlockIterator iterator = (StringUtils.equals("-", inputPath.toAbsolutePath().toString()))
 //                ? new VcfBlockIterator(new BufferedInputStream(System.in), new FullVcfCodec())
@@ -520,25 +520,25 @@ public class VariantCommandExecutor extends CommandExecutor {
 //        );
 //        runner.run();
 //        outputStream.close();
-
-//        InputStream inputStream = new FileInputStream(variantCommandOptions.convertVariantCommandOptions.output);
-//        if (outputStream instanceof GZIPOutputStream) {
-//            inputStream = new GZIPInputStream(inputStream);
-//        }
-//        VariantProto.Variant variant;
-//        int i = 0;
-//        try {
-//            while ((variant = VariantProto.Variant.parseDelimitedFrom(inputStream)) != null) {
-//                i++;
-//            System.out.println(variant.getChromosome() + ":" + variant.getStart()
-//                    + ":" + variant.getReference() + ":" + variant.getAlternate());
-////            System.out.println("variant = " + variant.toString());
-//            }
-//        } finally {
-//            System.out.println("Num variants = " + i);
-//            inputStream.close();
-//        }
-    }
+//
+////        InputStream inputStream = new FileInputStream(variantCommandOptions.convertVariantCommandOptions.output);
+////        if (outputStream instanceof GZIPOutputStream) {
+////            inputStream = new GZIPInputStream(inputStream);
+////        }
+////        VariantProto.Variant variant;
+////        int i = 0;
+////        try {
+////            while ((variant = VariantProto.Variant.parseDelimitedFrom(inputStream)) != null) {
+////                i++;
+////            System.out.println(variant.getChromosome() + ":" + variant.getStart()
+////                    + ":" + variant.getReference() + ":" + variant.getAlternate());
+//////            System.out.println("variant = " + variant.toString());
+////            }
+////        } finally {
+////            System.out.println("Num variants = " + i);
+////            inputStream.close();
+////        }
+//    }
 
     /*
 
