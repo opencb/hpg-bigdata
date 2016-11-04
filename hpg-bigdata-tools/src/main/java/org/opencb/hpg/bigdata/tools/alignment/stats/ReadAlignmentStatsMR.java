@@ -30,8 +30,9 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.ga4gh.models.ReadAlignment;
-import org.opencb.biodata.tools.alignment.tasks.AlignmentStats;
-import org.opencb.biodata.tools.alignment.tasks.AlignmentStatsCalculator;
+import org.opencb.biodata.tools.alignment.stats.AlignmentGlobalStats;
+import org.opencb.biodata.tools.alignment.stats.AlignmentGlobalStatsCalculator;
+import org.opencb.biodata.tools.alignment.stats.AvroAlignmentGlobalStatsCalculator;
 import org.opencb.hpg.bigdata.tools.sequence.stats.ReadAlignmentStatsWritable;
 import org.opencb.hpg.bigdata.tools.sequence.stats.ReadStatsWritable;
 
@@ -57,7 +58,7 @@ public class ReadAlignmentStatsMR {
             if (key.datum() == null) {
                 return;
             }
-            AlignmentStats stats = new AlignmentStatsCalculator().compute(key.datum());
+            AlignmentGlobalStats stats = new AvroAlignmentGlobalStatsCalculator().compute(key.datum());
             context.write(new LongWritable(newKey), new ReadAlignmentStatsWritable(stats));
 
             // count records and update new key
@@ -74,8 +75,8 @@ public class ReadAlignmentStatsMR {
 
         public void reduce(LongWritable key, Iterable<ReadAlignmentStatsWritable> values, Context context) throws
                 IOException, InterruptedException {
-            AlignmentStats stats = new AlignmentStats();
-            AlignmentStatsCalculator calculator = new AlignmentStatsCalculator();
+            AlignmentGlobalStats stats = new AlignmentGlobalStats();
+            AlignmentGlobalStatsCalculator calculator = new AvroAlignmentGlobalStatsCalculator();
             for (ReadAlignmentStatsWritable value : values) {
                 calculator.update(value.getStats(), stats);
             }
@@ -88,8 +89,8 @@ public class ReadAlignmentStatsMR {
 
         public void reduce(LongWritable key, Iterable<ReadAlignmentStatsWritable> values, Context context) throws
                 IOException, InterruptedException {
-            AlignmentStats stats = new AlignmentStats();
-            AlignmentStatsCalculator calculator = new AlignmentStatsCalculator();
+            AlignmentGlobalStats stats = new AlignmentGlobalStats();
+            AlignmentGlobalStatsCalculator calculator = new AvroAlignmentGlobalStatsCalculator();
             for (ReadAlignmentStatsWritable value : values) {
                 calculator.update(value.getStats(), stats);
             }
