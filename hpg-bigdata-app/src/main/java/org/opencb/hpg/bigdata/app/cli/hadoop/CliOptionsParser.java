@@ -351,37 +351,34 @@ public class CliOptionsParser {
     }
 
     @Parameters(commandNames = {"convert"},
-            commandDescription = "Convert gVCF/VCF files to different data formats such as Avro/Parquet")
+            commandDescription = "Convert gVCF/VCF files to different data formats such as Avro, Parquet and Json.")
     class ConvertVariantCommandOptions {
 
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
 
-        @Parameter(names = {"-i", "--input"},
-                description = "HDFS input file (the BAM/SAM file must be stored in GA4GH/Avro model)",
+        @Parameter(names = {"-i", "--input"}, description = "Input file name, usually a gVCF/VCF but it can be an Avro file when converting to Parquet.",
                 required = true, arity = 1)
-        public String input = null;
+        public String input;
 
-        @Parameter(names = {"-o", "--output"},
-                description = "Local output directory to save results, summary, images...", required = false, arity = 1)
-        public String output = null;
+        @Parameter(names = {"--to"}, description = "Destination Serialization format. Accepted values: avro, parquet and json", required = true)
+        public String to;
 
-        @Parameter(names = {"--to-avro"},
-                description = "Accepted values: sam2bam, sam2cram, bam2fastq", required = false)
-        public boolean toAvro;
+        @Parameter(names = {"-o", "--output"}, description = "Output file name.", required = false, arity = 1)
+        public String output;
 
-        @Parameter(names = {"--from-avro"}, description = "Converts Avro format into JSON", required = false)
-        public boolean fromAvro;
+        @Parameter(names = {"-O"}, description = "Use the standard output.", required = false, arity = 0)
+        public boolean stdOutput;
 
-        @Parameter(names = {"-x", "--compression"},
-                description = "Only for commands 'to-avro' and 'to-parquet'. Values: snappy, deflate, bzip2, xz",
-                required = false, arity = 1)
+        @Parameter(names = {"--from"}, description = "Accepted values: vcf, avro", required = false)
+        public String from;
+
+        @Parameter(names = {"-x", "--compression"}, description = "Only for commands 'to-avro' and 'to-parquet'. Values: snappy, deflate, bzip2, xz",
+                   required = false, arity = 1)
         public String compression = "snappy";
 
-        @Parameter(names = {"--to-parquet"},
-                description = "Accepted values: sam2bam, sam2cram, bam2fastq", required = false)
-        public boolean toParquet;
-
+        @Parameter(names = {"--region"}, description = "Filter variant by regions, comma separated list of regions, e.g.: 1:300000-400000000,15:343453463-8787665654", required = false)
+        public String regions;
     }
 
     @Parameters(commandNames = {"index"},

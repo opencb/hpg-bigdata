@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.opencb.hpg-bigdata</groupId>
         <artifactId>hpg-bigdata</artifactId>
-        <version>0.6.0</version>
+        <version>1.0.0-alpha</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -52,21 +52,11 @@
             <version>${avro.version}</version>
             <classifier>hadoop2</classifier>
         </dependency>
-        <dependency>
-            <groupId>org.apache.parquet</groupId>
-            <artifactId>parquet-avro</artifactId>
-            <version>${parquet.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.parquet</groupId>
-            <artifactId>parquet-column</artifactId>
-            <version>${parquet.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.parquet</groupId>
-            <artifactId>parquet-hadoop</artifactId>
-            <version>${parquet.version}</version>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>org.apache.parquet</groupId>-->
+            <!--<artifactId>parquet-avro</artifactId>-->
+            <!--<version>${parquet.version}</version>-->
+        <!--</dependency>-->
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-client</artifactId>

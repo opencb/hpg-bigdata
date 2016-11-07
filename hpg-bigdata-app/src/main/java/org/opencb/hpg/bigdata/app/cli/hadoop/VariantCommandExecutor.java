@@ -16,15 +16,12 @@
 
 package org.opencb.hpg.bigdata.app.cli.hadoop;
 
-import java.net.URI;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.mapreduce.Job;
-import org.ga4gh.models.Variant;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
 import org.opencb.hpg.bigdata.tools.variant.Variant2HbaseMR;
-import org.opencb.hpg.bigdata.tools.variant.Vcf2AvroMR;
-import org.opencb.hpg.bigdata.tools.io.parquet.ParquetMR;
+
+import java.net.URI;
 
 /**
  * Created by imedina on 25/06/15.
@@ -83,31 +80,32 @@ public class VariantCommandExecutor extends CommandExecutor {
 
 
     private void convert() throws Exception {
-        String input = variantCommandOptions.convertVariantCommandOptions.input;
-        String output = variantCommandOptions.convertVariantCommandOptions.output;
-        String compression = variantCommandOptions.convertVariantCommandOptions.compression;
-
-        if (output == null) {
-            output = input;
-        }
-
-        // clean paths
-//        String in = PathUtils.clean(input);
-//        String out = PathUtils.clean(output);
-
-        if (variantCommandOptions.convertVariantCommandOptions.toParquet) {
-            logger.info("Transform {} to parquet", input);
-
-            new ParquetMR(Variant.getClassSchema()).run(input, output, compression);
-//            if (PathUtils.isHdfs(input)) {
-//                new ParquetMR(Variant.getClassSchema()).run(input, output, compression);
-//            } else {
-//                new ParquetConverter<Variant>(Variant.getClassSchema()).toParquet(new FileInputStream(input), output);
-//            }
-
-        } else {
-            Vcf2AvroMR.run(input, output, compression);
-        }
+//
+//        String input = variantCommandOptions.convertVariantCommandOptions.input;
+//        String output = variantCommandOptions.convertVariantCommandOptions.output;
+//        String compression = variantCommandOptions.convertVariantCommandOptions.compression;
+//
+//        if (output == null) {
+//            output = input;
+//        }
+//
+//        // clean paths
+////        String in = PathUtils.clean(input);
+////        String out = PathUtils.clean(output);
+//
+//        if (variantCommandOptions.convertVariantCommandOptions.toParquet) {
+//            logger.info("Transform {} to parquet", input);
+//
+//            new ParquetMR(Variant.getClassSchema()).run(input, output, compression);
+////            if (PathUtils.isHdfs(input)) {
+////                new ParquetMR(Variant.getClassSchema()).run(input, output, compression);
+////            } else {
+////                new ParquetConverter<Variant>(Variant.getClassSchema()).toParquet(new FileInputStream(input), output);
+////            }
+//
+//        } else {
+//            Vcf2AvroMR.run(input, output, compression);
+//        }
     }
 
 }

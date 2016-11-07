@@ -28,7 +28,7 @@ import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.opencb.hpg.bigdata.core.converters.FullVcfCodec;
+import org.opencb.biodata.formats.variant.vcf4.FullVcfCodec;
 import org.opencb.hpg.bigdata.core.io.VcfBlockIterator;
 
 /**

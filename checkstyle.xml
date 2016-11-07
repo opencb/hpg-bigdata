@@ -66,8 +66,12 @@
         <module name="LineLength">
             <property name="max" value="140"/>
         </module>
-        <module name="MethodLength"/>
-        <module name="ParameterNumber"/>
+        <module name="MethodLength">
+            <property name="max" value="200"/>
+        </module>
+        <module name="ParameterNumber">
+            <property name="max" value="15"></property>
+        </module>
         <module name="OuterTypeNumber"/>
 
         <!-- Checks for whitespace                               -->
@@ -129,7 +133,7 @@
         <!--<property name="ignoreConstructorParameter" value="true"/>-->
         <!--</module>-->
         <module name="IllegalInstantiation"/>
-        <module name="InnerAssignment"/>
+        <!--<module name="InnerAssignment"/>-->
         <module name="MissingSwitchDefault"/>
         <!--<module name="RedundantThrows"/>-->
         <module name="SimplifyBooleanExpression"/>
