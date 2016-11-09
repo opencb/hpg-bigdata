@@ -26,10 +26,12 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
 import org.apache.spark.sql.SparkSession;
 import org.ga4gh.models.ReadAlignment;
+import org.opencb.biodata.models.alignment.RegionCoverage;
 import org.opencb.biodata.models.core.Region;
+import org.opencb.biodata.tools.alignment.AlignmentManager;
+import org.opencb.biodata.tools.alignment.AlignmentOptions;
+import org.opencb.biodata.tools.alignment.AlignmentUtils;
 import org.opencb.biodata.tools.alignment.stats.AlignmentGlobalStats;
-import org.opencb.biodata.tools.alignment.stats.AlignmentGlobalStatsCalculator;
-import org.opencb.biodata.tools.alignment.stats.AvroAlignmentGlobalStatsCalculator;
 import org.opencb.commons.utils.FileUtils;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
 import org.opencb.hpg.bigdata.core.avro.AlignmentAvroSerializer;
@@ -40,7 +42,7 @@ import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -75,11 +77,11 @@ public class AlignmentCommandExecutor extends CommandExecutor {
                         alignmentCommandOptions.statsAlignmentCommandOptions.commonOptions.conf);
                 stats();
                 break;
-            case "depth":
-                init(alignmentCommandOptions.depthAlignmentCommandOptions.commonOptions.logLevel,
-                        alignmentCommandOptions.depthAlignmentCommandOptions.commonOptions.verbose,
-                        alignmentCommandOptions.depthAlignmentCommandOptions.commonOptions.conf);
-                depth();
+            case "coverage":
+                init(alignmentCommandOptions.coverageAlignmentCommandOptions.commonOptions.logLevel,
+                        alignmentCommandOptions.coverageAlignmentCommandOptions.commonOptions.verbose,
+                        alignmentCommandOptions.coverageAlignmentCommandOptions.commonOptions.conf);
+                coverage();
                 break;
             case "query":
                 init(alignmentCommandOptions.queryAlignmentCommandOptions.commonOptions.logLevel,
@@ -187,27 +189,13 @@ public class AlignmentCommandExecutor extends CommandExecutor {
         String output = alignmentCommandOptions.statsAlignmentCommandOptions.output;
 
         try {
-            // reader
-            InputStream is = new FileInputStream(input);
-            DataFileStream<ReadAlignment> reader = new DataFileStream<>(is, new SpecificDatumReader<>(ReadAlignment.class));
-
-            AlignmentGlobalStats stats;
-            AlignmentGlobalStats totalStats = new AlignmentGlobalStats();
-            AlignmentGlobalStatsCalculator calculator = new AvroAlignmentGlobalStatsCalculator();
-
-            // main loop
-            for (ReadAlignment readAlignment : reader) {
-                stats = calculator.compute(readAlignment);
-                calculator.update(stats, totalStats);
-            }
-
-            // close reader
-            reader.close();
-            is.close();
+            // compute stats using the AlignmentManager
+            AlignmentManager alignmentManager = new AlignmentManager(Paths.get(input));
+            AlignmentGlobalStats stats = alignmentManager.stats();
 
             // write results
             PrintWriter writer = new PrintWriter(new File(output + "/stats.json"));
-            writer.write(totalStats.toJSON());
+            writer.write(stats.toJSON());
             writer.close();
 
         } catch (Exception e) {
@@ -215,14 +203,51 @@ public class AlignmentCommandExecutor extends CommandExecutor {
         }
     }
 
-    private void depth() throws IOException {
+    private void coverage() throws IOException {
+        final int chunkSize = 10000;
+
         // get input parameters
-        String input = alignmentCommandOptions.depthAlignmentCommandOptions.input;
-        String output = alignmentCommandOptions.depthAlignmentCommandOptions.output;
+        String input = alignmentCommandOptions.coverageAlignmentCommandOptions.input;
+        String output = alignmentCommandOptions.coverageAlignmentCommandOptions.output;
 
-        HashMap<String, Integer> regionLength = new HashMap<>();
+        Path filePath = Paths.get(input);
 
-        //TODO: fix using the new RegionCoverage, JT
+        // writer
+        PrintWriter writer = new PrintWriter(new File(output + "/" + filePath.getFileName() + ".coverage"));
+
+        SAMFileHeader fileHeader = AlignmentUtils.getFileHeader(filePath);
+
+        AlignmentOptions options = new AlignmentOptions();
+        options.setContained(false);
+
+        short[] values;
+
+        AlignmentManager alignmentManager = new AlignmentManager(filePath);
+        Iterator<SAMSequenceRecord> iterator = fileHeader.getSequenceDictionary().getSequences().iterator();
+        while (iterator.hasNext()) {
+            SAMSequenceRecord next = iterator.next();
+            for (int i = 0; i < next.getSequenceLength(); i += chunkSize) {
+                Region region = new Region(next.getSequenceName(), i + 1,
+                        Math.min(i + chunkSize, next.getSequenceLength()));
+                RegionCoverage regionCoverage = alignmentManager.coverage(region, options, null);
+
+                // write coverages to file (only values greater than 0)
+                values = regionCoverage.getValues();
+                for (int j=0, start = region.getStart(); j < values.length; j++, start++) {
+                    if (values[j] > 0) {
+                        writer.write(next.getSequenceName() + "\t" + start + "\t" + values[j] + "\n");
+                    }
+                }
+            }
+        }
+
+        // close
+        writer.close();
+
+//
+//        HashMap<String, Integer> regionLength = new HashMap<>();
+//
+//        //TODO: fix using the new RegionCoverage, JT
 //        try {
 //            // header management
 //            BufferedReader br = new BufferedReader(new FileReader(input + BAM_HEADER_SUFFIX));
