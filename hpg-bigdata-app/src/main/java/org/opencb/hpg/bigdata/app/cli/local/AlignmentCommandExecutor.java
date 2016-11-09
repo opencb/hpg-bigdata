@@ -28,9 +28,9 @@ import org.apache.spark.sql.SparkSession;
 import org.ga4gh.models.ReadAlignment;
 import org.opencb.biodata.models.alignment.RegionCoverage;
 import org.opencb.biodata.models.core.Region;
-import org.opencb.biodata.tools.alignment.AlignmentManager;
 import org.opencb.biodata.tools.alignment.AlignmentOptions;
-import org.opencb.biodata.tools.alignment.AlignmentUtils;
+import org.opencb.biodata.tools.alignment.BamManager;
+import org.opencb.biodata.tools.alignment.BamUtils;
 import org.opencb.biodata.tools.alignment.stats.AlignmentGlobalStats;
 import org.opencb.commons.utils.FileUtils;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
@@ -338,8 +338,8 @@ public class AlignmentCommandExecutor extends CommandExecutor {
 
         try {
             // compute stats using the AlignmentManager
-            AlignmentManager alignmentManager = new AlignmentManager(Paths.get(input));
-            AlignmentGlobalStats stats = alignmentManager.stats();
+            BamManager bamManager = new BamManager(Paths.get(input));
+            AlignmentGlobalStats stats = bamManager.stats();
 
             // write results
             PrintWriter writer = new PrintWriter(new File(output + "/stats.json"));
@@ -363,21 +363,21 @@ public class AlignmentCommandExecutor extends CommandExecutor {
         // writer
         PrintWriter writer = new PrintWriter(new File(output + "/" + filePath.getFileName() + ".coverage"));
 
-        SAMFileHeader fileHeader = AlignmentUtils.getFileHeader(filePath);
+        SAMFileHeader fileHeader = BamUtils.getFileHeader(filePath);
 
         AlignmentOptions options = new AlignmentOptions();
         options.setContained(false);
 
         short[] values;
 
-        AlignmentManager alignmentManager = new AlignmentManager(filePath);
+        BamManager bamManager = new BamManager(filePath);
         Iterator<SAMSequenceRecord> iterator = fileHeader.getSequenceDictionary().getSequences().iterator();
         while (iterator.hasNext()) {
             SAMSequenceRecord next = iterator.next();
             for (int i = 0; i < next.getSequenceLength(); i += chunkSize) {
                 Region region = new Region(next.getSequenceName(), i + 1,
                         Math.min(i + chunkSize, next.getSequenceLength()));
-                RegionCoverage regionCoverage = alignmentManager.coverage(region, options, null);
+                RegionCoverage regionCoverage = bamManager.coverage(region, options, null);
 
                 // write coverages to file (only values greater than 0)
                 values = regionCoverage.getValues();

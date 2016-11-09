@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.opencb.hpg-bigdata</groupId>
         <artifactId>hpg-bigdata</artifactId>
-        <version>1.0.0-beta-SNAPSHOT</version>
+        <version>1.0.0-beta-nvm</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
