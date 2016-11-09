@@ -71,7 +71,7 @@ public class LocalCliOptionsParser {
         alignmentSubCommands.addCommand("view", alignmentCommandOptions.viewAlignmentCommandOptions);
         alignmentSubCommands.addCommand("sort", alignmentCommandOptions.sortAlignmentCommandOptions);
         alignmentSubCommands.addCommand("stats", alignmentCommandOptions.statsAlignmentCommandOptions);
-        alignmentSubCommands.addCommand("depth", alignmentCommandOptions.depthAlignmentCommandOptions);
+        alignmentSubCommands.addCommand("coverage", alignmentCommandOptions.coverageAlignmentCommandOptions);
         alignmentSubCommands.addCommand("query", alignmentCommandOptions.queryAlignmentCommandOptions);
 
         variantCommandOptions = new VariantCommandOptions();
@@ -250,7 +250,7 @@ public class LocalCliOptionsParser {
         ViewAlignmentCommandOptions viewAlignmentCommandOptions;
         SortAlignmentCommandOptions sortAlignmentCommandOptions;
         StatsAlignmentCommandOptions statsAlignmentCommandOptions;
-        DepthAlignmentCommandOptions depthAlignmentCommandOptions;
+        CoverageAlignmentCommandOptions coverageAlignmentCommandOptions;
         QueryAlignmentCommandOptions queryAlignmentCommandOptions;
 
         public AlignmentCommandOptions() {
@@ -258,7 +258,7 @@ public class LocalCliOptionsParser {
             this.viewAlignmentCommandOptions = new ViewAlignmentCommandOptions();
             this.sortAlignmentCommandOptions = new SortAlignmentCommandOptions();
             this.statsAlignmentCommandOptions = new StatsAlignmentCommandOptions();
-            this.depthAlignmentCommandOptions = new DepthAlignmentCommandOptions();
+            this.coverageAlignmentCommandOptions = new CoverageAlignmentCommandOptions();
             this.queryAlignmentCommandOptions = new QueryAlignmentCommandOptions();
         }
     }
@@ -359,8 +359,8 @@ public class LocalCliOptionsParser {
         //public String filter = null;
     }
 
-    @Parameters(commandNames = {"depth"}, commandDescription = "Compute the depth (or coverage) for a given file containing alignments according to the GA4GH/Avro model")
-    class DepthAlignmentCommandOptions {
+    @Parameters(commandNames = {"coverage"}, commandDescription = "Compute the coverage for a given file containing alignments according to the GA4GH/Avro model")
+    class CoverageAlignmentCommandOptions {
 
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
@@ -368,7 +368,7 @@ public class LocalCliOptionsParser {
         @Parameter(names = {"-i", "--input"}, description = "Local input file containing alignments stored according to the GA4GH/Avro model. This file must be sorted", required = true, arity = 1)
         public String input = null;
 
-        @Parameter(names = {"-o", "--output"}, description = "Local output directory to save the depth in a text file", required = true, arity = 1)
+        @Parameter(names = {"-o", "--output"}, description = "Local output directory to save the coverage in a text file", required = true, arity = 1)
         public String output = null;
 
         @Parameter(names = {"--region"}, description = "Comma separated list of regions, e.g.: 1:300000-400000000,15:343453463-8787665654", arity = 1)

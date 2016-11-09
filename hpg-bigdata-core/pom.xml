@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.opencb.hpg-bigdata</groupId>
         <artifactId>hpg-bigdata</artifactId>
-        <version>1.0.0-alpha</version>
+        <version>1.0.0-beta-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -100,7 +100,7 @@
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
-            <version>3.0.0-beta-3</version>
+            <version>3.1.0</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
