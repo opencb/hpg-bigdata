@@ -34,6 +34,7 @@ import org.ga4gh.models.ReadAlignment;
 import org.ga4gh.models.Strand;
 import org.opencb.hpg.bigdata.core.utils.ReadAlignmentUtils;
 
+@Deprecated
 public class SAMRecord2ReadAlignmentConverter implements Converter<SAMRecord, ReadAlignment> {
 
     // From SAM specification

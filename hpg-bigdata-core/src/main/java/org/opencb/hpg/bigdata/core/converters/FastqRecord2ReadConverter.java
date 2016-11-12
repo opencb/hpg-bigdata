@@ -19,6 +19,7 @@ package org.opencb.hpg.bigdata.core.converters;
 import htsjdk.samtools.fastq.FastqRecord;
 import org.opencb.biodata.models.sequence.Read;
 
+@Deprecated
 public class FastqRecord2ReadConverter implements Converter<FastqRecord, Read> {
 
     @Override
