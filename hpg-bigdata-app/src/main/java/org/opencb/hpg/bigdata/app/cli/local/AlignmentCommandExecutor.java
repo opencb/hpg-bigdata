@@ -28,9 +28,9 @@ import org.apache.spark.sql.SparkSession;
 import org.ga4gh.models.ReadAlignment;
 import org.opencb.biodata.models.alignment.RegionCoverage;
 import org.opencb.biodata.models.core.Region;
-import org.opencb.biodata.tools.alignment.AlignmentManager;
 import org.opencb.biodata.tools.alignment.AlignmentOptions;
-import org.opencb.biodata.tools.alignment.AlignmentUtils;
+import org.opencb.biodata.tools.alignment.BamManager;
+import org.opencb.biodata.tools.alignment.BamUtils;
 import org.opencb.biodata.tools.alignment.stats.AlignmentGlobalStats;
 import org.opencb.commons.utils.FileUtils;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
@@ -189,8 +189,8 @@ public class AlignmentCommandExecutor extends CommandExecutor {
         String output = alignmentCommandOptions.statsAlignmentCommandOptions.output;
 
         try {
-            // compute stats using the AlignmentManager
-            AlignmentManager alignmentManager = new AlignmentManager(Paths.get(input));
+            // compute stats using the BamManager
+            BamManager alignmentManager = new BamManager(Paths.get(input));
             AlignmentGlobalStats stats = alignmentManager.stats();
 
             // write results
@@ -215,14 +215,14 @@ public class AlignmentCommandExecutor extends CommandExecutor {
         // writer
         PrintWriter writer = new PrintWriter(new File(output + "/" + filePath.getFileName() + ".coverage"));
 
-        SAMFileHeader fileHeader = AlignmentUtils.getFileHeader(filePath);
+        SAMFileHeader fileHeader = BamUtils.getFileHeader(filePath);
 
         AlignmentOptions options = new AlignmentOptions();
         options.setContained(false);
 
         short[] values;
 
-        AlignmentManager alignmentManager = new AlignmentManager(filePath);
+        BamManager alignmentManager = new BamManager(filePath);
         Iterator<SAMSequenceRecord> iterator = fileHeader.getSequenceDictionary().getSequences().iterator();
         while (iterator.hasNext()) {
             SAMSequenceRecord next = iterator.next();
