@@ -26,12 +26,8 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -54,10 +50,10 @@ public class VariantDatasetTest {
         System.out.println("sparkConf = " + sparkConf.toDebugString());
     }
 
-//    @AfterClass
-//    public static void shutdown() {
+    @AfterClass
+    public static void shutdown() {
 //        vd.sparkSession.sparkContext().stop();
-//    }
+    }
 
     public void initDataset() {
         sparkSession = new SparkSession(new SparkContext(sparkConf));
@@ -66,16 +62,6 @@ public class VariantDatasetTest {
             String filename = this.getClass().getResource("/100.variants.avro").getFile();
             System.out.println(">>>> opening file " + filename);
             vd.load(filename, sparkSession);
-//=======
-//        //String filename = "/home/imedina/data/CEU-1409-01_20000.vcf.avro";
-//        //String filename = "/home/jtarraga/data150/spark/10k.variants.avro";
-//
-//        try {
-//            Path inputPath = Paths.get(getClass().getResource("/100.variants.avro").toURI());
-//            long count;
-//            VariantDataset vd = new VariantDataset();
-//            vd.load(inputPath.toString(), sparkSession);
-//>>>>>>> develop
             vd.printSchema();
             vd.createOrReplaceTempView("vcf");
         } catch (Exception e) {
@@ -137,49 +123,6 @@ public class VariantDatasetTest {
 
             // delete temporary directory
             FileUtils.deleteDirectory(dir);
-//
-//
-//
-//            String tmpDir = temporaryFolder.newFolder().getAbsolutePath();
-//            String filename = tmpDir + "/query.out." + format;
-//            System.out.println("tmpDir = " + tmpDir);
-//            System.out.println("filename = " + filename);
-//
-//            new CliUtils().saveDatasetAsOneFile(vd, "json", String filename, LoggerFactory.getLogger(this.getClass().toString());
-//
-//            saveDatasetAsOneFile
-//
-//            if ("json".equals(format)) {
-//                vd.coalesce(1).write().format("json").option("", "true").save(tmpDir);
-//            } else if ("parquet".equals(format)) {
-//                vd.coalesce(1).write().format("parquet").save(tmpDir);
-//            } else {
-//                //vd.coalesce(1).write().format("avro").save(tmpDir);
-//                vd.coalesce(1).write().format("com.databricks.spark.avro").save(tmpDir);
-//            }
-//
-//            File dir = new File(tmpDir);
-//            if (!dir.isDirectory()) {
-//                // error management
-//                System.err.println("Error: a directory was expected but " + tmpDir);
-//                return;
-//            }
-//
-//            // list out all the file name and filter by the extension
-//            Boolean found = false;
-//            String[] list = dir.list();
-//            for (String name: list) {
-//                if (name.startsWith("part-r-") && name.endsWith(format)) {
-//                    new File(tmpDir + "/" + name).renameTo(new File(filename));
-//                    found = true;
-//                    break;
-//                }
-//            }
-//            if (!found) {
-//                // error management
-//                System.err.println("Error: pattern 'part-r-*avro' was not found");
-//                return;
-//            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -260,7 +203,6 @@ public class VariantDatasetTest {
             //.studyFilter("stats.refAlleleCount", "hgva@hsapiens_grch37:1000GENOMES_phase_3::ASW==121")
                   //  .annotationFilter("consequenceTypes.proteinVariantAnnotation.substitutionScores", "sift< 0.2")
                     //.annotationFilter("conservation", "phylop<0.3,phastCons<0.1")
-            //.annotationFilter("consequenceTypes.geneName", "O")
                     .countBy("gene").show();
               //      .groupBy("ct.geneName").count()
               //      .show();
