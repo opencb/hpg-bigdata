@@ -40,16 +40,15 @@ public class VariantParseQueryTest {
 
     @Test
     public void parse() throws Exception {
-//        String result = "SELECT * FROM test LATERAL VIEW explode(annotation.conservation) acons as cons_phylop " +
-//                "LATERAL VIEW explode(annotation.conservation) acons as cons_phastCons " +
-//                "WHERE ((cons_phastCons.source = 'phastCons' AND cons_phastCons.score<03) " +
-//                "OR (cons_phylop.source = 'phylop' AND cons_phylop.score>0.5))";
-//
-//        Query query = new Query();
-//        query.put("annotation.conservation", "phastCons<03,phylop>0.5");
-//
-//        String test = variantParseQuery.parse(query, null, "test");
-//        assertEquals("SQL query does not match", result, test);
+        String result = "SELECT * FROM test LATERAL VIEW explode(annotation.conservation) acons as cons " +
+                "WHERE ((cons.source = 'phastCons' AND cons.score<03) " +
+                "OR (cons.source = 'phylop' AND cons.score>0.5))";
+
+        Query query = new Query();
+        query.put("annotation.conservation", "phastCons<03,phylop>0.5");
+
+        String test = variantParseQuery.parse(query, null, "test");
+        assertEquals("SQL query does not match", result, test);
     }
 
     @Test

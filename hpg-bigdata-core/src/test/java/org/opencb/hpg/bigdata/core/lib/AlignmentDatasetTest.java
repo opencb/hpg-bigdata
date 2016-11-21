@@ -4,9 +4,11 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
 import org.apache.spark.sql.SparkSession;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Created by joaquin on 8/21/16.
@@ -19,10 +21,8 @@ public class AlignmentDatasetTest {
 
     @BeforeClass
     public static void setup() {
-        sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "/home/joaquin/softs/spark-2.0.0-bin-hadoop2.7/bin");
-//        SparkConf sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "/home/imedina/soft/spark-1.6.2");
-        //SparkConf sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "/home/imedina/soft/spark-2.0.0");
-
+        // it doesn't matter what we set to spark's home directory
+        sparkConf = SparkConfCreator.getConf("AlignmentDatasetTest", "local", 1, true, "");
         System.out.println("sparkConf = " + sparkConf.toDebugString());
         sparkSession = new SparkSession(new SparkContext(sparkConf));
     }
@@ -35,9 +35,9 @@ public class AlignmentDatasetTest {
     public void initDataset() {
         ad = new AlignmentDataset();
         try {
-            String filename = "/home/jtarraga/CAM/data/test.bam.avro";
-            System.out.println(">>>> opening file " + filename);
-            ad.load(filename, sparkSession);
+            Path inputPath = Paths.get(getClass().getResource("/test.bam.avro").toURI());
+            System.out.println(">>>> opening file " + inputPath);
+            ad.load(inputPath.toString(), sparkSession);
             ad.printSchema();
             ad.createOrReplaceTempView("bam");
         } catch (Exception e) {
