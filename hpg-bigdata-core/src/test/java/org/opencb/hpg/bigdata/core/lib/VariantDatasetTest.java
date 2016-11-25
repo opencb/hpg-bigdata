@@ -16,21 +16,20 @@
 
 package org.opencb.hpg.bigdata.core.lib;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
-import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.sql.Column;
 import org.apache.spark.sql.SparkSession;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Created by imedina on 04/08/16.
@@ -41,33 +40,26 @@ public class VariantDatasetTest {
     static SparkConf sparkConf;
     static SparkSession sparkSession;
 
+    @Rule
+    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
     @BeforeClass
     public static void setup() {
-        sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "/home/joaquin/softs/spark-2.0.0-bin-hadoop2.7/bin");
-
-//        sparkConf.set("spark.broadcast.compress", "true");
-//        sparkConf.set("spark.io.compression.codec", "org.apache.spark.io.SnappyCompressionCodec");
-//
-//        sparkConf.set("spark.hadoop.mapred.output.compression.codec", "true");
-//        sparkConf.set("spark.hadoop.mapred.output.compression.codec", "org.apache.hadoop.io.compress.GzipCodec");
-//        sparkConf.set("spark.hadoop.mapred.output.compression.type", "BLOCK");
-
-//        SparkConf sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "/home/imedina/soft/spark-1.6.2");
-        //SparkConf sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "/home/imedina/soft/spark-2.0.0");
-
+        // it doesn't matter what we set to spark's home directory
+        sparkConf = SparkConfCreator.getConf("AlignmentDatasetTest", "local", 1, true, "");
         System.out.println("sparkConf = " + sparkConf.toDebugString());
-        sparkSession = new SparkSession(new SparkContext(sparkConf));
     }
 
     @AfterClass
     public static void shutdown() {
-        vd.sparkSession.sparkContext().stop();
+//        vd.sparkSession.sparkContext().stop();
     }
 
     public void initDataset() {
+        sparkSession = new SparkSession(new SparkContext(sparkConf));
         vd = new VariantDataset(sparkSession);
         try {
-            String filename = this.getClass().getResource("100.variants.avro").getFile();
+            String filename = this.getClass().getResource("/100.variants.avro").getFile();
             System.out.println(">>>> opening file " + filename);
             vd.load(filename, sparkSession);
             vd.printSchema();
@@ -94,15 +86,17 @@ public class VariantDatasetTest {
 //            String format = "avro";
 //            String format = "parquet";
             String format = "json";
+
             String filename = "/tmp/query.out." + format;
             String tmpDir = filename + ".tmp";
+
             if ("json".equals(format)) {
-                vd.coalesce(1).write().format("json").option("", "true").save(tmpDir);
+                vd.coalesce(1).write().format("json").save(tmpDir);
             } else if ("parquet".equals(format)) {
                 vd.coalesce(1).write().format("parquet").save(tmpDir);
             } else {
-                //vd.coalesce(1).write().format("avro").save(tmpDir);
                 vd.coalesce(1).write().format("com.databricks.spark.avro").save(tmpDir);
+                format = "avro";
             }
 
             File dir = new File(tmpDir);
@@ -124,9 +118,11 @@ public class VariantDatasetTest {
             }
             if (!found) {
                 // error management
-                System.err.println("Error: pattern 'part-r-*avro' was not found");
-                return;
+                System.out.println("Error: pattern 'part-r-*" + format + "' was not found");
             }
+
+            // delete temporary directory
+            FileUtils.deleteDirectory(dir);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -144,7 +140,7 @@ public class VariantDatasetTest {
 
             //vd.studyFilter("stats.maf", "1000g::all<=0.4").show();
             //vd.studyFilter("stats.maf", "hgva@hsapiens_grch37:1000GENOMES_phase_3::ASW==0.008196721").show();
-            vd.studyFilter("stats.refAlleleCount", "hgva@hsapiens_grch37:1000GENOMES_phase_3::ASW==121").show();
+//            vd.studyFilter("stats.refAlleleCount", "hgva@hsapiens_grch37:1000GENOMES_phase_3::ASW==121").show();
 
 //            long count = vd.annotationfilter("consequenceTypes.sequenceOntologyTerms.accession", "SO:0001566").count();
 
@@ -164,8 +160,8 @@ public class VariantDatasetTest {
 //            count = vd.idFilter(Arrays.asList(StringUtils.split(ids, ","))).count();
 
 //            count = vd.annotationFilter("conservation", "phylop<0.3,phastCons<0.1").count();
-//            String types = "SNP,SNV";
-//            count = vd.typeFilter(new ArrayList<>(Arrays.asList(StringUtils.split(types, ",")))).count();
+            String types = "SNP,SNV";
+            count = vd.typeFilter(new ArrayList<>(Arrays.asList(StringUtils.split(types, ",")))).count();
 
 //            System.out.println(vd.annotationfilter("consequenceTypes.sequenceOntologyTerms.name", "missense_variant")
 //                    .select("annotation.consequenceTypes.sequenceOntologyTerms").count());
@@ -187,10 +183,12 @@ public class VariantDatasetTest {
 //            System.out.println("---->>> " + vd.select("studies.files").select("attributes").head());
 //            System.out.println(vd.filter("studies.files[0].attributes.AF = '0.009'"));
 //            System.out.println(vd.filter("studies.files.attributes.AF = '0.009'"));
+            vd.sparkSession.sparkContext().stop();
+
+            assert(count == 98);
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         vd.sparkSession.sparkContext().stop();
     }
 
@@ -203,10 +201,9 @@ public class VariantDatasetTest {
             System.out.println(">>>>> GROUPBY --------------------------------------");
             vd
             //.studyFilter("stats.refAlleleCount", "hgva@hsapiens_grch37:1000GENOMES_phase_3::ASW==121")
-                    .annotationFilter("consequenceTypes.proteinVariantAnnotation.substitutionScores", "sift< 0.2")
+                  //  .annotationFilter("consequenceTypes.proteinVariantAnnotation.substitutionScores", "sift< 0.2")
                     //.annotationFilter("conservation", "phylop<0.3,phastCons<0.1")
-            //.annotationFilter("consequenceTypes.geneName", "O")
-                    .groupBy("geneName").count().show();
+                    .countBy("gene").show();
               //      .groupBy("ct.geneName").count()
               //      .show();
             System.out.println("----------------------------------------------------");
