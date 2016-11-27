@@ -183,7 +183,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
         }
     }
 
-    private void stats() throws IOException {
+    private void stats() throws Exception {
         // get input parameters
         String input = alignmentCommandOptions.statsAlignmentCommandOptions.input;
         String output = alignmentCommandOptions.statsAlignmentCommandOptions.output;
@@ -192,6 +192,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
             // compute stats using the BamManager
             BamManager alignmentManager = new BamManager(Paths.get(input));
             AlignmentGlobalStats stats = alignmentManager.stats();
+            alignmentManager.close();
 
             // write results
             PrintWriter writer = new PrintWriter(new File(output + "/stats.json"));
