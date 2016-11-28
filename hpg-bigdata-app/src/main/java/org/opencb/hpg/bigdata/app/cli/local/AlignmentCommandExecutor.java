@@ -230,7 +230,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
             for (int i = 0; i < next.getSequenceLength(); i += chunkSize) {
                 Region region = new Region(next.getSequenceName(), i + 1,
                         Math.min(i + chunkSize, next.getSequenceLength()));
-                RegionCoverage regionCoverage = alignmentManager.coverage(region, options, null);
+                RegionCoverage regionCoverage = alignmentManager.coverage(region, null, options);
 
                 // write coverages to file (only values greater than 0)
                 values = regionCoverage.getValues();
