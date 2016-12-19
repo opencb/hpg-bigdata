@@ -331,15 +331,16 @@ public class AlignmentCommandExecutor extends CommandExecutor {
         CliUtils.saveDatasetAsOneFile(ad, "avro", alignmentCommandOptions.sortAlignmentCommandOptions.output, logger);
     }
 
-    private void stats() throws IOException {
+    private void stats() throws Exception {
         // get input parameters
         String input = alignmentCommandOptions.statsAlignmentCommandOptions.input;
         String output = alignmentCommandOptions.statsAlignmentCommandOptions.output;
 
         try {
-            // compute stats using the AlignmentManager
-            BamManager bamManager = new BamManager(Paths.get(input));
-            AlignmentGlobalStats stats = bamManager.stats();
+            // compute stats using the BamManager
+            BamManager alignmentManager = new BamManager(Paths.get(input));
+            AlignmentGlobalStats stats = alignmentManager.stats();
+            alignmentManager.close();
 
             // write results
             PrintWriter writer = new PrintWriter(new File(output + "/stats.json"));
@@ -370,14 +371,14 @@ public class AlignmentCommandExecutor extends CommandExecutor {
 
         short[] values;
 
-        BamManager bamManager = new BamManager(filePath);
+        BamManager alignmentManager = new BamManager(filePath);
         Iterator<SAMSequenceRecord> iterator = fileHeader.getSequenceDictionary().getSequences().iterator();
         while (iterator.hasNext()) {
             SAMSequenceRecord next = iterator.next();
             for (int i = 0; i < next.getSequenceLength(); i += chunkSize) {
                 Region region = new Region(next.getSequenceName(), i + 1,
                         Math.min(i + chunkSize, next.getSequenceLength()));
-                RegionCoverage regionCoverage = bamManager.coverage(region, options, null);
+                RegionCoverage regionCoverage = alignmentManager.coverage(region, null, options);
 
                 // write coverages to file (only values greater than 0)
                 values = regionCoverage.getValues();

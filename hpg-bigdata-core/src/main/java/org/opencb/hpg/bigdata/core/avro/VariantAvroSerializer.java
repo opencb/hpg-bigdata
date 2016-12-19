@@ -9,10 +9,13 @@ import org.opencb.biodata.models.variant.Variant;
 import org.opencb.biodata.models.variant.VariantMetadataManager;
 import org.opencb.biodata.models.variant.avro.VariantAvro;
 import org.opencb.biodata.tools.variant.VcfFileReader;
-import org.opencb.biodata.tools.variant.converter.VariantContextToVariantConverter;
+import org.opencb.biodata.tools.variant.converters.avro.VariantContextToVariantConverter;
 import org.opencb.hpg.bigdata.core.io.avro.AvroFileWriter;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
@@ -35,6 +38,26 @@ public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
     }
 
     public void toAvro(String inputFilename, String outputFilename) throws IOException {
+
+
+//
+//        throw new UnsupportedOperationException("Avro conversion not implemented yet!");
+//
+//        VcfManager vcfManager = new VcfManager(Paths.get(inputFilename));
+//        vcfManager.
+
+
+//             Path path = Paths.get(getClass().getResource(filename).toURI());
+//        VcfManager vcfManager = new VcfManager(path);
+//        index(vcfManager);
+//        VcfIterator<VariantContext> iterator = vcfManager.iterator();
+//        int count = 0;
+//        while (iterator.hasNext()) {
+//            VariantContext vc = iterator.next();
+//            System.out.println(vc);
+//            count++;
+//        }
+//        assertEquals(3, count);
 
         File inputFile = new File(inputFilename);
         String filename = inputFile.getName();
@@ -67,8 +90,8 @@ public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
 
         // main loop
         long counter = 0;
-        VariantContextToVariantConverter converter = new VariantContextToVariantConverter(
-                datasetName, filename, vcfHeader.getSampleNamesInOrder());
+        VariantContextToVariantConverter converter = new VariantContextToVariantConverter(datasetName, filename,
+                vcfHeader.getSampleNamesInOrder());
 
         List<VariantContext> variantContexts = vcfFileReader.read(1000);
         while (variantContexts.size() > 0) {
