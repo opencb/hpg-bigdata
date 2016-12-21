@@ -1,7 +1,15 @@
 package org.opencb.hpg.bigdata.tools.variant.analysis;
 
+import org.apache.commons.math.linear.*;
 import org.apache.commons.math3.distribution.FDistribution;
 import org.apache.commons.math3.linear.*;
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.linear.ArrayRealVector;
+import org.apache.commons.math3.linear.DecompositionSolver;
+import org.apache.commons.math3.linear.EigenDecomposition;
+import org.apache.commons.math3.linear.LUDecomposition;
+import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.random.RandomDataGenerator;
 import scala.collection.mutable.StringBuilder;
 
@@ -240,56 +248,28 @@ public class CMC {
 
         // get means
         // Xx.mean = colMeans(Xx, na.rm=TRUE)
-        double sum = 0;
-        double[] column;
-        double[] xXMean = new double[xX.getColumnDimension()];
-        for (int i = 0; i < xX.getColumnDimension(); i++) {
-            sum = 0;
-            column = xX.getColumn(i);
-            for (int j = 0; j < column.length; j++) {
-                sum += column[j];
-            }
-            xXMean[i] = sum / column.length;
-        }
-//        System.out.print("xXmean = ");
-//        for (int i = 0; i < xXmean.length; i++) {
-//            System.out.print(xXmean[i] + "\t");
+        double[] xXMean = colMeans(xX);
+//        System.out.print("xXMean = ");
+//        for (int i = 0; i < xXMean.length; i++) {
+//            System.out.print(xXMean[i] + "\t");
 //        }
 //        System.out.println();
 
         // Yy.mean = colMeans(Yy, na.rm=TRUE)
-        double[] yYMean = new double[yY.getColumnDimension()];
-        for (int i = 0; i < yY.getColumnDimension(); i++) {
-            sum = 0;
-            column = yY.getColumn(i);
-            for (int j = 0; j < column.length; j++) {
-                sum += column[j];
-            }
-            yYMean[i] = sum / column.length;
-        }
-//        System.out.print("yYmean = ");
-//        for (int i = 0; i < yYmean.length; i++) {
-//            System.out.print(yYmean[i] + "\t");
+        double[] yYMean = colMeans(yY);
+//        System.out.print("yYMean = ");
+//        for (int i = 0; i < yYMean.length; i++) {
+//            System.out.print(yYMean[i] + "\t");
 //        }
 //        System.out.println();
 
         // center matrices Xx and Yy
         // Dx = sweep(Xx, 2, Xx.mean)
         // Dy = sweep(Yy, 2, Yy.mean)
-        RealMatrix dX = new Array2DRowRealMatrix(xX.getRowDimension(), xX.getColumnDimension());
-        for (int row = 0; row < dX.getRowDimension(); row++) {
-            for (int col = 0; col < dX.getColumnDimension(); col++) {
-                dX.setEntry(row, col, xX.getEntry(row, col) - xXMean[col]);
-            }
-        }
+        RealMatrix dX = substractVector(xX, xXMean);
 //        System.out.println("Dx = " + Dx);
 
-        RealMatrix dY = new Array2DRowRealMatrix(yY.getRowDimension(), yY.getColumnDimension());
-        for (int row = 0; row < dY.getRowDimension(); row++) {
-            for (int col = 0; col < dY.getColumnDimension(); col++) {
-                dY.setEntry(row, col, yY.getEntry(row, col) - yYMean[col]);
-            }
-        }
+        RealMatrix dY = substractVector(yY, yYMean);
 //        System.out.println("Dy = " + Dy);
 
         // pooled covariance matrix
@@ -370,7 +350,45 @@ public class CMC {
     }
 
     /**
+     * Compute the column means.
      *
+     * @param matrix    Matrix target
+     * @return          Array with the column means
+     */
+    private double[] colMeans(RealMatrix matrix) {
+        double sum;
+        double[] column;
+        double[] mean = new double[matrix.getColumnDimension()];
+        for (int i = 0; i < matrix.getColumnDimension(); i++) {
+            sum = 0;
+            column = matrix.getColumn(i);
+            for (int j = 0; j < column.length; j++) {
+                sum += column[j];
+            }
+            mean[i] = sum / column.length;
+        }
+        return mean;
+    }
+
+    /**
+     * Substrat vector to the matrix column.
+     *
+     * @param matrix    Matrix target
+     * @param vector    Vector to substract
+     * @return          Matrix
+     */
+    private RealMatrix substractVector(RealMatrix matrix, double[] vector) {
+        RealMatrix res = new Array2DRowRealMatrix(matrix.getRowDimension(), matrix.getColumnDimension());
+        for (int row = 0; row < res.getRowDimension(); row++) {
+            for (int col = 0; col < res.getColumnDimension(); col++) {
+                res.setEntry(row, col, matrix.getEntry(row, col) - vector[col]);
+            }
+        }
+        return res;
+    }
+
+    /**
+     * CMC result.
      */
     public class Result {
         private int numCases;
