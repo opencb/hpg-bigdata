@@ -1,6 +1,5 @@
 package org.opencb.hpg.bigdata.tools.variant.analysis;
 
-import org.apache.spark.mllib.linalg.Matrices;
 import org.apache.spark.mllib.linalg.Matrix;
 import org.apache.spark.mllib.stat.Statistics;
 import org.apache.spark.mllib.stat.test.ChiSqTestResult;

@@ -1,17 +1,8 @@
-package org.opencb.hpg.bigdata.tools.variant.analysis;
+package org.opencb.hpg.bigdata.tools.variant.analysis.statistics;
 
-import org.apache.commons.math.linear.*;
 import org.apache.commons.math3.distribution.FDistribution;
 import org.apache.commons.math3.linear.*;
-import org.apache.commons.math3.linear.Array2DRowRealMatrix;
-import org.apache.commons.math3.linear.ArrayRealVector;
-import org.apache.commons.math3.linear.DecompositionSolver;
-import org.apache.commons.math3.linear.EigenDecomposition;
-import org.apache.commons.math3.linear.LUDecomposition;
-import org.apache.commons.math3.linear.RealMatrix;
-import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.random.RandomDataGenerator;
-import scala.collection.mutable.StringBuilder;
 
 import java.security.InvalidParameterException;
 
@@ -20,7 +11,7 @@ import java.security.InvalidParameterException;
  */
 public class CMC {
 
-    private CMC.Result result = new CMC.Result();
+    private CMCResult result = new CMCResult();
 
     /**
      * The CMC method is a pooling approach proposed by Li and Leal (2008) that uses allele frequencies
@@ -35,7 +26,7 @@ public class CMC {
      * @param genotype          Matrix with genotype data coded as 0, 1, 2.
      * @return                  CMC result
      */
-    public CMC.Result run(RealVector phenotype, RealMatrix genotype) {
+    public CMCResult run(RealVector phenotype, RealMatrix genotype) {
         return run(phenotype, genotype, 0.05, 100);
     }
 
@@ -54,7 +45,7 @@ public class CMC {
      * @param numPermutations   Number of permutations
      * @return                  CMC result
      */
-    public CMC.Result run(RealVector phenotype, RealMatrix genotype, double maf, int numPermutations) {
+    public CMCResult run(RealVector phenotype, RealMatrix genotype, double maf, int numPermutations) {
 //        System.out.println("phenotype:\n" + phenotype.toString());
 //        System.out.println("genotype:\n" + genotype.toString());
 
@@ -385,108 +376,5 @@ public class CMC {
             }
         }
         return res;
-    }
-
-    /**
-     * CMC result.
-     */
-    public class Result {
-        private int numCases;
-        private int numControls;
-        private int numVariants;
-        private int numRareVariants;
-        private double maf;
-        private int numPermutations;
-        private double statistic;
-        private double asymPvalue;
-        private double permPvalue;
-
-        public String toString() {
-            StringBuilder sb = new StringBuilder();
-            sb.append("CMC: Combined Multivariate and Collapsing Method\n");
-            sb.append("Info:\n");
-            sb.append("\tcases: " + getNumCases() + "\n");
-            sb.append("\tcontrols: " + getNumControls() + "\n");
-            sb.append("\tvariants: " + getNumVariants() + "\n");
-            sb.append("\trare variants: " + getNumRareVariants() + "\n");
-            sb.append("\tmaf: " + getMaf() + "\n");
-            sb.append("\tpermutations: " + getNumPermutations() + "\n");
-            sb.append("\tstatistic: " + getStatistic() + "\n");
-            sb.append("\tasymptotic p-value: " + getAsymPvalue() + "\n");
-            sb.append("\tpermuted p-value: " + getPermPvalue() + "\n");
-            return sb.toString();
-        }
-
-        public int getNumCases() {
-            return numCases;
-        }
-
-        public void setNumCases(int numCases) {
-            this.numCases = numCases;
-        }
-
-        public int getNumControls() {
-            return numControls;
-        }
-
-        public void setNumControls(int numControls) {
-            this.numControls = numControls;
-        }
-
-        public int getNumVariants() {
-            return numVariants;
-        }
-
-        public void setNumVariants(int numVariants) {
-            this.numVariants = numVariants;
-        }
-
-        public int getNumRareVariants() {
-            return numRareVariants;
-        }
-
-        public void setNumRareVariants(int numRareVariants) {
-            this.numRareVariants = numRareVariants;
-        }
-
-        public double getMaf() {
-            return maf;
-        }
-
-        public void setMaf(double maf) {
-            this.maf = maf;
-        }
-
-        public int getNumPermutations() {
-            return numPermutations;
-        }
-
-        public void setNumPermutations(int numPermutations) {
-            this.numPermutations = numPermutations;
-        }
-
-        public double getStatistic() {
-            return statistic;
-        }
-
-        public void setStatistic(double statistic) {
-            this.statistic = statistic;
-        }
-
-        public double getAsymPvalue() {
-            return asymPvalue;
-        }
-
-        public void setAsymPvalue(double asymPvalue) {
-            this.asymPvalue = asymPvalue;
-        }
-
-        public double getPermPvalue() {
-            return permPvalue;
-        }
-
-        public void setPermPvalue(double permPvalue) {
-            this.permPvalue = permPvalue;
-        }
     }
 }

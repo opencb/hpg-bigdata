@@ -2,8 +2,9 @@ package org.opencb.hpg.bigdata.tools.variant.analysis;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.BlockRealMatrix;
-import org.junit.Assert;
 import org.junit.Test;
+import org.opencb.hpg.bigdata.tools.variant.analysis.statistics.CMC;
+import org.opencb.hpg.bigdata.tools.variant.analysis.statistics.CMCResult;
 
 import static org.junit.Assert.assertEquals;
 
@@ -36,7 +37,7 @@ public class CMCTest {
         };
 
         CMC cmc = new CMC();
-        CMC.Result result = cmc.run(new ArrayRealVector(phenotype), new BlockRealMatrix(genotype));
+        CMCResult result = cmc.run(new ArrayRealVector(phenotype), new BlockRealMatrix(genotype));
         System.out.println(result.toString());
 
         assertEquals("CMC statistic does not match", result.getStatistic(), 2.666666666666665, 0.1);
