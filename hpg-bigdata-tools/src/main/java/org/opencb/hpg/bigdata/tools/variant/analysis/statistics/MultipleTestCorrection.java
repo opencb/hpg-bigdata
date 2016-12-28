@@ -13,33 +13,33 @@ public class MultipleTestCorrection {
         for (int i = 0; i < size; i++) {
             res[i] = pvalues[i] * size;
         }
-        return StatUtils.pmin(1, res);
+        return StatsUtils.pmin(1, res);
     }
 
     public static double[] bHCorrection(double[] pvalues) throws InvalidParameterException {
-        int[] o = ArrayUtils.order(pvalues, true);
-        int[] ro = ArrayUtils.order(o);
-        double[] mult = ArrayUtils.ordered(pvalues, o);
+        int[] o = StatsUtils.order(pvalues, true);
+        int[] ro = StatsUtils.order(o);
+        double[] mult = StatsUtils.ordered(pvalues, o);
         for (int i = mult.length, j = 0; i > 0; i--, j++) {
             mult[j] *= ((double) mult.length / (i));
         }
-        return ArrayUtils.ordered(StatUtils.pmin(1, StatUtils.cummin(mult)), ro);
+        return StatsUtils.ordered(StatsUtils.pmin(1, StatsUtils.cummin(mult)), ro);
     }
 
     public static double[] hochbergCorrection(double[] pvalues) throws InvalidParameterException {
-        int[] o = ArrayUtils.order(pvalues, true);
-        int[] ro = ArrayUtils.order(o);
-        double[] mult = ArrayUtils.ordered(pvalues, o);
+        int[] o = StatsUtils.order(pvalues, true);
+        int[] ro = StatsUtils.order(o);
+        double[] mult = StatsUtils.ordered(pvalues, o);
         for (int i = mult.length, j = 0; i > 0; i--, j++) {
             mult[j] *= (mult.length - i + 1);
         }
-        return ArrayUtils.ordered(StatUtils.pmin(1, StatUtils.cummin(mult)), ro);
+        return StatsUtils.ordered(StatsUtils.pmin(1, StatsUtils.cummin(mult)), ro);
     }
 
     public static double[] bYCorrection(double[] pvalues) throws InvalidParameterException {
-        int[] o = ArrayUtils.order(pvalues, true);
-        int[] ro = ArrayUtils.order(o);
-        double[] mult = ArrayUtils.ordered(pvalues, o);
+        int[] o = StatsUtils.order(pvalues, true);
+        int[] ro = StatsUtils.order(o);
+        double[] mult = StatsUtils.ordered(pvalues, o);
 
         double q = 0.0;
         for (int i = 1; i <= mult.length; i++) {
@@ -49,16 +49,16 @@ public class MultipleTestCorrection {
         for (int i = mult.length, j = 0; i > 0; i--, j++) {
             mult[j] *= (q * (double) mult.length / (i));
         }
-        return ArrayUtils.ordered(StatUtils.pmin(1, StatUtils.cummin(mult)), ro);
+        return StatsUtils.ordered(StatsUtils.pmin(1, StatsUtils.cummin(mult)), ro);
     }
 
     public static double[] holmCorrection(double[] pvalues) throws InvalidParameterException {
-        int[] o = ArrayUtils.order(pvalues);
-        int[] ro = ArrayUtils.order(o);
-        double[] mult = ArrayUtils.ordered(pvalues, o);
+        int[] o = StatsUtils.order(pvalues);
+        int[] ro = StatsUtils.order(o);
+        double[] mult = StatsUtils.ordered(pvalues, o);
         for (int i = 0; i < mult.length; i++) {
             mult[i] *= (mult.length - i);
         }
-        return ArrayUtils.ordered(StatUtils.pmin(1, StatUtils.cummax(mult)), ro);
+        return StatsUtils.ordered(StatsUtils.pmin(1, StatsUtils.cummax(mult)), ro);
     }
 }
