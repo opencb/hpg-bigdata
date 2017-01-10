@@ -1,6 +1,5 @@
 package org.opencb.hpg.bigdata.app.cli.local;
 
-import org.apache.commons.jexl2.UnifiedJEXL;
 import org.junit.Test;
 
 /**
@@ -14,17 +13,13 @@ public class VariantQueryCLITest {
     String inputFilename = "../hpg-bigdata-core/src/test/resources/org/opencb/hpg/bigdata/core/lib/100.variants.avro";
     String outputFilename = "/tmp/query.out";
 
-    private void execute(String commandLine) {
+    public static void execute(String commandLine) throws Exception {
         System.out.println("Executing:\n" + commandLine + "\n");
         LocalCliOptionsParser parser = new LocalCliOptionsParser();
         parser.parse(commandLine.split(" "));
 
         VariantCommandExecutor executor = new VariantCommandExecutor(parser.getVariantCommandOptions());
-        try {
-            executor.execute();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        executor.execute();
     }
 
     @Test
@@ -35,7 +30,11 @@ public class VariantQueryCLITest {
         commandLine.append(" -i ").append(inputFilename);
         commandLine.append(" --count");
 
-        execute(commandLine.toString());
+        try {
+            execute(commandLine.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     //    @Test
@@ -46,7 +45,11 @@ public class VariantQueryCLITest {
         commandLine.append(" -i ").append(inputFilename);
         commandLine.append(" --limit 3");
 
-        execute(commandLine.toString());
+        try {
+            execute(commandLine.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 //    @Test
@@ -60,7 +63,11 @@ public class VariantQueryCLITest {
         commandLine.append(" --consequence-type \"missense_variant\"");
         commandLine.append(" --count");
 
-        execute(commandLine.toString());
+        try {
+            execute(commandLine.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 //    @Test
@@ -75,7 +82,11 @@ public class VariantQueryCLITest {
         commandLine.append(" --gene \"BIN3,ZNF517\"");
         commandLine.append(" --count");
 
-        execute(commandLine.toString());
+        try {
+            execute(commandLine.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 //    @Test
@@ -90,7 +101,11 @@ public class VariantQueryCLITest {
         commandLine.append(" --limit 100");
         commandLine.append(" --group-by gene");
 
-        execute(commandLine.toString());
+        try {
+            execute(commandLine.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 //    @Test
@@ -102,7 +117,11 @@ public class VariantQueryCLITest {
         commandLine.append(" --sample-genotype \"0:0|0;3:1|0,1|1\"");
         commandLine.append(" --limit 10");
 
-        execute(commandLine.toString());
+        try {
+            execute(commandLine.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     //    @Test
@@ -117,7 +136,11 @@ public class VariantQueryCLITest {
         commandLine.append(" --consequence-type \"missense_variant\"");
         commandLine.append(" --count");
 
-        execute(commandLine.toString());
+        try {
+            execute(commandLine.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     //    @Test
@@ -133,7 +156,11 @@ public class VariantQueryCLITest {
         commandLine.append(" --gene \"BIN3,ZNF517\"");
         commandLine.append(" --count");
 
-        execute(commandLine.toString());
+        try {
+            execute(commandLine.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     //    @Test
@@ -149,6 +176,10 @@ public class VariantQueryCLITest {
         commandLine.append(" --limit 100");
         commandLine.append(" --group-by gene");
 
-        execute(commandLine.toString());
+        try {
+            execute(commandLine.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

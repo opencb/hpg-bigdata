@@ -711,24 +711,32 @@ public class LocalCliOptionsParser {
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
 
-        @Parameter(names = {"-i", "--input"}, description = "Input file name (Avro/Parquet format)",
+        @Parameter(names = {"-i", "--input"}, description = "Input file name (Avro/Parquet format).",
                 required = true, arity = 1)
         public String input;
 
-        @Parameter(names = {"--pedigree-file"}, description = "Input file with information about family relationships, sex,... (extended PED format)",
+        @Parameter(names = {"--dataset"}, description = "Target dataset.",
                 arity = 1)
-        public String pedigreeFilename = null;
+        public String datasetId = null;
 
-        @Parameter(names = {"--create-cohort"}, description = "Create new cohort. Expected value format is: dataset_name::cohort_name::sample_name1,sample_name2,... or dataset_name::cohort_name::sample_name_file\"")
+        @Parameter(names = {"--load-pedigree"}, description = "Pedigree file name (in PED format) to load in the target dataset. A pedigree file contains information about family relationships, phenotype, gendre,... (extended PED format).",
+                arity = 1)
+        public String loadPedFilename = null;
+
+        @Parameter(names = {"--save-pedigree"}, description = "File name where to save the pedigree information (in PED format) of the target dataset. A pedigree file contains information about family relationships, phenotype, gendre,... (extended PED format).",
+                arity = 1)
+        public String savePedFilename = null;
+
+        @Parameter(names = {"--create-cohort"}, description = "Create new cohort for the target dataset. Expected value format is: cohort_name::sample_name1,sample_name2,... or dataset_name::cohort_name::sample_name_file\"")
         public String createCohort = null;
 
-        @Parameter(names = {"--rename-cohort"}, description = "Rename cohort. Expected value format is: dataset_name::old_name::new_name")
+        @Parameter(names = {"--rename-cohort"}, description = "Rename a cohort of the target dataset. Expected value format is: old_name::new_name")
         public String renameCohort = null;
 
-        @Parameter(names = {"--rename-dataset"}, description = "Rename dataset. Expected value format is: old_name::new_name")
+        @Parameter(names = {"--rename-dataset"}, description = "Rename the target dataset to this new name.")
         public String renameDataset = null;
 
-        @Parameter(names = {"--summary"}, description = "Output metadata summary")
+        @Parameter(names = {"--summary"}, description = "Output metadata summary.")
         public boolean summary = false;
     }
 
