@@ -21,7 +21,7 @@
 
     <groupId>org.opencb.hpg-bigdata</groupId>
     <artifactId>hpg-bigdata</artifactId>
-    <version>1.0.0-beta1</version>
+    <version>1.0.0-beta2</version>
     <packaging>pom</packaging>
 
     <modules>
@@ -35,10 +35,10 @@
     <url>https://github.com/opencb/hpg-bigdata</url>
 
     <properties>
-        <hpg.version>1.0.0-beta1</hpg.version>
+        <hpg.version>1.0.0-beta2</hpg.version>
         <ga4gh.version>0.6.0a5</ga4gh.version>
-        <biodata.version>0.9.0</biodata.version>
-        <commons-lib.version>3.4.0</commons-lib.version>
+        <biodata.version>1.0.0-SNAPSHOT</biodata.version>
+        <commons-lib.version>3.4.1-SNAPSHOT</commons-lib.version>
         <hadoop.version>2.6.3</hadoop.version>
         <hbase.version>1.0.1</hbase.version>
         <avro.version>1.7.7</avro.version>
