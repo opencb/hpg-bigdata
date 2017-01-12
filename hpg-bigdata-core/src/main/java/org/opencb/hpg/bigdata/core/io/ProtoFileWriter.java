@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Created by mh719 on 11/05/2016.
  */
-public class ProtoFileWriter<T extends com.google.protobuf.GeneratedMessage> implements DataWriter<T> {
+public class ProtoFileWriter<T extends com.google.protobuf.GeneratedMessageV3> implements DataWriter<T> {
     private String compression = StringUtils.EMPTY;
     protected Logger logger = LoggerFactory.getLogger(this.getClass().toString());
 

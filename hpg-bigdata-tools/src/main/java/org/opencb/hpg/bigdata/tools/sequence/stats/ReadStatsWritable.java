@@ -17,8 +17,8 @@
 package org.opencb.hpg.bigdata.tools.sequence.stats;
 
 import org.apache.hadoop.io.Writable;
-import org.opencb.biodata.tools.sequence.tasks.SequenceInfo;
-import org.opencb.biodata.tools.sequence.tasks.SequenceStats;
+import org.opencb.biodata.tools.alignment.stats.SequenceInfo;
+import org.opencb.biodata.tools.alignment.stats.SequenceStats;
 
 import java.io.DataInput;
 import java.io.DataOutput;
