@@ -2,6 +2,9 @@ package org.opencb.hpg.bigdata.tools.variant.analysis;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
+import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.api.java.function.Function;
+import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.ml.classification.LogisticRegression;
 import org.apache.spark.ml.classification.LogisticRegressionModel;
 import org.apache.spark.ml.linalg.VectorUDT;
@@ -12,151 +15,341 @@ import org.apache.spark.mllib.linalg.Matrices;
 import org.apache.spark.mllib.linalg.Matrix;
 import org.apache.spark.mllib.stat.Statistics;
 import org.apache.spark.mllib.stat.test.ChiSqTestResult;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.RowFactory;
-import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema;
+import org.apache.spark.rdd.RDD;
+import org.apache.spark.sql.*;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.Metadata;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+import org.apache.spark.streaming.Duration;
+import org.apache.spark.streaming.StreamingContext;
+import org.apache.spark.streaming.api.java.JavaDStream;
+import org.apache.spark.streaming.api.java.JavaReceiverInputDStream;
+import org.apache.spark.streaming.api.java.JavaStreamingContext;
 import org.junit.Test;
+import org.opencb.biodata.models.core.pedigree.Individual;
+import org.opencb.biodata.models.core.pedigree.Pedigree;
+import org.opencb.biodata.models.variant.VariantMetadataManager;
 import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
 import org.opencb.hpg.bigdata.core.lib.VariantDataset;
-import scala.collection.mutable.WrappedArray;
+import scala.Serializable;
+import scala.collection.mutable.*;
+import scala.collection.mutable.Map;
+import scala.collection.mutable.Queue;
+import scala.collection.mutable.StringBuilder;
 
+import java.io.File;
+import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static org.apache.spark.sql.functions.desc;
+
 /**
  * Created by jtarraga on 23/12/16.
  */
-public class MLTest {
+public class MLTest implements Serializable {
 
-    SparkConf sparkConf;
-    SparkSession sparkSession;
-    VariantDataset vd;
+//    SparkConf sparkConf;
+//    SparkSession sparkSession;
+//    VariantDataset vd;
 
-    private void init() throws Exception {
+//    private void init() throws Exception {
+//        // it doesn't matter what we set to spark's home directory
+//        sparkConf = SparkConfCreator.getConf("AlignmentDatasetTest", "local", 1, true, "");
+//        System.out.println("sparkConf = " + sparkConf.toDebugString());
+//        sparkSession = new SparkSession(new SparkContext(sparkConf));
+//
+//    }
+
+//    @Test
+    public void streaming() throws Exception {
+
         // it doesn't matter what we set to spark's home directory
-        sparkConf = SparkConfCreator.getConf("AlignmentDatasetTest", "local", 1, true, "");
+        SparkConf sparkConf = SparkConfCreator.getConf("AlignmentDatasetTest", "local", 1, true, "");
         System.out.println("sparkConf = " + sparkConf.toDebugString());
-        sparkSession = new SparkSession(new SparkContext(sparkConf));
 
-    }
-
-    //@Test
-    public void getSamples() throws Exception {
-        init();
-
-        vd = new VariantDataset(sparkSession);
-        Path inputPath = Paths.get("/media/data100/jtarraga/data/spark/100.variants.avro");
+        JavaStreamingContext ssc = new JavaStreamingContext(sparkConf, new Duration(1000));
+        SparkSession sparkSession = new SparkSession(ssc.sparkContext().sc());
+//        SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
+        VariantDataset vd = new VariantDataset(sparkSession);
+        Path inputPath = Paths.get("/tmp/test.vcf.avro");
+//        Path inputPath = Paths.get("/media/data100/jtarraga/data/spark/100.variants.avro");
         //Path inputPath = Paths.get(getClass().getResource("/100.variants.avro").toURI());
         System.out.println(">>>> opening file " + inputPath);
         vd.load(inputPath.toString());
         vd.createOrReplaceTempView("vcf");
-        vd.printSchema();
 
-        String sql = "SELECT id, chromosome, start, end, study.studyId, study.samplesData FROM vcf LATERAL VIEW explode (studies) act as study "
-                + "WHERE (study.studyId = 'hgva@hsapiens_grch37:1000GENOMES_phase_3')";
+
+
+        //StreamingExamples.setStreamingLogLevels();
+
+        // Create the context with a 1 second batch size
+        //SparkConf sparkConf = new SparkConf().setAppName("JavaCustomReceiver");
+        //JavaStreamingContext ssc = new JavaStreamingContext(sparkConf, new Duration(1000));
+
+        // Create an input stream with the custom receiver on target ip:port and count the
+        // words in input stream of \n delimited text (eg. generated by 'nc')
+        JavaReceiverInputDStream<Dataset<Row>> datasets = ssc.receiverStream(
+                new JavaCustomReceiver(vd.sqlContext()));
+
+        JavaDStream<String> words = datasets.map(new Function<Dataset<Row>, String>() {
+            @Override
+            public String call(Dataset dataset) throws Exception {
+                return "toto";
+            }
+        });
+        words.print();
+/*
+        JavaDStream<String> words = lines.flatMap(new FlatMapFunction<String, String>() {
+            @Override
+            public Iterator<String> call(String x) {
+                return Arrays.asList(SPACE.split(x)).iterator();
+            }
+        });
+
+        JavaPairDStream<String, Integer> wordCounts = words.mapToPair(
+                new PairFunction<String, String, Integer>() {
+                    @Override public Tuple2<String, Integer> call(String s) {
+                        return new Tuple2<>(s, 1);
+                    }
+                }).reduceByKey(new Function2<Integer, Integer, Integer>() {
+            @Override
+            public Integer call(Integer i1, Integer i2) {
+                return i1 + i2;
+            }
+        });
+
+        wordCounts.print();
+*/      ssc.start();
+        ssc.awaitTermination();
+    }
+
+//    @Test
+    public void map() throws Exception {
+
+        // it doesn't matter what we set to spark's home directory
+        SparkConf sparkConf = SparkConfCreator.getConf("AlignmentDatasetTest", "local", 1, true, "");
+        System.out.println("sparkConf = " + sparkConf.toDebugString());
+        SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
+        VariantDataset vd;
+
+
+        vd = new VariantDataset(sparkSession);
+        Path inputPath = Paths.get("/tmp/test.vcf.avro");
+//        Path inputPath = Paths.get("/media/data100/jtarraga/data/spark/100.variants.avro");
+        //Path inputPath = Paths.get(getClass().getResource("/100.variants.avro").toURI());
+        System.out.println(">>>> opening file " + inputPath);
+        vd.load(inputPath.toString());
+        vd.createOrReplaceTempView("vcf");
+        //vd.printSchema();
+
+        String sql = "SELECT id, chromosome, start, end, study.studyId, study.samplesData FROM vcf LATERAL VIEW explode (studies) act as study ";
+//        String sql = "SELECT id, chromosome, start, end, study.studyId, study.samplesData FROM vcf LATERAL VIEW explode (studies) act as study "
+//                + "WHERE (study.studyId = 'hgva@hsapiens_grch37:1000GENOMES_phase_3')";
+        Dataset<Row> result = vd.sqlContext().sql(sql);
+        result.show();
+
+        SQLContext sqlContext = vd.sqlContext();
+        Dataset<String> namesDS = result.map(new MapFunction<Row, String>() {
+            @Override
+            public String call(Row r) throws Exception {
+                File file = new File("/tmp/pos-" + r.get(1) + "_" + r.get(2) + ".txt");
+                Dataset<Row> rows = sqlContext.sql("SELECT chromosome, start");
+                StringBuilder line = new StringBuilder();
+                rows.foreach(row -> {line.append(r.get(1)).append("\t").append(r.get(2)).append("\t")
+                        .append(r.get(3)).append("\t").append(r.get(4));});
+                PrintWriter writer = new PrintWriter(file);
+                writer.println(line);
+                writer.close();
+                return file.toString();
+            }
+        }, Encoders.STRING());
+        namesDS.show(false);
+//                                             }
+
+
+        //        Encoder<TestResult> testResultEncoder = Encoders.bean(TestResult.class);
+//        Dataset<TestResult> namesDS = result.map(new MapFunction<Row, TestResult>() {
+//            @Override
+//            public TestResult call(Row r) throws Exception {
+//                TestResult res = new TestResult();
+//                res.setpValue(0.05);
+//                res.setMethod("pearson");
+//                return res;
+////                return r.get(0)
+////                        + " : " + ((WrappedArray) r.getList(5).get(0)).head()
+////                        + ", " + ((WrappedArray) r.getList(5).get(1)).head();
+//            }
+//        }, testResultEncoder);
+//        namesDS.show(false);
+
+    }
+
+//    @Test
+    public void getSamples() throws Exception {
+
+        // it doesn't matter what we set to spark's home directory
+        SparkConf sparkConf = SparkConfCreator.getConf("AlignmentDatasetTest", "local", 1, true, "");
+        System.out.println("sparkConf = " + sparkConf.toDebugString());
+        SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
+        VariantDataset vd;
+
+//        init();
+
+        if (true) {
+            double[] pValues = new double[]{1.0, 0.03, 1.0, 0.38};
+            //RowFactory.create("a", Vectors.dense(pValues));
+            List<Row> rows = new ArrayList<>();
+            for (int i = 0; i < pValues.length; i++) {
+                rows.add(RowFactory.create(i, pValues[i]));
+            }
+            //Arrays.asList(RowFactory.create("a", org.apache.spark.mllib.linalg.Vectors.dense(1.0, 2.0, 3.0)), RowFactory.create("b", org.apache.spark.mllib.linalg.Vectors.dense(4.0, 5.0, 6.0)));
+            List<StructField> fields = new ArrayList<>(2);
+//            fields.add(DataTypes.createStructField("p", DataTypes.StringType, false));
+            fields.add(DataTypes.createStructField("id", DataTypes.IntegerType, false));
+            fields.add(DataTypes.createStructField("pValue", DataTypes.DoubleType, false));
+            StructType schema = DataTypes.createStructType(fields);
+            Dataset<Row> pValueRows = sparkSession.createDataFrame(rows, schema);
+            pValueRows.show();
+            Dataset<Row> sortedRows = pValueRows.sort(desc("pValue"));
+            //sortedRows.withColumn("newId", null);
+            sortedRows.show();
+            return;
+        }
+
+
+        vd = new VariantDataset(sparkSession);
+        Path inputPath = Paths.get("/tmp/test.vcf.avro");
+//        Path inputPath = Paths.get("/media/data100/jtarraga/data/spark/100.variants.avro");
+        //Path inputPath = Paths.get(getClass().getResource("/100.variants.avro").toURI());
+        System.out.println(">>>> opening file " + inputPath);
+        vd.load(inputPath.toString());
+        vd.createOrReplaceTempView("vcf");
+        //vd.printSchema();
+
+        String sql = "SELECT id, chromosome, start, end, study.studyId, study.samplesData FROM vcf LATERAL VIEW explode (studies) act as study ";
+//        String sql = "SELECT id, chromosome, start, end, study.studyId, study.samplesData FROM vcf LATERAL VIEW explode (studies) act as study "
+//                + "WHERE (study.studyId = 'hgva@hsapiens_grch37:1000GENOMES_phase_3')";
         Dataset<Row> result = vd.sqlContext().sql(sql);
         List list = result.head().getList(5);
         System.out.println("list size = " + list.size());
         System.out.println(((WrappedArray) list.get(0)).head());
 
-        result.foreach(r -> System.out.println(r.get(0) + " : " + ((WrappedArray) r.getList(5).get(0)).head()
-                + ", " + ((WrappedArray) r.getList(5).get(1)).head()));
-        result.show();
+
+        VariantMetadataManager variantMetadataManager = new VariantMetadataManager();
+        variantMetadataManager.load(inputPath + ".meta.json");
+        Pedigree pedigree = variantMetadataManager.getPedigree("testing-pedigree");
+
+        ChiSquareAnalysis.run(result, pedigree);
+
+//        //result.show();
+//        Encoder<TestResult> testResultEncoder = Encoders.bean(TestResult.class);
+//        Dataset<TestResult> namesDS = result.map(new MapFunction<Row, TestResult>() {
+//            @Override
+//            public TestResult call(Row r) throws Exception {
+//                TestResult res = new TestResult();
+//                res.setpValue(0.05);
+//                res.setMethod("pearson");
+//                return res;
+////                return r.get(0)
+////                        + " : " + ((WrappedArray) r.getList(5).get(0)).head()
+////                        + ", " + ((WrappedArray) r.getList(5).get(1)).head();
+//            }
+//        }, testResultEncoder);
+//        namesDS.show(false);
+
+
         sparkSession.stop();
     }
 
     @Test
     public void logistic() throws Exception {
-        init();
-
-        StructType schema = new StructType(new StructField[]{
-                new StructField("label", DataTypes.IntegerType, false, Metadata.empty()),
-                new StructField("features", new VectorUDT(), false, Metadata.empty()),
-        });
-
-        List<Row> data = Arrays.asList(
-                RowFactory.create(0, Vectors.dense(1.0, 2.0)),
-                RowFactory.create(0, Vectors.dense(1.0, 1.0)),
-                RowFactory.create(0, Vectors.dense(1.0, 0.0)),
-                RowFactory.create(1, Vectors.dense(1.0, 1.0)),
-                RowFactory.create(1, Vectors.dense(1.0, 0.0)),
-                RowFactory.create(1, Vectors.dense(1.0, 0.0))
-        );
-        Dataset<Row> dataset = sparkSession.createDataFrame(data, schema);
-        LogisticRegression logistic = new LogisticRegression();
-        LogisticRegressionModel model = logistic.fit(dataset);
-        // Print the coefficients and intercept for logistic regression
-        System.out.println("Coefficients: "
-                + model.coefficients() + " Intercept: " + model.intercept());
-
-        sparkSession.stop();
+//        init();
+//
+//        StructType schema = new StructType(new StructField[]{
+//                new StructField("label", DataTypes.IntegerType, false, Metadata.empty()),
+//                new StructField("features", new VectorUDT(), false, Metadata.empty()),
+//        });
+//
+//        List<Row> data = Arrays.asList(
+//                RowFactory.create(0, Vectors.dense(1.0, 2.0)),
+//                RowFactory.create(0, Vectors.dense(1.0, 1.0)),
+//                RowFactory.create(0, Vectors.dense(1.0, 0.0)),
+//                RowFactory.create(1, Vectors.dense(1.0, 1.0)),
+//                RowFactory.create(1, Vectors.dense(1.0, 0.0)),
+//                RowFactory.create(1, Vectors.dense(1.0, 0.0))
+//        );
+//        Dataset<Row> dataset = sparkSession.createDataFrame(data, schema);
+//        LogisticRegression logistic = new LogisticRegression();
+//        LogisticRegressionModel model = logistic.fit(dataset);
+//        // Print the coefficients and intercept for logistic regression
+//        System.out.println("Coefficients: "
+//                + model.coefficients() + " Intercept: " + model.intercept());
+//
+//        sparkSession.stop();
     }
 
     //@Test
     public void linear() throws Exception {
-        init();
-
-        StructType schema = new StructType(new StructField[]{
-                new StructField("label", DataTypes.DoubleType, false, Metadata.empty()),
-                new StructField("features", new VectorUDT(), false, Metadata.empty()),
-        });
-
-        List<Row> data = Arrays.asList(
-                RowFactory.create(0.0, Vectors.dense(1.0, 2.0)),
-                RowFactory.create(0.0, Vectors.dense(1.0, 1.0)),
-                RowFactory.create(0.0, Vectors.dense(1.0, 0.0)),
-                RowFactory.create(1.0, Vectors.dense(1.0, 1.0)),
-                RowFactory.create(1.0, Vectors.dense(1.0, 0.0)),
-                RowFactory.create(1.0, Vectors.dense(1.0, 0.0))
-        );
-        Dataset<Row> dataset = sparkSession.createDataFrame(data, schema);
-        LinearRegression linear = new LinearRegression();
-        LinearRegressionModel model = linear.fit(dataset);
-        // Print the coefficients and intercept for logistic regression
-        System.out.println("Coefficients: "
-                + model.coefficients() + " Intercept: " + model.intercept());
-
-        sparkSession.stop();
+//        init();
+//
+//        StructType schema = new StructType(new StructField[]{
+//                new StructField("label", DataTypes.DoubleType, false, Metadata.empty()),
+//                new StructField("features", new VectorUDT(), false, Metadata.empty()),
+//        });
+//
+//        List<Row> data = Arrays.asList(
+//                RowFactory.create(0.0, Vectors.dense(1.0, 2.0)),
+//                RowFactory.create(0.0, Vectors.dense(1.0, 1.0)),
+//                RowFactory.create(0.0, Vectors.dense(1.0, 0.0)),
+//                RowFactory.create(1.0, Vectors.dense(1.0, 1.0)),
+//                RowFactory.create(1.0, Vectors.dense(1.0, 0.0)),
+//                RowFactory.create(1.0, Vectors.dense(1.0, 0.0))
+//        );
+//        Dataset<Row> dataset = sparkSession.createDataFrame(data, schema);
+//        LinearRegression linear = new LinearRegression();
+//        LinearRegressionModel model = linear.fit(dataset);
+//        // Print the coefficients and intercept for logistic regression
+//        System.out.println("Coefficients: "
+//                + model.coefficients() + " Intercept: " + model.intercept());
+//
+//        sparkSession.stop();
     }
 
-//    @Test
+    @Test
     public void chiSquare() throws Exception {
 
         try {
-            init();
-
-            long count;
-            vd.printSchema();
-
-            vd.show(1);
-            sparkSession.stop();
-
-            System.exit(0);
-
-
-            Row row = vd.head();
-            int index = row.fieldIndex("studies");
-            System.out.println("studies index = " + index);
-            System.out.println("class at index = " + row.get(index).getClass());
-            List studies = row.getList(index);
-            //List<StudyEntry> studies = row.getList(12);
-            System.out.println(studies.get(0).getClass());
-            GenericRowWithSchema study = (GenericRowWithSchema) studies.get(0);
-            System.out.println("study, field 0 = " + study.getString(0));
-            int sdIndex = study.fieldIndex("samplesData");
-            System.out.println("samplesData index = " + sdIndex);
-            List samplesData = study.getList(sdIndex);
-            for (int i = 0; i < samplesData.size(); i++) {
-                WrappedArray data = (WrappedArray) samplesData.get(i);
-                System.out.println("sample " + i + ": " + data.head());
-            }
+//            init();
+//
+//            long count;
+//            vd.printSchema();
+//
+//            vd.show(1);
+//            sparkSession.stop();
+//
+//            //System.exit(0);
+//
+//
+//            Row row = vd.head();
+//            int index = row.fieldIndex("studies");
+//            System.out.println("studies index = " + index);
+//            System.out.println("class at index = " + row.get(index).getClass());
+//            List studies = row.getList(index);
+//            //List<StudyEntry> studies = row.getList(12);
+//            System.out.println(studies.get(0).getClass());
+//            GenericRowWithSchema study = (GenericRowWithSchema) studies.get(0);
+//            System.out.println("study, field 0 = " + study.getString(0));
+//            int sdIndex = study.fieldIndex("samplesData");
+//            System.out.println("samplesData index = " + sdIndex);
+//            List samplesData = study.getList(sdIndex);
+//            for (int i = 0; i < samplesData.size(); i++) {
+//                WrappedArray data = (WrappedArray) samplesData.get(i);
+//                System.out.println("sample " + i + ": " + data.head());
+//            }
 
 //            samplesData.forEach(sd -> System.out.println(((WrappedArray) ((List) sd).get(0)).head()));
 
@@ -190,7 +383,7 @@ public class MLTest {
             // summary of the test including the p-value, degrees of freedom...
             System.out.println(independenceTestResult + "\n");
 
-            sparkSession.stop();
+//            sparkSession.stop();
         } catch (Exception e) {
             e.printStackTrace();
         }
