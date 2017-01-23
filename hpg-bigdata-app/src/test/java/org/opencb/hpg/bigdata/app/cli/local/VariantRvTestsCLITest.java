@@ -20,7 +20,7 @@ public class VariantRvTestsCLITest {
         confPath = Paths.get("/home/jtarraga/data/vcf/skat/skat.params");
     }
 
-    @Test
+//    @Test
     public void skat() {
 
         try {

@@ -49,7 +49,7 @@ public class MLTest implements Serializable {
 //    }
 
 
-    @Test
+//    @Test
     public void streaming() throws Exception {
 
         // it doesn't matter what we set to spark's home directory

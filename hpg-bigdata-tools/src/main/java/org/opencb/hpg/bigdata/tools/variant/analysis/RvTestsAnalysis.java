@@ -2,19 +2,18 @@ package org.opencb.hpg.bigdata.tools.variant.analysis;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.opencb.biodata.formats.pedigree.PedigreeManager;
 import org.opencb.biodata.models.core.Region;
+import org.opencb.biodata.models.core.pedigree.Pedigree;
 import org.opencb.biodata.models.variant.VariantMetadataManager;
-import org.opencb.biodata.models.variant.avro.VariantAvro;
 import org.opencb.commons.utils.FileUtils;
 import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
 import org.opencb.hpg.bigdata.core.lib.VariantDataset;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Properties;
@@ -37,7 +36,8 @@ public class RvTestsAnalysis {
         this.confFilename = confFilename;
     }
 
-//    ./build/bin/hpg-bigdata-local2.sh variant rvtests -i ~/data/vcf/skat/example.vcf.avro -o ~/data/vcf/skat/out --dataset noname -c ~/data/vcf/skat/skat.params
+//    ./build/bin/hpg-bigdata-local2.sh variant rvtests -i ~/data/vcf/skat/example.vcf.avro -o ~/data/vcf/skat/out
+// --dataset noname -c ~/data/vcf/skat/skat.params
 
     public void run(String dataset) throws Exception {
         // create spark session
@@ -59,7 +59,7 @@ public class RvTestsAnalysis {
             System.out.println((String) key + " = " + (String) prop.get(key));
         }
 
-       // create temporary directory
+        // create temporary directory
         File tmpDir = new File(outDirname + "/tmp");
         tmpDir.mkdir();
 
@@ -67,7 +67,8 @@ public class RvTestsAnalysis {
         File phenoFile = new File(tmpDir.getAbsolutePath() + "/pheno");
         VariantMetadataManager metadataManager = new VariantMetadataManager();
         metadataManager.load(inFilename + ".meta.json");
-        new PedigreeManager().save(metadataManager.getPedigree(dataset), phenoFile.toPath());
+        Pedigree pedigree = metadataManager.getPedigree(dataset);
+        new PedigreeManager().save(pedigree, phenoFile.toPath());
 
         // loop for regions
         String line;
@@ -88,24 +89,40 @@ public class RvTestsAnalysis {
 
             // create temporary vcf file fot the region variants
             VariantDataset ds = (VariantDataset) vd.regionFilter(region);
-            Dataset<VariantAvro> variantDS = ds.as(Encoders.bean(VariantAvro.class));
-
+            File vcfFile = new File(tmpDir.getAbsolutePath() + "/variants." + i + ".vcf");
+            writer = FileUtils.newBufferedWriter(vcfFile.toPath());
+            writer.write("##fileformat=VCFv4.2\n");
+            writer.write("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT");
+            for (String key: pedigree.getIndividuals().keySet()) {
+                writer.write("\t");
+                writer.write(pedigree.getIndividuals().get(key).getId());
+            }
+            writer.write("\n");
             List<Row> rows = ds.collectAsList();
             for (Row row: rows) {
-                row.g
                 System.out.println(row);
             }
-            File vcfFile = new File(tmpDir.getAbsolutePath() + "/variants." + i + ".vcf");
+            writer.close();
 
             // compress vcf to bgz
             cmdline.setLength(0);
             cmdline.append(this.BGZIP_BIN).append(" ").append(vcfFile.getAbsolutePath());
-            execute(cmdline.toString());
+            Process p = execute(cmdline.toString());
+            System.out.println("Compressing vcf to gz: " + cmdline);
+            System.out.println("\tSTDOUT:");
+            System.out.println(readInputStream(p.getInputStream()));
+            System.out.println("\tSTDERR:");
+            System.out.println(readInputStream(p.getErrorStream()));
 
             // and create tabix index
             cmdline.setLength(0);
             cmdline.append(this.TABIX_BIN).append(" -p vcf ").append(vcfFile.getAbsolutePath()).append(".gz");
-            execute(cmdline.toString());
+            p = execute(cmdline.toString());
+            System.out.println("Creating tabix index: " + cmdline);
+            System.out.println("\tSTDOUT:");
+            System.out.println(readInputStream(p.getInputStream()));
+            System.out.println("\tSTDERR:");
+            System.out.println(readInputStream(p.getErrorStream()));
 
             // rvtests command line
             cmdline.setLength(0);
@@ -113,36 +130,52 @@ public class RvTestsAnalysis {
                     .append(" --inVcf ").append(vcfFile.getAbsolutePath()).append(".gz")
                     .append(" --setFile ").append(setFile.getAbsolutePath())
                     .append(" --out ").append(tmpDir.getAbsolutePath()).append("/out.").append(i);
-            execute(cmdline.toString());
+            p = execute(cmdline.toString());
+            System.out.println("Execute test: " + cmdline);
+            System.out.println("\tSTDOUT:");
+            System.out.println(readInputStream(p.getInputStream()));
+            System.out.println("\tSTDERR:");
+            System.out.println(readInputStream(p.getErrorStream()));
 
             i++;
         }
         reader.close();
     }
 
-
-    private void execute(String cmdline) {
+    private Process execute(String cmdline) {
+        Process p = null;
         try {
             System.out.println("Executing: " + cmdline);
-            Process p = Runtime.getRuntime().exec(cmdline);
-
-            BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
-            BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-
-            // read the output from the command
-            String s;
-            System.out.println("Here is the standard output of the command:\n");
-            while ((s = stdInput.readLine()) != null) {
-                System.out.println(s);
-            }
-
-            // read any errors from the attempted command
-            System.out.println("Here is the standard error of the command (if any):\n");
-            while ((s = stdError.readLine()) != null) {
-                System.out.println(s);
-            }
+            p = Runtime.getRuntime().exec(cmdline);
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return p;
+    }
+
+    private void saveStream(InputStream inputStream, Path path) {
+        try {
+            PrintWriter writer = new PrintWriter(path.toFile());
+            writer.write(readInputStream(inputStream));
+            writer.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private String readInputStream(InputStream inputStream) {
+        StringBuilder res = new StringBuilder();
+        try {
+            // read the output from the command
+            BufferedReader stdInput = new BufferedReader(new InputStreamReader(inputStream));
+            String s;
+            System.out.println("Here is the standard output of the command:\n");
+            while ((s = stdInput.readLine()) != null) {
+                res.append(s).append("\n");
+            }
+        } catch (IOException e) {
+            res.append(e.getMessage()).append("\n");
+        }
+        return res.toString();
     }
 }
