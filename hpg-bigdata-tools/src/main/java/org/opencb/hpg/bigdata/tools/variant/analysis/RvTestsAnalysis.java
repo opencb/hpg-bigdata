@@ -26,9 +26,9 @@ public class RvTestsAnalysis {
     private String outDirname;
     private String confFilename;
 
-    private final String RVTEST_BIN = "/home/jtarraga/softs/rvtests/executable/rvtest";
-    private final String BGZIP_BIN = "/home/joaquin/softs/htslib/bgzip";
-    private final String TABIX_BIN = "/home/joaquin/softs/htslib/tabix";
+    private final String RVTEST_BIN = "/home/jtarraga/soft/rvtests/executable/rvtest";
+    private final String BGZIP_BIN = "/usr/bin/bgzip"; //"/home/joaquin/softs/htslib/bgzip";
+    private final String TABIX_BIN = "/usr/bin/tabix"; //"/home/joaquin/softs/htslib/tabix";
 
     public RvTestsAnalysis(String inFilename, String outDirname, String confFilename) {
         this.inFilename = inFilename;

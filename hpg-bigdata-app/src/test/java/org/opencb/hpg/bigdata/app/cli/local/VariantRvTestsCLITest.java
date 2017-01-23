@@ -15,9 +15,11 @@ public class VariantRvTestsCLITest {
     Path confPath;
 
     private void init() throws URISyntaxException {
-        inPath = Paths.get("/home/jtarraga/data/vcf/skat/example.vcf.avro");
-        outPath = Paths.get("/home/jtarraga/data/vcf/skat/out");
-        confPath = Paths.get("/home/jtarraga/data/vcf/skat/skat.params");
+        String root = "/home/jtarraga/data100/vcf/rvtest-skat/spark";
+//        String root = "/home/jtarraga/data/vcf/skat/";
+        inPath = Paths.get(root + "/example.vcf.avro");
+        outPath = Paths.get(root + "/out");
+        confPath = Paths.get(root + "/skat.params");
     }
 
 //    @Test
