@@ -82,6 +82,7 @@ public class LocalCliOptionsParser {
         variantSubCommands.addCommand("view", variantCommandOptions.viewVariantCommandOptions);
         variantSubCommands.addCommand("query", variantCommandOptions.queryVariantCommandOptions);
         variantSubCommands.addCommand("metadata", variantCommandOptions.metadataVariantCommandOptions);
+        variantSubCommands.addCommand("rvtests", variantCommandOptions.rvtestsVariantCommandOptions);
     }
 
     public void parse(String[] args) throws ParameterException {
@@ -439,6 +440,7 @@ public class LocalCliOptionsParser {
         ViewVariantCommandOptions viewVariantCommandOptions;
         QueryVariantCommandOptions queryVariantCommandOptions;
         MetadataVariantCommandOptions metadataVariantCommandOptions;
+        RvTestsVariantCommandOptions rvtestsVariantCommandOptions;
 
         public VariantCommandOptions() {
             this.convertVariantCommandOptions = new ConvertVariantCommandOptions();
@@ -446,6 +448,7 @@ public class LocalCliOptionsParser {
             this.viewVariantCommandOptions = new ViewVariantCommandOptions();
             this.queryVariantCommandOptions = new QueryVariantCommandOptions();
             this.metadataVariantCommandOptions = new MetadataVariantCommandOptions();
+            this.rvtestsVariantCommandOptions = new RvTestsVariantCommandOptions();
         }
     }
 
@@ -739,6 +742,30 @@ public class LocalCliOptionsParser {
         @Parameter(names = {"--summary"}, description = "Output metadata summary.")
         public boolean summary = false;
     }
+
+    @Parameters(commandNames = {"rvtests"}, commandDescription = "Execute the 'rvtests' program.")
+    class RvTestsVariantCommandOptions {
+
+        @ParametersDelegate
+        public CommonCommandOptions commonOptions = commonCommandOptions;
+
+        @Parameter(names = {"-i", "--input"}, description = "Input file name (in Avro/Parquet file format).",
+                required = true, arity = 1)
+        public String inFilename;
+
+        @Parameter(names = {"-o", "--output"}, description = "Output directory name to save the rvtests results.",
+                required = true, arity = 1)
+        public String outDirname;
+
+        @Parameter(names = {"--dataset"}, description = "Target dataset.",
+                arity = 1)
+        public String datasetId = null;
+
+        @Parameter(names = {"-c", "--config"}, description = "Configuration file name containing the rvtests parameters.",
+                required = true, arity = 1)
+        public String confFilename;
+    }
+
 
     private void printMainUsage() {
         // TODO This is a nasty hack. By some unknown reason JCommander only prints the description from first command

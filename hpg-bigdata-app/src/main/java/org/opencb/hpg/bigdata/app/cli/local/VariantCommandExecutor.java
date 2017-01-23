@@ -44,6 +44,7 @@ import org.opencb.hpg.bigdata.core.converters.variation.VariantContext2VariantCo
 import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
 import org.opencb.hpg.bigdata.core.lib.VariantDataset;
 import org.opencb.hpg.bigdata.core.parquet.VariantParquetConverter;
+import org.opencb.hpg.bigdata.tools.variant.analysis.RvTestsAnalysis;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -96,10 +97,16 @@ public class VariantCommandExecutor extends CommandExecutor {
                 query();
                 break;
             case "metadata":
-                init(variantCommandOptions.queryVariantCommandOptions.commonOptions.logLevel,
-                        variantCommandOptions.queryVariantCommandOptions.commonOptions.verbose,
-                        variantCommandOptions.queryVariantCommandOptions.commonOptions.conf);
+                init(variantCommandOptions.metadataVariantCommandOptions.commonOptions.logLevel,
+                        variantCommandOptions.metadataVariantCommandOptions.commonOptions.verbose,
+                        variantCommandOptions.metadataVariantCommandOptions.commonOptions.conf);
                 metadata();
+                break;
+            case "rvtests":
+                init(variantCommandOptions.rvtestsVariantCommandOptions.commonOptions.logLevel,
+                        variantCommandOptions.rvtestsVariantCommandOptions.commonOptions.verbose,
+                        variantCommandOptions.rvtestsVariantCommandOptions.commonOptions.conf);
+                rvtests();
                 break;
             default:
                 break;
@@ -841,5 +848,14 @@ public class VariantCommandExecutor extends CommandExecutor {
         } else {
             System.out.println("Error: metafile does not exist, " + metaFile.getAbsolutePath());
         }
+    }
+
+
+    public void rvtests() throws Exception {
+        RvTestsAnalysis rvtests = new RvTestsAnalysis(variantCommandOptions.rvtestsVariantCommandOptions.inFilename,
+                variantCommandOptions.rvtestsVariantCommandOptions.outDirname,
+                variantCommandOptions.rvtestsVariantCommandOptions.confFilename);
+
+        rvtests.run(variantCommandOptions.rvtestsVariantCommandOptions.datasetId);
     }
 }

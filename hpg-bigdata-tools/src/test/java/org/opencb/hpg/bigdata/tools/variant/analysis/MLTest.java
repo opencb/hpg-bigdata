@@ -2,48 +2,32 @@ package org.opencb.hpg.bigdata.tools.variant.analysis;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
-import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.MapFunction;
-import org.apache.spark.ml.classification.LogisticRegression;
-import org.apache.spark.ml.classification.LogisticRegressionModel;
-import org.apache.spark.ml.linalg.VectorUDT;
-import org.apache.spark.ml.linalg.Vectors;
-import org.apache.spark.ml.regression.LinearRegression;
-import org.apache.spark.ml.regression.LinearRegressionModel;
 import org.apache.spark.mllib.linalg.Matrices;
 import org.apache.spark.mllib.linalg.Matrix;
 import org.apache.spark.mllib.stat.Statistics;
 import org.apache.spark.mllib.stat.test.ChiSqTestResult;
-import org.apache.spark.rdd.RDD;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.Metadata;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.apache.spark.streaming.Duration;
-import org.apache.spark.streaming.StreamingContext;
-import org.apache.spark.streaming.api.java.JavaDStream;
-import org.apache.spark.streaming.api.java.JavaReceiverInputDStream;
-import org.apache.spark.streaming.api.java.JavaStreamingContext;
 import org.junit.Test;
-import org.opencb.biodata.models.core.pedigree.Individual;
 import org.opencb.biodata.models.core.pedigree.Pedigree;
 import org.opencb.biodata.models.variant.VariantMetadataManager;
 import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
 import org.opencb.hpg.bigdata.core.lib.VariantDataset;
 import scala.Serializable;
-import scala.collection.mutable.*;
-import scala.collection.mutable.Map;
-import scala.collection.mutable.Queue;
+import scala.Tuple2;
 import scala.collection.mutable.StringBuilder;
+import scala.collection.mutable.WrappedArray;
 
 import java.io.File;
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.apache.spark.sql.functions.desc;
 
@@ -64,23 +48,279 @@ public class MLTest implements Serializable {
 //
 //    }
 
-//    @Test
+
+    @Test
     public void streaming() throws Exception {
 
         // it doesn't matter what we set to spark's home directory
         SparkConf sparkConf = SparkConfCreator.getConf("AlignmentDatasetTest", "local", 1, true, "");
         System.out.println("sparkConf = " + sparkConf.toDebugString());
 
-        JavaStreamingContext ssc = new JavaStreamingContext(sparkConf, new Duration(1000));
-        SparkSession sparkSession = new SparkSession(ssc.sparkContext().sc());
-//        SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
+        SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
         VariantDataset vd = new VariantDataset(sparkSession);
-        Path inputPath = Paths.get("/tmp/test.vcf.avro");
+//        Path inputPath = Paths.get("/tmp/test.vcf.avro");
 //        Path inputPath = Paths.get("/media/data100/jtarraga/data/spark/100.variants.avro");
-        //Path inputPath = Paths.get(getClass().getResource("/100.variants.avro").toURI());
+//        Path inputPath = Paths.get(getClass().getResource("/100.variants.avro").toURI());
+        Path inputPath = Paths.get("/home/jtarraga/appl/hpg-bigdata/hpg-bigdata-core/src/test/resources/100.variants.avro");
         System.out.println(">>>> opening file " + inputPath);
         vd.load(inputPath.toString());
         vd.createOrReplaceTempView("vcf");
+
+
+        Dataset<Row> rows = vd.sqlContext().sql("SELECT chromosome, start, end FROM vcf");
+
+        List<Row> rowList = rows.collectAsList();
+
+        List<Integer> list = rows.toJavaRDD().groupBy(new Function<Row, String>() {
+            @Override
+            public String call(Row row) throws Exception {
+                String key;
+                int start = row.getInt(1);
+                if (start < 16066000) {
+                    key = "1";
+                } else if (start < 16067000) {
+                    key = "2";
+                } else if (start < 16069000) {
+                    key = "3";
+                } else {
+                    key = "4";
+                }
+                return key;
+            }
+        }).map(new Function<Tuple2<String, Iterable<Row>>, Integer>() {
+            @Override
+            public Integer call(Tuple2<String, Iterable<Row>> keyValue) throws Exception {
+                System.out.println("key = " + keyValue._1());
+                int i = 0;
+                PrintWriter writer = new PrintWriter(new File("/tmp/key-" + keyValue._1()));
+                java.util.Iterator<Row> iterator = keyValue._2().iterator();
+                while (iterator.hasNext()) {
+                    Row row = iterator.next();
+                    System.out.println("\t\t" + row.get(0) + "\t" + row.get(1));
+                    writer.println(row.get(0) + "\t" + row.get(1));
+                    i++;
+                }
+                writer.close();
+                return i;
+            }
+        }).collect();
+        list.forEach(i -> System.out.println(i));
+    }
+
+//    @Test
+    public void streaming00() throws Exception {
+
+        // it doesn't matter what we set to spark's home directory
+        SparkConf sparkConf = SparkConfCreator.getConf("AlignmentDatasetTest", "local", 1, true, "");
+        System.out.println("sparkConf = " + sparkConf.toDebugString());
+
+//        JavaStreamingContext ssc = new JavaStreamingContext(sparkConf, new Duration(1000));
+//        SparkSession sparkSession = new SparkSession(ssc.sparkContext().sc());
+        SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
+        VariantDataset vd = new VariantDataset(sparkSession);
+//        Path inputPath = Paths.get("/tmp/test.vcf.avro");
+//        Path inputPath = Paths.get("/media/data100/jtarraga/data/spark/100.variants.avro");
+//        Path inputPath = Paths.get(getClass().getResource("/100.variants.avro").toURI());
+        Path inputPath = Paths.get("/home/jtarraga/appl/hpg-bigdata/hpg-bigdata-core/src/test/resources/100.variants.avro");
+        System.out.println(">>>> opening file " + inputPath);
+        vd.load(inputPath.toString());
+        vd.createOrReplaceTempView("vcf");
+
+        Dataset<Row> rows = vd.sqlContext().sql("SELECT chromosome, start, end FROM vcf");
+
+        List<Row> rowList = rows.collectAsList();
+
+
+//        rows.grou
+//        JavaPairRDD<String, Iterable<Row>> pairs = rows.toJavaRDD().groupBy(new );
+        //JavaPairRDD<Character, Iterable<String>>
+
+        List<Integer> list = rows.toJavaRDD().groupBy(new Function<Row, String>() {
+            @Override
+            public String call(Row row) throws Exception {
+                String key;
+                int start = row.getInt(1);
+                if (start < 16066000) {
+                    key = "1";
+                } else if (start < 16067000) {
+                    key = "2";
+                } else if (start < 16069000) {
+                    key = "3";
+                } else {
+                    key = "4";
+                }
+                return key;
+            }
+        }).map(new Function<Tuple2<String, Iterable<Row>>, Integer>() {
+            @Override
+            public Integer call(Tuple2<String, Iterable<Row>> keyValue) throws Exception {
+                System.out.println("key = " + keyValue._1());
+                int i = 0;
+                PrintWriter writer = new PrintWriter(new File("/tmp/key-" + keyValue._1()));
+                java.util.Iterator<Row> iterator = keyValue._2().iterator();
+                while (iterator.hasNext()) {
+                    Row row = iterator.next();
+                    System.out.println("\t\t" + row.get(0) + "\t" + row.get(1));
+                    writer.println(row.get(0) + "\t" + row.get(1));
+                    i++;
+                }
+                writer.close();
+//                keyValue._2().forEach(row -> {
+//                    i++;
+//                    System.out.println("\t\t" + row.get(0) + "\t" + row.get(1))
+//                });
+                return i;
+            }
+        }).collect();
+        list.forEach(i -> System.out.println(i));
+/*
+        KeyValueGroupedDataset<String, Row> groups = rows.groupByKey(new MapFunction<Row, String>() {
+            @Override
+            public String call(Row row) throws Exception {
+                String key;
+                int start = row.getInt(1);
+                if (start < 16066000) {
+                    key = "1";
+                } else if (start < 16067000) {
+                    key = "2";
+                } else if (start < 16069000) {
+                    key = "3";
+                } else {
+                    key = "4";
+                }
+                return key;
+            }
+        }, Encoders.STRING());
+
+//        groups.keys().foreach(k -> System.out.println(k));
+/*
+        groups.mapGroups(new Function2<String, Iterator<Row>, Object>() {
+            @Override
+            public Object apply(String s, Iterator<Row> rowIterator) {
+                return null;
+            }
+/*
+        r educe(new ReduceFunction<Row>() {
+            @Override
+            public Row call(Row row, Row t1) throws Exception {
+                return null;
+            }
+        });
+
+        JavaPairRDD<Object, Iterable> keyValues = rows.toJavaRDD().groupBy(new Function<Row, Object>() {
+            @Override
+            public Object call(Row row) throws Exception {
+                return null;
+            }
+        });
+
+        JavaPairRDD<Object, Iterable> groupMap = productSaleMap.groupBy(new Function<ProductSale, Object>() {
+            @Override
+            public Object call(ProductSale productSale) throws Exception {
+                c.setTime(productSale.getSale().getPurchaseDate());
+                return c.get(Calendar.YEAR);
+            }
+        });
+
+
+        JavaPairRDD<Object, Long> totalSaleData = groupMap.mapValues(new Function<Iterable, Long>() {
+            @Override
+            public Long call(Iterable productSales) throws Exception {
+                Long sumData = 0L;
+                for (ProductSale productSale : productSales) {
+                    sumData = sumData + (productSale.getProduct().getPrice() * productSale.getSale().getItemPurchased());
+                }
+                return sumData;
+            }
+        });
+
+
+        JavaPairRDD<String, Row> pairs = rows.toJavaRDD().mapToPair(new PairFunction<Row, String, Row>() {
+            @Override
+            public Tuple2<String, Row> call(Row row) throws Exception {
+                String key = "";
+                int start = row.getInt(1);
+                if (start < 16066000) {
+                    key = "1";
+                } else if (start < 16067000) {
+                    key = "2";
+                } else if(start < 16069000) {
+                    key = "3";
+                } else {
+                    key = "4";
+                }
+
+                return new Tuple2<>(key, row);
+            }
+        }).reduceByKey()reduce(new Function2<Tuple2<String, Row>, Tuple2<String, Row>, Tuple2<String, Row>>() {
+            @Override
+            public Tuple2<String, Row> call(Tuple2<String, Row> stringRowTuple2, Tuple2<String, Row> stringRowTuple22) throws Exception {
+                return null;
+            }
+        });
+
+        rows.toJavaRDD((
+
+                JavaPairRDD<String, Integer> rddX =
+                x.mapToPair(e -> new Tuple2<String, Integer>(e, 1));
+
+        // New JavaPairRDD
+        JavaPairRDD<String, Integer> rddY = rddX.reduceByKey(reduceSumFunc);
+
+        //Print tuples
+        for(Tuple2<String, Integer> element : rddY.collect()){
+            System.out.println("("+element._1+", "+element._2+")");
+        }
+    }
+}
+
+        rows.toJavaRDD().key
+        rows.mreduce(new ReduceFunction<Row>() {
+            @Override
+            public Row call(Row row, Row t1) throws Exception {
+                return null;
+            }
+        });
+
+/*
+        List<Dataset<Row>> buffer = new ArrayList<>();
+
+
+
+        //Dataset<Dataset<Row>> datasets;
+
+        //Dataset<Row> dataset;
+        //dataset.gr
+
+
+        Thread thread = new Thread() {
+            @Override public void run() {
+                System.out.println("------>>>>> Starting thread");
+                for (int i = 0; i < 5; i++) {
+                    Dataset<Row> ds = vd.sqlContext().sql("SELECT chromosome, start, end FROM vcf");
+                    //System.out.println("=================> Stream, dataset " + i + " with " + ds.count() + " rows");
+                    System.out.println("------------------------>>>>> adding new dataset");
+                    buffer.add(ds);
+                }
+                System.out.println("------>>>>> Ending thread");
+            }
+        };
+
+        thread.start();
+
+        while (thread.isAlive() || buffer.size() > 0) {
+            System.out.println("Still alive or buffer size " + buffer.size() + "...");
+            if (buffer.size() > 0) {
+                Dataset<Row> ds = buffer.remove(0);
+                List<Row> list = ds.collectAsList();
+                for (int i = 0; i < list.size(); i++) {
+                    System.out.println(i + "\t" + list.get(i).get(0) + "\t" + list.get(i).get(1) + "\t" + list.get(i).get(2));
+                }
+            }
+            Thread.sleep(1000);
+        }
+
+
 
 
 
@@ -92,16 +332,16 @@ public class MLTest implements Serializable {
 
         // Create an input stream with the custom receiver on target ip:port and count the
         // words in input stream of \n delimited text (eg. generated by 'nc')
-        JavaReceiverInputDStream<Dataset<Row>> datasets = ssc.receiverStream(
-                new JavaCustomReceiver(vd.sqlContext()));
+//        JavaReceiverInputDStream<Dataset<Row>> datasets = ssc.receiverStream(
+//                new JavaCustomReceiver(vd.sqlContext()));
 
-        JavaDStream<String> words = datasets.map(new Function<Dataset<Row>, String>() {
-            @Override
-            public String call(Dataset dataset) throws Exception {
-                return "toto";
-            }
-        });
-        words.print();
+ //       JavaDStream<String> words = datasets.map(new Function<Dataset<Row>, String>() {
+//            @Override
+//            public String call(Dataset dataset) throws Exception {
+//                return "toto";
+//            }
+//        });
+//        words.print();
 /*
         JavaDStream<String> words = lines.flatMap(new FlatMapFunction<String, String>() {
             @Override
@@ -123,8 +363,8 @@ public class MLTest implements Serializable {
         });
 
         wordCounts.print();
-*/      ssc.start();
-        ssc.awaitTermination();
+*///      ssc.start();
+  //      ssc.awaitTermination();
     }
 
 //    @Test

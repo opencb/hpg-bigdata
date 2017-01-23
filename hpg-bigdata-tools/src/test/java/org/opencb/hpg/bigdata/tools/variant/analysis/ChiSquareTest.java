@@ -87,6 +87,5 @@ public class ChiSquareTest {
         trainingSummary.residuals().show();
         System.out.println("RMSE: " + trainingSummary.rootMeanSquaredError());
         System.out.println("r2: " + trainingSummary.r2());
-
     }
 }
