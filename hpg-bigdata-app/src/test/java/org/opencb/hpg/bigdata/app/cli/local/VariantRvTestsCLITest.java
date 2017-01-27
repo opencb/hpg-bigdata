@@ -22,7 +22,7 @@ public class VariantRvTestsCLITest {
         confPath = Paths.get(root + "/skat.params");
     }
 
-//    @Test
+    @Test
     public void skat() {
 
         try {

@@ -2,6 +2,10 @@ package org.opencb.hpg.bigdata.tools.variant.analysis;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
+import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.Function;
+import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.opencb.biodata.formats.pedigree.PedigreeManager;
@@ -11,22 +15,24 @@ import org.opencb.biodata.models.variant.VariantMetadataManager;
 import org.opencb.commons.utils.FileUtils;
 import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
 import org.opencb.hpg.bigdata.core.lib.VariantDataset;
+import scala.Tuple2;
+import scala.collection.mutable.StringBuilder;
+import scala.collection.mutable.WrappedArray;
 
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 /**
  * Created by joaquin on 1/19/17.
  */
-public class RvTestsAnalysis {
+public class RvTestsAnalysis implements Serializable {
     private String inFilename;
     private String outDirname;
     private String confFilename;
 
-    private final String RVTEST_BIN = "/home/jtarraga/soft/rvtests/executable/rvtest";
+    private final String RVTEST_BIN = "/usr/bin/rvtests"; //"/home/jtarraga/soft/rvtests/executable/rvtest";
     private final String BGZIP_BIN = "/usr/bin/bgzip"; //"/home/joaquin/softs/htslib/bgzip";
     private final String TABIX_BIN = "/usr/bin/tabix"; //"/home/joaquin/softs/htslib/tabix";
 
@@ -39,7 +45,7 @@ public class RvTestsAnalysis {
 //    ./build/bin/hpg-bigdata-local2.sh variant rvtests -i ~/data/vcf/skat/example.vcf.avro -o ~/data/vcf/skat/out
 // --dataset noname -c ~/data/vcf/skat/skat.params
 
-    public void run(String dataset) throws Exception {
+    public void run(String datasetName) throws Exception {
         // create spark session
         SparkConf sparkConf = SparkConfCreator.getConf("variant rvtests", "local", 1, true);
         SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
@@ -49,14 +55,23 @@ public class RvTestsAnalysis {
         vd.load(inFilename);
         vd.createOrReplaceTempView("vcf");
 
-        // load rvtests parameters
-        Properties prop = new Properties();
+        // load rvtests parameters into properties
+        Properties props = new Properties();
         InputStream confStream = new FileInputStream(confFilename);
-        prop.load(confStream);
+        props.load(confStream);
         confStream.close();
 
-        for (Object key: prop.keySet()) {
-            System.out.println((String) key + " = " + (String) prop.get(key));
+        for (Object key: props.keySet()) {
+            System.out.println((String) key + " = " + (String) props.get(key));
+        }
+
+        List<String> kernels = null;
+        String kernel = props.getProperty("kernel");
+        if (kernel != null) {
+            kernels = Arrays.asList(kernel.toLowerCase()
+                    .replace("skato", "SkatO")
+                    .replace("skat", "Skat")
+                    .split(","));
         }
 
         // create temporary directory
@@ -67,23 +82,23 @@ public class RvTestsAnalysis {
         File phenoFile = new File(tmpDir.getAbsolutePath() + "/pheno");
         VariantMetadataManager metadataManager = new VariantMetadataManager();
         metadataManager.load(inFilename + ".meta.json");
-        Pedigree pedigree = metadataManager.getPedigree(dataset);
+        Pedigree pedigree = metadataManager.getPedigree(datasetName);
         new PedigreeManager().save(pedigree, phenoFile.toPath());
 
         // loop for regions
         String line;
-        BufferedReader reader = FileUtils.newBufferedReader(Paths.get(prop.getProperty("setFile")));
+        BufferedWriter writer;
+        BufferedReader reader = FileUtils.newBufferedReader(Paths.get(props.getProperty("setFile")));
         int i = 0;
-        StringBuilder cmdline = new StringBuilder();
+        StringBuilder sb = new StringBuilder();
         while ((line = reader.readLine()) != null) {
             String[] fields = line.split("[\t ]");
             System.out.println(fields[0]);
-            String regionName = fields[0];
             Region region = new Region(fields[1]);
 
             // create temporary files for --inVcf and --setFile
             File setFile = new File(tmpDir.getAbsolutePath() + "/setFile." + i);
-            BufferedWriter writer = FileUtils.newBufferedWriter(setFile.toPath());
+            writer = FileUtils.newBufferedWriter(setFile.toPath());
             writer.write(fields[0] + "\t" + fields[1] + "\n");
             writer.close();
 
@@ -91,47 +106,79 @@ public class RvTestsAnalysis {
             VariantDataset ds = (VariantDataset) vd.regionFilter(region);
             File vcfFile = new File(tmpDir.getAbsolutePath() + "/variants." + i + ".vcf");
             writer = FileUtils.newBufferedWriter(vcfFile.toPath());
+            // header lines
             writer.write("##fileformat=VCFv4.2\n");
             writer.write("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT");
+            // sample names
             for (String key: pedigree.getIndividuals().keySet()) {
                 writer.write("\t");
                 writer.write(pedigree.getIndividuals().get(key).getId());
             }
             writer.write("\n");
+            // variant lines
             List<Row> rows = ds.collectAsList();
             for (Row row: rows) {
-                System.out.println(row);
+                List<Row> studies = row.getList(12);
+                Row study = null;
+                for (int j = 0; j < studies.size(); j++) {
+                    if (studies.get(j).get(0).equals(datasetName)) {
+                        study = studies.get(j);
+                        break;
+                    }
+                }
+
+                if (study == null) {
+                    throw new Exception("Dataset '" + datasetName + "' not found!");
+                }
+                List<Row> files = study.getList(1);
+                String filter = (String) files.get(0).getJavaMap(2).get("FILTER");
+                String qual = (String) files.get(0).getJavaMap(2).get("QUAL");
+
+                sb.setLength(0);
+                sb.append(row.get(2)).append("\t").append(row.get(3)).append("\t")
+                        .append(row.get(0) == null ? "." : row.get(0)).append("\t")
+                        .append(row.get(5)).append("\t").append(row.get(6)).append("\t").append(qual).append("\t")
+                        .append(filter).append("\t").append(".").append("\t").append(study.getList(3).get(0));
+
+                for (int j = 0; j < pedigree.getIndividuals().size(); j++) {
+                    sb.append("\t").append(((WrappedArray) study.getList(4).get(j)).head());
+                }
+                sb.append("\n");
+                writer.write(sb.toString());
+                System.out.println(sb.toString());
             }
             writer.close();
 
             // compress vcf to bgz
-            cmdline.setLength(0);
-            cmdline.append(this.BGZIP_BIN).append(" ").append(vcfFile.getAbsolutePath());
-            Process p = execute(cmdline.toString());
-            System.out.println("Compressing vcf to gz: " + cmdline);
+            sb.setLength(0);
+            sb.append(props.getProperty("gzip", this.BGZIP_BIN)).append(" ").append(vcfFile.getAbsolutePath());
+            Process p = execute(sb.toString());
+            System.out.println("Compressing vcf to gz: " + sb);
             System.out.println("\tSTDOUT:");
             System.out.println(readInputStream(p.getInputStream()));
             System.out.println("\tSTDERR:");
             System.out.println(readInputStream(p.getErrorStream()));
 
             // and create tabix index
-            cmdline.setLength(0);
-            cmdline.append(this.TABIX_BIN).append(" -p vcf ").append(vcfFile.getAbsolutePath()).append(".gz");
-            p = execute(cmdline.toString());
-            System.out.println("Creating tabix index: " + cmdline);
+            sb.setLength(0);
+            sb.append(props.getProperty("tabix", this.TABIX_BIN)).append(" -p vcf ").append(vcfFile.getAbsolutePath()).append(".gz");
+            p = execute(sb.toString());
+            System.out.println("Creating tabix index: " + sb);
             System.out.println("\tSTDOUT:");
             System.out.println(readInputStream(p.getInputStream()));
             System.out.println("\tSTDERR:");
             System.out.println(readInputStream(p.getErrorStream()));
 
             // rvtests command line
-            cmdline.setLength(0);
-            cmdline.append(this.RVTEST_BIN).append(" --kernel skat --pheno ").append(phenoFile.getAbsolutePath())
+            sb.setLength(0);
+            sb.append(props.getProperty("rvtests", this.RVTEST_BIN))
+                    .append(kernel == null ? " " : " --kernel " + kernel)
+                    .append(" --pheno ").append(phenoFile.getAbsolutePath())
                     .append(" --inVcf ").append(vcfFile.getAbsolutePath()).append(".gz")
                     .append(" --setFile ").append(setFile.getAbsolutePath())
                     .append(" --out ").append(tmpDir.getAbsolutePath()).append("/out.").append(i);
-            p = execute(cmdline.toString());
-            System.out.println("Execute test: " + cmdline);
+            p = execute(sb.toString());
+            System.out.println("Execute test: " + sb);
             System.out.println("\tSTDOUT:");
             System.out.println(readInputStream(p.getInputStream()));
             System.out.println("\tSTDERR:");
@@ -139,7 +186,210 @@ public class RvTestsAnalysis {
 
             i++;
         }
-        reader.close();
+
+        // write final
+        for (String k: kernels) {
+            boolean header = false;
+            writer = FileUtils.newBufferedWriter(Paths.get(outDirname + "/out." + k + ".assoc"));
+            for (int j = 0; j < i; j++) {
+                File file = new File(tmpDir.getAbsolutePath() + "/out." + j + "." + k + ".assoc");
+                if (file.exists()) {
+                    reader = FileUtils.newBufferedReader(file.toPath());
+                    line = reader.readLine();
+                    if (!header) {
+                        writer.write(line);
+                        writer.write("\n");
+                        header = true;
+                    }
+                    while ((line = reader.readLine()) != null) {
+                        writer.write(line);
+                        writer.write("\n");
+                    }
+                    reader.close();
+                }
+            }
+            writer.close();
+        }
+    }
+
+    public void run00(String datasetName) throws Exception {
+        // create spark session
+        SparkConf sparkConf = SparkConfCreator.getConf("variant rvtests", "local", 1, true);
+        SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
+
+        // load dataset
+        VariantDataset vd = new VariantDataset(sparkSession);
+        vd.load(inFilename);
+        vd.createOrReplaceTempView("vcf");
+
+        // load rvtests parameters into properties
+        Properties props = new Properties();
+        InputStream confStream = new FileInputStream(confFilename);
+        props.load(confStream);
+        confStream.close();
+
+        List<String> kernels = null;
+        String kernel = props.getProperty("kernel");
+        if (kernel != null) {
+            kernels = Arrays.asList(kernel.toLowerCase()
+                    .replace("skato", "SkatO")
+                    .replace("skat", "Skat")
+                    .split(","));
+        }
+
+        // create temporary directory
+        File tmpDir = new File(outDirname + "/tmp");
+        tmpDir.mkdir();
+
+        // create temporary file for --pheno
+        File phenoFile = new File(tmpDir.getAbsolutePath() + "/pheno");
+        VariantMetadataManager metadataManager = new VariantMetadataManager();
+        metadataManager.load(inFilename + ".meta.json");
+        Pedigree pedigree = metadataManager.getPedigree(datasetName);
+        new PedigreeManager().save(pedigree, phenoFile.toPath());
+
+        Map<String, String> pedigreeMap = new LinkedHashMap<>();
+        for (String key : pedigree.getIndividuals().keySet()) {
+            pedigreeMap.put(key, pedigree.getIndividuals().get(key).getId());
+        }
+
+
+        String sql = "SELECT * FROM vcf";
+        Dataset<Row> rows = vd.sqlContext().sql(sql);
+
+        List<String> regions = new ArrayList<>();
+        regions.add("1:1-3");
+        regions.add("2:6-8");
+
+        JavaPairRDD<String, Iterable<Row>> groups = rows.javaRDD().groupBy(row -> {
+            String key = null;
+            for (String region: regions) {
+                String[] fields = region.split("[:-]");
+                if (fields[0].equals(row.getString(2))
+                        && Integer.parseInt(fields[1]) <= row.getInt(4)
+                        && Integer.parseInt(fields[2]) >= row.getInt(3)) {
+                    key = region;
+                    break;
+                }
+            }
+            return key;
+        });
+
+        JavaRDD<String> results = groups.map(new Function<Tuple2<String, Iterable<Row>>, String>() {
+            @Override
+            public String call(Tuple2<String, Iterable<Row>> tuple) throws Exception {
+                StringBuilder sb = new StringBuilder();
+                BufferedWriter writer;
+                Iterator<Row> iterator = tuple._2.iterator();
+//                System.out.println("+++++++++++++ " + tuple._1);
+
+                String id = tuple._1.replace(":", "_").replace("-", "_");
+
+                // create temporary files for --inVcf and --setFile
+                File setFile = new File(tmpDir.getAbsolutePath() + "/setFile." + id);
+                writer = FileUtils.newBufferedWriter(setFile.toPath());
+                writer.write(id + "\t" + tuple._1 + "\n");
+                writer.close();
+
+                File vcfFile = new File(tmpDir.getAbsolutePath() + "/variants."
+                        +  id + ".vcf");
+                writer = FileUtils.newBufferedWriter(vcfFile.toPath());
+                // header lines
+                writer.write("##fileformat=VCFv4.2\n");
+                writer.write("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT");
+                // sample names
+                for (String key : pedigreeMap.keySet()) {
+                    writer.write("\t");
+                    writer.write(pedigreeMap.get(key));
+                }
+                writer.write("\n");
+                while (iterator.hasNext()) {
+                    Row row = iterator.next();
+//                    System.out.println("=================== " + row);
+
+                    // variant lines
+                    List<Row> studies = row.getList(12);
+                    Row study = null;
+                    for (int j = 0; j < studies.size(); j++) {
+                        if (studies.get(j).get(0).equals(datasetName)) {
+                            study = studies.get(j);
+                            break;
+                        }
+                    }
+
+                    if (study == null) {
+                        throw new Exception("Dataset '" + datasetName + "' not found!");
+                    }
+                    List<Row> files = study.getList(1);
+                    String filter = (String) files.get(0).getJavaMap(2).get("FILTER");
+                    String qual = (String) files.get(0).getJavaMap(2).get("QUAL");
+
+                    sb.setLength(0);
+                    sb.append(row.get(2)).append("\t").append(row.get(3)).append("\t")
+                            .append(row.get(0) == null ? "." : row.get(0)).append("\t")
+                            .append(row.get(5)).append("\t").append(row.get(6)).append("\t").append(qual).append("\t")
+                            .append(filter).append("\t").append(".").append("\t").append(study.getList(3).get(0));
+
+                    for (int j = 0; j < pedigreeMap.size(); j++) {
+                        sb.append("\t").append(((WrappedArray) study.getList(4).get(j)).head());
+                    }
+                    sb.append("\n");
+                    writer.write(sb.toString());
+                    System.out.println(sb.toString());
+                }
+                writer.close();
+
+                // compress vcf to bgz
+                sb.setLength(0);
+                sb.append(props.getProperty("bgzip")).append(" ").append(vcfFile.getAbsolutePath());
+                Process p = execute(sb.toString());
+                System.out.println("Compressing vcf to gz: " + sb);
+                System.out.println("\tSTDOUT:");
+                System.out.println(readInputStream(p.getInputStream()));
+                System.out.println("\tSTDERR:");
+                System.out.println(readInputStream(p.getErrorStream()));
+
+                // and create tabix index
+                sb.setLength(0);
+                sb.append(props.getProperty("tabix")).append(" -p vcf ").append(vcfFile.getAbsolutePath()).append(".gz");
+                p = execute(sb.toString());
+                System.out.println("Creating tabix index: " + sb);
+                System.out.println("\tSTDOUT:");
+                System.out.println(readInputStream(p.getInputStream()));
+                System.out.println("\tSTDERR:");
+                System.out.println(readInputStream(p.getErrorStream()));
+
+                // rvtests command line
+                sb.setLength(0);
+                sb.append(props.getProperty("rvtests"))
+                        .append(kernel == null ? " " : " --kernel " + kernel)
+                        .append(" --pheno ").append(phenoFile.getAbsolutePath())
+                        .append(" --inVcf ").append(vcfFile.getAbsolutePath()).append(".gz")
+                        .append(" --setFile ").append(setFile.getAbsolutePath())
+                        .append(" --out ").append(tmpDir.getAbsolutePath()).append("/out.").append(id);
+                p = execute(sb.toString());
+                System.out.println("Execute test: " + sb);
+                System.out.println("\tSTDOUT:");
+                System.out.println(readInputStream(p.getInputStream()));
+                System.out.println("\tSTDERR:");
+                System.out.println(readInputStream(p.getErrorStream()));
+
+                sb.setLength(0);
+                File file = new File(tmpDir.getAbsolutePath() + "/out." + id + ".Skat.assoc");
+                if (file.exists()) {
+                    BufferedReader reader = FileUtils.newBufferedReader(file.toPath());
+                    String line = reader.readLine();
+                    while ((line = reader.readLine()) != null) {
+                        sb.append(line).append("\n");
+                    }
+                    reader.close();
+                }
+
+                return sb.toString();
+            }
+        });
+
+        System.out.println(results.collect());
     }
 
     private Process execute(String cmdline) {
