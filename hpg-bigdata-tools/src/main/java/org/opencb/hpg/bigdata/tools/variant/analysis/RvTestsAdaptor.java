@@ -15,6 +15,8 @@ import org.opencb.biodata.models.variant.VariantMetadataManager;
 import org.opencb.commons.utils.FileUtils;
 import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
 import org.opencb.hpg.bigdata.core.lib.VariantDataset;
+import org.opencb.hpg.bigdata.tools.ToolExecutor;
+import org.opencb.hpg.bigdata.tools.ToolExecutorException;
 import scala.Tuple2;
 import scala.collection.mutable.StringBuilder;
 import scala.collection.mutable.WrappedArray;
@@ -27,16 +29,16 @@ import java.util.*;
 /**
  * Created by joaquin on 1/19/17.
  */
-public class RvTestsAnalysis implements Serializable {
+public class RvTestsAdaptor extends ToolExecutor implements Serializable {
     private String inFilename;
     private String outDirname;
     private String confFilename;
 
-    private final String RVTEST_BIN = "/usr/bin/rvtests"; //"/home/jtarraga/soft/rvtests/executable/rvtest";
-    private final String BGZIP_BIN = "/usr/bin/bgzip"; //"/home/joaquin/softs/htslib/bgzip";
-    private final String TABIX_BIN = "/usr/bin/tabix"; //"/home/joaquin/softs/htslib/tabix";
+    private final String RVTEST_BIN = "rvtests"; //"/home/jtarraga/soft/rvtests/executable/rvtest";
+    private final String BGZIP_BIN = "bgzip"; //"/home/joaquin/softs/htslib/bgzip";
+    private final String TABIX_BIN = "tabix"; //"/home/joaquin/softs/htslib/tabix";
 
-    public RvTestsAnalysis(String inFilename, String outDirname, String confFilename) {
+    public RvTestsAdaptor(String inFilename, String outDirname, String confFilename) {
         this.inFilename = inFilename;
         this.outDirname = outDirname;
         this.confFilename = confFilename;
@@ -427,5 +429,9 @@ public class RvTestsAnalysis implements Serializable {
             res.append(e.getMessage()).append("\n");
         }
         return res.toString();
+    }
+
+    @Override
+    public void execute() throws ToolExecutorException {
     }
 }

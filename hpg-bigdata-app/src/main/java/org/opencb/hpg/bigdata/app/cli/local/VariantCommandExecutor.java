@@ -44,7 +44,7 @@ import org.opencb.hpg.bigdata.core.converters.variation.VariantContext2VariantCo
 import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
 import org.opencb.hpg.bigdata.core.lib.VariantDataset;
 import org.opencb.hpg.bigdata.core.parquet.VariantParquetConverter;
-import org.opencb.hpg.bigdata.tools.variant.analysis.RvTestsAnalysis;
+import org.opencb.hpg.bigdata.tools.variant.analysis.RvTestsAdaptor;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -852,7 +852,7 @@ public class VariantCommandExecutor extends CommandExecutor {
 
 
     public void rvtests() throws Exception {
-        RvTestsAnalysis rvtests = new RvTestsAnalysis(variantCommandOptions.rvtestsVariantCommandOptions.inFilename,
+        RvTestsAdaptor rvtests = new RvTestsAdaptor(variantCommandOptions.rvtestsVariantCommandOptions.inFilename,
                 variantCommandOptions.rvtestsVariantCommandOptions.outDirname,
                 variantCommandOptions.rvtestsVariantCommandOptions.confFilename);
 
