@@ -218,7 +218,7 @@ public class VariantCommandExecutor extends CommandExecutor {
                 // convert to VCF -> PARQUET
                 System.out.println("\n\nStarting VCF->PARQUET conversion...\n");
                 startTime = System.currentTimeMillis();
-                parquetConverter.toParquetFromVcf(inputStream, output);
+                parquetConverter.toParquetFromVcf(inputPath.toString(), output);
                 elapsedTime = System.currentTimeMillis() - startTime;
                 System.out.println("\n\nFinish VCF->PARQUET conversion in " + (elapsedTime / 1000F) + " sec\n");
             }
@@ -853,6 +853,7 @@ public class VariantCommandExecutor extends CommandExecutor {
 
     public void rvtests() throws Exception {
         RvTestsAdaptor rvtests = new RvTestsAdaptor(variantCommandOptions.rvtestsVariantCommandOptions.inFilename,
+                variantCommandOptions.rvtestsVariantCommandOptions.metaFilename,
                 variantCommandOptions.rvtestsVariantCommandOptions.outDirname,
                 variantCommandOptions.rvtestsVariantCommandOptions.confFilename);
 

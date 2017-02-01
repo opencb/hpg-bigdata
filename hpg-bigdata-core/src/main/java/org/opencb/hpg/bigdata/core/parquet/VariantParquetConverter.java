@@ -16,14 +16,21 @@
 
 package org.opencb.hpg.bigdata.core.parquet;
 
+import htsjdk.variant.variantcontext.VariantContext;
+import htsjdk.variant.vcf.VCFHeader;
 import org.apache.hadoop.fs.Path;
 import org.apache.parquet.avro.AvroParquetWriter;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.opencb.biodata.models.core.Region;
+import org.opencb.biodata.models.metadata.SampleSetType;
 import org.opencb.biodata.models.variant.Variant;
+import org.opencb.biodata.models.variant.VariantMetadataManager;
 import org.opencb.biodata.models.variant.avro.VariantAvro;
 import org.opencb.biodata.tools.variant.VariantVcfHtsjdkReader;
+import org.opencb.biodata.tools.variant.VcfFileReader;
+import org.opencb.biodata.tools.variant.converters.avro.VariantContextToVariantConverter;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -35,6 +42,10 @@ import java.util.function.Predicate;
  */
 public class VariantParquetConverter extends ParquetConverter<VariantAvro> {
 
+    private String species = null;
+    private String assembly = null;
+    private String datasetName = null;
+
     public VariantParquetConverter() {
         this(CompressionCodecName.GZIP, 128 * 1024 * 1024, 128 * 1024);
     }
@@ -45,17 +56,68 @@ public class VariantParquetConverter extends ParquetConverter<VariantAvro> {
         this.schema = VariantAvro.SCHEMA$;
     }
 
-    public void toParquet(InputStream inputStream, String outputFilename, boolean isAvroSource) throws IOException {
-        if (isAvroSource) {
-            toParquetFromAvro(inputStream, outputFilename);
-        } else {
-            toParquetFromVcf(inputStream, outputFilename);
+//    public void toParquet(InputStream inputStream, String outputFilename, boolean isAvroSource) throws IOException {
+//        if (isAvroSource) {
+//            toParquetFromAvro(inputStream, outputFilename);
+//        } else {
+//            toParquetFromVcf(inputStream, outputFilename);
+//        }
+//    }
+
+    public void toParquetFromVcf(String inputFilename, String outputFilename) throws IOException {
+        File inputFile = new File(inputFilename);
+        String filename = inputFile.getName();
+
+        VariantMetadataManager metadataManager;
+        metadataManager = new VariantMetadataManager(species, assembly,
+                datasetName, filename);
+
+        // reader
+        VcfFileReader vcfFileReader = new VcfFileReader();
+        vcfFileReader.open(inputFilename);
+        VCFHeader vcfHeader = vcfFileReader.getVcfHeader();
+
+        // writer
+        AvroParquetWriter parquetFileWriter =
+                new AvroParquetWriter(new Path(outputFilename), schema, compressionCodecName, rowGroupSize, pageSize);
+//        VariantGlobalStatsCalculator statsCalculator = new VariantGlobalStatsCalculator(vcfReader.getSource());
+//        statsCalculator.pre();
+
+        // metadata management
+        metadataManager.setSampleIds(filename, vcfHeader.getSampleNamesInOrder());
+        metadataManager.createCohort(datasetName, "all", vcfHeader.getSampleNamesInOrder(),
+                SampleSetType.MISCELLANEOUS);
+
+        // main loop
+        long counter = 0;
+        VariantContextToVariantConverter converter = new VariantContextToVariantConverter(datasetName, filename,
+                vcfHeader.getSampleNamesInOrder());
+
+        List<VariantContext> variantContexts = vcfFileReader.read(1000);
+        while (variantContexts.size() > 0) {
+            for (VariantContext vc: variantContexts) {
+                Variant variant = converter.convert(vc);
+                if (filter(variant.getImpl())) {
+                    counter++;
+                    parquetFileWriter.write(variant.getImpl());
+//                    statsCalculator.updateGlobalStats(variant);
+                }
+            }
+            variantContexts = vcfFileReader.read(1000);
         }
+        System.out.println("Number of processed records: " + counter);
+
+        // save metadata (JSON format)
+        metadataManager.save(outputFilename + ".meta.json");
+
+        // close
+        vcfFileReader.close();
+        parquetFileWriter.close();
     }
 
     public void toParquetFromVcf(InputStream inputStream, String outputFilename) throws IOException {
         // reader
-        String metaFilename = outputFilename + ".meta";
+        String metaFilename = outputFilename + ".meta.json";
         VariantVcfHtsjdkReader vcfReader = new VariantVcfHtsjdkReader(inputStream, null);
         vcfReader.open();
         vcfReader.pre();

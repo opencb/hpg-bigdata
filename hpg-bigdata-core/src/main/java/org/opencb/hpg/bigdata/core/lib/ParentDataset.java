@@ -87,17 +87,21 @@ public abstract class ParentDataset<T> {
     }
 
     protected abstract void updateDataset(Query query);
+//    protected abstract void reset();
     public abstract String getSql();
 
     public void update() {
         updateDataset(query);
+        query = new Query();
+        queryOptions = new QueryOptions();
     }
 
     public ParentDataset<T> countBy(String field) {
         if (!queryOptions.containsKey("countBy")) {
             queryOptions.put("countBy", field);
             queryOptions.put("toClean", false);
-            updateDataset(query);
+            //updateDataset(query);
+            update();
         } else {
             // error
             System.err.println("\nError: nested countBy are not allowed!\n");
@@ -185,10 +189,14 @@ public abstract class ParentDataset<T> {
     }
 
     public Object collect() {
+        //updateDataset(query);
+        update();
         return ds.collect();
     }
 
     public List<Row> collectAsList() {
+        //updateDataset(query);
+        update();
         return ds.collectAsList();
     }
 
@@ -201,7 +209,8 @@ public abstract class ParentDataset<T> {
     }
 
     public long count() {
-        updateDataset(query);
+        //updateDataset(query);
+        update();
         return ds.count();
     }
 
@@ -293,7 +302,8 @@ public abstract class ParentDataset<T> {
     }
 
     public ParentDataset<T> filter(String conditionExpr) {
-        updateDataset(query);
+        //updateDataset(query);
+        update();
         ds = ds.filter(conditionExpr);
         return this;
     }
@@ -577,11 +587,14 @@ public abstract class ParentDataset<T> {
     }
 
     public void show(int numRows) {
-        updateDataset(query);
+        //updateDataset(query);
+        update();
         ds.show(numRows);
     }
 
     public void show(int numRows, boolean truncate) {
+        //updateDataset(query);
+        update();
         ds.show(numRows, truncate);
     }
 

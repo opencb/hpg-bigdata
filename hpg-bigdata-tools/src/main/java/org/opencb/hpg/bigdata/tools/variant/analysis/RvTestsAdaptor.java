@@ -31,6 +31,7 @@ import java.util.*;
  */
 public class RvTestsAdaptor extends ToolExecutor implements Serializable {
     private String inFilename;
+    private String metaFilename;
     private String outDirname;
     private String confFilename;
 
@@ -39,7 +40,12 @@ public class RvTestsAdaptor extends ToolExecutor implements Serializable {
     private final String TABIX_BIN = "tabix"; //"/home/joaquin/softs/htslib/tabix";
 
     public RvTestsAdaptor(String inFilename, String outDirname, String confFilename) {
+        this(inFilename, inFilename + ".meta.json", outDirname, confFilename);
+    }
+
+    public RvTestsAdaptor(String inFilename, String metaFilename, String outDirname, String confFilename) {
         this.inFilename = inFilename;
+        this.metaFilename = metaFilename;
         this.outDirname = outDirname;
         this.confFilename = confFilename;
     }
@@ -49,7 +55,12 @@ public class RvTestsAdaptor extends ToolExecutor implements Serializable {
 
     public void run(String datasetName) throws Exception {
         // create spark session
-        SparkConf sparkConf = SparkConfCreator.getConf("variant rvtests", "local", 1, true);
+        SparkConf sparkConf;
+        if (inFilename.startsWith("/")) {
+            sparkConf = SparkConfCreator.getConf("variant rvtests", "local", 1, true);
+        } else {
+            sparkConf = new SparkConf().setAppName("variant rvtests");
+        }
         SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
 
         // load dataset
@@ -83,13 +94,13 @@ public class RvTestsAdaptor extends ToolExecutor implements Serializable {
         // create temporary file for --pheno
         File phenoFile = new File(tmpDir.getAbsolutePath() + "/pheno");
         VariantMetadataManager metadataManager = new VariantMetadataManager();
-        metadataManager.load(inFilename + ".meta.json");
+        metadataManager.load(metaFilename);
         Pedigree pedigree = metadataManager.getPedigree(datasetName);
         new PedigreeManager().save(pedigree, phenoFile.toPath());
 
         // loop for regions
         String line;
-        BufferedWriter writer;
+        BufferedWriter writer =  null;
         BufferedReader reader = FileUtils.newBufferedReader(Paths.get(props.getProperty("setFile")));
         int i = 0;
         StringBuilder sb = new StringBuilder();
@@ -108,6 +119,7 @@ public class RvTestsAdaptor extends ToolExecutor implements Serializable {
             VariantDataset ds = (VariantDataset) vd.regionFilter(region);
             File vcfFile = new File(tmpDir.getAbsolutePath() + "/variants." + i + ".vcf");
             writer = FileUtils.newBufferedWriter(vcfFile.toPath());
+
             // header lines
             writer.write("##fileformat=VCFv4.2\n");
             writer.write("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT");
@@ -117,8 +129,25 @@ public class RvTestsAdaptor extends ToolExecutor implements Serializable {
                 writer.write(pedigree.getIndividuals().get(key).getId());
             }
             writer.write("\n");
+
             // variant lines
-            List<Row> rows = ds.collectAsList();
+//            writer.write(i + " >>>>>>>>>>>>>> " + line + ", num. rows = " + ds.count() + "\n");
+//            writer.close();
+//            System.out.println("\n\n" + i + " >>>>>>>>>>>>>> " + line + ", num. rows = " + ds.count() + "\n");
+//            ds.show(1, false);
+//            ds.reset();
+
+            //System.out.println("----------> !!!! rows should be sorted by start !!!" + ds.getSql());
+//            ds.executeSql(ds.getSql()).show();
+//            System.out.println("----------> rows should be sorted by start !!!");
+//            ds.executeSql("SELECT * FROM vcf  WHERE (chromosome = '22' AND start >= 32755892 AND end <= 32767063)"
+//                    + " ORDER BY start ASC").show();
+//            System.exit(0);
+
+            //List<Row> rows = ds.collectAsList();
+            List<Row> rows = ds.executeSql(ds.getSql()).collectAsList();
+            ds.reset();
+
             for (Row row: rows) {
                 List<Row> studies = row.getList(12);
                 Row study = null;
@@ -132,6 +161,8 @@ public class RvTestsAdaptor extends ToolExecutor implements Serializable {
                 if (study == null) {
                     throw new Exception("Dataset '" + datasetName + "' not found!");
                 }
+
+//              System.out.println("\n\n\n" + row.mkString() + "\n\n");
                 List<Row> files = study.getList(1);
                 String filter = (String) files.get(0).getJavaMap(2).get("FILTER");
                 String qual = (String) files.get(0).getJavaMap(2).get("QUAL");
@@ -142,9 +173,16 @@ public class RvTestsAdaptor extends ToolExecutor implements Serializable {
                         .append(row.get(5)).append("\t").append(row.get(6)).append("\t").append(qual).append("\t")
                         .append(filter).append("\t").append(".").append("\t").append(study.getList(3).get(0));
 
-                for (int j = 0; j < pedigree.getIndividuals().size(); j++) {
-                    sb.append("\t").append(((WrappedArray) study.getList(4).get(j)).head());
-                }
+//                try {
+//                    System.out.println("size = " + study.getList(4).size() + ", for " + sb.toString());
+                    for (int j = 0; j < pedigree.getIndividuals().size(); j++) {
+//                        System.out.println(j + "\t" + ((WrappedArray) study.getList(4).get(j)).head());
+                        sb.append("\t").append(((WrappedArray) study.getList(4).get(j)).head());
+                    }
+//                } catch (Exception ex) {
+//                    System.out.println("Not sample data for " + sb.toString());
+//                    System.out.println(ex.getMessage());
+//                }
                 sb.append("\n");
                 writer.write(sb.toString());
                 System.out.println(sb.toString());
@@ -153,7 +191,7 @@ public class RvTestsAdaptor extends ToolExecutor implements Serializable {
 
             // compress vcf to bgz
             sb.setLength(0);
-            sb.append(props.getProperty("gzip", this.BGZIP_BIN)).append(" ").append(vcfFile.getAbsolutePath());
+            sb.append(props.getProperty("bgzip", this.BGZIP_BIN)).append(" ").append(vcfFile.getAbsolutePath());
             Process p = execute(sb.toString());
             System.out.println("Compressing vcf to gz: " + sb);
             System.out.println("\tSTDOUT:");

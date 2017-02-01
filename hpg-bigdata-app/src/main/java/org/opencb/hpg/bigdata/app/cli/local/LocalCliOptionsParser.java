@@ -753,6 +753,10 @@ public class LocalCliOptionsParser {
                 required = true, arity = 1)
         public String inFilename;
 
+        @Parameter(names = {"-m", "--metadata"}, description = "Input metadata file name.",
+                required = true, arity = 1)
+        public String metaFilename;
+
         @Parameter(names = {"-o", "--output"}, description = "Output directory name to save the rvtests results.",
                 required = true, arity = 1)
         public String outDirname;

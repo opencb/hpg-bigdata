@@ -45,6 +45,7 @@ public abstract  class ParseQuery {
         if (filters.size() > 0) {
             sqlQueryString.append("WHERE ").append(StringUtils.join(filters, " AND "));
         }
+        sqlQueryString.append(" ORDER BY start ASC");
     }
 
     protected String processFilter(String key, String value, boolean isString, boolean isArray) {
