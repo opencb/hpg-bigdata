@@ -857,6 +857,7 @@ public class VariantCommandExecutor extends CommandExecutor {
                 variantCommandOptions.rvtestsVariantCommandOptions.outDirname,
                 variantCommandOptions.rvtestsVariantCommandOptions.confFilename);
 
-        rvtests.run(variantCommandOptions.rvtestsVariantCommandOptions.datasetId);
+//        rvtests.run(variantCommandOptions.rvtestsVariantCommandOptions.datasetId);
+        rvtests.run00(variantCommandOptions.rvtestsVariantCommandOptions.datasetId);
     }
 }

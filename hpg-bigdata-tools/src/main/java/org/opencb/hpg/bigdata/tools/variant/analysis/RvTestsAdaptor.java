@@ -173,41 +173,37 @@ public class RvTestsAdaptor extends ToolExecutor implements Serializable {
                         .append(row.get(5)).append("\t").append(row.get(6)).append("\t").append(qual).append("\t")
                         .append(filter).append("\t").append(".").append("\t").append(study.getList(3).get(0));
 
-//                try {
-//                    System.out.println("size = " + study.getList(4).size() + ", for " + sb.toString());
-                    for (int j = 0; j < pedigree.getIndividuals().size(); j++) {
-//                        System.out.println(j + "\t" + ((WrappedArray) study.getList(4).get(j)).head());
+                int j = 0;
+                try {
+//                    System.out.println("size for (" + i + "): " + sb.toString());
+//                    System.out.println("\tsize = " + study.getList(4).size());
+                    for (j = 0; j < pedigree.getIndividuals().size(); j++) {
+//                        System.out.println(j + ": ");
+//                        System.out.println("\t" + ((WrappedArray) study.getList(4).get(j)).head());
                         sb.append("\t").append(((WrappedArray) study.getList(4).get(j)).head());
                     }
-//                } catch (Exception ex) {
-//                    System.out.println("Not sample data for " + sb.toString());
-//                    System.out.println(ex.getMessage());
-//                }
+                } catch (Exception ex) {
+                    System.out.println("Exception for sample data: " + sb.toString());
+                    System.out.println("(i, j, sample data size, pedigree size)  = ("
+                            + i + ", " + j + ", " + study.getList(4).size() + ", " + pedigree.getIndividuals().size());
+                    System.out.println(ex.getMessage());
+                    ex.printStackTrace();
+                }
                 sb.append("\n");
                 writer.write(sb.toString());
-                System.out.println(sb.toString());
+//                System.out.println(sb.toString());
             }
             writer.close();
 
             // compress vcf to bgz
             sb.setLength(0);
             sb.append(props.getProperty("bgzip", this.BGZIP_BIN)).append(" ").append(vcfFile.getAbsolutePath());
-            Process p = execute(sb.toString());
-            System.out.println("Compressing vcf to gz: " + sb);
-            System.out.println("\tSTDOUT:");
-            System.out.println(readInputStream(p.getInputStream()));
-            System.out.println("\tSTDERR:");
-            System.out.println(readInputStream(p.getErrorStream()));
+            execute(sb.toString(), "Compressing vcf to gz: " + sb.toString());
 
             // and create tabix index
             sb.setLength(0);
             sb.append(props.getProperty("tabix", this.TABIX_BIN)).append(" -p vcf ").append(vcfFile.getAbsolutePath()).append(".gz");
-            p = execute(sb.toString());
-            System.out.println("Creating tabix index: " + sb);
-            System.out.println("\tSTDOUT:");
-            System.out.println(readInputStream(p.getInputStream()));
-            System.out.println("\tSTDERR:");
-            System.out.println(readInputStream(p.getErrorStream()));
+            execute(sb.toString(), "Creating tabix index: " + sb);
 
             // rvtests command line
             sb.setLength(0);
@@ -217,12 +213,7 @@ public class RvTestsAdaptor extends ToolExecutor implements Serializable {
                     .append(" --inVcf ").append(vcfFile.getAbsolutePath()).append(".gz")
                     .append(" --setFile ").append(setFile.getAbsolutePath())
                     .append(" --out ").append(tmpDir.getAbsolutePath()).append("/out.").append(i);
-            p = execute(sb.toString());
-            System.out.println("Execute test: " + sb);
-            System.out.println("\tSTDOUT:");
-            System.out.println(readInputStream(p.getInputStream()));
-            System.out.println("\tSTDERR:");
-            System.out.println(readInputStream(p.getErrorStream()));
+            execute(sb.toString(), "Running rvtests: " + sb);
 
             i++;
         }
@@ -254,7 +245,12 @@ public class RvTestsAdaptor extends ToolExecutor implements Serializable {
 
     public void run00(String datasetName) throws Exception {
         // create spark session
-        SparkConf sparkConf = SparkConfCreator.getConf("variant rvtests", "local", 1, true);
+        SparkConf sparkConf;
+        if (inFilename.startsWith("/")) {
+            sparkConf = SparkConfCreator.getConf("variant rvtests", "local", 1, true);
+        } else {
+            sparkConf = new SparkConf().setAppName("variant rvtests");
+        }
         SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
 
         // load dataset
@@ -284,7 +280,7 @@ public class RvTestsAdaptor extends ToolExecutor implements Serializable {
         // create temporary file for --pheno
         File phenoFile = new File(tmpDir.getAbsolutePath() + "/pheno");
         VariantMetadataManager metadataManager = new VariantMetadataManager();
-        metadataManager.load(inFilename + ".meta.json");
+        metadataManager.load(metaFilename);
         Pedigree pedigree = metadataManager.getPedigree(datasetName);
         new PedigreeManager().save(pedigree, phenoFile.toPath());
 
@@ -293,13 +289,19 @@ public class RvTestsAdaptor extends ToolExecutor implements Serializable {
             pedigreeMap.put(key, pedigree.getIndividuals().get(key).getId());
         }
 
-
         String sql = "SELECT * FROM vcf";
         Dataset<Row> rows = vd.sqlContext().sql(sql);
 
         List<String> regions = new ArrayList<>();
-        regions.add("1:1-3");
-        regions.add("2:6-8");
+        regions.add("22:40766594-40806293");
+        regions.add("22:32755892-32767063");
+        regions.add("22:32755894-32766972");
+        regions.add("22:29834571-29838444");
+        regions.add("22:31835344-31885547");
+        regions.add("22:31608249-31676066");
+        regions.add("22:38615297-38668670");
+        regions.add("22:38822332-38851203");
+        regions.add("22:20455993-20461786");
 
         JavaPairRDD<String, Iterable<Row>> groups = rows.javaRDD().groupBy(row -> {
             String key = null;
@@ -382,22 +384,12 @@ public class RvTestsAdaptor extends ToolExecutor implements Serializable {
                 // compress vcf to bgz
                 sb.setLength(0);
                 sb.append(props.getProperty("bgzip")).append(" ").append(vcfFile.getAbsolutePath());
-                Process p = execute(sb.toString());
-                System.out.println("Compressing vcf to gz: " + sb);
-                System.out.println("\tSTDOUT:");
-                System.out.println(readInputStream(p.getInputStream()));
-                System.out.println("\tSTDERR:");
-                System.out.println(readInputStream(p.getErrorStream()));
+                execute(sb.toString(), "Compressing vcf to gz: " + sb);
 
                 // and create tabix index
                 sb.setLength(0);
                 sb.append(props.getProperty("tabix")).append(" -p vcf ").append(vcfFile.getAbsolutePath()).append(".gz");
-                p = execute(sb.toString());
-                System.out.println("Creating tabix index: " + sb);
-                System.out.println("\tSTDOUT:");
-                System.out.println(readInputStream(p.getInputStream()));
-                System.out.println("\tSTDERR:");
-                System.out.println(readInputStream(p.getErrorStream()));
+                execute(sb.toString(), "Creating tabix index: " + sb);
 
                 // rvtests command line
                 sb.setLength(0);
@@ -407,12 +399,7 @@ public class RvTestsAdaptor extends ToolExecutor implements Serializable {
                         .append(" --inVcf ").append(vcfFile.getAbsolutePath()).append(".gz")
                         .append(" --setFile ").append(setFile.getAbsolutePath())
                         .append(" --out ").append(tmpDir.getAbsolutePath()).append("/out.").append(id);
-                p = execute(sb.toString());
-                System.out.println("Execute test: " + sb);
-                System.out.println("\tSTDOUT:");
-                System.out.println(readInputStream(p.getInputStream()));
-                System.out.println("\tSTDERR:");
-                System.out.println(readInputStream(p.getErrorStream()));
+                execute(sb.toString(), "Running rvtests: " + sb);
 
                 sb.setLength(0);
                 File file = new File(tmpDir.getAbsolutePath() + "/out." + id + ".Skat.assoc");
@@ -432,11 +419,17 @@ public class RvTestsAdaptor extends ToolExecutor implements Serializable {
         System.out.println(results.collect());
     }
 
-    private Process execute(String cmdline) {
+    private Process execute(String cmdline, String label) {
         Process p = null;
         try {
+            System.out.println(label);
             System.out.println("Executing: " + cmdline);
             p = Runtime.getRuntime().exec(cmdline);
+
+            System.out.println("\tSTDOUT:");
+            System.out.println(readInputStream(p.getInputStream()));
+            System.out.println("\tSTDERR:");
+            System.out.println(readInputStream(p.getErrorStream()));
         } catch (Exception e) {
             e.printStackTrace();
         }
