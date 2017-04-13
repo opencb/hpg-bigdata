@@ -23,6 +23,22 @@ public class VariantQueryCLITest {
     }
 
     @Test
+    public void query00() {
+        StringBuilder commandLine = new StringBuilder();
+        commandLine.append(" variant query");
+        commandLine.append(" --log-level ERROR");
+        commandLine.append(" -i ").append(inputFilename);
+        commandLine.append(" --type INDEL");
+        //commandLine.append(" --limit 10");
+
+        try {
+            execute(commandLine.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
     public void query0() {
         StringBuilder commandLine = new StringBuilder();
         commandLine.append(" variant query");
@@ -52,7 +68,7 @@ public class VariantQueryCLITest {
         }
     }
 
-//    @Test
+    //@Test
     public void query2() {
         StringBuilder commandLine = new StringBuilder();
         commandLine.append(" variant query");
