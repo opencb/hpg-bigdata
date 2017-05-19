@@ -23,9 +23,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
-import org.opencb.hpg.bigdata.tools.sequence.Fastq2AvroMR;
-import org.opencb.hpg.bigdata.tools.sequence.stats.ReadKmersMR;
-import org.opencb.hpg.bigdata.tools.sequence.stats.ReadStatsMR;
+import org.opencb.hpg.bigdata.analysis.sequence.Fastq2AvroMR;
+import org.opencb.hpg.bigdata.analysis.sequence.stats.ReadKmersMR;
+import org.opencb.hpg.bigdata.analysis.sequence.stats.ReadStatsMR;
 import org.opencb.hpg.bigdata.core.utils.PathUtils;
 
 /**

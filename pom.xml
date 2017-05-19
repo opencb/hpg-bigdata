@@ -27,7 +27,7 @@
     <modules>
         <module>hpg-bigdata-app</module>
         <module>hpg-bigdata-core</module>
-        <module>hpg-bigdata-tools</module>
+        <module>hpg-bigdata-analysis</module>
     </modules>
 
     <name>HPG BigData project</name>
@@ -118,7 +118,7 @@
             </dependency>
             <dependency>
                 <groupId>org.opencb.hpg-bigdata</groupId>
-                <artifactId>hpg-bigdata-tools</artifactId>
+                <artifactId>hpg-bigdata-analysis</artifactId>
                 <version>${hpg.version}</version>
             </dependency>
             <dependency>

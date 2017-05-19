@@ -19,7 +19,7 @@ package org.opencb.hpg.bigdata.app.cli.hadoop;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.mapreduce.Job;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
-import org.opencb.hpg.bigdata.tools.variant.Variant2HbaseMR;
+import org.opencb.hpg.bigdata.analysis.variant.Variant2HbaseMR;
 
 import java.net.URI;
 

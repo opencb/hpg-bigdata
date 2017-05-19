@@ -21,9 +21,9 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.ga4gh.models.ReadAlignment;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
-import org.opencb.hpg.bigdata.tools.alignment.Bam2AvroMR;
-import org.opencb.hpg.bigdata.tools.alignment.stats.ReadAlignmentStatsMR;
-import org.opencb.hpg.bigdata.tools.io.parquet.ParquetMR;
+import org.opencb.hpg.bigdata.analysis.alignment.Bam2AvroMR;
+import org.opencb.hpg.bigdata.analysis.alignment.stats.ReadAlignmentStatsMR;
+import org.opencb.hpg.bigdata.analysis.io.parquet.ParquetMR;
 
 import java.io.IOException;
 import java.util.Date;
