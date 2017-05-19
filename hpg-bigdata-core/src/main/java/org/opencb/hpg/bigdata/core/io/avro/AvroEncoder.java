@@ -17,10 +17,12 @@
 package org.opencb.hpg.bigdata.core.io.avro;
 
 import org.apache.avro.Schema;
-import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.io.Encoder;
 import org.apache.avro.io.EncoderFactory;
+import org.apache.avro.specific.SpecificDatumWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -29,6 +31,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * TODO: Move to java-common-libs
+ *
  * Created by hpccoll1 on 02/04/15.
  */
 public class AvroEncoder<T> {
@@ -39,7 +43,8 @@ public class AvroEncoder<T> {
     private int encodeFails = 0;
     private boolean abortOnFail = false;
 
-    public static final int SIZE = 1000000;
+    protected Logger logger = LoggerFactory.getLogger(AvroEncoder.class);
+    private static final int SIZE = 1000000;
 
     public AvroEncoder(Schema schema) {
         this(schema, true);
@@ -47,7 +52,7 @@ public class AvroEncoder<T> {
 
     public AvroEncoder(Schema schema, boolean abortOnFail) {
         this.abortOnFail = abortOnFail;
-        this.datumWriter = new GenericDatumWriter<>(schema);
+        this.datumWriter = new SpecificDatumWriter<>(schema);
         this.byteArrayOutputStream = new ByteArrayOutputStream(SIZE);    //Initialize with 1MB
         this.encoder = EncoderFactory.get().binaryEncoder(byteArrayOutputStream, null);
     }
@@ -62,7 +67,7 @@ public class AvroEncoder<T> {
                     throw e;
                 }
                 encodeFails++;
-                System.err.println(e.getMessage());
+                logger.warn("Error encoding element", e);
                 encoder.flush();
                 byteArrayOutputStream.reset();
                 continue;
