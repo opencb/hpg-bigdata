@@ -16,29 +16,27 @@
 
 package org.opencb.hpg.bigdata.analysis.tools.manifest;
 
-import java.util.List;
+import java.util.Map;
 
 public class Example {
 
-    private String name, executionId;
-    private List<ExampleOption> options;
+    private String name;
+    private Map<String, Object> params;
 
     public Example() {
 
     }
 
-    public Example(String name, String executionId, List<ExampleOption> options) {
+    public Example(String name, Map<String, Object> params) {
         this.name = name;
-        this.executionId = executionId;
-        this.options = options;
+        this.params = params;
     }
 
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("Example{");
         sb.append("name='").append(name).append('\'');
-        sb.append(", executionId='").append(executionId).append('\'');
-        sb.append(", options=").append(options);
+        sb.append(", params=").append(params);
         sb.append('}');
         return sb.toString();
     }
@@ -51,19 +49,12 @@ public class Example {
         this.name = name;
     }
 
-    public String getExecutionId() {
-        return executionId;
+    public Map<String, Object> getParams() {
+        return params;
     }
 
-    public void setExecutionId(String executionId) {
-        this.executionId = executionId;
-    }
-
-    public List<ExampleOption> geOptions() {
-        return options;
-    }
-
-    public void setOptions(List<ExampleOption> options) {
-        this.options = options;
+    public Example setParams(Map<String, Object> params) {
+        this.params = params;
+        return this;
     }
 }

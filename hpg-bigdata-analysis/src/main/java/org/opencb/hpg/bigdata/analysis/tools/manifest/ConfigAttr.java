@@ -22,7 +22,6 @@ public class ConfigAttr {
     private String value;
 
     public ConfigAttr() {
-
     }
 
     public ConfigAttr(String name, String value) {

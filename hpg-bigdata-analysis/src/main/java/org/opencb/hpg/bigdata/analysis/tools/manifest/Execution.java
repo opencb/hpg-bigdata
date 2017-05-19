@@ -20,30 +20,27 @@ import java.util.List;
 
 public class Execution {
 
-    private String id, name, executable, outputParam, testCmd, result;
-    private List<InputParam> inputParams;
-    private List<InputParam> inputParamsFromTxt;
-    private List<Option> validParams;
+    private String id, name, executable, testCmd;
+    private List<String> input;
+    private List<String> output;
+    private List<InputParam> params;
     private List<ConfigAttr> configAttr;
-
+    private List<Example> examples;
 
     public Execution() {
-
     }
 
-    public Execution(String id, String name, String executable,
-                     List<InputParam> inputParams, List<InputParam> inputParamsFromTxt, String outputParam,
-                     List<Option> validParams, List<ConfigAttr> configAttr, String testCmd, String result) {
+    public Execution(String id, String name, String executable, String testCmd, List<String> input, List<String> output,
+                     List<InputParam> params, List<ConfigAttr> configAttr, List<Example> examples) {
         this.id = id;
         this.name = name;
         this.executable = executable;
-        this.inputParams = inputParams;
-        this.inputParamsFromTxt = inputParamsFromTxt;
-        this.outputParam = outputParam;
-        this.validParams = validParams;
-        this.configAttr = configAttr;
         this.testCmd = testCmd;
-        this.result = result;
+        this.input = input;
+        this.output = output;
+        this.params = params;
+        this.configAttr = configAttr;
+        this.examples = examples;
     }
 
     @Override
@@ -52,13 +49,12 @@ public class Execution {
         sb.append("id='").append(id).append('\'');
         sb.append(", name='").append(name).append('\'');
         sb.append(", executable='").append(executable).append('\'');
-        sb.append(", outputParam='").append(outputParam).append('\'');
         sb.append(", testCmd='").append(testCmd).append('\'');
-        sb.append(", result='").append(result).append('\'');
-        sb.append(", inputParams=").append(inputParams);
-        sb.append(", inputParamsFromTxt=").append(inputParamsFromTxt);
-        sb.append(", validParams=").append(validParams);
+        sb.append(", input=").append(input);
+        sb.append(", output=").append(output);
+        sb.append(", params=").append(params);
         sb.append(", configAttr=").append(configAttr);
+        sb.append(", examples=").append(examples);
         sb.append('}');
         return sb.toString();
     }
@@ -67,79 +63,80 @@ public class Execution {
         return id;
     }
 
-    public void setId(String id) {
+    public Execution setId(String id) {
         this.id = id;
+        return this;
     }
 
     public String getName() {
         return name;
     }
 
-    public void setName(String name) {
+    public Execution setName(String name) {
         this.name = name;
+        return this;
     }
 
     public String getExecutable() {
         return executable;
     }
 
-    public void setExecutable(String executable) {
+    public Execution setExecutable(String executable) {
         this.executable = executable;
-    }
-
-    public String getOutputParam() {
-        return outputParam;
-    }
-
-    public void setOutputParam(String outputParam) {
-        this.outputParam = outputParam;
-    }
-
-    public List<InputParam> getInputParams() {
-        return inputParams;
-    }
-
-    public void setInputParams(List<InputParam> inputParams) {
-        this.inputParams = inputParams;
-    }
-
-    public List<Option> getValidParams() {
-        return validParams;
-    }
-
-    public void setValidParams(List<Option> validParams) {
-        this.validParams = validParams;
-    }
-
-    public List<ConfigAttr> getConfigAttr() {
-        return configAttr;
-    }
-
-    public void setConfigAttr(List<ConfigAttr> configAttr) {
-        this.configAttr = configAttr;
+        return this;
     }
 
     public String getTestCmd() {
         return testCmd;
     }
 
-    public void setTestCmd(String testCmd) {
+    public Execution setTestCmd(String testCmd) {
         this.testCmd = testCmd;
+        return this;
     }
 
-    public List<InputParam> getInputParamsFromTxt() {
-        return inputParamsFromTxt;
+    public List<String> getInput() {
+        return input;
     }
 
-    public void setInputParamsFromTxt(List<InputParam> inputParamsFromTxt) {
-        this.inputParamsFromTxt = inputParamsFromTxt;
+    public Execution setInput(List<String> input) {
+        this.input = input;
+        return this;
     }
 
-    public String getResult() {
-        return result;
+    public List<String> getOutput() {
+        return output;
     }
 
-    public void setResult(String result) {
-        this.result = result;
+    public Execution setOutput(List<String> output) {
+        this.output = output;
+        return this;
+    }
+
+    public List<InputParam> getParams() {
+        return params;
+    }
+
+    public Execution setParams(List<InputParam> params) {
+        this.params = params;
+        return this;
+    }
+
+    public List<ConfigAttr> getConfigAttr() {
+        return configAttr;
+    }
+
+    public Execution setConfigAttr(List<ConfigAttr> configAttr) {
+        this.configAttr = configAttr;
+        return this;
+    }
+
+    public List<Example> getExamples() {
+        return examples;
+    }
+
+    public Execution setExamples(List<Example> examples) {
+        this.examples = examples;
+        return this;
     }
 }

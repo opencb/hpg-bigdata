@@ -21,18 +21,16 @@ import java.util.List;
 public class Manifest {
 
     private Author author;
-    private String version, id, name, description, website, publication;
+    private String version, id, name, description, website, publication, separator;
     private Icon icon;
     private List<Option> globalParams;
     private List<Execution> executions;
-    private List<Example> examples;
 
     public Manifest() {
-
     }
 
     public Manifest(Author author, String version, String id, String name, String description, String website, String publication,
-                    Icon icon, List<Option> globalParams, List<Execution> executions, List<Example> examples) {
+                    String separator, Icon icon, List<Option> globalParams, List<Execution> executions) {
         this.author = author;
         this.version = version;
         this.id = id;
@@ -40,15 +38,15 @@ public class Manifest {
         this.description = description;
         this.website = website;
         this.publication = publication;
+        this.separator = separator;
         this.icon = icon;
         this.globalParams = globalParams;
         this.executions = executions;
-        this.examples = examples;
     }
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("Analysis{");
+        final StringBuilder sb = new StringBuilder("Manifest{");
         sb.append("author=").append(author);
         sb.append(", version='").append(version).append('\'');
         sb.append(", id='").append(id).append('\'');
@@ -56,10 +54,10 @@ public class Manifest {
         sb.append(", description='").append(description).append('\'');
         sb.append(", website='").append(website).append('\'');
         sb.append(", publication='").append(publication).append('\'');
+        sb.append(", separator='").append(separator).append('\'');
         sb.append(", icon=").append(icon);
         sb.append(", globalParams=").append(globalParams);
         sb.append(", executions=").append(executions);
-        sb.append(", examples=").append(examples);
         sb.append('}');
         return sb.toString();
     }
@@ -144,12 +142,12 @@ public class Manifest {
         this.executions = executions;
     }
 
-    public List<Example> getExamples() {
-        return examples;
+    public String getSeparator() {
+        return separator;
     }
 
-    public void setExamples(List<Example> examples) {
-        this.examples = examples;
+    public Manifest setSeparator(String separator) {
+        this.separator = separator;
+        return this;
     }
-
 }
