@@ -22,7 +22,7 @@ import htsjdk.variant.vcf.VCFHeaderVersion;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.opencb.biodata.formats.variant.vcf4.FullVcfCodec;
-import org.opencb.biodata.tools.variant.converter.Converter;
+import org.opencb.biodata.tools.variant.converters.Converter;
 import org.opencb.commons.run.ParallelTaskRunner;
 import org.opencb.hpg.bigdata.core.io.VariantContextBlockIterator;
 import org.opencb.hpg.bigdata.core.io.avro.AvroEncoder;

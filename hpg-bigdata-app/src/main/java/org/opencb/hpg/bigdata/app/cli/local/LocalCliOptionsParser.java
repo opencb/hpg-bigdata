@@ -82,6 +82,7 @@ public class LocalCliOptionsParser {
         variantSubCommands.addCommand("view", variantCommandOptions.viewVariantCommandOptions);
         variantSubCommands.addCommand("query", variantCommandOptions.queryVariantCommandOptions);
         variantSubCommands.addCommand("metadata", variantCommandOptions.metadataVariantCommandOptions);
+        variantSubCommands.addCommand("rvtests", variantCommandOptions.rvtestsVariantCommandOptions);
     }
 
     public void parse(String[] args) throws ParameterException {
@@ -439,6 +440,7 @@ public class LocalCliOptionsParser {
         ViewVariantCommandOptions viewVariantCommandOptions;
         QueryVariantCommandOptions queryVariantCommandOptions;
         MetadataVariantCommandOptions metadataVariantCommandOptions;
+        RvTestsVariantCommandOptions rvtestsVariantCommandOptions;
 
         public VariantCommandOptions() {
             this.convertVariantCommandOptions = new ConvertVariantCommandOptions();
@@ -446,6 +448,7 @@ public class LocalCliOptionsParser {
             this.viewVariantCommandOptions = new ViewVariantCommandOptions();
             this.queryVariantCommandOptions = new QueryVariantCommandOptions();
             this.metadataVariantCommandOptions = new MetadataVariantCommandOptions();
+            this.rvtestsVariantCommandOptions = new RvTestsVariantCommandOptions();
         }
     }
 
@@ -711,26 +714,62 @@ public class LocalCliOptionsParser {
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
 
-        @Parameter(names = {"-i", "--input"}, description = "Input file name (Avro/Parquet format)",
+        @Parameter(names = {"-i", "--input"}, description = "Input file name (Avro/Parquet format).",
                 required = true, arity = 1)
         public String input;
 
-        @Parameter(names = {"--pedigree-file"}, description = "Input file with information about family relationships, sex,... (extended PED format)",
+        @Parameter(names = {"--dataset"}, description = "Target dataset.",
                 arity = 1)
-        public String pedigreeFilename = null;
+        public String datasetId = null;
 
-        @Parameter(names = {"--create-cohort"}, description = "Create new cohort. Expected value format is: dataset_name::cohort_name::sample_name1,sample_name2,... or dataset_name::cohort_name::sample_name_file\"")
+        @Parameter(names = {"--load-pedigree"}, description = "Pedigree file name (in PED format) to load in the target dataset. A pedigree file contains information about family relationships, phenotype, gendre,... (extended PED format).",
+                arity = 1)
+        public String loadPedFilename = null;
+
+        @Parameter(names = {"--save-pedigree"}, description = "File name where to save the pedigree information (in PED format) of the target dataset. A pedigree file contains information about family relationships, phenotype, gendre,... (extended PED format).",
+                arity = 1)
+        public String savePedFilename = null;
+
+        @Parameter(names = {"--create-cohort"}, description = "Create new cohort for the target dataset. Expected value format is: cohort_name::sample_name1,sample_name2,... or dataset_name::cohort_name::sample_name_file\"")
         public String createCohort = null;
 
-        @Parameter(names = {"--rename-cohort"}, description = "Rename cohort. Expected value format is: dataset_name::old_name::new_name")
+        @Parameter(names = {"--rename-cohort"}, description = "Rename a cohort of the target dataset. Expected value format is: old_name::new_name")
         public String renameCohort = null;
 
-        @Parameter(names = {"--rename-dataset"}, description = "Rename dataset. Expected value format is: old_name::new_name")
+        @Parameter(names = {"--rename-dataset"}, description = "Rename the target dataset to this new name.")
         public String renameDataset = null;
 
-        @Parameter(names = {"--summary"}, description = "Output metadata summary")
+        @Parameter(names = {"--summary"}, description = "Output metadata summary.")
         public boolean summary = false;
     }
+
+    @Parameters(commandNames = {"rvtests"}, commandDescription = "Execute the 'rvtests' program.")
+    class RvTestsVariantCommandOptions {
+
+        @ParametersDelegate
+        public CommonCommandOptions commonOptions = commonCommandOptions;
+
+        @Parameter(names = {"-i", "--input"}, description = "Input file name (in Avro/Parquet file format).",
+                required = true, arity = 1)
+        public String inFilename;
+
+        @Parameter(names = {"-m", "--metadata"}, description = "Input metadata file name.",
+                required = true, arity = 1)
+        public String metaFilename;
+
+        @Parameter(names = {"-o", "--output"}, description = "Output directory name to save the rvtests results.",
+                required = true, arity = 1)
+        public String outDirname;
+
+        @Parameter(names = {"--dataset"}, description = "Target dataset.",
+                arity = 1)
+        public String datasetId = null;
+
+        @Parameter(names = {"-c", "--config"}, description = "Configuration file name containing the rvtests parameters.",
+                required = true, arity = 1)
+        public String confFilename;
+    }
+
 
     private void printMainUsage() {
         // TODO This is a nasty hack. By some unknown reason JCommander only prints the description from first command

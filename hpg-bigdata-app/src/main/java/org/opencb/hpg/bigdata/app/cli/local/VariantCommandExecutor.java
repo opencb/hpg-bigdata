@@ -26,14 +26,16 @@ import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
 import org.apache.spark.sql.SparkSession;
+import org.opencb.biodata.formats.pedigree.PedigreeManager;
 import org.opencb.biodata.models.core.Region;
+import org.opencb.biodata.models.core.pedigree.Pedigree;
 import org.opencb.biodata.models.metadata.SampleSetType;
 import org.opencb.biodata.models.variant.Variant;
 import org.opencb.biodata.models.variant.VariantMetadataManager;
 import org.opencb.biodata.models.variant.avro.StudyEntry;
 import org.opencb.biodata.models.variant.avro.VariantAvro;
 import org.opencb.biodata.models.variant.avro.VariantFileMetadata;
-import org.opencb.biodata.tools.variant.converter.VariantContextToVariantConverter;
+import org.opencb.biodata.tools.variant.converters.avro.VariantContextToVariantConverter;
 import org.opencb.commons.utils.FileUtils;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
 import org.opencb.hpg.bigdata.core.avro.VariantAvroAnnotator;
@@ -42,6 +44,7 @@ import org.opencb.hpg.bigdata.core.converters.variation.VariantContext2VariantCo
 import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
 import org.opencb.hpg.bigdata.core.lib.VariantDataset;
 import org.opencb.hpg.bigdata.core.parquet.VariantParquetConverter;
+import org.opencb.hpg.bigdata.tools.variant.analysis.RvTestsAdaptor;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -94,10 +97,16 @@ public class VariantCommandExecutor extends CommandExecutor {
                 query();
                 break;
             case "metadata":
-                init(variantCommandOptions.queryVariantCommandOptions.commonOptions.logLevel,
-                        variantCommandOptions.queryVariantCommandOptions.commonOptions.verbose,
-                        variantCommandOptions.queryVariantCommandOptions.commonOptions.conf);
+                init(variantCommandOptions.metadataVariantCommandOptions.commonOptions.logLevel,
+                        variantCommandOptions.metadataVariantCommandOptions.commonOptions.verbose,
+                        variantCommandOptions.metadataVariantCommandOptions.commonOptions.conf);
                 metadata();
+                break;
+            case "rvtests":
+                init(variantCommandOptions.rvtestsVariantCommandOptions.commonOptions.logLevel,
+                        variantCommandOptions.rvtestsVariantCommandOptions.commonOptions.verbose,
+                        variantCommandOptions.rvtestsVariantCommandOptions.commonOptions.conf);
+                rvtests();
                 break;
             default:
                 break;
@@ -209,7 +218,7 @@ public class VariantCommandExecutor extends CommandExecutor {
                 // convert to VCF -> PARQUET
                 System.out.println("\n\nStarting VCF->PARQUET conversion...\n");
                 startTime = System.currentTimeMillis();
-                parquetConverter.toParquetFromVcf(inputStream, output);
+                parquetConverter.toParquetFromVcf(inputPath.toString(), output);
                 elapsedTime = System.currentTimeMillis() - startTime;
                 System.out.println("\n\nFinish VCF->PARQUET conversion in " + (elapsedTime / 1000F) + " sec\n");
             }
@@ -771,6 +780,7 @@ public class VariantCommandExecutor extends CommandExecutor {
     public void metadata() throws Exception {
         // sanity check
         Path input = get(variantCommandOptions.metadataVariantCommandOptions.input);
+        String datasetId = variantCommandOptions.metadataVariantCommandOptions.datasetId;
 
         boolean updated = false;
 
@@ -781,47 +791,73 @@ public class VariantCommandExecutor extends CommandExecutor {
             VariantMetadataManager metadataManager = new VariantMetadataManager();
             metadataManager.load(metaFile.getPath());
 
-            if (variantCommandOptions.metadataVariantCommandOptions.pedigreeFilename != null) {
-                System.out.println("Warning: load a pedigree file is not yet implemented !");
-                System.exit(-1);
+            // load pedigree ?
+            if (variantCommandOptions.metadataVariantCommandOptions.loadPedFilename != null) {
+                Pedigree pedigree = new PedigreeManager().parse(
+                        get(variantCommandOptions.metadataVariantCommandOptions.loadPedFilename));
+                metadataManager.loadPedigree(pedigree, datasetId);
+                updated = true;
             }
 
+            // save pedigree ?
+            if (variantCommandOptions.metadataVariantCommandOptions.savePedFilename != null) {
+                Pedigree pedigree = metadataManager.getPedigree(datasetId);
+                new PedigreeManager().save(pedigree,
+                        get(variantCommandOptions.metadataVariantCommandOptions.savePedFilename));
+
+            }
+
+            // create cohort ?
             if (variantCommandOptions.metadataVariantCommandOptions.createCohort != null) {
                 String[] names = variantCommandOptions.metadataVariantCommandOptions.createCohort.split("::");
 
                 List<String> sampleIds;
-                if (new File(names[2]).exists()) {
-                    sampleIds = Files.readAllLines(Paths.get(names[2]));
+                if (new File(names[1]).exists()) {
+                    sampleIds = Files.readAllLines(Paths.get(names[1]));
                 } else {
-                    sampleIds = Arrays.asList(StringUtils.split(names[2], ","));
+                    sampleIds = Arrays.asList(StringUtils.split(names[1], ","));
                 }
 
-                metadataManager.createCohort(names[0], names[1], sampleIds, SampleSetType.MISCELLANEOUS);
+                metadataManager.createCohort(datasetId, names[0], sampleIds, SampleSetType.MISCELLANEOUS);
                 updated = true;
             }
 
+            // rename cohort ?
             if (variantCommandOptions.metadataVariantCommandOptions.renameCohort != null) {
                 String[] names = variantCommandOptions.metadataVariantCommandOptions.renameCohort.split("::");
-                metadataManager.renameCohort(names[0], names[1], names[2]);
+                metadataManager.renameCohort(datasetId, names[0], names[1]);
                 updated = true;
             }
 
+            // rename dataset ?
             if (variantCommandOptions.metadataVariantCommandOptions.renameDataset != null) {
-                String[] names = variantCommandOptions.metadataVariantCommandOptions.renameDataset.split("::");
-                metadataManager.renameDataset(names[0], names[1]);
+                metadataManager.renameDataset(datasetId,
+                        variantCommandOptions.metadataVariantCommandOptions.renameDataset);
                 updated = true;
             }
 
+            // summary ?
             if (variantCommandOptions.metadataVariantCommandOptions.summary) {
                 System.out.println(metadataManager.summary());
             }
 
             if (updated) {
-                // write the metadata
+                // overwrite the metadata
                 metadataManager.save();
             }
         } else {
             System.out.println("Error: metafile does not exist, " + metaFile.getAbsolutePath());
         }
+    }
+
+
+    public void rvtests() throws Exception {
+        RvTestsAdaptor rvtests = new RvTestsAdaptor(variantCommandOptions.rvtestsVariantCommandOptions.inFilename,
+                variantCommandOptions.rvtestsVariantCommandOptions.metaFilename,
+                variantCommandOptions.rvtestsVariantCommandOptions.outDirname,
+                variantCommandOptions.rvtestsVariantCommandOptions.confFilename);
+
+//        rvtests.run(variantCommandOptions.rvtestsVariantCommandOptions.datasetId);
+        rvtests.run00(variantCommandOptions.rvtestsVariantCommandOptions.datasetId);
     }
 }

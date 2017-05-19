@@ -26,8 +26,8 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-	<artifactId>hpg-bigdata-tools</artifactId>
-	<version>${hpg.version}</version>
+    <artifactId>hpg-bigdata-tools</artifactId>
+    <version>${hpg.version}</version>
 
     <dependencies>
         <dependency>
@@ -35,6 +35,11 @@
             <artifactId>hpg-bigdata-core</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-mllib_2.11</artifactId>
+            <version>2.0.2</version>
+        </dependency>
         <dependency>
             <groupId>org.seqdoop</groupId>
             <artifactId>hadoop-bam</artifactId>
@@ -53,9 +58,9 @@
             <classifier>hadoop2</classifier>
         </dependency>
         <!--<dependency>-->
-            <!--<groupId>org.apache.parquet</groupId>-->
-            <!--<artifactId>parquet-avro</artifactId>-->
-            <!--<version>${parquet.version}</version>-->
+        <!--<groupId>org.apache.parquet</groupId>-->
+        <!--<artifactId>parquet-avro</artifactId>-->
+        <!--<version>${parquet.version}</version>-->
         <!--</dependency>-->
         <dependency>
             <groupId>org.apache.hadoop</groupId>
@@ -95,6 +100,11 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>2.6</version>
         </dependency>
     </dependencies>
 

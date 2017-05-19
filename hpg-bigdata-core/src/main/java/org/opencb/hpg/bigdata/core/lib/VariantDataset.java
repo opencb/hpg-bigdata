@@ -20,6 +20,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.SparkSession;
 import org.opencb.commons.datastore.core.Query;
+import org.opencb.commons.datastore.core.QueryOptions;
 
 import java.util.Arrays;
 import java.util.List;
@@ -59,6 +60,14 @@ public class VariantDataset extends ParentDataset<VariantDataset> {
         } else {
             query.put(key, String.join(",", values));
         }
+    }
+
+    public void reset() {
+        sql = null;
+        variantParseQuery = new VariantParseQuery();
+        query = new Query();
+        queryOptions = new QueryOptions();
+        queryOptions.put("toClean", true);
     }
 
     public Dataset executeSql(String sql) {
