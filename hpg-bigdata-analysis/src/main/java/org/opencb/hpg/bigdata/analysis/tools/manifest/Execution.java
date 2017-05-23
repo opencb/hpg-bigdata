@@ -21,26 +21,25 @@ import java.util.List;
 public class Execution {
 
     private String id, name, executable, testCmd;
-    private List<String> input;
-    private List<String> output;
+
+    /**
+     * Flag indicating whether the parameters follow the POSIX command line standard.
+     * If true, we will assume the parameters are preceded by '-' if it is a one letter parameter or '--' otherwise.
+     */
+    private boolean posix;
+
     private List<InputParam> params;
-    private List<ConfigAttr> configAttr;
-    private List<Example> examples;
 
     public Execution() {
     }
 
-    public Execution(String id, String name, String executable, String testCmd, List<String> input, List<String> output,
-                     List<InputParam> params, List<ConfigAttr> configAttr, List<Example> examples) {
+    public Execution(String id, String name, String executable, String testCmd, boolean posix, List<InputParam> params) {
         this.id = id;
         this.name = name;
         this.executable = executable;
         this.testCmd = testCmd;
-        this.input = input;
-        this.output = output;
+        this.posix = posix;
         this.params = params;
-        this.configAttr = configAttr;
-        this.examples = examples;
     }
 
     @Override
@@ -50,11 +49,8 @@ public class Execution {
         sb.append(", name='").append(name).append('\'');
         sb.append(", executable='").append(executable).append('\'');
         sb.append(", testCmd='").append(testCmd).append('\'');
-        sb.append(", input=").append(input);
-        sb.append(", output=").append(output);
+        sb.append(", posix=").append(posix);
         sb.append(", params=").append(params);
-        sb.append(", configAttr=").append(configAttr);
-        sb.append(", examples=").append(examples);
         sb.append('}');
         return sb.toString();
     }
@@ -95,21 +91,12 @@ public class Execution {
         return this;
     }
 
-    public List<String> getInput() {
-        return input;
+    public boolean isPosix() {
+        return posix;
     }
 
-    public Execution setInput(List<String> input) {
-        this.input = input;
-        return this;
-    }
-
-    public List<String> getOutput() {
-        return output;
-    }
-
-    public Execution setOutput(List<String> output) {
-        this.output = output;
+    public Execution setPosix(boolean posix) {
+        this.posix = posix;
         return this;
     }
 
@@ -119,24 +106,6 @@ public class Execution {
 
     public Execution setParams(List<InputParam> params) {
         this.params = params;
-        return this;
-    }
-
-    public List<ConfigAttr> getConfigAttr() {
-        return configAttr;
-    }
-
-    public Execution setConfigAttr(List<ConfigAttr> configAttr) {
-        this.configAttr = configAttr;
-        return this;
-    }
-
-    public List<Example> getExamples() {
-        return examples;
-    }
-
-    public Execution setExamples(List<Example> examples) {
-        this.examples = examples;
         return this;
     }
 }

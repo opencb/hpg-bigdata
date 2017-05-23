@@ -21,26 +21,26 @@ import java.util.List;
 public class Manifest {
 
     private Author author;
-    private String version, id, name, description, website, publication, separator;
-    private Icon icon;
-    private List<Option> globalParams;
+    private String id, name, version, git, description, website, publication;
+    private String separator;
+    private ProgrammingLanguage language;
     private List<Execution> executions;
 
     public Manifest() {
     }
 
-    public Manifest(Author author, String version, String id, String name, String description, String website, String publication,
-                    String separator, Icon icon, List<Option> globalParams, List<Execution> executions) {
+    public Manifest(Author author, String id, String name, String version, String git, String description, String website,
+                    String publication, String separator, ProgrammingLanguage language, List<Execution> executions) {
         this.author = author;
-        this.version = version;
         this.id = id;
         this.name = name;
+        this.version = version;
+        this.git = git;
         this.description = description;
         this.website = website;
         this.publication = publication;
         this.separator = separator;
-        this.icon = icon;
-        this.globalParams = globalParams;
+        this.language = language;
         this.executions = executions;
     }
 
@@ -48,15 +48,15 @@ public class Manifest {
     public String toString() {
         final StringBuilder sb = new StringBuilder("Manifest{");
         sb.append("author=").append(author);
-        sb.append(", version='").append(version).append('\'');
         sb.append(", id='").append(id).append('\'');
         sb.append(", name='").append(name).append('\'');
+        sb.append(", version='").append(version).append('\'');
+        sb.append(", git='").append(git).append('\'');
         sb.append(", description='").append(description).append('\'');
         sb.append(", website='").append(website).append('\'');
         sb.append(", publication='").append(publication).append('\'');
         sb.append(", separator='").append(separator).append('\'');
-        sb.append(", icon=").append(icon);
-        sb.append(", globalParams=").append(globalParams);
+        sb.append(", language=").append(language);
         sb.append(", executions=").append(executions);
         sb.append('}');
         return sb.toString();
@@ -66,80 +66,72 @@ public class Manifest {
         return author;
     }
 
-    public void setAuthor(Author author) {
+    public Manifest setAuthor(Author author) {
         this.author = author;
-    }
-
-    public String getVersion() {
-        return version;
-    }
-
-    public void setVersion(String version) {
-        this.version = version;
+        return this;
     }
 
     public String getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public Manifest setId(String id) {
         this.id = id;
+        return this;
     }
 
     public String getName() {
         return name;
     }
 
-    public void setName(String name) {
+    public Manifest setName(String name) {
         this.name = name;
+        return this;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public Manifest setVersion(String version) {
+        this.version = version;
+        return this;
+    }
+
+    public String getGit() {
+        return git;
+    }
+
+    public Manifest setGit(String git) {
+        this.git = git;
+        return this;
     }
 
     public String getDescription() {
         return description;
     }
 
-    public void setDescription(String description) {
+    public Manifest setDescription(String description) {
         this.description = description;
+        return this;
     }
 
     public String getWebsite() {
         return website;
     }
 
-    public void setWebsite(String website) {
+    public Manifest setWebsite(String website) {
         this.website = website;
+        return this;
     }
 
     public String getPublication() {
         return publication;
     }
 
-    public void setPublication(String publication) {
+    public Manifest setPublication(String publication) {
         this.publication = publication;
-    }
-
-    public Icon getIcon() {
-        return icon;
-    }
-
-    public void setIcon(Icon icon) {
-        this.icon = icon;
-    }
-
-    public List<Option> getGlobalParams() {
-        return globalParams;
-    }
-
-    public void setGlobalParams(List<Option> globalParams) {
-        this.globalParams = globalParams;
-    }
-
-    public List<Execution> getExecutions() {
-        return executions;
-    }
-
-    public void setExecutions(List<Execution> executions) {
-        this.executions = executions;
+        return this;
     }
 
     public String getSeparator() {
@@ -148,6 +140,24 @@ public class Manifest {
 
     public Manifest setSeparator(String separator) {
         this.separator = separator;
+        return this;
+    }
+
+    public ProgrammingLanguage getLanguage() {
+        return language;
+    }
+
+    public Manifest setLanguage(ProgrammingLanguage language) {
+        this.language = language;
+        return this;
+    }
+
+    public List<Execution> getExecutions() {
+        return executions;
+    }
+
+    public Manifest setExecutions(List<Execution> executions) {
+        this.executions = executions;
         return this;
     }
 }
