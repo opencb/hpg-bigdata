@@ -16,6 +16,12 @@
 
 package org.opencb.hpg.bigdata.analysis.tools.manifest;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 
 public class Manifest {
@@ -29,19 +35,31 @@ public class Manifest {
     public Manifest() {
     }
 
-    public Manifest(Author author, String id, String name, String version, String git, String description, String website,
-                    String publication, String separator, ProgrammingLanguage language, List<Execution> executions) {
-        this.author = author;
-        this.id = id;
-        this.name = name;
-        this.version = version;
-        this.git = git;
-        this.description = description;
-        this.website = website;
-        this.publication = publication;
-        this.separator = separator;
-        this.language = language;
-        this.executions = executions;
+    public void serialize(OutputStream configurationOututStream) throws IOException {
+        ObjectMapper jsonMapper = new ObjectMapper();
+        jsonMapper.writerWithDefaultPrettyPrinter().writeValue(configurationOututStream, this);
+    }
+
+    public static Manifest load(InputStream manifestStream) throws IOException {
+        return load(manifestStream, "json");
+    }
+
+    private static Manifest load(InputStream manifestStream, String format) throws IOException {
+        Manifest manifest;
+        ObjectMapper objectMapper;
+        switch (format) {
+            case "json":
+                objectMapper = new ObjectMapper();
+                manifest = objectMapper.readValue(manifestStream, Manifest.class);
+                break;
+            case "yml":
+            case "yaml":
+            default:
+                objectMapper = new ObjectMapper(new YAMLFactory());
+                manifest = objectMapper.readValue(manifestStream, Manifest.class);
+                break;
+        }
+        return manifest;
     }
 
     @Override

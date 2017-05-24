@@ -16,7 +16,9 @@
 
 package org.opencb.hpg.bigdata.analysis.tools.manifest;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Execution {
 
@@ -102,6 +104,14 @@ public class Execution {
 
     public List<InputParam> getParams() {
         return params;
+    }
+
+    public Map<String, InputParam> getParamsAsMap() {
+        Map<String, InputParam> mapParams = new HashMap<>();
+        for (InputParam param : params) {
+            mapParams.put(param.getName(), param);
+        }
+        return mapParams;
     }
 
     public Execution setParams(List<InputParam> params) {
