@@ -1,6 +1,5 @@
 package org.opencb.hpg.bigdata.analysis.tools;
 
-import org.apache.hadoop.fs.Stat;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.opencb.commons.exec.Command;
 import org.opencb.commons.exec.RunnableProcess;
@@ -47,7 +46,7 @@ public class ExecutorManager {
 
             // Keep writing in the status file while running to update current time
             Status statusObject = new Status(Status.RUNNING);
-            while(status.equalsIgnoreCase(Status.RUNNING)) {
+            while (status.equalsIgnoreCase(Status.RUNNING)) {
                 try {
                     statusObject.setCurrentDate();
                     objectMapper.writer().writeValue(outdir.resolve("status.json").toFile(), statusObject);
