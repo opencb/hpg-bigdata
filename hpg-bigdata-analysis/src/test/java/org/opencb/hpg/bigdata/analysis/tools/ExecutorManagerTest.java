@@ -19,7 +19,7 @@ public class ExecutorManagerTest {
     @Test
     public void execute() throws AnalysisToolException, IOException, InterruptedException {
         Path path = Paths.get("/tmp");
-        new ExecutorManager().execute("sleep 10", path);
+        new Executor().execute("sleep 10", path);
 
         ObjectReader reader = new ObjectMapper().reader(Status.class);
         Status status = reader.readValue(path.resolve("status.json").toFile());

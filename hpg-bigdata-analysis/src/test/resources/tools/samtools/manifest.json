@@ -57,8 +57,8 @@
       "arity" : 1,
       "required" : true,
       "output" : true,
-      "redirection" : true,
-      "position" : 100,
+      "redirection" : false,
+      "position" : 0,
       "hidden" : false,
       "dataType" : "FILE"
     }, {
@@ -103,6 +103,35 @@
       "redirection" : false,
       "position" : 2,
       "hidden" : false,
+      "dataType" : "FILE"
+    }, {
+      "name" : "input",
+      "description" : "Input bam file",
+      "defaultValue" : null,
+      "arity" : 1,
+      "required" : true,
+      "output" : false,
+      "redirection" : false,
+      "position" : 1,
+      "hidden" : true,
+      "dataType" : "FILE"
+    } ]
+  }, {
+    "id" : "index",
+    "name" : "Index alignment",
+    "executable" : "samtools index",
+    "testCmd" : "",
+    "posix" : true,
+    "params" : [ {
+      "name" : "output",
+      "description" : "out.index file",
+      "defaultValue" : null,
+      "arity" : 1,
+      "required" : true,
+      "output" : true,
+      "redirection" : false,
+      "position" : 2,
+      "hidden" : true,
       "dataType" : "FILE"
     }, {
       "name" : "input",

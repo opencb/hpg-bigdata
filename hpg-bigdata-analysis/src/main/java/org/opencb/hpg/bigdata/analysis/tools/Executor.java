@@ -16,52 +16,20 @@ import java.nio.file.Path;
 /**
  * Created by pfurio on 24/05/17.
  */
-public class ExecutorManager {
+public class Executor {
 
-    private static Logger logger = LoggerFactory.getLogger(ExecutorManager.class);
+    private static Logger logger = LoggerFactory.getLogger(Executor.class);
     private static ObjectMapper objectMapper = new ObjectMapper();
     private static int threadInitNumber;
-    private volatile String status;
+    private static volatile String status;
 
-    protected void execute(String commandLine, Path outdir) throws AnalysisToolException {
+    protected static void execute(String commandLine, Path outdir) throws AnalysisToolException {
         if (!outdir.toFile().isDirectory()) {
             throw new AnalysisToolException("Output directory " + outdir + " is not an actual directory");
         }
         if (!outdir.toFile().canWrite()) {
             throw new AnalysisToolException("Cannot write on output directory " + outdir);
         }
-
-        // This thread will write the status.json file
-        Runnable statusProcess = () -> {
-            // Create hook to write status with ERROR
-            Thread hook = new Thread(() -> {
-                Status statusObject = new Status(status);
-                try {
-                    objectMapper.writer().writeValue(outdir.resolve("status.json").toFile(), statusObject);
-                } catch (IOException e) {
-                    logger.error("Could not write status {} to file", status, e);
-                }
-            });
-            Runtime.getRuntime().addShutdownHook(hook);
-
-            // Keep writing in the status file while running to update current time
-            Status statusObject = new Status(Status.RUNNING);
-            while (status.equalsIgnoreCase(Status.RUNNING)) {
-                try {
-                    statusObject.setCurrentDate();
-                    objectMapper.writer().writeValue(outdir.resolve("status.json").toFile(), statusObject);
-                } catch (IOException e) {
-                    logger.error("Could not write status {} to file", status, e);
-                }
-
-                try {
-                    Thread.sleep(5000);
-                } catch (InterruptedException e) {
-                    logger.error("{}", e.getMessage(), e);
-                    return;
-                }
-            }
-        };
 
         try {
             status = Status.RUNNING;
@@ -73,10 +41,12 @@ public class ExecutorManager {
             dataOutputStream = new DataOutputStream(new FileOutputStream(outdir.resolve("stderr.txt").toFile()));
             com.setErrorOutputStream(dataOutputStream);
 
-            Thread thread = new Thread(statusProcess, "StatusThread-" + nextThreadNum());
+            ExecutorMonitor monitor = new ExecutorMonitor();
+//            Thread thread = new Thread(statusProcess, "StatusThread-" + nextThreadNum());
 
             Thread hook = new Thread(() -> {
-                status = Status.ERROR;
+//                status = Status.ERROR;
+                monitor.stop(new Status(Status.ERROR));
                 logger.info("Running ShutdownHook. Tool execution has being aborted.");
                 com.setStatus(RunnableProcess.Status.KILLED);
                 com.setExitValue(-2);
@@ -90,10 +60,11 @@ public class ExecutorManager {
             System.err.println();
 
             Runtime.getRuntime().addShutdownHook(hook);
-            thread.start();
+            monitor.start(outdir);
             com.run();
             Runtime.getRuntime().removeShutdownHook(hook);
-            status = Status.DONE;
+            monitor.stop(new Status(Status.DONE));
+//            status = Status.DONE;
 
             System.err.println();
             logger.info("==========================================");

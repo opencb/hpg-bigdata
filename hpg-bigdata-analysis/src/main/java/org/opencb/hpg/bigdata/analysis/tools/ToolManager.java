@@ -159,7 +159,7 @@ public class ToolManager {
     }
 
     public void runCommandLine(String commandLine, Path outdir) throws AnalysisToolException {
-        new ExecutorManager().execute(commandLine, outdir);
+        new Executor().execute(commandLine, outdir);
     }
 
     private void checkToolDirectory() throws AnalysisToolException {
