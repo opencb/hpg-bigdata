@@ -16,34 +16,32 @@
 
 package org.opencb.hpg.bigdata.analysis.tools.manifest;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Execution {
 
-    private String id, name, executable, outputParam, testCmd, result;
-    private List<InputParam> inputParams;
-    private List<InputParam> inputParamsFromTxt;
-    private List<Option> validParams;
-    private List<ConfigAttr> configAttr;
+    private String id, name, executable, testCmd;
 
+    /**
+     * Flag indicating whether the parameters follow the POSIX command line standard.
+     * If true, we will assume the parameters are preceded by '-' if it is a one letter parameter or '--' otherwise.
+     */
+    private boolean posix;
+
+    private List<InputParam> params;
 
     public Execution() {
-
     }
 
-    public Execution(String id, String name, String executable,
-                     List<InputParam> inputParams, List<InputParam> inputParamsFromTxt, String outputParam,
-                     List<Option> validParams, List<ConfigAttr> configAttr, String testCmd, String result) {
+    public Execution(String id, String name, String executable, String testCmd, boolean posix, List<InputParam> params) {
         this.id = id;
         this.name = name;
         this.executable = executable;
-        this.inputParams = inputParams;
-        this.inputParamsFromTxt = inputParamsFromTxt;
-        this.outputParam = outputParam;
-        this.validParams = validParams;
-        this.configAttr = configAttr;
         this.testCmd = testCmd;
-        this.result = result;
+        this.posix = posix;
+        this.params = params;
     }
 
     @Override
@@ -52,13 +50,9 @@ public class Execution {
         sb.append("id='").append(id).append('\'');
         sb.append(", name='").append(name).append('\'');
         sb.append(", executable='").append(executable).append('\'');
-        sb.append(", outputParam='").append(outputParam).append('\'');
         sb.append(", testCmd='").append(testCmd).append('\'');
-        sb.append(", result='").append(result).append('\'');
-        sb.append(", inputParams=").append(inputParams);
-        sb.append(", inputParamsFromTxt=").append(inputParamsFromTxt);
-        sb.append(", validParams=").append(validParams);
-        sb.append(", configAttr=").append(configAttr);
+        sb.append(", posix=").append(posix);
+        sb.append(", params=").append(params);
         sb.append('}');
         return sb.toString();
     }
@@ -67,79 +61,61 @@ public class Execution {
         return id;
     }
 
-    public void setId(String id) {
+    public Execution setId(String id) {
         this.id = id;
+        return this;
     }
 
     public String getName() {
         return name;
     }
 
-    public void setName(String name) {
+    public Execution setName(String name) {
         this.name = name;
+        return this;
     }
 
     public String getExecutable() {
         return executable;
     }
 
-    public void setExecutable(String executable) {
+    public Execution setExecutable(String executable) {
         this.executable = executable;
-    }
-
-    public String getOutputParam() {
-        return outputParam;
-    }
-
-    public void setOutputParam(String outputParam) {
-        this.outputParam = outputParam;
-    }
-
-    public List<InputParam> getInputParams() {
-        return inputParams;
-    }
-
-    public void setInputParams(List<InputParam> inputParams) {
-        this.inputParams = inputParams;
-    }
-
-    public List<Option> getValidParams() {
-        return validParams;
-    }
-
-    public void setValidParams(List<Option> validParams) {
-        this.validParams = validParams;
-    }
-
-    public List<ConfigAttr> getConfigAttr() {
-        return configAttr;
-    }
-
-    public void setConfigAttr(List<ConfigAttr> configAttr) {
-        this.configAttr = configAttr;
+        return this;
     }
 
     public String getTestCmd() {
         return testCmd;
     }
 
-    public void setTestCmd(String testCmd) {
+    public Execution setTestCmd(String testCmd) {
         this.testCmd = testCmd;
+        return this;
     }
 
-    public List<InputParam> getInputParamsFromTxt() {
-        return inputParamsFromTxt;
+    public boolean isPosix() {
+        return posix;
     }
 
-    public void setInputParamsFromTxt(List<InputParam> inputParamsFromTxt) {
-        this.inputParamsFromTxt = inputParamsFromTxt;
+    public Execution setPosix(boolean posix) {
+        this.posix = posix;
+        return this;
     }
 
-    public String getResult() {
-        return result;
+    public List<InputParam> getParams() {
+        return params;
     }
 
-    public void setResult(String result) {
-        this.result = result;
+    public Map<String, InputParam> getParamsAsMap() {
+        Map<String, InputParam> mapParams = new HashMap<>();
+        for (InputParam param : params) {
+            mapParams.put(param.getName(), param);
+        }
+        return mapParams;
+    }
+
+    public Execution setParams(List<InputParam> params) {
+        this.params = params;
+        return this;
     }
 }
