@@ -8,12 +8,11 @@ import org.apache.spark.mllib.linalg.Vectors;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.functions;
-import org.opencb.hpg.bigdata.analysis.Analysis;
 
 /**
  * Created by jtarraga on 30/05/17.
  */
-public class LogisticRegressionAnalysis extends Analysis {
+public class LogisticRegressionAnalysis extends VariantAnalysisExecutor {
 
     private String depVarName;
     private String indepVarName;
@@ -23,7 +22,7 @@ public class LogisticRegressionAnalysis extends Analysis {
     private double elasticNet = 0.8; // elastic net mixing parameter
 
     @Override
-    public void run() {
+    public void execute() {
         LogisticRegression lr = new LogisticRegression()
                 .setMaxIter(numIterations)
                 .setRegParam(regularization)

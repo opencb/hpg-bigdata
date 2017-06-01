@@ -10,7 +10,6 @@ import org.apache.spark.ml.regression.LinearRegressionTrainingSummary;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SQLContext;
-import org.opencb.hpg.bigdata.analysis.Analysis;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +17,7 @@ import java.util.List;
 /**
  * Created by jtarraga on 30/05/17.
  */
-public class LinearRegressionAnalysis extends Analysis {
+public class LinearRegressionAnalysis extends VariantAnalysisExecutor {
 
     private String depVarName;
     private String indepVarName;
@@ -28,7 +27,7 @@ public class LinearRegressionAnalysis extends Analysis {
     private double elasticNet = 0.8; // elastic net mixing parameter
 
     @Override
-    public void run() {
+    public void execute() {
         LinearRegression lr = new LinearRegression()
                 .setMaxIter(numIterations)
                 .setRegParam(regularization)

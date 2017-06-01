@@ -33,23 +33,26 @@ public abstract  class ParseQuery {
 
     public abstract String parse(Query query, QueryOptions queryOptions, String viewName);
 
-    protected void buildQueryString(String viewName, QueryOptions queryOptions) {
-        if (queryOptions != null && StringUtils.isNotEmpty(queryOptions.getString(QueryOptions.INCLUDE))) {
-            sqlQueryString.append("SELECT ").append(queryOptions.getString(QueryOptions.INCLUDE)).append(" ");
-        } else {
-            sqlQueryString.append("SELECT * ");
-        }
+    protected void buildSimpleQueryString(String viewName, QueryOptions queryOptions) {
+
+//        if (queryOptions != null && StringUtils.isNotEmpty(queryOptions.getString(QueryOptions.INCLUDE))) {
+//            sqlQueryString.append("SELECT ").append(queryOptions.getString(QueryOptions.INCLUDE)).append(" ");
+//        } else {
+//            sqlQueryString.append("SELECT * ");
+//        }
+        sqlQueryString.append("SELECT * ");
         sqlQueryString.append("FROM ").append(viewName).append(" ").append(StringUtils.join(explodes.toArray(), " ")).append(" ");
-        sqlQueryString.append("WHERE ").append(StringUtils.join(filters, " AND "));
-
-        System.err.println(sqlQueryString.toString());
-
+        if (filters.size() > 0) {
+            sqlQueryString.append("WHERE ").append(StringUtils.join(filters, " AND "));
+        }
+        sqlQueryString.append(" ORDER BY start ASC");
     }
 
     protected String processFilter(String key, String value, boolean isString, boolean isArray) {
 
         if (StringUtils.isEmpty(key) || StringUtils.isEmpty(value)) {
-            throw new IllegalArgumentException("key or value are null or empty");
+            throw new IllegalArgumentException("key or value are null or empty (key = "
+                    + key + ", value = " + value + ")");
         }
 
         boolean or = value.contains(",");

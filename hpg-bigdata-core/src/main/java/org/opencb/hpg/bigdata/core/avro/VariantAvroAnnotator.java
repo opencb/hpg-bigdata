@@ -49,7 +49,7 @@ public class VariantAvroAnnotator {
         ClientConfiguration clientConfiguration = new ClientConfiguration();
         clientConfiguration.setVersion("v4");
         clientConfiguration.setRest(new RestConfig(Collections
-                .singletonList("http://bioinfodev.hpc.cam.ac.uk/cellbase-4.1.0-beta"), 30000));
+                .singletonList("http://bioinfodev.hpc.cam.ac.uk/cellbase-4.5.0-beta"), 30000));
 
         cellBaseClient = new CellBaseClient("hsapiens", clientConfiguration);
     }
@@ -73,15 +73,15 @@ public class VariantAvroAnnotator {
         List<String> variants = new ArrayList<>(2000);
         List<VariantAvro> records = new ArrayList<>(2000);
         VariantAvro record;
-        int counter = 1;
+        int counter = 1, batchSize = 200;
         while (dataFileStream.hasNext()) {
             record = dataFileStream.next();
 
             records.add(record);
             variants.add(record.getChromosome() + ":" + record.getStart() + ":" + record.getReference() + ":" + record.getAlternate());
 
-            if (counter++ % 2000 == 0) {
-                System.out.println("Annotating 2000 variants batch...");
+            if (counter++ % batchSize == 0) {
+                System.out.println("Annotating " + batchSize + " variants batch...");
                 QueryResponse<VariantAnnotation> annotations = variationClient.getAnnotations(variants,
                         new QueryOptions(QueryOptions.EXCLUDE, "expression"));
                 for (int i = 0; i < annotations.getResponse().size(); i++) {

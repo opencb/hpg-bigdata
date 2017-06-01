@@ -16,9 +16,7 @@
 
 package org.opencb.hpg.bigdata.core.avro;
 
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
@@ -30,7 +28,7 @@ public abstract class AvroSerializer<T> {
 
     protected String compression;
 
-    protected List<Predicate<T>> filters;
+    protected List<List<Predicate<T>>> filters;
 
     public AvroSerializer() {
         this("deflate");
@@ -43,41 +41,63 @@ public abstract class AvroSerializer<T> {
     }
 
     public boolean filter(T record) {
-        for (Predicate filter: filters) {
-            if (!filter.test(record)) {
-                return false;
+        for (List<Predicate<T>> list: filters) {
+            if (list.size() == 1) {
+                if (!list.get(0).test(record)) {
+                    return false;
+                }
+            } else if (list.size() > 1) {
+                boolean or = false;
+                for (Predicate<T> filter: list) {
+                    if (filter.test(record)) {
+                        or = true;
+                        break;
+                    }
+                }
+                if (!or) {
+                    return false;
+                }
             }
         }
         return true;
     }
 
     public AvroSerializer addFilter(Predicate<T> predicate) {
-        getFilters().add(predicate);
+        List<Predicate<T>> list = new ArrayList<>();
+        list.add(predicate);
+        getFilters().add(list);
         return this;
     }
 
-    public void toAvro(String inputFilename, String outputFilename) throws IOException {
-        InputStream inputStream = new FileInputStream(inputFilename);
-        toAvro(inputStream, outputFilename);
-        inputStream.close();
+    public AvroSerializer addFilter(List<Predicate<T>> predicates) {
+        return addFilter(predicates, false);
     }
 
-    public abstract void toAvro(InputStream inputStream, String outputFilename) throws IOException;
+    public AvroSerializer addFilter(List<Predicate<T>> predicates, boolean and) {
+        if (and) {
+            predicates.forEach(p -> addFilter(p));
+        } else {
+            getFilters().add(predicates);
+        }
+        return this;
+    }
+
+    public abstract void toAvro(String inputFilename, String outputFilename) throws IOException;
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("AvroSerializer{");
+        final StringBuilder sb = new StringBuilder("ParquetSerializer{");
         sb.append("compression=").append(compression);
         sb.append(", filters=").append(filters);
         sb.append('}');
         return sb.toString();
     }
 
-    public List<Predicate<T>> getFilters() {
+    public List<List<Predicate<T>>> getFilters() {
         return filters;
     }
 
-    public AvroSerializer setFilters(List<Predicate<T>> filters) {
+    public AvroSerializer setFilters(List<List<Predicate<T>>> filters) {
         this.filters = filters;
         return this;
     }

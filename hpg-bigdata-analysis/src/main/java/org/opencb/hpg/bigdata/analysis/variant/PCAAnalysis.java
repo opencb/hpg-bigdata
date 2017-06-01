@@ -4,18 +4,17 @@ import org.apache.spark.ml.feature.PCA;
 import org.apache.spark.ml.feature.PCAModel;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.opencb.hpg.bigdata.analysis.Analysis;
 
 /**
  * Created by jtarraga on 30/05/17.
  */
-public class PCAAnalysis extends Analysis {
+public class PCAAnalysis extends VariantAnalysisExecutor {
 
     private int kValue = 3;
     private String featureName;
 
     @Override
-    public void run() {
+    public void execute() {
         // prepare dataset
         Dataset<Row> dataset = null;
 

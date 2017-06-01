@@ -17,6 +17,7 @@
 package org.opencb.hpg.bigdata.app.cli.local;
 
 import com.beust.jcommander.*;
+import org.apache.parquet.hadoop.ParquetWriter;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -67,6 +68,8 @@ public class LocalCliOptionsParser {
         jcommander.addCommand("alignment", sequenceCommandOptions);
         JCommander alignmentSubCommands = jcommander.getCommands().get("alignment");
         alignmentSubCommands.addCommand("convert", alignmentCommandOptions.convertAlignmentCommandOptions);
+        alignmentSubCommands.addCommand("view", alignmentCommandOptions.viewAlignmentCommandOptions);
+        alignmentSubCommands.addCommand("sort", alignmentCommandOptions.sortAlignmentCommandOptions);
         alignmentSubCommands.addCommand("stats", alignmentCommandOptions.statsAlignmentCommandOptions);
         alignmentSubCommands.addCommand("coverage", alignmentCommandOptions.coverageAlignmentCommandOptions);
         alignmentSubCommands.addCommand("query", alignmentCommandOptions.queryAlignmentCommandOptions);
@@ -76,8 +79,10 @@ public class LocalCliOptionsParser {
         JCommander variantSubCommands = jcommander.getCommands().get("variant");
         variantSubCommands.addCommand("convert", variantCommandOptions.convertVariantCommandOptions);
         variantSubCommands.addCommand("annotate", variantCommandOptions.annotateVariantCommandOptions);
+        variantSubCommands.addCommand("view", variantCommandOptions.viewVariantCommandOptions);
         variantSubCommands.addCommand("query", variantCommandOptions.queryVariantCommandOptions);
-
+        variantSubCommands.addCommand("metadata", variantCommandOptions.metadataVariantCommandOptions);
+        variantSubCommands.addCommand("rvtests", variantCommandOptions.rvtestsVariantCommandOptions);
     }
 
     public void parse(String[] args) throws ParameterException {
@@ -142,14 +147,14 @@ public class LocalCliOptionsParser {
         @Parameter(names = {"-h", "--help"},  description = "This parameter prints this help", help = true)
         public boolean help;
 
-        @Parameter(names = {"-L", "--log-level"}, description = "Set the level log, values: debug, info, warning, error, fatal", required = false, arity = 1)
+        @Parameter(names = {"-L", "--log-level"}, description = "Set the level log, values: debug, info, warning, error, fatal", arity = 1)
         public String logLevel = "info";
 
         @Deprecated
-        @Parameter(names = {"-v", "--verbose"}, description = "This parameter set the level of the logging", required = false, arity = 1)
+        @Parameter(names = {"-v", "--verbose"}, description = "This parameter set the level of the logging", arity = 1)
         public boolean verbose;
 
-        @Parameter(names = {"--conf"}, description = "Set the configuration file", required = false, arity = 1)
+        @Parameter(names = {"--conf"}, description = "Set the configuration file", arity = 1)
         public String conf;
 
     }
@@ -179,8 +184,6 @@ public class LocalCliOptionsParser {
 
     }
 
-
-
     /*
      * Sequence (FASTQ) CLI options
      */
@@ -208,7 +211,7 @@ public class LocalCliOptionsParser {
         @Parameter(names = {"-o", "--output"}, description = "Local output file to store the FastQ sequences according to the GA4GH/Avro model", required = true, arity = 1)
         public String output = null;
 
-        @Parameter(names = {"-x", "--compression"}, description = "Accepted values: snappy, deflate, bzip2, xz, null. Default: snappy", required = false, arity = 1)
+        @Parameter(names = {"-x", "--compression"}, description = "Accepted values: snappy, deflate, bzip2, xz, null. Default: snappy", arity = 1)
         public String compression = "snappy";
 
         //@Parameter(names = {"--to-avro"}, description = "", required = false)
@@ -233,7 +236,7 @@ public class LocalCliOptionsParser {
         //@Parameter(names = {"-f", "--filter"}, description = "", required = false, arity = 1)
         //public String filter = null;
 
-        @Parameter(names = {"-k", "--kmers"}, description = "Compute k-mers (according to the indicated length)", required = false, arity = 1)
+        @Parameter(names = {"-k", "--kmers"}, description = "Compute k-mers (according to the indicated length)", arity = 1)
         public Integer kmers = 0;
     }
 
@@ -245,41 +248,100 @@ public class LocalCliOptionsParser {
     public class AlignmentCommandOptions extends CommandOptions {
 
         ConvertAlignmentCommandOptions convertAlignmentCommandOptions;
+        ViewAlignmentCommandOptions viewAlignmentCommandOptions;
+        SortAlignmentCommandOptions sortAlignmentCommandOptions;
         StatsAlignmentCommandOptions statsAlignmentCommandOptions;
         CoverageAlignmentCommandOptions coverageAlignmentCommandOptions;
         QueryAlignmentCommandOptions queryAlignmentCommandOptions;
 
         public AlignmentCommandOptions() {
             this.convertAlignmentCommandOptions = new ConvertAlignmentCommandOptions();
+            this.viewAlignmentCommandOptions = new ViewAlignmentCommandOptions();
+            this.sortAlignmentCommandOptions = new SortAlignmentCommandOptions();
             this.statsAlignmentCommandOptions = new StatsAlignmentCommandOptions();
             this.coverageAlignmentCommandOptions = new CoverageAlignmentCommandOptions();
             this.queryAlignmentCommandOptions = new QueryAlignmentCommandOptions();
         }
     }
 
-    @Parameters(commandNames = {"convert"}, commandDescription = "Converts BAM files to different big data formats such as Avro")
+    @Parameters(commandNames = {"convert"}, commandDescription = "Converts BAM files to different big data formats such as Avro, Parquet")
     class ConvertAlignmentCommandOptions {
 
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
 
-        @Parameter(names = {"-i", "--input"}, description = "Local input file in BAM format", required = true, arity = 1)
+        @Parameter(names = {"-i", "--input"}, description = "Input filename in BAM format", required = true, arity = 1)
         public String input = null;
 
-        @Parameter(names = {"-o", "--output"}, description = "Local output file to store the BAM alignments according to the GA4GH/Avro model", required = true, arity = 1)
+        @Parameter(names = {"-o", "--output"}, description = "Output filename to store the BAM alignments according to the GA4GH/Avro model", required = true, arity = 1)
         public String output = null;
 
-        @Parameter(names = {"-x", "--compression"}, description = "Accepted values: snappy, deflate, bzip2, xz. Default: snappy", required = false, arity = 1)
-        public String compression = "snappy";
+        @Parameter(names = {"-x", "--compression"}, description = "Compression method, accepted values: gzip, snappy", arity = 1)
+        public String compression = "gzip";
 
-        //@Parameter(names = {"--to-avro"}, description = "", required = false)
-        //public boolean toAvro;
+        @Parameter(names = {"--to"}, description = "Destination format, accepted values: avro, parquet", arity = 1)
+        public String to = "avro";
 
-        @Parameter(names = {"--to-bam"}, description = "Convert back to BAM format. In this case, the input file has to be saved in the GA4GH/Avro model, and the output file will be in BAM format", required = false)
-        public boolean toBam;
+        @Parameter(names = {"--from"}, description = "Input file format, accepted values: bam, avro", arity = 1)
+        public String from = "bam";
 
-        @Parameter(names = {"--adjust-quality"}, description = "Compress quality field using 8 quality levels. Will loss information.", required = false)
-        public boolean adjustQuality;
+        @Parameter(names = {"--bin-qualities"}, description = "Compress the nucleotide qualities by using 8 quality levels (there will be loss of information)")
+        public boolean binQualities = false;
+
+        @Parameter(names = {"--min-mapq"}, description = "Minimum mapping quality", arity = 1)
+        public int minMapQ = 20;
+
+        @Parameter(names = {"--region"}, description = "Comma separated list of regions, e.g.: 1:300000-400000000,15:343453463-8787665654", arity = 1)
+        public String regions = null;
+
+        @Parameter(names = {"--region-file"}, description = "Input filename with a list of regions. One region per line, e.g.: 1:300000-400000000", arity = 1)
+        public String regionFilename = null;
+
+        @Parameter(names = {"--page-size"}, description = "Page size, only for parquet conversions", arity = 1)
+        public int pageSize = ParquetWriter.DEFAULT_PAGE_SIZE;
+
+        @Parameter(names = {"--block-size"}, description = "Block size, only for parquet conversions", arity = 1)
+        public int blockSize = ParquetWriter.DEFAULT_BLOCK_SIZE;
+    }
+
+    @Parameters(commandNames = {"view"}, commandDescription = "Display alignment Avro/Parquet files")
+    class ViewAlignmentCommandOptions {
+
+        @ParametersDelegate
+        public CommonCommandOptions commonOptions = commonCommandOptions;
+
+        @Parameter(names = {"-i", "--input"}, description = "Input file name (Avro/Parquet format)",
+                required = true, arity = 1)
+        public String input;
+
+        @Parameter(names = {"--head"}, description = "Output the first alignments of the file",
+                arity = 1)
+        public int head;
+
+        @Parameter(names = {"--schema"}, description = "Display the Avro schema")
+        public boolean schema = false;
+
+        @Parameter(names = {"--exclude-sequences"}, description = "Nucleotide sequences are not displayed")
+        public boolean excludeSequences = false;
+
+        @Parameter(names = {"--exclude-qualities"}, description = "Quality sequences are not displayed")
+        public boolean excludeQualities = false;
+
+        @Parameter(names = {"--sam"}, description = "Alignments are displayed in SAM format")
+        public boolean sam = false;
+    }
+
+    @Parameters(commandNames = {"sort"}, commandDescription = "Sort alignments of a GA4GH/Avro file")
+    class SortAlignmentCommandOptions {
+
+        @ParametersDelegate
+        public CommonCommandOptions commonOptions = commonCommandOptions;
+
+        @Parameter(names = {"-i", "--input"}, description = "Input filename containing alignments to sort (GA4GH/Avro format)", required = true, arity = 1)
+        public String input = null;
+
+        @Parameter(names = {"-o", "--output"}, description = "Output filename to store the alignments sorted (GA4GH/Avro format)", required = true, arity = 1)
+        public String output = null;
     }
 
     @Parameters(commandNames = {"stats"}, commandDescription = "Compute some stats for a file containing alignments according to the GA4GH/Avro model")
@@ -310,8 +372,11 @@ public class LocalCliOptionsParser {
         @Parameter(names = {"-o", "--output"}, description = "Local output directory to save the coverage in a text file", required = true, arity = 1)
         public String output = null;
 
-        //@Parameter(names = {"-f", "--filter"}, description = "", required = false, arity = 1)
-        //public String filter = null;
+        @Parameter(names = {"--region"}, description = "Comma separated list of regions, e.g.: 1:300000-400000000,15:343453463-8787665654", arity = 1)
+        public String regions = null;
+
+        @Parameter(names = {"--region-file"}, description = "Input filename with a list of regions. One region per line, e.g.: 1:300000-400000000", arity = 1)
+        public String regionFilename = null;
     }
 
     @Parameters(commandNames = {"query"}, commandDescription = "Command to execute queries against the Alignment input file (Avro or Parquet), the results will be saved into the output file.")
@@ -328,38 +393,38 @@ public class LocalCliOptionsParser {
                 required = true, arity = 1)
         public String output;
 
-        @Parameter(names = {"--region"}, description = "Query for region; comma separated list of regions, e.g.: 1:300000-400000000,15:343453463-8787665654", required = false)
+        @Parameter(names = {"--region"}, description = "Query for region; comma separated list of regions, e.g.: 1:300000-400000000,15:343453463-8787665654")
         public String regions;
 
-        @Parameter(names = {"--region-file"}, description = "Query for region; the list of regions is stored in this input file, one region (1:300000-400000000) per line", required = false)
+        @Parameter(names = {"--region-file"}, description = "Query for region; the list of regions is stored in this input file, one region (1:300000-400000000) per line")
         public String regionFile;
 
         @Parameter(names = {"--min-mapq"}, description = "Query for minimun mappging quality",
-                required = false, arity = 1)
+                arity = 1)
         public int minMapQ = 0;
 
         @Parameter(names = {"--require-flags"}, description = "Query for alignments matching theses flags",
-                required = false, arity = 1)
+                arity = 1)
         public int requireFlags = 4095;
 
         @Parameter(names = {"--filtering-flags"}, description = "Query for alignments not matching these flags",
-                required = false, arity = 1)
+                arity = 1)
         public int filteringFlags = 0;
 
         @Parameter(names = {"--min-tlen"}, description = "Query for alignments with a template length greater than the minimun",
-                required = false, arity = 1)
+                arity = 1)
         public int minTLen = 0;
 
         @Parameter(names = {"--max-tlen"}, description = "Query for alignments with a template length less than the maximum\"",
-                required = false, arity = 1)
+                arity = 1)
         public int maxTLen = Integer.MAX_VALUE;
 
         @Parameter(names = {"--min-alen"}, description = "Query for alignments with an alignment length greater than the minimun",
-                required = false, arity = 1)
+                arity = 1)
         public int minALen = 0;
 
         @Parameter(names = {"--max-alen"}, description = "Query for alignments with an alignment length less than the maximum\"",
-                required = false, arity = 1)
+                arity = 1)
         public int maxALen = Integer.MAX_VALUE;
     }
 
@@ -372,55 +437,92 @@ public class LocalCliOptionsParser {
 
         ConvertVariantCommandOptions convertVariantCommandOptions;
         AnnotateVariantCommandOptions annotateVariantCommandOptions;
+        ViewVariantCommandOptions viewVariantCommandOptions;
         QueryVariantCommandOptions queryVariantCommandOptions;
+        MetadataVariantCommandOptions metadataVariantCommandOptions;
+        RvTestsVariantCommandOptions rvtestsVariantCommandOptions;
 
         public VariantCommandOptions() {
             this.convertVariantCommandOptions = new ConvertVariantCommandOptions();
             this.annotateVariantCommandOptions = new AnnotateVariantCommandOptions();
+            this.viewVariantCommandOptions = new ViewVariantCommandOptions();
             this.queryVariantCommandOptions = new QueryVariantCommandOptions();
+            this.metadataVariantCommandOptions = new MetadataVariantCommandOptions();
+            this.rvtestsVariantCommandOptions = new RvTestsVariantCommandOptions();
         }
     }
 
-    @Parameters(commandNames = {"convert"}, commandDescription = "Convert gVCF/VCF files to different big data formats such as Avro and Parquet using GA4GH models")
+    @Parameters(commandNames = {"convert"}, commandDescription = "Convert gVCF/VCF files to different big data formats such as Avro and Parquet using OpenCB models")
     class ConvertVariantCommandOptions {
 
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
 
-        @Parameter(names = {"-i", "--input"}, description = "Input file name, usually a gVCF/VCF but it can be an Avro file when converting to Parquet.",
+        @Parameter(names = {"-i", "--input"}, description = "Input gVCF/VCF file name",
+//        @Parameter(names = {"-i", "--input"}, description = "Input file name, usually a gVCF/VCF but it can be an Avro file when converting to Parquet.",
                 required = true, arity = 1)
         public String input;
 
-        @Parameter(names = {"--to"}, description = "Destination Serialization format. Accepted values: avro, parquet and json", required = true)
-        public String to;
+        @Parameter(names = {"--to"}, description = "Destination format, accepted values: avro, parquet", arity = 1)
+        public String to = "avro";
 
-        @Parameter(names = {"-o", "--output"}, description = "Output file name.", required = false, arity = 1)
-        public String output;
+        @Parameter(names = {"--from"}, description = "Input file format, accepted values: vcf, avro", arity = 1)
+        public String from = "vcf";
 
-        @Parameter(names = {"-O"}, description = "Use the standard output.", required = false, arity = 0)
-        public boolean stdOutput;
+        @Parameter(names = {"-o", "--output"}, description = "Output file name", required = true, arity = 1)
+        public String output = null;
 
-        @Parameter(names = {"--from"}, description = "Accepted values: vcf, avro", required = false)
-        public String from;
+//        @Parameter(names = {"-O"}, description = "Use the standard output.", required = false, arity = 0)
+//        public boolean stdOutput;
 
-        @Parameter(names = {"--region"}, description = "Filter variant by regions, comma separated list of regions, e.g.: 1:300000-400000000,15:343453463-8787665654", required = false)
-        public String regions;
+//        @Parameter(names = {"--from"}, description = "Accepted values: vcf, avro", required = false)
+//        public String from;
 
-        @Parameter(names = {"-d", "--data-model"}, description = "Only for 'to-json' and 'to-avro' options. 'to-protobuf' is only available with opencb data models. Values: opencb, ga4gh", required = false, arity = 1)
-        public String dataModel = "opencb";
+//        @Parameter(names = {"-d", "--data-model"}, description = "Only for 'to-json' and 'to-avro' options. 'to-protobuf' is only available with opencb data models. Values: opencb, ga4gh", required = false, arity = 1)
+//        public String dataModel = "opencb";
 
-        @Parameter(names = {"-x", "--compression"}, description = "Available options for Avro are: : snappy, deflate, bzip2, xz. " +
-                "For JSON and ProtoBuf only 'gzip' is available. It compression is null,  it will be inferred compression from file extensions: .gz, .sz, ...", required = false, arity = 1)
-        public String compression = "deflate";
+//        @Parameter(names = {"-x", "--compression"}, description = "Available options for Avro are: : snappy, deflate, bzip2, xz. " +
+//                "For JSON and ProtoBuf only 'gzip' is available. It compression is null,  it will be inferred compression from file extensions: .gz, .sz, ...", required = false, arity = 1)
+//        public String compression = "deflate";
 
-        @Parameter(names = {"-t", "--num-threads"}, description = "Number of threads to use, this must be less than the number of cores", required = false)
+        @Parameter(names = {"-x", "--compression"}, description = "Compression method, acepted values: : snappy, gzip, bzip2, xz", arity = 1)
+        public String compression = "gzip";
+
+        @Parameter(names = {"--only-with-id"}, description = "Variants with IDs (variants with missing IDs will be discarded)")
+        public boolean validId = false;
+
+//        @Parameter(names = {"--min-quality"}, description = "Minimum quality", arity = 1)
+//        public int minQuality = 20;
+
+        @Parameter(names = {"--region"}, description = "Comma separated list of regions, e.g.: 1:300000-400000000,15:343453463-8787665654", arity = 1)
+        public String regions = null;
+
+        @Parameter(names = {"--region-file"}, description = "Input filename with a list of regions. One region per line, e.g.: 1:300000-400000000", arity = 1)
+        public String regionFilename = null;
+
+        @Parameter(names = {"--page-size"}, description = "Page size, only for parquet conversions", arity = 1)
+        public int pageSize = ParquetWriter.DEFAULT_PAGE_SIZE;
+
+        @Parameter(names = {"--block-size"}, description = "Block size, only for parquet conversions", arity = 1)
+        public int blockSize = ParquetWriter.DEFAULT_BLOCK_SIZE;
+
+        @Parameter(names = {"--species"}, description = "Species name", arity = 1)
+        public String species = "unknown";
+
+        @Parameter(names = {"--assembly"}, description = "Assembly name", arity = 1)
+        public String assembly = "unknown";
+
+        @Parameter(names = {"--dataset"}, description = "Dataset name", arity = 1)
+        public String dataset = "noname";
+
+        @Parameter(names = {"-t", "--num-threads"}, description = "Number of threads to use, usually this must be less than the number of cores")
         public int numThreads = 1;
 
-        @Parameter(names = {"--skip-normalization"}, description = "Whether to skip variant normalization", required = false)
-        public boolean skipNormalization;
+//        @Parameter(names = {"--skip-normalization"}, description = "Whether to skip variant normalization", required = false)
+//        public boolean skipNormalization;
 
-        @DynamicParameter(names = {"-D"}, hidden = true)
-        public Map<String, String> options = new HashMap<>();
+//        @DynamicParameter(names = {"-D"}, hidden = true)
+//        public Map<String, String> options = new HashMap<>();
     }
 
 
@@ -430,7 +532,7 @@ public class LocalCliOptionsParser {
         @ParametersDelegate
         public CommonCommandOptions commonOptions = commonCommandOptions;
 
-        @Parameter(names = {"-i", "--input"}, description = "Input file name, usually a gVCF/VCF but it can be an Avro file when converting to Parquet.",
+        @Parameter(names = {"-i", "--input"}, description = "0000 Input file name, usually a gVCF/VCF but it can be an Avro file when converting to Parquet.",
                 required = true, arity = 1)
         public String input;
 
@@ -439,7 +541,34 @@ public class LocalCliOptionsParser {
         public String ouput;
     }
 
-    @Parameters(commandNames = {"query"}, commandDescription = "Command to execute queries against the input file (Avro or Parquet), the results will be saved into the output file.")
+    @Parameters(commandNames = {"view"}, commandDescription = "Display variant Avro/Parquet files")
+    class ViewVariantCommandOptions {
+
+        @ParametersDelegate
+        public CommonCommandOptions commonOptions = commonCommandOptions;
+
+        @Parameter(names = {"-i", "--input"}, description = "Input file name (Avro/Parquet format)",
+                required = true, arity = 1)
+        public String input;
+
+        @Parameter(names = {"--head"}, description = "Output the first variants of the file",
+                arity = 1)
+        public int head;
+
+        @Parameter(names = {"--schema"}, description = "Display the Avro schema")
+        public boolean schema = false;
+
+        @Parameter(names = {"--exclude-samples"}, description = "Sample data are not displayed")
+        public boolean excludeSamples = false;
+
+        @Parameter(names = {"--exclude-annotations"}, description = "Annotations are not displayed")
+        public boolean excludeAnnotations = false;
+
+        @Parameter(names = {"--vcf"}, description = "Variants are displayed in VCF format")
+        public boolean vcf = false;
+    }
+
+    @Parameters(commandNames = {"query"}, commandDescription = "Execute queries against the input file (Avro or Parquet) saving the results in the output file")
     class QueryVariantCommandOptions {
 
         @ParametersDelegate
@@ -449,28 +578,100 @@ public class LocalCliOptionsParser {
                 required = true, arity = 1)
         public String input;
 
-        @Parameter(names = {"-o", "--output"}, description = "Output file name.",
-                required = true, arity = 1)
+        @Parameter(names = {"-o", "--output"}, description = "Output file name. Its extension .json, .parquet and .avro, indicates the output format.",
+                arity = 1)
         public String output;
 
         @Parameter(names = {"--id"}, description = "Query for ID; comma separated list of IDs, e.g.: \"rs312411,rs421225\"",
-                required = false, arity = 1)
+                arity = 1)
         public String ids;
 
-        @Parameter(names = {"--type"}, description = "Query for type; comma separated list of IDs, e.g.: \"SNP,SNV\"",
-                required = false, arity = 1)
+        @Parameter(names = {"--id-file"}, description = "Query for ID that are stored in a file, one ID per line, e.g.: rs312411",
+                arity = 1)
+        public String idFilename;
+
+        @Parameter(names = {"--type"}, description = "Query for type; comma separated list of IDs, e.g.: \"INDEL,SNP,SNV\"",
+                arity = 1)
         public String types;
 
-        @Parameter(names = {"--region"}, description = "Query for region; comma separated list of regions, e.g.: 1:300000-400000000,15:343453463-8787665654", required = false)
+        @Parameter(names = {"--s", "--study"}, description = "Query for study; comma separated list of study names",
+                arity = 1)
+        public String studies;
+
+        @Parameter(names = {"--biotype"}, description = "Query for biotype; comma separated list of biotype names, e.g.: protein_coding, pseudogene",
+                arity = 1)
+        public String biotypes;
+
+        @Parameter(names = {"-r", "--region"}, description = "Query for region; comma separated list of regions, e.g.: 1:300000-400000000,15:343453463-8787665654",
+                arity = 1)
         public String regions;
 
-        @Parameter(names = {"--consequence-type-so-accession"}, description = "Query for Sequence Ontology (SO) term accession code; comma separated list of accession codes of the SO terms related to the variant consequence type, e.g.: SO:32234,SO:00124",
-                required = false, arity = 1)
-        public String so_accessions;
+        @Parameter(names = {"--region-file"}, description = "Query for regions that are stored in a file, one region per line,  e.g.: 1:6700000-560000000",
+                arity = 1)
+        public String regionFilename;
 
-        @Parameter(names = {"--consequence-type-so-name"}, description = "Query for Sequence Ontology (SO) term name; comma separated list of names of the SO terms related to the variant consequence type, e.g.:  \"transgenic insertion, genetic marker\"",
-                required = false, arity = 1)
-        public String so_names;
+        @Parameter(names = {"--maf"}, description = "Query for the Minor Allele Frequency of a given study and cohort. Use the following format enclosed with double quotes: \"study_name::cohort_name[<|>|<=|>=|==|!=]value\", e.g.: \"1000g::all>0.4\"",
+                arity = 1)
+        public String maf;
+
+        @Parameter(names = {"--mgf"}, description = "Query for the Minor Genotype Frequency of a given study and cohort. Use the following format enclosed with double quotes: \"study_name::cohort_name[<|>|<=|>=|==|!=]value\", e.g.: \"1000g::all>0.18198\"",
+                arity = 1)
+        public String mgf;
+
+        @Parameter(names = {"--missing-allele"}, description = "Query for the number of missing alleles of a given study and cohort. Use the following format enclosed with double quotes: \"study_name::cohort_name[<|>|<=|>=|==|!=]value\", e.g.: \"1000g::all==5\"",
+                arity = 1)
+        public String missingAlleles;
+
+        @Parameter(names = {"--missing-genotype"}, description = "Query for the number of missing genotypes of a given study and cohort. Use the following format enclosed with double quotes: \"study_name::cohort_name[<|>|<=|>=|==|!=]value\", e.g.: \"1000g::all!=0\"",
+                arity = 1)
+        public String missingGenotypes;
+
+        @Parameter(names = {"--ct", "--consequence-type"}, description = "Query for Sequence Ontology term names or accession codes; comma separated (use double quotes if you provide term names), e.g.: \"transgenic insertion,SO:32234,SO:00124\"",
+                arity = 1)
+        public String consequenceTypes;
+
+        @Parameter(names = {"--gene"}, description = "Query for gene; comma separated list of gene names, e.g.: \"BIN3,ZNF517\"",
+                arity = 1)
+        public String genes;
+
+        @Parameter(names = {"--clinvar"}, description = "Query for clinvar (accession); comma separated list of accessions", arity = 1)
+        public String clinvar;
+
+        @Parameter(names = {"--cosmic"}, description = "Query for cosmic (mutation ID); comma separated list of mutations IDs", arity = 1)
+        public String cosmic;
+
+//        @Parameter(names = {"--gwas"}, description = "Query for gwas (traits); comma separated list of traits",  arity = 1)
+//        public String gwas;
+
+        @Parameter(names = {"--conservation"}, description = "Query for conservation scores (phastCons, phylop, gerp); comma separated list of scores and enclosed with double quotes, e.g.: \"phylop<0.3,phastCons<0.1\"",
+                arity = 1)
+        public String conservScores;
+
+        @Parameter(names = {"--ps", "--protein-substitution"}, description = "Query for protein substitution scores (polyphen, sift); comma separated list of scores and enclosed with double quotes, e.g.: \"polyphen>0.3,sift>0.6\"",
+                arity = 1)
+        public String substScores;
+
+        @Parameter(names = {"--pf", "--population-frequency"}, description = "Query for alternate population frequency of a given study. Use the following format enclosed with double quotes: \"study_name::population_name[<|>|<=|>=|==|!=]frequency_value\", e.g.: \"1000g::CEU<0.4\"",
+                arity = 1)
+        public String pf;
+
+        @Parameter(names = {"--pmaf", "--population-maf"}, description = "Query for population minor allele frequency of a given study. Use the following the format enclosed with double quotes: \"study_name::population_name[<|>|<=|>=|==|!=]frequency_value\", e.g.: \"1000g::PJL<=0.25\"",
+                arity = 1)
+        public String pmaf;
+
+        @Parameter(names = {"--sample-genotype"}, description = "Query for sample genotypes. Use the following the format enclosed with double quotes: \"sample_index1:genotype1,genotype;sample_index2:genotype1\", e.g.: \"0:0/0;2:1/0,1/1\"",
+                arity = 1)
+        public String sampleGenotypes;
+
+        @Parameter(names = {"--group-by"}, description = "Display the number of output records grouped by 'gene' or 'consequence_type'",
+                arity = 1)
+        public String groupBy;
+
+        @Parameter(names = {"--limit"}, description = "Display the first output records", arity = 1)
+        public int limit = 0;
+
+        @Parameter(names = {"--count"}, description = "Display the number of output records")
+        public boolean count = false;
     }
 
 
@@ -507,6 +708,69 @@ public class LocalCliOptionsParser {
         }
     }
 
+    @Parameters(commandNames = {"metadata"}, commandDescription = "Manage metadata information")
+    class MetadataVariantCommandOptions {
+
+        @ParametersDelegate
+        public CommonCommandOptions commonOptions = commonCommandOptions;
+
+        @Parameter(names = {"-i", "--input"}, description = "Input file name (Avro/Parquet format).",
+                required = true, arity = 1)
+        public String input;
+
+        @Parameter(names = {"--dataset"}, description = "Target dataset.",
+                arity = 1)
+        public String datasetId = null;
+
+        @Parameter(names = {"--load-pedigree"}, description = "Pedigree file name (in PED format) to load in the target dataset. A pedigree file contains information about family relationships, phenotype, gendre,... (extended PED format).",
+                arity = 1)
+        public String loadPedFilename = null;
+
+        @Parameter(names = {"--save-pedigree"}, description = "File name where to save the pedigree information (in PED format) of the target dataset. A pedigree file contains information about family relationships, phenotype, gendre,... (extended PED format).",
+                arity = 1)
+        public String savePedFilename = null;
+
+        @Parameter(names = {"--create-cohort"}, description = "Create new cohort for the target dataset. Expected value format is: cohort_name::sample_name1,sample_name2,... or dataset_name::cohort_name::sample_name_file\"")
+        public String createCohort = null;
+
+        @Parameter(names = {"--rename-cohort"}, description = "Rename a cohort of the target dataset. Expected value format is: old_name::new_name")
+        public String renameCohort = null;
+
+        @Parameter(names = {"--rename-dataset"}, description = "Rename the target dataset to this new name.")
+        public String renameDataset = null;
+
+        @Parameter(names = {"--summary"}, description = "Output metadata summary.")
+        public boolean summary = false;
+    }
+
+    @Parameters(commandNames = {"rvtests"}, commandDescription = "Execute the 'rvtests' program.")
+    class RvTestsVariantCommandOptions {
+
+        @ParametersDelegate
+        public CommonCommandOptions commonOptions = commonCommandOptions;
+
+        @Parameter(names = {"-i", "--input"}, description = "Input file name (in Avro/Parquet file format).",
+                required = true, arity = 1)
+        public String inFilename;
+
+        @Parameter(names = {"-m", "--metadata"}, description = "Input metadata file name.",
+                required = true, arity = 1)
+        public String metaFilename;
+
+        @Parameter(names = {"-o", "--output"}, description = "Output directory name to save the rvtests results.",
+                required = true, arity = 1)
+        public String outDirname;
+
+        @Parameter(names = {"--dataset"}, description = "Target dataset.",
+                arity = 1)
+        public String datasetId = null;
+
+        @Parameter(names = {"-c", "--config"}, description = "Configuration file name containing the rvtests parameters.",
+                required = true, arity = 1)
+        public String confFilename;
+    }
+
+
     private void printMainUsage() {
         // TODO This is a nasty hack. By some unknown reason JCommander only prints the description from first command
         Map<String, String> commandDescription = new HashMap<>();
@@ -540,7 +804,6 @@ public class LocalCliOptionsParser {
         }
     }
 
-
     public GeneralOptions getGeneralOptions() {
         return generalOptions;
     }
@@ -568,5 +831,4 @@ public class LocalCliOptionsParser {
     public VariantCommandOptions getVariantCommandOptions() {
         return variantCommandOptions;
     }
-
 }

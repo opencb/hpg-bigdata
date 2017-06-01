@@ -36,6 +36,11 @@
         </dependency>
 
         <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-mllib_2.11</artifactId>
+            <version>2.0.2</version>
+        </dependency>
+        <dependency>
             <groupId>org.seqdoop</groupId>
             <artifactId>hadoop-bam</artifactId>
             <version>7.0.0</version>
@@ -53,14 +58,24 @@
             <classifier>hadoop2</classifier>
         </dependency>
         <!--<dependency>-->
-            <!--<groupId>org.apache.parquet</groupId>-->
-            <!--<artifactId>parquet-avro</artifactId>-->
-            <!--<version>${parquet.version}</version>-->
+        <!--<groupId>org.apache.parquet</groupId>-->
+        <!--<artifactId>parquet-avro</artifactId>-->
+        <!--<version>${parquet.version}</version>-->
         <!--</dependency>-->
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-client</artifactId>
             <version>${hadoop.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.sun.jersey</groupId>
+                    <artifactId>jersey-client</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.sun.jersey</groupId>
+                    <artifactId>jersey-core</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.hbase</groupId>
@@ -71,6 +86,16 @@
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-server</artifactId>
             <version>${hbase.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.sun.jersey</groupId>
+                    <artifactId>jersey-server</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.sun.jersey</groupId>
+                    <artifactId>jersey-core</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -80,6 +105,11 @@
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-mllib_2.11</artifactId>
             <version>2.0.2</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>2.6</version>
         </dependency>
     </dependencies>
 

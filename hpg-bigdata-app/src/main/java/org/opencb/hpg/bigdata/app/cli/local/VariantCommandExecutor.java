@@ -16,41 +16,47 @@
 
 package org.opencb.hpg.bigdata.app.cli.local;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFFileReader;
-import org.apache.avro.Schema;
+import org.apache.avro.file.DataFileStream;
+import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
 import org.apache.spark.sql.SparkSession;
-import org.opencb.biodata.formats.variant.vcf4.FullVcfCodec;
+import org.opencb.biodata.formats.pedigree.PedigreeManager;
 import org.opencb.biodata.models.core.Region;
+import org.opencb.biodata.models.core.pedigree.Pedigree;
+import org.opencb.biodata.models.metadata.SampleSetType;
 import org.opencb.biodata.models.variant.Variant;
+import org.opencb.biodata.models.variant.VariantMetadataManager;
+import org.opencb.biodata.models.variant.avro.StudyEntry;
 import org.opencb.biodata.models.variant.avro.VariantAvro;
+import org.opencb.biodata.models.variant.avro.VariantFileMetadata;
 import org.opencb.biodata.tools.variant.converters.avro.VariantContextToVariantConverter;
-import org.opencb.commons.io.DataReader;
-import org.opencb.commons.run.ParallelTaskRunner;
 import org.opencb.commons.utils.FileUtils;
+import org.opencb.hpg.bigdata.analysis.variant.RvTestsAdaptor;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
 import org.opencb.hpg.bigdata.core.avro.VariantAvroAnnotator;
 import org.opencb.hpg.bigdata.core.avro.VariantAvroSerializer;
-import org.opencb.hpg.bigdata.core.converters.variation.VariantAvroEncoderTask;
 import org.opencb.hpg.bigdata.core.converters.variation.VariantContext2VariantConverter;
-import org.opencb.hpg.bigdata.core.io.VcfBlockIterator;
-import org.opencb.hpg.bigdata.core.io.avro.AvroFileWriter;
 import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
 import org.opencb.hpg.bigdata.core.lib.VariantDataset;
 import org.opencb.hpg.bigdata.core.parquet.VariantParquetConverter;
 
 import java.io.*;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
+import static java.nio.file.Paths.get;
+
+//import org.opencb.hpg.bigdata.analysis.variant.analysis.RvTestsAdaptor;
 
 /**
  * Created by imedina on 25/06/15.
@@ -63,7 +69,6 @@ public class VariantCommandExecutor extends CommandExecutor {
 //      super(variantCommandOptions.c, fastqCommandOptions.verbose, fastqCommandOptions.conf);
         this.variantCommandOptions = variantCommandOptions;
     }
-
 
     @Override
     public void execute() throws Exception {
@@ -80,74 +85,238 @@ public class VariantCommandExecutor extends CommandExecutor {
                         variantCommandOptions.convertVariantCommandOptions.commonOptions.verbose,
                         variantCommandOptions.convertVariantCommandOptions.commonOptions.conf);
                 annotate();
+                break;
+            case "view":
+                init(variantCommandOptions.viewVariantCommandOptions.commonOptions.logLevel,
+                        variantCommandOptions.viewVariantCommandOptions.commonOptions.verbose,
+                        variantCommandOptions.viewVariantCommandOptions.commonOptions.conf);
+                view();
+                break;
             case "query":
                 init(variantCommandOptions.queryVariantCommandOptions.commonOptions.logLevel,
                         variantCommandOptions.queryVariantCommandOptions.commonOptions.verbose,
                         variantCommandOptions.queryVariantCommandOptions.commonOptions.conf);
                 query();
                 break;
+            case "metadata":
+                init(variantCommandOptions.metadataVariantCommandOptions.commonOptions.logLevel,
+                        variantCommandOptions.metadataVariantCommandOptions.commonOptions.verbose,
+                        variantCommandOptions.metadataVariantCommandOptions.commonOptions.conf);
+                metadata();
+                break;
+            case "rvtests":
+                init(variantCommandOptions.rvtestsVariantCommandOptions.commonOptions.logLevel,
+                        variantCommandOptions.rvtestsVariantCommandOptions.commonOptions.verbose,
+                        variantCommandOptions.rvtestsVariantCommandOptions.commonOptions.conf);
+                rvtests();
+                break;
             default:
                 break;
         }
     }
 
-    private void convert() throws Exception {
-        // check mandatory parameter 'input file'
+    private void convert() throws IOException {
+        // sanity check: paremeter 'to'
+        String to = variantCommandOptions.convertVariantCommandOptions.to.toLowerCase();
+        if (!to.equals("avro") && !to.equals("parquet")) {
+            throw new IllegalArgumentException("Unknown serialization format: " + to + ". Valid values: avro, parquet");
+        }
+        boolean toParquet = to.equals("parquet");
+
+        String from = variantCommandOptions.convertVariantCommandOptions.from.toLowerCase();
+        if (!from.equals("vcf") && !from.equals("avro")) {
+            throw new IllegalArgumentException("Unknown input format: " + from + ". Valid values: vcf, avro");
+        }
+        boolean fromAvro = from.equals("avro");
+
+        // sanity check: parameter 'compression'
+        String compressionCodecName = variantCommandOptions.convertVariantCommandOptions.compression.toLowerCase();
+        if (!compressionCodecName.equals("gzip")
+                && !compressionCodecName.equals("snappy")) {
+            throw new IllegalArgumentException("Unknown compression method: " + compressionCodecName
+                    + ". Valid values: gzip, snappy");
+        }
+
+        // sanity check: input file
         Path inputPath = Paths.get(variantCommandOptions.convertVariantCommandOptions.input);
         FileUtils.checkFile(inputPath);
 
-        // check mandatory parameter 'to'
-        String to = variantCommandOptions.convertVariantCommandOptions.to;
-        if (!to.equals("avro") && !to.equals("parquet") && !to.equals("json")) {
-            throw new IllegalArgumentException("Unknown serialization format: " + to + ". Valid values: avro, parquet and json");
-        }
+        // sanity check: output file
+        String output = CliUtils.getOutputFilename(variantCommandOptions.convertVariantCommandOptions.input,
+                variantCommandOptions.convertVariantCommandOptions.output, to);
 
-        // check output
-        String output = variantCommandOptions.convertVariantCommandOptions.output;
-        boolean stdOutput = variantCommandOptions.convertVariantCommandOptions.stdOutput;
-        OutputStream outputStream;
-        if (stdOutput) {
-            output = "STDOUT";
-        } else {
-            if (output != null && !output.isEmpty()) {
-                Path parent = Paths.get(output).toAbsolutePath().getParent();
-                if (parent != null) { // null if output is a file in the current directory
-                    FileUtils.checkDirectory(parent, true); // Throws exception, if does not exist
+        long startTime, elapsedTime;
+
+        // convert to parquet if required
+        if (toParquet) {
+            // sanity check: rowGroupSize and pageSize for parquet conversion
+            int rowGroupSize = variantCommandOptions.convertVariantCommandOptions.blockSize;
+            if (rowGroupSize <= 0) {
+                throw new IllegalArgumentException("Invalid block size: " + rowGroupSize
+                            + ". It must be greater than 0");
+            }
+            int pageSize = variantCommandOptions.convertVariantCommandOptions.pageSize;
+            if (pageSize <= 0) {
+                throw new IllegalArgumentException("Invalid page size: " + pageSize
+                            + ". It must be greater than 0");
+            }
+
+            // create the Parquet writer and add the necessary filters
+            VariantParquetConverter parquetConverter = new VariantParquetConverter(
+                    CompressionCodecName.fromConf(compressionCodecName), rowGroupSize, pageSize);
+
+            // valid id filter
+            if (variantCommandOptions.convertVariantCommandOptions.validId) {
+                parquetConverter.addValidIdFilter();
+            }
+
+//        // set minimum quality filter
+//        if (variantCommandOptions.convertVariantCommandOptions.minQuality > 0) {
+//            parquetConverter.addMinQualityFilter(variantCommandOptions.convertVariantCommandOptions.minQuality);
+//        }
+
+            // region filter management,
+            // we use the same region list to store all regions from both parameter --regions and --region-file
+            List<Region> regions = CliUtils.getRegionList(variantCommandOptions.convertVariantCommandOptions.regions,
+                    variantCommandOptions.convertVariantCommandOptions.regionFilename);
+            if (regions != null && regions.size() > 0) {
+                parquetConverter.addRegionFilter(regions, false);
+            }
+
+            InputStream inputStream = new FileInputStream(inputPath.toString());
+            if (fromAvro) {
+                // convert to AVRO -> PARQUET
+                System.out.println("\n\nStarting AVRO->PARQUET conversion...\n");
+                startTime = System.currentTimeMillis();
+
+                if (variantCommandOptions.convertVariantCommandOptions.numThreads > 1) {
+                    parquetConverter.toParquetFromAvro(inputStream, output,
+                            variantCommandOptions.convertVariantCommandOptions.numThreads);
+                } else {
+                    parquetConverter.toParquetFromAvro(inputStream, output);
+                }
+
+                elapsedTime = System.currentTimeMillis() - startTime;
+                System.out.println("\n\nFinish AVRO->PARQUET conversion in " + (elapsedTime / 1000F) + " sec\n");
+
+                // metadata file management
+                File metaFile = new File(inputPath.toString() + ".meta.json");
+                if (1 == 0 && metaFile.exists()) {
+                    File outMetaFile = new File(output + ".meta.json");
+
+                    // read metadata JSON to update filename
+                    ObjectMapper mapper = new ObjectMapper();
+                    //mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+                    VariantFileMetadata data = mapper.readValue(metaFile, VariantFileMetadata.class);
+                    data.setFileName(outMetaFile.toString());
+
+                    // write the metadata
+                    PrintWriter writer = new PrintWriter(new FileOutputStream(outMetaFile));
+                    writer.write(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(
+                            mapper.readValue(data.toString(), Object.class)));
+                    writer.close();
                 }
             } else {
-                output = inputPath.toString() + "." + to;
+                // convert to VCF -> PARQUET
+                System.out.println("\n\nStarting VCF->PARQUET conversion...\n");
+                startTime = System.currentTimeMillis();
+                parquetConverter.toParquetFromVcf(inputPath.toString(), output);
+                elapsedTime = System.currentTimeMillis() - startTime;
+                System.out.println("\n\nFinish VCF->PARQUET conversion in " + (elapsedTime / 1000F) + " sec\n");
             }
-            outputStream = new FileOutputStream(output);
+        } else {
+            // convert to VCF -> AVRO
+
+            // create the Avro writer and add the necessary filters
+            VariantAvroSerializer avroSerializer = new VariantAvroSerializer(
+                    variantCommandOptions.convertVariantCommandOptions.species,
+                    variantCommandOptions.convertVariantCommandOptions.assembly,
+                    variantCommandOptions.convertVariantCommandOptions.dataset,
+                    compressionCodecName);
+
+            // valid id filter
+            if (variantCommandOptions.convertVariantCommandOptions.validId) {
+                avroSerializer.addValidIdFilter();
+            }
+
+//        // set minimum quality filter
+//        if (variantCommandOptions.convertVariantCommandOptions.minQuality > 0) {
+//            avroSerializer.addMinQualityFilter(variantCommandOptions.convertVariantCommandOptions.minQuality);
+//        }
+
+            // region filter management,
+            // we use the same region list to store all regions from both parameter --regions and --region-file
+            List<Region> regions = CliUtils.getRegionList(variantCommandOptions.convertVariantCommandOptions.regions,
+                    variantCommandOptions.convertVariantCommandOptions.regionFilename);
+            if (regions != null && regions.size() > 0) {
+                avroSerializer.addRegionFilter(regions, false);
+            }
+
+            System.out.println("\n\nStarting VCF->AVRO conversion...\n");
+            startTime = System.currentTimeMillis();
+            avroSerializer.toAvro(inputPath.toString(), output);
+            elapsedTime = System.currentTimeMillis() - startTime;
+            System.out.println("\n\nFinish VCF->AVRO conversion in " + (elapsedTime / 1000F) + " sec\n");
         }
-
-        // compression
-        String compression = variantCommandOptions.convertVariantCommandOptions.compression;
-
-        // region filter
-        List<Region> regions = null;
-        if (StringUtils.isNotEmpty(variantCommandOptions.convertVariantCommandOptions.regions)) {
-            regions = Region.parseRegions(variantCommandOptions.convertVariantCommandOptions.regions);
-        }
-
-        switch (variantCommandOptions.convertVariantCommandOptions.to) {
-            case "avro":
-                VariantAvroSerializer avroSerializer = new VariantAvroSerializer(compression);
-                if (regions != null) {
-                    regions.forEach(avroSerializer::addRegionFilter);
-                }
-                avroSerializer.toAvro(inputPath.toString(), output);
-                break;
-            case "parquet":
-                InputStream is = new FileInputStream(variantCommandOptions.convertVariantCommandOptions.input);
-                VariantParquetConverter parquetConverter = new VariantParquetConverter();
-                parquetConverter.toParquet(is, variantCommandOptions.convertVariantCommandOptions.output + "2");
-                break;
-            default:
-                System.out.println("No valid format: " + variantCommandOptions.convertVariantCommandOptions.to);
-                break;
-        }
-
     }
+
+//    private void convert3() throws Exception {
+//        // check mandatory parameter 'input file'
+//        Path inputPath = Paths.get(variantCommandOptions.convertVariantCommandOptions.input);
+//        FileUtils.checkFile(inputPath);
+//
+//        // check mandatory parameter 'to'
+//        String to = variantCommandOptions.convertVariantCommandOptions.to;
+//        if (!to.equals("avro") && !to.equals("parquet") && !to.equals("json")) {
+//            throw new IllegalArgumentException("Unknown serialization format: " + to + ". Valid values: avro, parquet and json");
+//        }
+//
+//        // check output
+//        String output = variantCommandOptions.convertVariantCommandOptions.output;
+//        boolean stdOutput = variantCommandOptions.convertVariantCommandOptions.stdOutput;
+//        OutputStream outputStream;
+//        if (stdOutput) {
+//            output = "STDOUT";
+//        } else {
+//            if (output != null && !output.isEmpty()) {
+//                Path parent = Paths.get(output).toAbsolutePath().getParent();
+//                if (parent != null) { // null if output is a file in the current directory
+//                    FileUtils.checkDirectory(parent, true); // Throws exception, if does not exist
+//                }
+//            } else {
+//                output = inputPath.toString() + "." + to;
+//            }
+//            outputStream = new FileOutputStream(output);
+//        }
+//
+//        // compression
+//        String compression = variantCommandOptions.convertVariantCommandOptions.compression;
+//
+//        // region filter
+//        List<Region> regions = null;
+//        if (StringUtils.isNotEmpty(variantCommandOptions.convertVariantCommandOptions.regions)) {
+//            regions = Region.parseRegions(variantCommandOptions.convertVariantCommandOptions.regions);
+//        }
+//
+//        switch (variantCommandOptions.convertVariantCommandOptions.to) {
+//            case "avro":
+//                VariantParquetSerializer avroSerializer = new VariantParquetSerializer(compression);
+//                if (regions != null) {
+//                    regions.forEach(avroSerializer::addRegionFilter);
+//                }
+//                avroSerializer.toAvro(inputPath.toString(), output);
+//                break;
+//            case "parquet":
+//                InputStream is = new FileInputStream(variantCommandOptions.convertVariantCommandOptions.input);
+//                VariantParquetConverter parquetConverter = new VariantParquetConverter();
+//                parquetConverter.toParquet(is, variantCommandOptions.convertVariantCommandOptions.output + "2");
+//                break;
+//            default:
+//                System.out.println("No valid format: " + variantCommandOptions.convertVariantCommandOptions.to);
+//                break;
+//        }
+//
+//    }
 
 //    private void convert2() throws Exception {
 //        Path inputPath = Paths.get(variantCommandOptions.convertVariantCommandOptions.input);
@@ -261,7 +430,7 @@ public class VariantCommandExecutor extends CommandExecutor {
 //            }
 //
 //            System.out.println("compression = " + compression);
-//            VariantAvroSerializer avroSerializer = new VariantAvroSerializer(compression);
+//            VariantParquetSerializer avroSerializer = new VariantParquetSerializer(compression);
 //            avroSerializer.toAvro(inputPath.toString(), output);
 //
 //            /*
@@ -325,7 +494,7 @@ public class VariantCommandExecutor extends CommandExecutor {
         reader.close();
     }
 
-//    private void convertToProtoBuf(Path inputPath, OutputStream outputStream) throws Exception {
+    private void convertToProtoBuf(Path inputPath, OutputStream outputStream) throws Exception {
 //        // Creating reader
 //        VcfBlockIterator iterator = (StringUtils.equals("-", inputPath.toAbsolutePath().toString()))
 //                ? new VcfBlockIterator(new BufferedInputStream(System.in), new FullVcfCodec())
@@ -362,25 +531,25 @@ public class VariantCommandExecutor extends CommandExecutor {
 //        );
 //        runner.run();
 //        outputStream.close();
-//
-////        InputStream inputStream = new FileInputStream(variantCommandOptions.convertVariantCommandOptions.output);
-////        if (outputStream instanceof GZIPOutputStream) {
-////            inputStream = new GZIPInputStream(inputStream);
-////        }
-////        VariantProto.Variant variant;
-////        int i = 0;
-////        try {
-////            while ((variant = VariantProto.Variant.parseDelimitedFrom(inputStream)) != null) {
-////                i++;
-////            System.out.println(variant.getChromosome() + ":" + variant.getStart()
-////                    + ":" + variant.getReference() + ":" + variant.getAlternate());
-//////            System.out.println("variant = " + variant.toString());
-////            }
-////        } finally {
-////            System.out.println("Num variants = " + i);
-////            inputStream.close();
-////        }
-//    }
+
+//        InputStream inputStream = new FileInputStream(variantCommandOptions.convertVariantCommandOptions.output);
+//        if (outputStream instanceof GZIPOutputStream) {
+//            inputStream = new GZIPInputStream(inputStream);
+//        }
+//        VariantProto.Variant variant;
+//        int i = 0;
+//        try {
+//            while ((variant = VariantProto.Variant.parseDelimitedFrom(inputStream)) != null) {
+//                i++;
+//            System.out.println(variant.getChromosome() + ":" + variant.getStart()
+//                    + ":" + variant.getReference() + ":" + variant.getAlternate());
+////            System.out.println("variant = " + variant.toString());
+//            }
+//        } finally {
+//            System.out.println("Num variants = " + i);
+//            inputStream.close();
+//        }
+    }
 
     /*
 
@@ -411,70 +580,70 @@ public class VariantCommandExecutor extends CommandExecutor {
      */
 
     private void convertToAvro(Path inputPath, String compression, String dataModel, OutputStream outputStream) throws Exception {
-        // Creating reader
-        VcfBlockIterator iterator = (StringUtils.equals("-", inputPath.toAbsolutePath().toString()))
-                ? new VcfBlockIterator(new BufferedInputStream(System.in), new FullVcfCodec())
-                : new VcfBlockIterator(inputPath.toFile(), new FullVcfCodec());
-        DataReader<CharBuffer> vcfDataReader = iterator.toCharBufferDataReader();
-
-
-        ArrayList<String> sampleNamesInOrder = iterator.getHeader().getSampleNamesInOrder();
-//        System.out.println("sampleNamesInOrder = " + sampleNamesInOrder);
-
-        // main loop
-        int numTasks = Math.max(variantCommandOptions.convertVariantCommandOptions.numThreads, 1);
-        int batchSize = 1024 * 1024;  //Batch size in bytes
-        int capacity = numTasks + 1;
-//            VariantConverterContext variantConverterContext = new VariantConverterContext();
-
-//        long start = System.currentTimeMillis();
-
-//        final VariantContextToVariantConverter converter = new VariantContextToVariantConverter("", "", sampleNamesInOrder);
-//        List<CharBuffer> read;
-//        while ((read = vcfDataReader.read()) != null {
-//            converter.convert(read.)
+//        // Creating reader
+//        VcfBlockIterator iterator = (StringUtils.equals("-", inputPath.toAbsolutePath().toString()))
+//                ? new VcfBlockIterator(new BufferedInputStream(System.in), new FullVcfCodec())
+//                : new VcfBlockIterator(inputPath.toFile(), new FullVcfCodec());
+//        DataReader<CharBuffer> vcfDataReader = iterator.toCharBufferDataReader();
+//
+//
+//        ArrayList<String> sampleNamesInOrder = iterator.getHeader().getSampleNamesInOrder();
+////        System.out.println("sampleNamesInOrder = " + sampleNamesInOrder);
+//
+//        // main loop
+//        int numTasks = Math.max(variantCommandOptions.convertVariantCommandOptions.numThreads, 1);
+//        int batchSize = 1024 * 1024;  //Batch size in bytes
+//        int capacity = numTasks + 1;
+////            VariantConverterContext variantConverterContext = new VariantConverterContext();
+//
+////        long start = System.currentTimeMillis();
+//
+////        final VariantContextToVariantConverter converter = new VariantContextToVariantConverter("", "", sampleNamesInOrder);
+////        List<CharBuffer> read;
+////        while ((read = vcfDataReader.read()) != null {
+////            converter.convert(read.)
+////        }
+//
+////        Old implementation:
+//
+//        ParallelTaskRunner.Config config = new ParallelTaskRunner.Config(numTasks, batchSize, capacity, false);
+//        ParallelTaskRunner<CharBuffer, ByteBuffer> runner;
+//        switch (dataModel.toLowerCase()) {
+//            case "opencb": {
+//                Schema classSchema = VariantAvro.getClassSchema();
+//                // Converter
+//                final VariantContextToVariantConverter converter = new VariantContextToVariantConverter("", "", sampleNamesInOrder);
+//                // Writer
+//                AvroFileWriter<VariantAvro> avroFileWriter = new AvroFileWriter<>(classSchema, compression, outputStream);
+//
+//                runner = new ParallelTaskRunner<>(
+//                        vcfDataReader,
+//                        () -> new VariantAvroEncoderTask<>(iterator.getHeader(), iterator.getVersion(),
+//                                variantContext -> converter.convert(variantContext).getImpl(), classSchema),
+//                        avroFileWriter, config);
+//                break;
+//            }
+//            case "ga4gh": {
+//                Schema classSchema = org.ga4gh.models.Variant.getClassSchema();
+//                // Converter
+//                final VariantContext2VariantConverter converter = new VariantContext2VariantConverter();
+//                converter.setVariantSetId("");  //TODO: Set VariantSetId
+//                // Writer
+//                AvroFileWriter<org.ga4gh.models.Variant> avroFileWriter = new AvroFileWriter<>(classSchema, compression, outputStream);
+//
+//                runner = new ParallelTaskRunner<>(
+//                        vcfDataReader,
+//                        () -> new VariantAvroEncoderTask<>(iterator.getHeader(), iterator.getVersion(), converter, classSchema),
+//                        avroFileWriter, config);
+//                break;
+//            }
+//            default:
+//                throw new IllegalArgumentException("Unknown dataModel \"" + dataModel + "\"");
 //        }
-
-//        Old implementation:
-
-        ParallelTaskRunner.Config config = new ParallelTaskRunner.Config(numTasks, batchSize, capacity, false);
-        ParallelTaskRunner<CharBuffer, ByteBuffer> runner;
-        switch (dataModel.toLowerCase()) {
-            case "opencb": {
-                Schema classSchema = VariantAvro.getClassSchema();
-                // Converter
-                final VariantContextToVariantConverter converter = new VariantContextToVariantConverter("", "", sampleNamesInOrder);
-                // Writer
-                AvroFileWriter<VariantAvro> avroFileWriter = new AvroFileWriter<>(classSchema, compression, outputStream);
-
-                runner = new ParallelTaskRunner<>(
-                        vcfDataReader,
-                        () -> new VariantAvroEncoderTask<>(iterator.getHeader(), iterator.getVersion(),
-                                variantContext -> converter.convert(variantContext).getImpl(), classSchema),
-                        avroFileWriter, config);
-                break;
-            }
-            case "ga4gh": {
-                Schema classSchema = org.ga4gh.models.Variant.getClassSchema();
-                // Converter
-                final VariantContext2VariantConverter converter = new VariantContext2VariantConverter();
-                converter.setVariantSetId("");  //TODO: Set VariantSetId
-                // Writer
-                AvroFileWriter<org.ga4gh.models.Variant> avroFileWriter = new AvroFileWriter<>(classSchema, compression, outputStream);
-
-                runner = new ParallelTaskRunner<>(
-                        vcfDataReader,
-                        () -> new VariantAvroEncoderTask<>(iterator.getHeader(), iterator.getVersion(), converter, classSchema),
-                        avroFileWriter, config);
-                break;
-            }
-            default:
-                throw new IllegalArgumentException("Unknown dataModel \"" + dataModel + "\"");
-        }
-        long start = System.currentTimeMillis();
-        runner.run();
-
-        logger.debug("Time " + (System.currentTimeMillis() - start) / 1000.0 + "s");
+//        long start = System.currentTimeMillis();
+//        runner.run();
+//
+//        logger.debug("Time " + (System.currentTimeMillis() - start) / 1000.0 + "s");
     }
 /*
     private void writeAvroStats(AvroFileWriter<VariantFileMetadata> aw, String file) throws IOException {
@@ -503,96 +672,194 @@ public class VariantCommandExecutor extends CommandExecutor {
 */
 
     public void query() throws Exception {
-        // check mandatory parameter 'input file'
-        Path inputPath = Paths.get(variantCommandOptions.queryVariantCommandOptions.input);
-        FileUtils.checkFile(inputPath);
+        // sanity check: input file
+        //Path inputPath = Paths.get(variantCommandOptions.queryVariantCommandOptions.input);
+        //FileUtils.checkFile(inputPath);
 
-        // TODO: to take the spark home from somewhere else
-        SparkConf sparkConf = SparkConfCreator.getConf("variant query", "local", 1,
-                    true, "/home/jtarraga/soft/spark-2.0.0/");
-        System.out.println("sparkConf = " + sparkConf.toDebugString());
+        SparkConf sparkConf = SparkConfCreator.getConf("variant query", "local", 1, true);
+        logger.debug("sparkConf = {}", sparkConf.toDebugString());
         SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
 
-//        SparkConf sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "/home/jtarraga/soft/spark-2.0.0/");
-//        SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
-
-        VariantDataset vd = new VariantDataset();
-
-        vd.load(variantCommandOptions.queryVariantCommandOptions.input, sparkSession);
+        VariantDataset vd = new VariantDataset(sparkSession);
+        vd.load(variantCommandOptions.queryVariantCommandOptions.input);
         vd.createOrReplaceTempView("vcf");
 
-        // query for id
-        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.ids)) {
-            String[] ids = StringUtils.split(variantCommandOptions.queryVariantCommandOptions.ids, ",");
-
-            for (String id : ids) {
-                vd.idFilter(id);
-                logger.warn("Query for multiple IDs, not yet implemented. Currently, it queries for the first ID.");
-                break;
-            }
-        }
-
-        // query for type
-        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.types)) {
-            String[] types = StringUtils.split(variantCommandOptions.queryVariantCommandOptions.types, ",");
-
-            if (types.length == 1) {
-                vd.typeFilter(types[0]);
-            } else {
-                vd.typeFilter(new ArrayList<>(Arrays.asList(types)));
-            }
-        }
-
-        // query for region
-        List<Region> regions = null;
-        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.regions)) {
-            regions = Region.parseRegions(variantCommandOptions.queryVariantCommandOptions.regions);
-
-            for (Region region : regions) {
-                logger.warn("Query for region, not yet implemented.");
-                break;
-            }
-        }
-
-        // query for SO term name
-        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.so_names)) {
-            String[] names = StringUtils.split(variantCommandOptions.queryVariantCommandOptions.so_names, ",");
-
-            for (String name : names) {
-                vd.annotationFilter("consequenceTypes.sequenceOntologyTerms.name", name);
-                logger.warn("Query for multiple SO term names (consequence type), not yet implemented. "
-                        + "Currently, it queries for the first SO term name.");
-                break;
-            }
-        }
-
-        // query for SO term accession
-        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.so_accessions)) {
-            String[] accessions = StringUtils.split(variantCommandOptions.queryVariantCommandOptions.so_accessions, ",");
-
-            for (String accession : accessions) {
-                vd.annotationFilter("consequenceTypes.sequenceOntologyTerms.accession", accession);
-                logger.warn("Query for multiple SO term accessions (consequence type), not yet implemented. "
-                        + "Currently, it queries for the first SO term accession.");
-                break;
-            }
-        }
+        // add filters
+        CliUtils.addVariantFilters(variantCommandOptions, vd);
 
         // apply previous filters
-        vd.update();
+        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.groupBy)) {
+            vd.countBy(variantCommandOptions.queryVariantCommandOptions.groupBy);
+        } else {
+            vd.update();
+        }
 
         // save the dataset
-        logger.warn("The current query implementation saves the resulting dataset in Avro format.");
-        vd.write().format("com.databricks.spark.avro").save(variantCommandOptions.queryVariantCommandOptions.output);
+        String output = variantCommandOptions.queryVariantCommandOptions.output;
+        if (output != null) {
+            if (output.endsWith(".json")) {
+                CliUtils.saveDatasetAsOneFile(vd, "json", output, logger);
+            } else if (output.endsWith(".parquet")) {
+                CliUtils.saveDatasetAsOneFile(vd, "parquet", output, logger);
+            } else {
+                CliUtils.saveDatasetAsOneFile(vd, "avro", output, logger);
+            }
+        }
+
+        // show output records
+        if (variantCommandOptions.queryVariantCommandOptions.limit > 0) {
+            vd.show(variantCommandOptions.queryVariantCommandOptions.limit);
+        }
+
+        // count output records
+        if (variantCommandOptions.queryVariantCommandOptions.count) {
+            long count = vd.count();
+            System.out.println("----------------------------------------------");
+            System.out.println("Number of output records: " + count);
+            System.out.println("----------------------------------------------");
+        }
     }
 
     public void annotate() throws IOException {
         VariantAvroAnnotator variantAvroAnnotator = new VariantAvroAnnotator();
 
-        Path input = Paths.get(variantCommandOptions.annotateVariantCommandOptions.input);
-        Path output = Paths.get(variantCommandOptions.annotateVariantCommandOptions.ouput);
+        Path input = get(variantCommandOptions.annotateVariantCommandOptions.input);
+        Path output = get(variantCommandOptions.annotateVariantCommandOptions.ouput);
         variantAvroAnnotator.annotate(input, output);
-
     }
 
+    public void view() throws Exception {
+        Path input = get(variantCommandOptions.viewVariantCommandOptions.input);
+        int head = variantCommandOptions.viewVariantCommandOptions.head;
+
+        // open
+        InputStream is = new FileInputStream(input.toFile());
+        DataFileStream<VariantAvro> reader = new DataFileStream<>(is,
+                new SpecificDatumReader<>(VariantAvro.class));
+
+        long counter = 0;
+        ObjectMapper mapper = new ObjectMapper();
+        if (variantCommandOptions.viewVariantCommandOptions.vcf) {
+            // vcf format
+            // first, header
+
+            // and then, variant
+            System.err.println("Warning: VCF output format is not implemented yet!");
+        } else if (variantCommandOptions.viewVariantCommandOptions.schema) {
+            // schema
+            System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(
+                    mapper.readValue(reader.getSchema().toString(), Object.class)));
+        } else {
+            // main
+            System.out.println("[");
+            for (VariantAvro variant : reader) {
+                // remove annotations ?
+                if (variantCommandOptions.viewVariantCommandOptions.excludeAnnotations) {
+                    variant.setAnnotation(null);
+                }
+
+                // remove samples ?
+                if (variantCommandOptions.viewVariantCommandOptions.excludeSamples) {
+                    for (StudyEntry study: variant.getStudies()) {
+                        study.setSamplesData(null);
+                    }
+                }
+                System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(
+                        mapper.readValue(variant.toString(), Object.class)));
+                counter++;
+                if (head > 0 && counter == head) {
+                    break;
+                }
+                System.out.println(",");
+            }
+            System.out.println("]");
+        }
+
+        // close
+        reader.close();
+    }
+
+    public void metadata() throws Exception {
+        // sanity check
+        Path input = get(variantCommandOptions.metadataVariantCommandOptions.input);
+        String datasetId = variantCommandOptions.metadataVariantCommandOptions.datasetId;
+
+        boolean updated = false;
+
+        // metadata file management
+        File metaFile = new File(input.toString() + ".meta.json");
+        if (metaFile.exists()) {
+
+            VariantMetadataManager metadataManager = new VariantMetadataManager();
+            metadataManager.load(metaFile.getPath());
+
+            // load pedigree ?
+            if (variantCommandOptions.metadataVariantCommandOptions.loadPedFilename != null) {
+                Pedigree pedigree = new PedigreeManager().parse(
+                        get(variantCommandOptions.metadataVariantCommandOptions.loadPedFilename));
+                metadataManager.loadPedigree(pedigree, datasetId);
+                updated = true;
+            }
+
+            // save pedigree ?
+            if (variantCommandOptions.metadataVariantCommandOptions.savePedFilename != null) {
+                Pedigree pedigree = metadataManager.getPedigree(datasetId);
+                new PedigreeManager().save(pedigree,
+                        get(variantCommandOptions.metadataVariantCommandOptions.savePedFilename));
+
+            }
+
+            // create cohort ?
+            if (variantCommandOptions.metadataVariantCommandOptions.createCohort != null) {
+                String[] names = variantCommandOptions.metadataVariantCommandOptions.createCohort.split("::");
+
+                List<String> sampleIds;
+                if (new File(names[1]).exists()) {
+                    sampleIds = Files.readAllLines(Paths.get(names[1]));
+                } else {
+                    sampleIds = Arrays.asList(StringUtils.split(names[1], ","));
+                }
+
+                metadataManager.createCohort(datasetId, names[0], sampleIds, SampleSetType.MISCELLANEOUS);
+                updated = true;
+            }
+
+            // rename cohort ?
+            if (variantCommandOptions.metadataVariantCommandOptions.renameCohort != null) {
+                String[] names = variantCommandOptions.metadataVariantCommandOptions.renameCohort.split("::");
+                metadataManager.renameCohort(datasetId, names[0], names[1]);
+                updated = true;
+            }
+
+            // rename dataset ?
+            if (variantCommandOptions.metadataVariantCommandOptions.renameDataset != null) {
+                metadataManager.renameDataset(datasetId,
+                        variantCommandOptions.metadataVariantCommandOptions.renameDataset);
+                updated = true;
+            }
+
+            // summary ?
+            if (variantCommandOptions.metadataVariantCommandOptions.summary) {
+                System.out.println(metadataManager.summary());
+            }
+
+            if (updated) {
+                // overwrite the metadata
+                metadataManager.save();
+            }
+        } else {
+            System.out.println("Error: metafile does not exist, " + metaFile.getAbsolutePath());
+        }
+    }
+
+
+    public void rvtests() throws Exception {
+        RvTestsAdaptor rvtests = new RvTestsAdaptor(variantCommandOptions.rvtestsVariantCommandOptions.inFilename,
+                variantCommandOptions.rvtestsVariantCommandOptions.metaFilename,
+                variantCommandOptions.rvtestsVariantCommandOptions.outDirname,
+                variantCommandOptions.rvtestsVariantCommandOptions.confFilename);
+
+//        rvtests.run(variantCommandOptions.rvtestsVariantCommandOptions.datasetId);
+        rvtests.run00(variantCommandOptions.rvtestsVariantCommandOptions.datasetId);
+    }
 }

@@ -38,6 +38,11 @@ public class AlignmentDataset extends ParentDataset<AlignmentDataset> {
         }
     }
 
+    @Override
+    public String getSql() {
+        return alignmentParseQuery.parse(query, null, viewName);
+    }
+
     // mapping quality filter
     public AlignmentDataset mappingQualityFilter(String value) {
         query.put("mapq", value);

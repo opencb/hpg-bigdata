@@ -24,6 +24,7 @@ import org.apache.spark.sql.types.StructType;
 import org.apache.spark.storage.StorageLevel;
 import org.opencb.biodata.models.core.Region;
 import org.opencb.commons.datastore.core.Query;
+import org.opencb.commons.datastore.core.QueryOptions;
 import scala.Symbol;
 import scala.Tuple2;
 import scala.collection.Seq;
@@ -38,18 +39,40 @@ import java.util.Map;
 public abstract class ParentDataset<T> {
 
     protected Query query;
+    protected QueryOptions queryOptions;
     protected String viewName;
     protected Dataset<Row> ds;
     protected SQLContext sqlContext;
     protected SparkSession sparkSession;
 
+
     public ParentDataset() {
+        this(null);
+    }
+
+    public ParentDataset(SparkSession sparkSession) {
+        this.sparkSession = sparkSession;
         ds = null;
         sqlContext = null;
 
         query = new Query();
+        queryOptions = new QueryOptions();
+        queryOptions.put("toClean", true);
     }
 
+    public void load(String filename) throws Exception {
+        sqlContext = new SQLContext(sparkSession);
+
+        if (StringUtils.endsWithAny(filename, "avro", "avro.gz", "avro.sz")) {
+            ds = sqlContext.read().format("com.databricks.spark.avro").load(filename);
+        } else if (StringUtils.endsWithAny(filename, "json", "json.gz")) {
+            ds = sqlContext.read().json(filename);
+        } else {
+            ds = sqlContext.read().load(filename);
+        }
+    }
+
+    @Deprecated
     public void load(String filename, SparkSession sparkSession) throws Exception {
         this.sparkSession = sparkSession;
         sqlContext = new SQLContext(sparkSession);
@@ -64,9 +87,28 @@ public abstract class ParentDataset<T> {
     }
 
     protected abstract void updateDataset(Query query);
+//    protected abstract void reset();
+    public abstract String getSql();
 
     public void update() {
         updateDataset(query);
+        query = new Query();
+        queryOptions = new QueryOptions();
+    }
+
+    public ParentDataset<T> countBy(String field) {
+        if (!queryOptions.containsKey("countBy")) {
+            queryOptions.put("countBy", field);
+            queryOptions.put("toClean", false);
+            //updateDataset(query);
+            update();
+        } else {
+            // error
+            System.err.println("\nError: nested countBy are not allowed!\n");
+            System.exit(-1);
+
+        }
+        return this;
     }
 
     // region filter
@@ -147,10 +189,14 @@ public abstract class ParentDataset<T> {
     }
 
     public Object collect() {
+        //updateDataset(query);
+        update();
         return ds.collect();
     }
 
     public List<Row> collectAsList() {
+        //updateDataset(query);
+        update();
         return ds.collectAsList();
     }
 
@@ -162,8 +208,9 @@ public abstract class ParentDataset<T> {
         return ds.columns();
     }
 
-    long count() {
-        updateDataset(query);
+    public long count() {
+        //updateDataset(query);
+        update();
         return ds.count();
     }
 
@@ -255,7 +302,8 @@ public abstract class ParentDataset<T> {
     }
 
     public ParentDataset<T> filter(String conditionExpr) {
-        updateDataset(query);
+        //updateDataset(query);
+        update();
         ds = ds.filter(conditionExpr);
         return this;
     }
@@ -539,11 +587,14 @@ public abstract class ParentDataset<T> {
     }
 
     public void show(int numRows) {
-        updateDataset(query);
+        //updateDataset(query);
+        update();
         ds.show(numRows);
     }
 
     public void show(int numRows, boolean truncate) {
+        //updateDataset(query);
+        update();
         ds.show(numRows, truncate);
     }
 

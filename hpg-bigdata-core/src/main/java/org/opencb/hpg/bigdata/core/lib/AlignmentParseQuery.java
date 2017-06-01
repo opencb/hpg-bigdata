@@ -70,7 +70,7 @@ public class AlignmentParseQuery extends ParseQuery {
         }
 
         // Build the SQL string from the processed query using explodes and filters
-        buildQueryString(viewName, queryOptions);
+        buildSimpleQueryString(viewName, queryOptions);
 
         return sqlQueryString.toString();
     }
