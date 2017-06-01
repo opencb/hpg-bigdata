@@ -4,6 +4,8 @@ import htsjdk.samtools.*;
 import org.apache.commons.lang3.StringUtils;
 import org.ga4gh.models.ReadAlignment;
 import org.opencb.biodata.models.core.Region;
+import org.opencb.biodata.tools.alignment.BamManager;
+import org.opencb.biodata.tools.alignment.iterators.AlignmentIterator;
 import org.opencb.hpg.bigdata.core.converters.SAMRecord2ReadAlignmentConverter;
 import org.opencb.hpg.bigdata.core.io.avro.AvroFileWriter;
 
