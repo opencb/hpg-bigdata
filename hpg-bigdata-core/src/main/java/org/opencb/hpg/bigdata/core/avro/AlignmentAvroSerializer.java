@@ -1,11 +1,12 @@
 package org.opencb.hpg.bigdata.core.avro;
 
-import htsjdk.samtools.*;
+import htsjdk.samtools.SAMRecord;
+import htsjdk.samtools.SAMRecordIterator;
+import htsjdk.samtools.SamReader;
+import htsjdk.samtools.SamReaderFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.ga4gh.models.ReadAlignment;
 import org.opencb.biodata.models.core.Region;
-import org.opencb.biodata.tools.alignment.BamManager;
-import org.opencb.biodata.tools.alignment.iterators.AlignmentIterator;
 import org.opencb.hpg.bigdata.core.converters.SAMRecord2ReadAlignmentConverter;
 import org.opencb.hpg.bigdata.core.io.avro.AvroFileWriter;
 
