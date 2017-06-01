@@ -18,15 +18,15 @@ package org.opencb.hpg.bigdata.analysis.tools.manifest;
 
 import java.util.List;
 
-public class InputParam {
+public class Param {
 
     private String name, description;
     private Object defaultValue;
 
     /**
-     * Number of values expected for the parameter. Can be 0 if type is BOOLEAN (flag).
+     * Field indicating that the parameter is a flag and it is not expecting any value.
      */
-    private int arity;
+    private boolean flag;
 
     /**
      * Flag indicating whether the parameter is a mandatory parameter.
@@ -55,17 +55,12 @@ public class InputParam {
      * Example: <threads: 2>  Command-line construction: <2> and not <--threads 2> as we would expect by default.
      */
     private boolean hidden;
-
-    /**
-     * Only applied for numeric dataTypes. It will be a vector containing the ranges of values. Example: [0, 1]"
-     */
-    private List<Float> ranges;
-
     /**
      * List of accepted values. Only expected for parameters that only accepts some concrete values.
      * Example: [first-strand, second-strand, unstranded].
+     *          Ranges: ["[-5,-1]"]
      */
-    private List<Object> acceptedValues;
+    private List<String> acceptedValues;
 
     private Type dataType;
 
@@ -77,38 +72,36 @@ public class InputParam {
         FOLDER
     }
 
-    public InputParam() {
+    public Param() {
     }
 
-    public InputParam(String name, String description, Object defaultValue, int arity, boolean required, boolean output,
-                      boolean redirection, int position, boolean hidden, List<Float> ranges, List<Object> acceptedValues, Type dataType) {
+    public Param(String name, String description, Object defaultValue, boolean flag, boolean required, boolean output, boolean redirection,
+                 int position, boolean hidden, List<String> acceptedValues, Type dataType) {
         this.name = name;
         this.description = description;
         this.defaultValue = defaultValue;
-        this.arity = arity;
+        this.flag = flag;
         this.required = required;
         this.output = output;
         this.redirection = redirection;
         this.position = position;
         this.hidden = hidden;
-        this.ranges = ranges;
         this.acceptedValues = acceptedValues;
         this.dataType = dataType;
     }
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("InputParam{");
+        final StringBuilder sb = new StringBuilder("Param{");
         sb.append("name='").append(name).append('\'');
         sb.append(", description='").append(description).append('\'');
         sb.append(", defaultValue=").append(defaultValue);
-        sb.append(", arity=").append(arity);
+        sb.append(", flag=").append(flag);
         sb.append(", required=").append(required);
         sb.append(", output=").append(output);
         sb.append(", redirection=").append(redirection);
         sb.append(", position=").append(position);
         sb.append(", hidden=").append(hidden);
-        sb.append(", ranges=").append(ranges);
         sb.append(", acceptedValues=").append(acceptedValues);
         sb.append(", dataType=").append(dataType);
         sb.append('}');
@@ -119,7 +112,7 @@ public class InputParam {
         return name;
     }
 
-    public InputParam setName(String name) {
+    public Param setName(String name) {
         this.name = name;
         return this;
     }
@@ -128,7 +121,7 @@ public class InputParam {
         return description;
     }
 
-    public InputParam setDescription(String description) {
+    public Param setDescription(String description) {
         this.description = description;
         return this;
     }
@@ -137,17 +130,17 @@ public class InputParam {
         return defaultValue;
     }
 
-    public InputParam setDefaultValue(Object defaultValue) {
+    public Param setDefaultValue(Object defaultValue) {
         this.defaultValue = defaultValue;
         return this;
     }
 
-    public int getArity() {
-        return arity;
+    public boolean isFlag() {
+        return flag;
     }
 
-    public InputParam setArity(int arity) {
-        this.arity = arity;
+    public Param setFlag(boolean flag) {
+        this.flag = flag;
         return this;
     }
 
@@ -155,7 +148,7 @@ public class InputParam {
         return required;
     }
 
-    public InputParam setRequired(boolean required) {
+    public Param setRequired(boolean required) {
         this.required = required;
         return this;
     }
@@ -164,7 +157,7 @@ public class InputParam {
         return output;
     }
 
-    public InputParam setOutput(boolean output) {
+    public Param setOutput(boolean output) {
         this.output = output;
         return this;
     }
@@ -173,7 +166,7 @@ public class InputParam {
         return redirection;
     }
 
-    public InputParam setRedirection(boolean redirection) {
+    public Param setRedirection(boolean redirection) {
         this.redirection = redirection;
         return this;
     }
@@ -182,7 +175,7 @@ public class InputParam {
         return position;
     }
 
-    public InputParam setPosition(int position) {
+    public Param setPosition(int position) {
         this.position = position;
         return this;
     }
@@ -191,25 +184,16 @@ public class InputParam {
         return hidden;
     }
 
-    public InputParam setHidden(boolean hidden) {
+    public Param setHidden(boolean hidden) {
         this.hidden = hidden;
         return this;
     }
 
-    public List<Float> getRanges() {
-        return ranges;
-    }
-
-    public InputParam setRanges(List<Float> ranges) {
-        this.ranges = ranges;
-        return this;
-    }
-
-    public List<Object> getAcceptedValues() {
+    public List<String> getAcceptedValues() {
         return acceptedValues;
     }
 
-    public InputParam setAcceptedValues(List<Object> acceptedValues) {
+    public Param setAcceptedValues(List<String> acceptedValues) {
         this.acceptedValues = acceptedValues;
         return this;
     }
@@ -218,7 +202,7 @@ public class InputParam {
         return dataType;
     }
 
-    public InputParam setDataType(Type dataType) {
+    public Param setDataType(Type dataType) {
         this.dataType = dataType;
         return this;
     }

@@ -16,23 +16,23 @@
 
 package org.opencb.hpg.bigdata.analysis.tools.manifest;
 
-public class Author {
+public class Contact {
 
     private String name;
     private String email;
 
-    public Author() {
+    public Contact() {
 
     }
 
-    public Author(String name, String email) {
+    public Contact(String name, String email) {
         this.name = name;
         this.email = email;
     }
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("Author{");
+        final StringBuilder sb = new StringBuilder("Contact{");
         sb.append("name='").append(name).append('\'');
         sb.append(", email='").append(email).append('\'');
         sb.append('}');

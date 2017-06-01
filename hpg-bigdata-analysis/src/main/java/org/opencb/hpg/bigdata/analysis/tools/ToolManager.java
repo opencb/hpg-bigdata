@@ -19,7 +19,7 @@ package org.opencb.hpg.bigdata.analysis.tools;
 import org.apache.commons.lang3.StringUtils;
 import org.opencb.hpg.bigdata.analysis.exceptions.AnalysisToolException;
 import org.opencb.hpg.bigdata.analysis.tools.manifest.Execution;
-import org.opencb.hpg.bigdata.analysis.tools.manifest.InputParam;
+import org.opencb.hpg.bigdata.analysis.tools.manifest.Param;
 import org.opencb.hpg.bigdata.analysis.tools.manifest.Manifest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,7 +63,7 @@ public class ToolManager {
         if (execution == null) {
             throw new AnalysisToolException("Execution " + executionName + " not found in manifest");
         }
-        Map<String, InputParam> manifestParams = execution.getParamsAsMap();
+        Map<String, Param> manifestParams = execution.getParamsAsMap();
 
         validateParams(execution, paramsMap);
 
@@ -79,7 +79,7 @@ public class ToolManager {
             }
 
             private Integer getPosition(String o) {
-                InputParam inputParam = manifestParams.get(o);
+                Param inputParam = manifestParams.get(o);
                 // If it is an output parameter with redirection, we put it at the end no matter the position configured
                 return inputParam != null
                         ? (inputParam.isRedirection() ? Integer.MAX_VALUE : inputParam.getPosition())
@@ -90,39 +90,39 @@ public class ToolManager {
         sortedMap.putAll(paramsMap);
 
         StringBuilder commandLine = new StringBuilder(toolDirectory.resolve(tool).toString()).append("/")
-                .append(execution.getExecutable()).append(" ");
+                .append(execution.getBin()).append(" ");
         for (Map.Entry<String, Object> objectEntry : sortedMap.entrySet()) {
-            InputParam inputParam = manifestParams.get(objectEntry.getKey());
+            Param inputParam = manifestParams.get(objectEntry.getKey());
             if (inputParam != null) {
                 if (!inputParam.isHidden() && !inputParam.isRedirection()) {
                     // Parameter key should appear in the command line
                     String key = inputParam.getName();
-                    if (!key.startsWith("-") && execution.isPosix()) {
+                    if (!key.startsWith("-") && manifest.getSettings().isPosix()) {
                         key = (key.length() > 1 ? "--" : "-") + key;
                     }
 
-                    commandLine.append(key).append(manifest.getSeparator());
+                    commandLine.append(key).append(manifest.getSettings().getSeparator());
                 }
 
                 // Value
-                if (inputParam.getDataType() != InputParam.Type.BOOLEAN) {
+                if (inputParam.getDataType() != Param.Type.BOOLEAN) {
                     if (inputParam.isRedirection()) {
                         commandLine.append("> ").append(objectEntry.getValue().toString());
                     } else {
                         commandLine.append(objectEntry.getValue().toString()).append(" ");
                     }
-                } else if (inputParam.getArity() > 0) {
+                } else if (!inputParam.isFlag()) {
                     commandLine.append(objectEntry.getValue()).append(" ");
                 }
             } else {
                 // Parameter objectEntry.getKey() does not exist in manifest
                 String key = objectEntry.getKey();
-                if (!key.startsWith("-") && execution.isPosix()) {
+                if (!key.startsWith("-") && manifest.getSettings().isPosix()) {
                     key = (key.length() > 1 ? "--" : "-") + key;
                 }
 
                 // Key
-                commandLine.append(key).append(manifest.getSeparator());
+                commandLine.append(key).append(manifest.getSettings().getSeparator());
                 // Value
                 commandLine.append(objectEntry.getValue().toString()).append(" ");
             }
@@ -187,18 +187,18 @@ public class ToolManager {
     }
 
     private void validateParams(Execution execution, Map<String, Object> paramsMap) throws AnalysisToolException {
-        Map<String, InputParam> manifestParams = execution.getParamsAsMap();
+        Map<String, Param> manifestParams = execution.getParamsAsMap();
 
         // We fetch which are the required parameters and we will be taking them out as we check the user paramsMap.
         Set<String> requiredParams = new HashSet<>();
-        for (InputParam inputParam : execution.getParams()) {
+        for (Param inputParam : execution.getParams()) {
             if (inputParam.isRequired()) {
                 requiredParams.add(inputParam.getName());
             }
         }
 
         for (Map.Entry<String, Object> entry : paramsMap.entrySet()) {
-            InputParam inputParam = manifestParams.get(entry.getKey());
+            Param inputParam = manifestParams.get(entry.getKey());
             if (inputParam != null) {
                 if (inputParam.isRequired()) {
                     requiredParams.remove(entry.getKey());
@@ -214,7 +214,7 @@ public class ToolManager {
         }
     }
 
-    private void validateDataType(Map.Entry<String, Object> entry, InputParam inputParam) throws AnalysisToolException {
+    private void validateDataType(Map.Entry<String, Object> entry, Param inputParam) throws AnalysisToolException {
         switch (inputParam.getDataType()) {
             case STRING:
             case BOOLEAN:

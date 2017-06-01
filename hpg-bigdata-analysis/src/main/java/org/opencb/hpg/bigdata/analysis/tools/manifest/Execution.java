@@ -22,25 +22,21 @@ import java.util.Map;
 
 public class Execution {
 
-    private String id, name, executable, testCmd;
+    private String id;
+    private String bin;
+    private String description;
+    private String usage;
 
-    /**
-     * Flag indicating whether the parameters follow the POSIX command line standard.
-     * If true, we will assume the parameters are preceded by '-' if it is a one letter parameter or '--' otherwise.
-     */
-    private boolean posix;
-
-    private List<InputParam> params;
+    private List<Param> params;
 
     public Execution() {
     }
 
-    public Execution(String id, String name, String executable, String testCmd, boolean posix, List<InputParam> params) {
+    public Execution(String id, String bin, String description, String usage, List<Param> params) {
         this.id = id;
-        this.name = name;
-        this.executable = executable;
-        this.testCmd = testCmd;
-        this.posix = posix;
+        this.bin = bin;
+        this.description = description;
+        this.usage = usage;
         this.params = params;
     }
 
@@ -48,10 +44,9 @@ public class Execution {
     public String toString() {
         final StringBuilder sb = new StringBuilder("Execution{");
         sb.append("id='").append(id).append('\'');
-        sb.append(", name='").append(name).append('\'');
-        sb.append(", executable='").append(executable).append('\'');
-        sb.append(", testCmd='").append(testCmd).append('\'');
-        sb.append(", posix=").append(posix);
+        sb.append(", bin='").append(bin).append('\'');
+        sb.append(", description='").append(description).append('\'');
+        sb.append(", usage='").append(usage).append('\'');
         sb.append(", params=").append(params);
         sb.append('}');
         return sb.toString();
@@ -66,55 +61,46 @@ public class Execution {
         return this;
     }
 
-    public String getName() {
-        return name;
+    public String getBin() {
+        return bin;
     }
 
-    public Execution setName(String name) {
-        this.name = name;
+    public Execution setBin(String bin) {
+        this.bin = bin;
         return this;
     }
 
-    public String getExecutable() {
-        return executable;
-    }
-
-    public Execution setExecutable(String executable) {
-        this.executable = executable;
-        return this;
-    }
-
-    public String getTestCmd() {
-        return testCmd;
-    }
-
-    public Execution setTestCmd(String testCmd) {
-        this.testCmd = testCmd;
-        return this;
-    }
-
-    public boolean isPosix() {
-        return posix;
-    }
-
-    public Execution setPosix(boolean posix) {
-        this.posix = posix;
-        return this;
-    }
-
-    public List<InputParam> getParams() {
+    public List<Param> getParams() {
         return params;
     }
 
-    public Map<String, InputParam> getParamsAsMap() {
-        Map<String, InputParam> mapParams = new HashMap<>();
-        for (InputParam param : params) {
+    public Map<String, Param> getParamsAsMap() {
+        Map<String, Param> mapParams = new HashMap<>();
+        for (Param param : params) {
             mapParams.put(param.getName(), param);
         }
         return mapParams;
     }
 
-    public Execution setParams(List<InputParam> params) {
+    public String getDescription() {
+        return description;
+    }
+
+    public Execution setDescription(String description) {
+        this.description = description;
+        return this;
+    }
+
+    public String getUsage() {
+        return usage;
+    }
+
+    public Execution setUsage(String usage) {
+        this.usage = usage;
+        return this;
+    }
+
+    public Execution setParams(List<Param> params) {
         this.params = params;
         return this;
     }

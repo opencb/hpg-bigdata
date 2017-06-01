@@ -26,11 +26,21 @@ import java.util.List;
 
 public class Manifest {
 
-    private Author author;
-    private String id, name, version, git, description, website, publication;
-    private String separator;
+    private String id;
+    private String name;
+    private String version;
+    private String description;
+    private String website;
+    private String publication;
+
+    private Contact contact;
+    private Git git;
+
     private ProgrammingLanguage language;
+    private List<String> dependencies;
     private List<Execution> executions;
+
+    private Settings settings;
 
     public Manifest() {
     }
@@ -65,27 +75,28 @@ public class Manifest {
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("Manifest{");
-        sb.append("author=").append(author);
-        sb.append(", id='").append(id).append('\'');
+        sb.append("id='").append(id).append('\'');
         sb.append(", name='").append(name).append('\'');
         sb.append(", version='").append(version).append('\'');
-        sb.append(", git='").append(git).append('\'');
         sb.append(", description='").append(description).append('\'');
         sb.append(", website='").append(website).append('\'');
         sb.append(", publication='").append(publication).append('\'');
-        sb.append(", separator='").append(separator).append('\'');
+        sb.append(", contact=").append(contact);
+        sb.append(", git=").append(git);
         sb.append(", language=").append(language);
+        sb.append(", dependencies=").append(dependencies);
         sb.append(", executions=").append(executions);
+        sb.append(", settings=").append(settings);
         sb.append('}');
         return sb.toString();
     }
 
-    public Author getAuthor() {
-        return author;
+    public Contact getContact() {
+        return contact;
     }
 
-    public Manifest setAuthor(Author author) {
-        this.author = author;
+    public Manifest setContact(Contact contact) {
+        this.contact = contact;
         return this;
     }
 
@@ -116,11 +127,11 @@ public class Manifest {
         return this;
     }
 
-    public String getGit() {
+    public Git getGit() {
         return git;
     }
 
-    public Manifest setGit(String git) {
+    public Manifest setGit(Git git) {
         this.git = git;
         return this;
     }
@@ -152,15 +163,6 @@ public class Manifest {
         return this;
     }
 
-    public String getSeparator() {
-        return separator;
-    }
-
-    public Manifest setSeparator(String separator) {
-        this.separator = separator;
-        return this;
-    }
-
     public ProgrammingLanguage getLanguage() {
         return language;
     }
@@ -170,12 +172,30 @@ public class Manifest {
         return this;
     }
 
+    public List<String> getDependencies() {
+        return dependencies;
+    }
+
+    public Manifest setDependencies(List<String> dependencies) {
+        this.dependencies = dependencies;
+        return this;
+    }
+
     public List<Execution> getExecutions() {
         return executions;
     }
 
     public Manifest setExecutions(List<Execution> executions) {
         this.executions = executions;
+        return this;
+    }
+
+    public Settings getSettings() {
+        return settings;
+    }
+
+    public Manifest setSettings(Settings settings) {
+        this.settings = settings;
         return this;
     }
 }

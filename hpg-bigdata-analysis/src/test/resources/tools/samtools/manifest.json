@@ -1,52 +1,54 @@
 {
-  "author" : {
+  "contact" : {
     "name" : "John",
     "email" : "rd@sanger.ac.uk"
   },
   "id" : "samtools",
   "name" : "Samtools",
   "version" : "0.1.19-96b5f2294a",
-  "git" : "",
   "description" : "samtools (Tools for alignments in the SAM format)",
   "website" : "http://samtools.sourceforge.net/",
   "publication" : "https://academic.oup.com/bioinformatics/article-lookup/doi/10.1093/bioinformatics/btp352",
-  "separator" : " ",
   "language" : {
     "name" : "C",
-    "version" : "",
-    "dependencies" : [ ]
+    "version" : ""
+  },
+  "dependencies" : [ ],
+  "settings" : {
+    "separator" : " ",
+    "env" : "",
+    "posix" : true
   },
   "executions" : [ {
     "id" : "view",
-    "name" : "SAM<->BAM conversion",
-    "executable" : "samtools view",
-    "testCmd" : "",
-    "posix" : true,
+    "bin" : "samtools view",
+    "description" : "SAM<->BAM conversion",
+    "usage" : "samtools view [options] <in.bam>|<in.sam> [region1 [...]]",
     "params" : [ {
       "name" : "b",
       "description" : "output BAM",
-      "arity" : 0,
+      "flag" : true,
       "position" : 0,
       "hidden" : false,
       "dataType" : "BOOLEAN"
     }, {
       "name" : "h",
       "description" : "print header for the SAM output",
-      "arity" : 0,
+      "flag" : true,
       "position" : 0,
       "hidden" : false,
       "dataType" : "BOOLEAN"
     }, {
       "name" : "H",
       "description" : "print header only (no alignments)",
-      "arity" : 0,
+      "flag" : false,
       "position" : 0,
       "hidden" : false,
       "dataType" : "BOOLEAN"
     }, {
       "name" : "S",
       "description" : "input is SAM",
-      "arity" : 0,
+      "flag" : false,
       "position" : 0,
       "hidden" : false,
       "dataType" : "BOOLEAN"
@@ -54,7 +56,7 @@
       "name" : "o",
       "description" : "Output file name",
       "defaultValue" : null,
-      "arity" : 1,
+      "flag" : false,
       "required" : true,
       "output" : true,
       "redirection" : false,
@@ -65,7 +67,7 @@
       "name" : "input",
       "description" : "Input file names",
       "defaultValue" : null,
-      "arity" : 1,
+      "flag" : false,
       "required" : true,
       "output" : false,
       "redirection" : false,
@@ -75,21 +77,20 @@
     } ]
   }, {
     "id" : "sort",
-    "name" : "Sort alignment file",
-    "executable" : "samtools sort",
-    "testCmd" : "",
-    "posix" : true,
+    "bin" : "samtools sort",
+    "description" : "Sort alignment file",
+    "usage" : "oskar.sh --tool 'samtools sort' [options] -h --input <in.bam> <out.prefix>",
     "params" : [ {
       "name" : "n",
       "description" : "sort by read name",
-      "arity" : 0,
+      "flag" : false,
       "position" : 0,
       "hidden" : false,
       "dataType" : "BOOLEAN"
     }, {
       "name" : "f",
       "description" : "use <out.prefix> as full file name instead of prefix",
-      "arity" : 0,
+      "flag" : false,
       "position" : 0,
       "hidden" : false,
       "dataType" : "BOOLEAN"
@@ -97,7 +98,7 @@
       "name" : "output",
       "description" : "out.prefix",
       "defaultValue" : null,
-      "arity" : 1,
+      "flag" : false,
       "required" : true,
       "output" : true,
       "redirection" : false,
@@ -108,7 +109,7 @@
       "name" : "input",
       "description" : "Input bam file",
       "defaultValue" : null,
-      "arity" : 1,
+      "flag" : false,
       "required" : true,
       "output" : false,
       "redirection" : false,
@@ -118,15 +119,14 @@
     } ]
   }, {
     "id" : "index",
-    "name" : "Index alignment",
-    "executable" : "samtools index",
-    "testCmd" : "",
-    "posix" : true,
+    "bin" : "samtools index",
+    "description" : "Index alignment",
+    "usage" : "samtools index <in.bam> [out.index]",
     "params" : [ {
       "name" : "output",
       "description" : "out.index file",
       "defaultValue" : null,
-      "arity" : 1,
+      "flag" : false,
       "required" : true,
       "output" : true,
       "redirection" : false,
@@ -137,7 +137,7 @@
       "name" : "input",
       "description" : "Input bam file",
       "defaultValue" : null,
-      "arity" : 1,
+      "flag" : false,
       "required" : true,
       "output" : false,
       "redirection" : false,
