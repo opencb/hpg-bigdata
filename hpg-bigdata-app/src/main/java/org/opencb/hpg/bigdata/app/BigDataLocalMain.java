@@ -68,7 +68,7 @@ public class BigDataLocalMain {
             } else {
                 // get the subcommand and printUsage if empty
                 String parsedSubCommand = localCliOptionsParser.getSubCommand();
-                if (parsedSubCommand == null || parsedSubCommand.isEmpty()) {
+                if (localCliOptionsParser.existSubcommands() && (parsedSubCommand == null || parsedSubCommand.isEmpty())) {
                     localCliOptionsParser.printUsage();
                 } else {
                     switch (parsedCommand) {
@@ -83,6 +83,9 @@ public class BigDataLocalMain {
                             break;
                         case "variant":
                             commandExecutor = new VariantCommandExecutor(localCliOptionsParser.getVariantCommandOptions());
+                            break;
+                        case "tool":
+                            commandExecutor = new ToolCommandExecutor(localCliOptionsParser.getToolCommandOptions());
                             break;
                         default:
                             System.out.printf("ERROR: not valid command: '" + parsedCommand + "'");

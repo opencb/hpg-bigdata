@@ -20,6 +20,7 @@ import com.beust.jcommander.*;
 import org.apache.parquet.hadoop.ParquetWriter;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -44,6 +45,8 @@ public class LocalCliOptionsParser {
 
     // NGS variant command and subcommmands
     private VariantCommandOptions variantCommandOptions;
+
+    private ToolCommandOptions toolCommandOptions;
 
     public LocalCliOptionsParser() {
         generalOptions = new GeneralOptions();
@@ -83,6 +86,9 @@ public class LocalCliOptionsParser {
         variantSubCommands.addCommand("query", variantCommandOptions.queryVariantCommandOptions);
         variantSubCommands.addCommand("metadata", variantCommandOptions.metadataVariantCommandOptions);
         variantSubCommands.addCommand("rvtests", variantCommandOptions.rvtestsVariantCommandOptions);
+
+        toolCommandOptions = new ToolCommandOptions();
+        jcommander.addCommand("tool", toolCommandOptions);
     }
 
     public void parse(String[] args) throws ParameterException {
@@ -101,6 +107,10 @@ public class LocalCliOptionsParser {
         } else {
             return null;
         }
+    }
+
+    public boolean existSubcommands() {
+        return jcommander.getCommands().get(jcommander.getParsedCommand()).getCommands().size() > 0;
     }
 
     /**
@@ -690,12 +700,22 @@ public class LocalCliOptionsParser {
         } else {
             String parsedCommand = getCommand();
             if(getSubCommand().isEmpty()){
-                System.err.println("");
-                System.err.println("Usage:   hpg-bigdata-local.sh " + parsedCommand + " <subcommand> [options]");
-                System.err.println("");
-                System.err.println("Subcommands:");
-                printCommandUsage(jcommander.getCommands().get(getCommand()));
-                System.err.println("");
+                if (existSubcommands()) {
+                    System.err.println("");
+                    System.err.println("Usage:   hpg-bigdata-local.sh " + parsedCommand + " <subcommand> [options]");
+                    System.err.println("");
+                    System.err.println("Subcommands:");
+                    printCommandUsage(jcommander.getCommands().get(getCommand()));
+                    System.err.println("");
+                } else {
+                    // There are no subcommands
+                    System.err.println("");
+                    System.err.println("Usage:   hpg-bigdata-local.sh " + parsedCommand + " [options]");
+                    System.err.println("");
+                    System.err.println("Options:");
+                    printSubCommandUsage(jcommander.getCommands().get(parsedCommand));
+                    System.err.println("");
+                }
             } else {
                 String parsedSubCommand = getSubCommand();
                 System.err.println("");
@@ -770,6 +790,20 @@ public class LocalCliOptionsParser {
         public String confFilename;
     }
 
+    @Parameters(commandNames = {"tools"}, commandDescription = "Run external commands")
+    public class ToolCommandOptions extends CommandOptions {
+        @Parameter(names = {"--id"}, description = "Tool and execution id separated by ':'. When there is only one execution, only the "
+                + "tool id will be needed. Example: samtools:view.", required = true, arity = 1)
+        public String tool;
+
+        @Parameter(names = {"--path"}, description = "Path containing all the tools.", required = true, arity = 1)
+        public String path;
+
+        @Parameter(names = {"--params"}, description = "List of space-separated key=value parameters necessary to run the tool.",
+                required = true, variableArity = true)
+        public List<String> params;
+    }
+
 
     private void printMainUsage() {
         // TODO This is a nasty hack. By some unknown reason JCommander only prints the description from first command
@@ -830,5 +864,9 @@ public class LocalCliOptionsParser {
 
     public VariantCommandOptions getVariantCommandOptions() {
         return variantCommandOptions;
+    }
+
+    public ToolCommandOptions getToolCommandOptions() {
+        return toolCommandOptions;
     }
 }
