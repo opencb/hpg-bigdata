@@ -16,27 +16,25 @@
 
 package org.opencb.hpg.bigdata.analysis.tools.manifest;
 
-public class Option {
+public class Contact {
 
-    private String name, description;
-    private boolean required;
+    private String name;
+    private String email;
 
-    public Option() {
+    public Contact() {
 
     }
 
-    public Option(String name, String description, boolean required) {
+    public Contact(String name, String email) {
         this.name = name;
-        this.description = description;
-        this.required = required;
+        this.email = email;
     }
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("Option{");
+        final StringBuilder sb = new StringBuilder("Contact{");
         sb.append("name='").append(name).append('\'');
-        sb.append(", description='").append(description).append('\'');
-        sb.append(", required=").append(required);
+        sb.append(", email='").append(email).append('\'');
         sb.append('}');
         return sb.toString();
     }
@@ -49,19 +47,11 @@ public class Option {
         this.name = name;
     }
 
-    public boolean isRequired() {
-        return required;
+    public String getEmail() {
+        return email;
     }
 
-    public void setRequired(boolean required) {
-        this.required = required;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
+    public void setEmail(String email) {
+        this.email = email;
     }
 }

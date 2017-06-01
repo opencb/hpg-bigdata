@@ -16,49 +16,38 @@
 
 package org.opencb.hpg.bigdata.analysis.tools.manifest;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Execution {
 
-    private String id, name, executable, outputParam, testCmd, result;
-    private List<InputParam> inputParams;
-    private List<InputParam> inputParamsFromTxt;
-    private List<Option> validParams;
-    private List<ConfigAttr> configAttr;
+    private String id;
+    private String bin;
+    private String description;
+    private String usage;
 
+    private List<Param> params;
 
     public Execution() {
-
     }
 
-    public Execution(String id, String name, String executable,
-                     List<InputParam> inputParams, List<InputParam> inputParamsFromTxt, String outputParam,
-                     List<Option> validParams, List<ConfigAttr> configAttr, String testCmd, String result) {
+    public Execution(String id, String bin, String description, String usage, List<Param> params) {
         this.id = id;
-        this.name = name;
-        this.executable = executable;
-        this.inputParams = inputParams;
-        this.inputParamsFromTxt = inputParamsFromTxt;
-        this.outputParam = outputParam;
-        this.validParams = validParams;
-        this.configAttr = configAttr;
-        this.testCmd = testCmd;
-        this.result = result;
+        this.bin = bin;
+        this.description = description;
+        this.usage = usage;
+        this.params = params;
     }
 
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("Execution{");
         sb.append("id='").append(id).append('\'');
-        sb.append(", name='").append(name).append('\'');
-        sb.append(", executable='").append(executable).append('\'');
-        sb.append(", outputParam='").append(outputParam).append('\'');
-        sb.append(", testCmd='").append(testCmd).append('\'');
-        sb.append(", result='").append(result).append('\'');
-        sb.append(", inputParams=").append(inputParams);
-        sb.append(", inputParamsFromTxt=").append(inputParamsFromTxt);
-        sb.append(", validParams=").append(validParams);
-        sb.append(", configAttr=").append(configAttr);
+        sb.append(", bin='").append(bin).append('\'');
+        sb.append(", description='").append(description).append('\'');
+        sb.append(", usage='").append(usage).append('\'');
+        sb.append(", params=").append(params);
         sb.append('}');
         return sb.toString();
     }
@@ -67,79 +56,52 @@ public class Execution {
         return id;
     }
 
-    public void setId(String id) {
+    public Execution setId(String id) {
         this.id = id;
+        return this;
     }
 
-    public String getName() {
-        return name;
+    public String getBin() {
+        return bin;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public Execution setBin(String bin) {
+        this.bin = bin;
+        return this;
     }
 
-    public String getExecutable() {
-        return executable;
+    public List<Param> getParams() {
+        return params;
     }
 
-    public void setExecutable(String executable) {
-        this.executable = executable;
+    public Map<String, Param> getParamsAsMap() {
+        Map<String, Param> mapParams = new HashMap<>();
+        for (Param param : params) {
+            mapParams.put(param.getName(), param);
+        }
+        return mapParams;
     }
 
-    public String getOutputParam() {
-        return outputParam;
+    public String getDescription() {
+        return description;
     }
 
-    public void setOutputParam(String outputParam) {
-        this.outputParam = outputParam;
+    public Execution setDescription(String description) {
+        this.description = description;
+        return this;
     }
 
-    public List<InputParam> getInputParams() {
-        return inputParams;
+    public String getUsage() {
+        return usage;
     }
 
-    public void setInputParams(List<InputParam> inputParams) {
-        this.inputParams = inputParams;
+    public Execution setUsage(String usage) {
+        this.usage = usage;
+        return this;
     }
 
-    public List<Option> getValidParams() {
-        return validParams;
-    }
-
-    public void setValidParams(List<Option> validParams) {
-        this.validParams = validParams;
-    }
-
-    public List<ConfigAttr> getConfigAttr() {
-        return configAttr;
-    }
-
-    public void setConfigAttr(List<ConfigAttr> configAttr) {
-        this.configAttr = configAttr;
-    }
-
-    public String getTestCmd() {
-        return testCmd;
-    }
-
-    public void setTestCmd(String testCmd) {
-        this.testCmd = testCmd;
-    }
-
-    public List<InputParam> getInputParamsFromTxt() {
-        return inputParamsFromTxt;
-    }
-
-    public void setInputParamsFromTxt(List<InputParam> inputParamsFromTxt) {
-        this.inputParamsFromTxt = inputParamsFromTxt;
-    }
-
-    public String getResult() {
-        return result;
-    }
-
-    public void setResult(String result) {
-        this.result = result;
+    public Execution setParams(List<Param> params) {
+        this.params = params;
+        return this;
     }
 }
