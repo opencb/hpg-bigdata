@@ -57,7 +57,6 @@ public class ExecutorMonitor {
                 try {
                     Thread.sleep(this.TIME);
                 } catch (InterruptedException e) {
-                    logger.error("{}", e.getMessage(), e);
                     Thread.currentThread().interrupt();
                     break;
                 }
