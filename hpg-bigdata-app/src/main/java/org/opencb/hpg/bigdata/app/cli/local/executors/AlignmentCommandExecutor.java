@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.opencb.hpg.bigdata.app.cli.local;
+package org.opencb.hpg.bigdata.app.cli.local.executors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import htsjdk.samtools.SAMFileHeader;
@@ -34,6 +34,8 @@ import org.opencb.biodata.tools.alignment.BamUtils;
 import org.opencb.biodata.tools.alignment.stats.AlignmentGlobalStats;
 import org.opencb.commons.utils.FileUtils;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
+import org.opencb.hpg.bigdata.app.cli.local.CliUtils;
+import org.opencb.hpg.bigdata.app.cli.local.options.AlignmentCommandOptions;
 import org.opencb.hpg.bigdata.core.avro.AlignmentAvroSerializer;
 import org.opencb.hpg.bigdata.core.lib.AlignmentDataset;
 import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
@@ -52,11 +54,12 @@ import java.util.List;
  */
 public class AlignmentCommandExecutor extends CommandExecutor {
 
-    private LocalCliOptionsParser.AlignmentCommandOptions alignmentCommandOptions;
+    private AlignmentCommandOptions alignmentCommandOptions;
 
     public static final String BAM_HEADER_SUFFIX = ".header";
 
-    public AlignmentCommandExecutor(LocalCliOptionsParser.AlignmentCommandOptions alignmentCommandOptions) {
+    public AlignmentCommandExecutor(AlignmentCommandOptions alignmentCommandOptions) {
+        super(alignmentCommandOptions.commonCommandOptions);
         this.alignmentCommandOptions = alignmentCommandOptions;
     }
 
@@ -64,43 +67,30 @@ public class AlignmentCommandExecutor extends CommandExecutor {
      * Parse specific 'alignment' command options
      */
     public void execute() throws Exception {
-        String subCommand = alignmentCommandOptions.getParsedSubCommand();
+        String subCommandString = getParsedSubCommand(alignmentCommandOptions.jCommander);
 
-        switch (subCommand) {
+        // init
+        init(alignmentCommandOptions.commonCommandOptions.logLevel,
+                alignmentCommandOptions.commonCommandOptions.verbose,
+                alignmentCommandOptions.commonCommandOptions.conf);
+
+        switch (subCommandString) {
             case "convert":
-                init(alignmentCommandOptions.convertAlignmentCommandOptions.commonOptions.logLevel,
-                        alignmentCommandOptions.convertAlignmentCommandOptions.commonOptions.verbose,
-                        alignmentCommandOptions.convertAlignmentCommandOptions.commonOptions.conf);
                 convert();
                 break;
             case "sort":
-                init(alignmentCommandOptions.sortAlignmentCommandOptions.commonOptions.logLevel,
-                        alignmentCommandOptions.sortAlignmentCommandOptions.commonOptions.verbose,
-                        alignmentCommandOptions.sortAlignmentCommandOptions.commonOptions.conf);
                 sort();
                 break;
             case "stats":
-                init(alignmentCommandOptions.statsAlignmentCommandOptions.commonOptions.logLevel,
-                        alignmentCommandOptions.statsAlignmentCommandOptions.commonOptions.verbose,
-                        alignmentCommandOptions.statsAlignmentCommandOptions.commonOptions.conf);
                 stats();
                 break;
             case "coverage":
-                init(alignmentCommandOptions.coverageAlignmentCommandOptions.commonOptions.logLevel,
-                        alignmentCommandOptions.coverageAlignmentCommandOptions.commonOptions.verbose,
-                        alignmentCommandOptions.coverageAlignmentCommandOptions.commonOptions.conf);
                 coverage();
                 break;
             case "query":
-                init(alignmentCommandOptions.queryAlignmentCommandOptions.commonOptions.logLevel,
-                        alignmentCommandOptions.queryAlignmentCommandOptions.commonOptions.verbose,
-                        alignmentCommandOptions.queryAlignmentCommandOptions.commonOptions.conf);
                 query();
                 break;
             case "view":
-                init(alignmentCommandOptions.queryAlignmentCommandOptions.commonOptions.logLevel,
-                        alignmentCommandOptions.queryAlignmentCommandOptions.commonOptions.verbose,
-                        alignmentCommandOptions.queryAlignmentCommandOptions.commonOptions.conf);
                 view();
                 break;
             /*
@@ -109,6 +99,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
                 break;
 */
             default:
+                logger.error("Alignment subcommand '" + subCommandString + "' not valid");
                 break;
         }
     }

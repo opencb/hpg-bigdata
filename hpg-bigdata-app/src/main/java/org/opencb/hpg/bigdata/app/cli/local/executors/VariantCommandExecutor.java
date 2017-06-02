@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.opencb.hpg.bigdata.app.cli.local;
+package org.opencb.hpg.bigdata.app.cli.local.executors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import htsjdk.variant.variantcontext.VariantContext;
@@ -39,6 +39,8 @@ import org.opencb.biodata.tools.variant.converters.avro.VariantContextToVariantC
 import org.opencb.commons.utils.FileUtils;
 import org.opencb.hpg.bigdata.analysis.variant.RvTestsAdaptor;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
+import org.opencb.hpg.bigdata.app.cli.local.CliUtils;
+import org.opencb.hpg.bigdata.app.cli.local.options.VariantCommandOptions;
 import org.opencb.hpg.bigdata.core.avro.VariantAvroAnnotator;
 import org.opencb.hpg.bigdata.core.avro.VariantAvroSerializer;
 import org.opencb.hpg.bigdata.core.converters.variation.VariantContext2VariantConverter;
@@ -63,54 +65,42 @@ import static java.nio.file.Paths.get;
  */
 public class VariantCommandExecutor extends CommandExecutor {
 
-    private LocalCliOptionsParser.VariantCommandOptions variantCommandOptions;
+    private VariantCommandOptions variantCommandOptions;
 
-    public VariantCommandExecutor(LocalCliOptionsParser.VariantCommandOptions variantCommandOptions) {
-//      super(variantCommandOptions.c, fastqCommandOptions.verbose, fastqCommandOptions.conf);
+    public VariantCommandExecutor(VariantCommandOptions variantCommandOptions) {
+        super(variantCommandOptions.commonCommandOptions);
         this.variantCommandOptions = variantCommandOptions;
     }
 
     @Override
     public void execute() throws Exception {
-        String subCommandString = variantCommandOptions.getParsedSubCommand();
+        // init
+        init(variantCommandOptions.commonCommandOptions.logLevel,
+                variantCommandOptions.commonCommandOptions.verbose,
+                variantCommandOptions.commonCommandOptions.conf);
+
+        String subCommandString = getParsedSubCommand(variantCommandOptions.jCommander);
         switch (subCommandString) {
             case "convert":
-                init(variantCommandOptions.convertVariantCommandOptions.commonOptions.logLevel,
-                        variantCommandOptions.convertVariantCommandOptions.commonOptions.verbose,
-                        variantCommandOptions.convertVariantCommandOptions.commonOptions.conf);
                 convert();
                 break;
             case "annotate":
-                init(variantCommandOptions.convertVariantCommandOptions.commonOptions.logLevel,
-                        variantCommandOptions.convertVariantCommandOptions.commonOptions.verbose,
-                        variantCommandOptions.convertVariantCommandOptions.commonOptions.conf);
                 annotate();
                 break;
             case "view":
-                init(variantCommandOptions.viewVariantCommandOptions.commonOptions.logLevel,
-                        variantCommandOptions.viewVariantCommandOptions.commonOptions.verbose,
-                        variantCommandOptions.viewVariantCommandOptions.commonOptions.conf);
                 view();
                 break;
             case "query":
-                init(variantCommandOptions.queryVariantCommandOptions.commonOptions.logLevel,
-                        variantCommandOptions.queryVariantCommandOptions.commonOptions.verbose,
-                        variantCommandOptions.queryVariantCommandOptions.commonOptions.conf);
                 query();
                 break;
             case "metadata":
-                init(variantCommandOptions.metadataVariantCommandOptions.commonOptions.logLevel,
-                        variantCommandOptions.metadataVariantCommandOptions.commonOptions.verbose,
-                        variantCommandOptions.metadataVariantCommandOptions.commonOptions.conf);
                 metadata();
                 break;
             case "rvtests":
-                init(variantCommandOptions.rvtestsVariantCommandOptions.commonOptions.logLevel,
-                        variantCommandOptions.rvtestsVariantCommandOptions.commonOptions.verbose,
-                        variantCommandOptions.rvtestsVariantCommandOptions.commonOptions.conf);
                 rvtests();
                 break;
             default:
+                logger.error("Variant subcommand '" + subCommandString + "' not valid");
                 break;
         }
     }

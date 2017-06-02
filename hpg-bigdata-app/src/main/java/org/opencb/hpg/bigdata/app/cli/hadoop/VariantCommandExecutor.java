@@ -16,21 +16,19 @@
 
 package org.opencb.hpg.bigdata.app.cli.hadoop;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.hadoop.mapreduce.Job;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
-import org.opencb.hpg.bigdata.analysis.variant.Variant2HbaseMR;
-
-import java.net.URI;
+import org.opencb.hpg.bigdata.app.cli.local.options.VariantCommandOptions;
 
 /**
  * Created by imedina on 25/06/15.
  */
+@Deprecated
 public class VariantCommandExecutor extends CommandExecutor {
 
-    private CliOptionsParser.VariantCommandOptions variantCommandOptions;
+    private VariantCommandOptions variantCommandOptions;
 
-    public VariantCommandExecutor(CliOptionsParser.VariantCommandOptions variantCommandOptions) {
+    public VariantCommandExecutor(VariantCommandOptions variantCommandOptions) {
+        super(variantCommandOptions.commonCommandOptions);
 //      super(fastqCommandOptions.logLevel, fastqCommandOptions.verbose, fastqCommandOptions.conf);
         this.variantCommandOptions = variantCommandOptions;
     }
@@ -38,17 +36,14 @@ public class VariantCommandExecutor extends CommandExecutor {
 
     @Override
     public void execute() throws Exception {
-        String subCommandString = variantCommandOptions.getParsedSubCommand();
+        String subCommandString = getParsedSubCommand(variantCommandOptions.jCommander);
+        init(variantCommandOptions.commonCommandOptions.logLevel,
+                variantCommandOptions.commonCommandOptions.verbose,
+                variantCommandOptions.commonCommandOptions.conf);
         switch (subCommandString) {
             case "convert":
-                init(variantCommandOptions.convertVariantCommandOptions.commonOptions.logLevel,
-                        variantCommandOptions.convertVariantCommandOptions.commonOptions.verbose,
-                        variantCommandOptions.convertVariantCommandOptions.commonOptions.conf);
                 convert();
             case "index":
-                init(variantCommandOptions.indexVariantCommandOptions.commonOptions.logLevel,
-                        variantCommandOptions.indexVariantCommandOptions.commonOptions.verbose,
-                        variantCommandOptions.indexVariantCommandOptions.commonOptions.conf);
                 index();
                 break;
             default:
@@ -57,6 +52,7 @@ public class VariantCommandExecutor extends CommandExecutor {
     }
 
     private void index() throws Exception {
+/*
         String input = variantCommandOptions.indexVariantCommandOptions.input;
         String db = variantCommandOptions.indexVariantCommandOptions.database;
         boolean nonVar = variantCommandOptions.indexVariantCommandOptions.includeNonVariants;
@@ -76,6 +72,7 @@ public class VariantCommandExecutor extends CommandExecutor {
         if (!fine) {
             throw new IllegalStateException("Variant 2 HBase failed!");
         }
+        */
     }
 
 

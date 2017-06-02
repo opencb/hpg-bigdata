@@ -16,8 +16,10 @@
 
 package org.opencb.hpg.bigdata.app.cli;
 
+import com.beust.jcommander.JCommander;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
+import org.opencb.hpg.bigdata.app.cli.local.LocalCliOptionsParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,14 +36,19 @@ public abstract class CommandExecutor {
 
     protected Logger logger;
 
-    public CommandExecutor() {
+    protected LocalCliOptionsParser.CommonCommandOptions options;
 
+    public CommandExecutor(LocalCliOptionsParser.CommonCommandOptions options) {
+        this.options = options;
+        init(options.logLevel, options.verbose, options.conf);
     }
 
+    @Deprecated
     public CommandExecutor(String logLevel) {
         this(logLevel, false, null);
     }
 
+    @Deprecated
     public CommandExecutor(String logLevel, boolean verbose, String configFile) {
         this.logLevel = logLevel;
         this.verbose = verbose;
@@ -79,6 +86,17 @@ public abstract class CommandExecutor {
     }
 
     public abstract void execute() throws Exception;
+
+    protected static String getParsedSubCommand(JCommander jCommander) {
+        String parsedCommand = jCommander.getParsedCommand();
+        if (jCommander.getCommands().containsKey(parsedCommand)) {
+            String subCommand = jCommander.getCommands().get(parsedCommand).getParsedCommand();
+            return subCommand != null ? subCommand: "";
+        } else {
+            return "";
+        }
+    }
+
 
     public String getLogLevel() {
         return logLevel;

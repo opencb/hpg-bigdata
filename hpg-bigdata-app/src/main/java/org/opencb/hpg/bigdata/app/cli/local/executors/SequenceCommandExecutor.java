@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.opencb.hpg.bigdata.app.cli.local;
+package org.opencb.hpg.bigdata.app.cli.local.executors;
 
 import htsjdk.samtools.fastq.FastqReader;
 import org.apache.avro.file.DataFileStream;
@@ -23,6 +23,7 @@ import org.opencb.biodata.models.sequence.Read;
 import org.opencb.biodata.tools.alignment.stats.SequenceStats;
 import org.opencb.biodata.tools.alignment.stats.SequenceStatsCalculator;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
+import org.opencb.hpg.bigdata.app.cli.local.options.SequenceCommandOptions;
 import org.opencb.hpg.bigdata.core.converters.FastqRecord2ReadConverter;
 import org.opencb.hpg.bigdata.core.io.avro.AvroWriter;
 import org.opencb.hpg.bigdata.core.utils.AvroUtils;
@@ -34,9 +35,10 @@ import java.io.*;
  */
 public class SequenceCommandExecutor extends CommandExecutor {
 
-    private LocalCliOptionsParser.SequenceCommandOptions sequenceCommandOptions;
+    private SequenceCommandOptions sequenceCommandOptions;
 
-    public SequenceCommandExecutor(LocalCliOptionsParser.SequenceCommandOptions sequenceCommandOptions) {
+    public SequenceCommandExecutor(SequenceCommandOptions sequenceCommandOptions) {
+        super(sequenceCommandOptions.commonCommandOptions);
         this.sequenceCommandOptions = sequenceCommandOptions;
     }
 
@@ -46,8 +48,8 @@ public class SequenceCommandExecutor extends CommandExecutor {
      * @throws IOException Exception thrown if file does not exist
      */
     public void execute() throws IOException {
-        String subCommand = sequenceCommandOptions.getParsedSubCommand();
-        switch (subCommand) {
+        String subCommandString = getParsedSubCommand(sequenceCommandOptions.jCommander);
+        switch (subCommandString) {
             case "convert":
                 convert();
                 break;
@@ -55,12 +57,13 @@ public class SequenceCommandExecutor extends CommandExecutor {
                 stats();
                 break;
             default:
+                logger.error("Sequence subcommand '" + subCommandString + "' not valid");
                 break;
         }
     }
 
     private void convert() throws IOException {
-        LocalCliOptionsParser.ConvertSequenceCommandOptions
+        SequenceCommandOptions.ConvertSequenceCommandOptions
                 convertSequenceCommandOptions = sequenceCommandOptions.convertSequenceCommandOptions;
 
         // get input parameters
@@ -93,7 +96,8 @@ public class SequenceCommandExecutor extends CommandExecutor {
     }
 
     private void stats() throws IOException {
-        LocalCliOptionsParser.StatsSequenceCommandOptions statsSequenceCommandOptions = sequenceCommandOptions.statsSequenceCommandOptions;
+        SequenceCommandOptions.StatsSequenceCommandOptions
+                statsSequenceCommandOptions = sequenceCommandOptions.statsSequenceCommandOptions;
 
         // get input parameters
         String input = statsSequenceCommandOptions.input;

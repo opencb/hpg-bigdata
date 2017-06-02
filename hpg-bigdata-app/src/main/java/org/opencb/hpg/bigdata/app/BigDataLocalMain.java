@@ -19,6 +19,10 @@ package org.opencb.hpg.bigdata.app;
 import com.beust.jcommander.ParameterException;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
 import org.opencb.hpg.bigdata.app.cli.local.*;
+import org.opencb.hpg.bigdata.app.cli.local.executors.AdminCommandExecutor;
+import org.opencb.hpg.bigdata.app.cli.local.executors.AlignmentCommandExecutor;
+import org.opencb.hpg.bigdata.app.cli.local.executors.SequenceCommandExecutor;
+import org.opencb.hpg.bigdata.app.cli.local.executors.VariantCommandExecutor;
 
 /**
  * Created by hpccoll1 on 18/05/15.

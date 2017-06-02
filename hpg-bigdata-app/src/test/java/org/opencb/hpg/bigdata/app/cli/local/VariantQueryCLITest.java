@@ -1,6 +1,7 @@
 package org.opencb.hpg.bigdata.app.cli.local;
 
 import org.junit.Test;
+import org.opencb.hpg.bigdata.app.cli.local.executors.VariantCommandExecutor;
 
 /**
  * Created by jtarraga on 12/10/16.

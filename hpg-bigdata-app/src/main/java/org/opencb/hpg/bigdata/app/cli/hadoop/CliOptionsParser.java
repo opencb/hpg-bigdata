@@ -24,6 +24,7 @@ import java.util.Map;
 /**
  * Created by imedina on 03/02/15.
  */
+@Deprecated
 public class CliOptionsParser {
 
     private final JCommander jcommander;

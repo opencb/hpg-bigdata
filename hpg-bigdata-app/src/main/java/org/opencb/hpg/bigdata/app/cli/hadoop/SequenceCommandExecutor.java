@@ -16,26 +16,29 @@
 
 package org.opencb.hpg.bigdata.app.cli.hadoop;
 
-import java.io.IOException;
-import java.util.Date;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
 import org.opencb.hpg.bigdata.analysis.sequence.Fastq2AvroMR;
 import org.opencb.hpg.bigdata.analysis.sequence.stats.ReadKmersMR;
 import org.opencb.hpg.bigdata.analysis.sequence.stats.ReadStatsMR;
+import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
+import org.opencb.hpg.bigdata.app.cli.local.options.SequenceCommandOptions;
 import org.opencb.hpg.bigdata.core.utils.PathUtils;
+
+import java.io.IOException;
+import java.util.Date;
 
 /**
  * Created by imedina on 03/02/15.
  */
+@Deprecated
 public class SequenceCommandExecutor extends CommandExecutor {
 
-    private CliOptionsParser.SequenceCommandOptions sequenceCommandOptions;
+    private SequenceCommandOptions sequenceCommandOptions;
 
-    public SequenceCommandExecutor(CliOptionsParser.SequenceCommandOptions sequenceCommandOptions) {
+    public SequenceCommandExecutor(SequenceCommandOptions sequenceCommandOptions) {
+        super(sequenceCommandOptions.commonCommandOptions);
         this.sequenceCommandOptions = sequenceCommandOptions;
     }
 
@@ -43,7 +46,7 @@ public class SequenceCommandExecutor extends CommandExecutor {
      * Parse specific 'sequence' command options
      */
     public void execute() throws Exception {
-        String subCommand = sequenceCommandOptions.getParsedSubCommand();
+        String subCommand = getParsedSubCommand(sequenceCommandOptions.jCommander);
 
         switch (subCommand) {
             case "convert":
@@ -56,12 +59,13 @@ public class SequenceCommandExecutor extends CommandExecutor {
                 System.out.println("Sub-command 'align': Not yet implemented for the command 'sequence' !");
                 break;
             default:
+                logger.error("Sequence subcommand '" + subCommand + "' not valid");
                 break;
         }
     }
 
     private void convert() throws Exception {
-        CliOptionsParser.ConvertSequenceCommandOptions
+        SequenceCommandOptions.ConvertSequenceCommandOptions
                 convertSequenceCommandOptions = sequenceCommandOptions.convertSequenceCommandOptions;
 
         // get input parameters
@@ -83,7 +87,8 @@ public class SequenceCommandExecutor extends CommandExecutor {
     }
 
     private void stats() throws Exception {
-        CliOptionsParser.StatsSequenceCommandOptions statsSequenceCommandOptions = sequenceCommandOptions.statsSequenceCommandOptions;
+        SequenceCommandOptions.StatsSequenceCommandOptions statsSequenceCommandOptions =
+                sequenceCommandOptions.statsSequenceCommandOptions;
 
         // get input parameters
         String input = statsSequenceCommandOptions.input;

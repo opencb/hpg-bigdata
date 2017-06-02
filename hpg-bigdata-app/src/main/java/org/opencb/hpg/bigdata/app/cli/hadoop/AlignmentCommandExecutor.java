@@ -19,11 +19,9 @@ package org.opencb.hpg.bigdata.app.cli.hadoop;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.ga4gh.models.ReadAlignment;
-import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
-import org.opencb.hpg.bigdata.analysis.alignment.Bam2AvroMR;
 import org.opencb.hpg.bigdata.analysis.alignment.stats.ReadAlignmentStatsMR;
-import org.opencb.hpg.bigdata.analysis.io.parquet.ParquetMR;
+import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
+import org.opencb.hpg.bigdata.app.cli.local.options.AlignmentCommandOptions;
 
 import java.io.IOException;
 import java.util.Date;
@@ -31,11 +29,13 @@ import java.util.Date;
 /**
  * Created by imedina on 16/03/15.
  */
+@Deprecated
 public class AlignmentCommandExecutor extends CommandExecutor {
 
-    private CliOptionsParser.AlignmentCommandOptions alignmentCommandOptions;
+    private AlignmentCommandOptions alignmentCommandOptions;
 
-    public AlignmentCommandExecutor(CliOptionsParser.AlignmentCommandOptions alignmentCommandOptions) {
+    public AlignmentCommandExecutor(AlignmentCommandOptions alignmentCommandOptions) {
+        super(alignmentCommandOptions.commonCommandOptions);
         this.alignmentCommandOptions = alignmentCommandOptions;
     }
 
@@ -46,7 +46,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
      * @throws Exception Exception thrown if file does not exist
      */
     public void execute() throws Exception {
-        String subCommand = alignmentCommandOptions.getParsedSubCommand();
+        String subCommand = getParsedSubCommand(alignmentCommandOptions.jCommander);
         switch (subCommand) {
             case "convert":
                 init(alignmentCommandOptions.convertAlignmentCommandOptions.commonOptions.logLevel,
@@ -72,6 +72,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
     }
 
     private void convert() throws Exception {
+/*
         String input = alignmentCommandOptions.convertAlignmentCommandOptions.input;
         String output = alignmentCommandOptions.convertAlignmentCommandOptions.output;
         String compressionCodecName = alignmentCommandOptions.convertAlignmentCommandOptions.compression;
@@ -91,6 +92,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
         } catch (Exception e) {
             throw e;
         }
+*/
     }
 
     private void stats() throws Exception {
@@ -125,6 +127,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
     }
 
     private void depth() throws Exception {
+/*
         String input = alignmentCommandOptions.depthAlignmentCommandOptions.input;
         String output = alignmentCommandOptions.depthAlignmentCommandOptions.output;
         String regions = alignmentCommandOptions.depthAlignmentCommandOptions.regions;
@@ -162,5 +165,6 @@ public class AlignmentCommandExecutor extends CommandExecutor {
 //        } catch (IOException e) {
 //            throw e;
 //        }
+*/
     }
 }

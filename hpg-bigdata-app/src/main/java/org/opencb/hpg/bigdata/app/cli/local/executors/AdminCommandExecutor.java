@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package org.opencb.hpg.bigdata.app.cli.local;
+package org.opencb.hpg.bigdata.app.cli.local.executors;
 
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
+import org.opencb.hpg.bigdata.app.cli.local.options.AdminCommandOptions;
 import org.opencb.hpg.bigdata.app.rest.RestServer;
 
 /**
@@ -24,24 +25,26 @@ import org.opencb.hpg.bigdata.app.rest.RestServer;
  */
 public class AdminCommandExecutor extends CommandExecutor {
 
-    private LocalCliOptionsParser.AdminCommandOptions adminCommandOptions;
+    private AdminCommandOptions adminCommandOptions;
 
-    public AdminCommandExecutor(LocalCliOptionsParser.AdminCommandOptions adminCommandOptions) {
+    public AdminCommandExecutor(AdminCommandOptions adminCommandOptions) {
+        super(adminCommandOptions.commonCommandOptions);
         this.adminCommandOptions = adminCommandOptions;
     }
 
 
     @Override
     public void execute() throws Exception {
-        String subCommandString = adminCommandOptions.getParsedSubCommand();
+        String subCommandString = getParsedSubCommand(adminCommandOptions.jCommander);
+        init(adminCommandOptions.commonCommandOptions.logLevel,
+                adminCommandOptions.commonCommandOptions.verbose,
+                adminCommandOptions.commonCommandOptions.conf);
         switch (subCommandString) {
             case "server":
-                init(adminCommandOptions.serverAdminCommandOptions.commonOptions.logLevel,
-                        adminCommandOptions.serverAdminCommandOptions.commonOptions.verbose,
-                        adminCommandOptions.serverAdminCommandOptions.commonOptions.conf);
                 startRestServer();
                 break;
             default:
+                logger.error("Administration subcommand '" + subCommandString + "' not valid");
                 break;
         }
     }

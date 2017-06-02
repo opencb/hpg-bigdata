@@ -28,6 +28,7 @@ import java.util.Properties;
  */
 public class BigDataMain {
 
+    @Deprecated
     public static void main(String[] args) {
 
         CliOptionsParser cliOptionsParser = new CliOptionsParser();
@@ -65,6 +66,7 @@ public class BigDataMain {
                     cliOptionsParser.printUsage();
                 } else {
                     switch (parsedCommand) {
+                        /*
                         case "sequence":
                             commandExecutor = new SequenceCommandExecutor(cliOptionsParser.getSequenceCommandOptions());
                             break;
@@ -77,6 +79,7 @@ public class BigDataMain {
                         case "feature":
                             System.out.printf("Not yet implemented: not valid command: '" + parsedCommand + "'");
                             break;
+                            */
                         default:
                             System.out.printf("ERROR: not valid command: '" + parsedCommand + "'");
                             cliOptionsParser.printUsage();

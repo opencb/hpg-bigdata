@@ -24,12 +24,15 @@ import org.apache.spark.SparkContext;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.SparkSession;
 import org.opencb.hpg.bigdata.app.cli.local.CliUtils;
-import org.opencb.hpg.bigdata.app.cli.local.LocalCliOptionsParser;
+import org.opencb.hpg.bigdata.app.cli.local.options.VariantCommandOptions;
 import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
 import org.opencb.hpg.bigdata.core.lib.VariantDataset;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.*;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -78,7 +81,7 @@ public class VariantWSServer {
             vd.createOrReplaceTempView(table);
 
             // create cli options
-            LocalCliOptionsParser.VariantCommandOptions variantCommandOptions;
+            VariantCommandOptions variantCommandOptions;
             variantCommandOptions = CliUtils.createVariantCommandOptions(id, ancestralAllele, displayConsequenceType,
                     xrefs, hgvs, consequenceTypes, consequenceSoAccession, consequenceSoName, populationFrequencies,
                     conservation, variantTraitAssociation);
@@ -124,7 +127,7 @@ public class VariantWSServer {
             vd.load("");
 
             // create cli options
-            LocalCliOptionsParser.VariantCommandOptions variantCommandOptions;
+            VariantCommandOptions variantCommandOptions;
             variantCommandOptions = CliUtils.createVariantCommandOptions(id, ancestralAllele, displayConsequenceType,
                     xrefs, hgvs, consequenceTypes, consequenceSoAccession, consequenceSoName, populationFrequencies,
                     conservation, variantTraitAssociation);

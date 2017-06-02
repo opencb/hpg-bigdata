@@ -3,6 +3,7 @@ package org.opencb.hpg.bigdata.app.cli.local;
 import org.apache.commons.lang3.StringUtils;
 import org.opencb.biodata.models.core.Region;
 import org.opencb.commons.utils.FileUtils;
+import org.opencb.hpg.bigdata.app.cli.local.options.VariantCommandOptions;
 import org.opencb.hpg.bigdata.core.lib.ParentDataset;
 import org.opencb.hpg.bigdata.core.lib.VariantDataset;
 import org.slf4j.Logger;
@@ -90,7 +91,7 @@ public class CliUtils {
         dir.delete();
     }
 
-    public static void addVariantFilters(LocalCliOptionsParser.VariantCommandOptions variantCommandOptions,
+    public static void addVariantFilters(VariantCommandOptions variantCommandOptions,
                                          VariantDataset vd) throws IOException {
         // query for ID (list and file)
         List<String> list = null;
@@ -198,7 +199,7 @@ public class CliUtils {
         }
     }
 
-    public static LocalCliOptionsParser.VariantCommandOptions createVariantCommandOptions(
+    public static VariantCommandOptions createVariantCommandOptions(
             String id, String ancestralAllele, String displayConsequenceType, String xrefs, String hgvs,
             String consequenceTypes, String consequenceSoAccession, String consequenceSoName,
             String populationFrequencies, String conservation, String variantTraitAssociation) {
