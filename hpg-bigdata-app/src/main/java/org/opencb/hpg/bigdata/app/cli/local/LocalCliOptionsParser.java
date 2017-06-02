@@ -68,7 +68,7 @@ public class LocalCliOptionsParser {
         sequenceSubCommands.addCommand("stats", sequenceCommandOptions.statsSequenceCommandOptions);
 
         alignmentCommandOptions = new AlignmentCommandOptions();
-        jcommander.addCommand("alignment", sequenceCommandOptions);
+        jcommander.addCommand("alignment", alignmentCommandOptions);
         JCommander alignmentSubCommands = jcommander.getCommands().get("alignment");
         alignmentSubCommands.addCommand("convert", alignmentCommandOptions.convertAlignmentCommandOptions);
         alignmentSubCommands.addCommand("view", alignmentCommandOptions.viewAlignmentCommandOptions);
@@ -78,7 +78,7 @@ public class LocalCliOptionsParser {
         alignmentSubCommands.addCommand("query", alignmentCommandOptions.queryAlignmentCommandOptions);
 
         variantCommandOptions = new VariantCommandOptions();
-        jcommander.addCommand("variant", sequenceCommandOptions);
+        jcommander.addCommand("variant", variantCommandOptions);
         JCommander variantSubCommands = jcommander.getCommands().get("variant");
         variantSubCommands.addCommand("convert", variantCommandOptions.convertVariantCommandOptions);
         variantSubCommands.addCommand("annotate", variantCommandOptions.annotateVariantCommandOptions);
@@ -254,7 +254,7 @@ public class LocalCliOptionsParser {
     /*
      * Alignment (BAM) CLI options
      */
-    @Parameters(commandNames = {"alignment"}, commandDescription = "Implements different tools for working with BAM files")
+    @Parameters(commandNames = {"alignment"}, commandDescription = "Implements different tools for working with SAM/BAM files")
     public class AlignmentCommandOptions extends CommandOptions {
 
         ConvertAlignmentCommandOptions convertAlignmentCommandOptions;
@@ -791,7 +791,11 @@ public class LocalCliOptionsParser {
     }
 
     @Parameters(commandNames = {"tools"}, commandDescription = "Run external commands")
-    public class ToolCommandOptions extends CommandOptions {
+    public class ToolCommandOptions {
+
+        @ParametersDelegate
+        public CommonCommandOptions commonOptions = commonCommandOptions;
+
         @Parameter(names = {"--id"}, description = "Tool and execution id separated by ':'. When there is only one execution, only the "
                 + "tool id will be needed. Example: samtools:view.", required = true, arity = 1)
         public String tool;
@@ -806,14 +810,8 @@ public class LocalCliOptionsParser {
 
 
     private void printMainUsage() {
-        // TODO This is a nasty hack. By some unknown reason JCommander only prints the description from first command
-        Map<String, String> commandDescription = new HashMap<>();
-        commandDescription.put("sequence", "Implements different tools for working with Fastq files");
-        commandDescription.put("alignment", "Implements different tools for working with SAM/BAM files");
-        commandDescription.put("variant", "Implements different tools for working with gVCF/VCF files");
-
         for (String s : jcommander.getCommands().keySet()) {
-            System.err.printf("%12s  %s\n", s, commandDescription.get(s));
+            System.err.printf("%12s  %s\n", s, jcommander.getCommandDescription(s));
         }
     }
 
