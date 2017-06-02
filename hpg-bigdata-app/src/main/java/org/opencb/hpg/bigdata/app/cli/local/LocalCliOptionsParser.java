@@ -84,8 +84,9 @@ public class LocalCliOptionsParser {
         variantSubCommands.addCommand("annotate", variantCommandOptions.annotateVariantCommandOptions);
         variantSubCommands.addCommand("view", variantCommandOptions.viewVariantCommandOptions);
         variantSubCommands.addCommand("query", variantCommandOptions.queryVariantCommandOptions);
-        //variantSubCommands.addCommand("metadata", variantCommandOptions.metadataVariantCommandOptions);
-        //variantSubCommands.addCommand("rvtests", variantCommandOptions.rvtestsVariantCommandOptions);
+        variantSubCommands.addCommand("metadata", variantCommandOptions.metadataVariantCommandOptions);
+        variantSubCommands.addCommand("rvtests", variantCommandOptions.rvtestsVariantCommandOptions);
+        
         toolCommandOptions = new ToolCommandOptions(commonCommandOptions, jcommander);
         jcommander.addCommand("tool", toolCommandOptions);
     }
