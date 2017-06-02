@@ -20,12 +20,8 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterDescription;
 import com.beust.jcommander.ParameterException;
-import org.opencb.hpg.bigdata.app.cli.local.options.AdminCommandOptions;
-import org.opencb.hpg.bigdata.app.cli.local.options.AlignmentCommandOptions;
-import org.opencb.hpg.bigdata.app.cli.local.options.SequenceCommandOptions;
-import org.opencb.hpg.bigdata.app.cli.local.options.VariantCommandOptions;
+import org.opencb.hpg.bigdata.app.cli.local.options.*;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -50,6 +46,8 @@ public class LocalCliOptionsParser {
 
     // NGS variant command and subcommmands
     private VariantCommandOptions variantCommandOptions;
+
+    private ToolCommandOptions toolCommandOptions;
 
     public LocalCliOptionsParser() {
         generalOptions = new GeneralOptions();
@@ -88,6 +86,8 @@ public class LocalCliOptionsParser {
         variantSubCommands.addCommand("query", variantCommandOptions.queryVariantCommandOptions);
         //variantSubCommands.addCommand("metadata", variantCommandOptions.metadataVariantCommandOptions);
         //variantSubCommands.addCommand("rvtests", variantCommandOptions.rvtestsVariantCommandOptions);
+        toolCommandOptions = new ToolCommandOptions(commonCommandOptions, jcommander);
+        jcommander.addCommand("tool", toolCommandOptions);
     }
 
     public void parse(String[] args) throws ParameterException {
@@ -106,6 +106,10 @@ public class LocalCliOptionsParser {
         } else {
             return null;
         }
+    }
+
+    public boolean existSubcommands() {
+        return jcommander.getCommands().get(jcommander.getParsedCommand()).getCommands().size() > 0;
     }
 
     /**
@@ -179,12 +183,22 @@ public class LocalCliOptionsParser {
         } else {
             String parsedCommand = getCommand();
             if(getSubCommand().isEmpty()){
-                System.err.println("");
-                System.err.println("Usage:   hpg-bigdata-local.sh " + parsedCommand + " <subcommand> [options]");
-                System.err.println("");
-                System.err.println("Subcommands:");
-                printCommandUsage(jcommander.getCommands().get(getCommand()));
-                System.err.println("");
+                if (existSubcommands()) {
+                    System.err.println("");
+                    System.err.println("Usage:   hpg-bigdata-local.sh " + parsedCommand + " <subcommand> [options]");
+                    System.err.println("");
+                    System.err.println("Subcommands:");
+                    printCommandUsage(jcommander.getCommands().get(getCommand()));
+                    System.err.println("");
+                } else {
+                    // There are no subcommands
+                    System.err.println("");
+                    System.err.println("Usage:   hpg-bigdata-local.sh " + parsedCommand + " [options]");
+                    System.err.println("");
+                    System.err.println("Options:");
+                    printSubCommandUsage(jcommander.getCommands().get(parsedCommand));
+                    System.err.println("");
+                }
             } else {
                 String parsedSubCommand = getSubCommand();
                 System.err.println("");
@@ -198,14 +212,8 @@ public class LocalCliOptionsParser {
     }
 
     private void printMainUsage() {
-        // TODO This is a nasty hack. By some unknown reason JCommander only prints the description from first command
-        Map<String, String> commandDescription = new HashMap<>();
-        commandDescription.put("sequence", "Implements different tools for working with Fastq files");
-        commandDescription.put("alignment", "Implements different tools for working with SAM/BAM files");
-        commandDescription.put("variant", "Implements different tools for working with gVCF/VCF files");
-
         for (String s : jcommander.getCommands().keySet()) {
-            System.err.printf("%12s  %s\n", s, commandDescription.get(s));
+            System.err.printf("%12s  %s\n", s, jcommander.getCommandDescription(s));
         }
     }
 
@@ -256,5 +264,9 @@ public class LocalCliOptionsParser {
 
     public VariantCommandOptions getVariantCommandOptions() {
         return variantCommandOptions;
+    }
+
+    public ToolCommandOptions getToolCommandOptions() {
+        return toolCommandOptions;
     }
 }
