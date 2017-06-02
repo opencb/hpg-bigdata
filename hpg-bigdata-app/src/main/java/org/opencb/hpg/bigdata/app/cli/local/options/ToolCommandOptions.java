@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * Created by jtarraga on 02/06/17.
  */
-@Parameters(commandNames = {"tools"}, commandDescription = "Run external commands")
+@Parameters(commandNames = {"tools"}, commandDescription = "Run external tools and analysis")
 public class ToolCommandOptions {
 
     public JCommander jCommander;
