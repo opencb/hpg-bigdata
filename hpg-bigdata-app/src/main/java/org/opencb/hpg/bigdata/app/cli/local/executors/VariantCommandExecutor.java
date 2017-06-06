@@ -25,6 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
+import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.opencb.biodata.formats.pedigree.PedigreeManager;
 import org.opencb.biodata.models.core.Region;
@@ -869,8 +870,61 @@ public class VariantCommandExecutor extends CommandExecutor {
         VariantDataset vd = new VariantDataset(sparkSession);
         vd.load(variantCommandOptions.associationVariantCommandOptions.input);
         vd.createOrReplaceTempView("vcf");
-        vd.show(2);
 
+        String datasetId = "noname";
+        if (StringUtils.isNotEmpty(variantCommandOptions.associationVariantCommandOptions.datasetId)) {
+            datasetId = variantCommandOptions.associationVariantCommandOptions.datasetId;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("SELECT id, study.samplesData FROM vcf ");
+        sb.append("LATERAL VIEW explode(studies) act as study ");
+        //sb.append("LATERAL VIEW explode(study.samplesData[0]) act as samplesData ");
+        sb.append("WHERE study.studyId = '" + datasetId + "' ");
+
+        //vd.executeSql(sb.toString()).show();
+
+        //Encoder<Variant> variantEncoder = Encoders.bean(Variant.class);
+        //Dataset<Variant> ds = vd.executeSql(sb.toString()).as(variantEncoder);
+        List<Row> rows = vd.executeSql(sb.toString()).collectAsList();
+        for (Row row: rows) {
+            System.out.println("id = " + rows.get(0));
+            int size = row.getList(1).size();
+            for (int i = 0; i < size; i++) {
+                System.out.println(row.getList(i));
+            }
+        }
+/*
+        List<Row> rows = vd.executeSql(sb.toString()).collectAsList();
+        for (Row row: rows) {
+            System.out.println("id = " + rows.get(0));
+            int size = row.getList(1).size();
+            for (int i=0; i < size; i++) {
+                System.out.println(((Seq)row.getList(1).get(i)).);
+            }
+            //List<List<String>> samples = row.getList(1).;
+            //row.apply(1).togetList(1).
+            //System.out.println(row.get(0) + " -> number of samples = " + samples.size());
+            //for (List<String> formats: samples) {
+            //    System.out.println("size of formats = " + formats.size());
+            //}
+
+        }
+        //vd1.show(false);
+        //vd1.selectExpr("samplesData[0][0]").show();
+ //       Row[] rows = (Row[]) vd1.take(1);
+   //     System.out.println(rows[0].apply(2) .apply(0).apply(0).stringValue());
+        //
+        //vd.studyFilter("studyId", datasetId);
+        //vd.sampleFilter("GT", "0|0");
+//        vd1.show();
+/*
+        List<Row> rows = vd.collectAsList();
+        System.out.println("number of rows = " + rows.size());
+        for (Row row: rows) {
+            System.out.println(row.get(0) + ", " + row.get(1));
+        }
+*/
         VariantMetadataManager variantMetadataManager = new VariantMetadataManager();
         variantMetadataManager.load(metaFile.getPath());
         Pedigree pedigree = variantMetadataManager.getPedigree("noname");
