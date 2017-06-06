@@ -99,6 +99,9 @@ public class VariantCommandExecutor extends CommandExecutor {
             case "rvtests":
                 rvtests();
                 break;
+            case "association":
+                assoc();
+                break;
             default:
                 logger.error("Variant subcommand '" + subCommandString + "' not valid");
                 break;
@@ -851,5 +854,34 @@ public class VariantCommandExecutor extends CommandExecutor {
 
 //        rvtests.run(variantCommandOptions.rvtestsVariantCommandOptions.datasetId);
         rvtests.run00(variantCommandOptions.rvtestsVariantCommandOptions.datasetId);
+    }
+
+    public void assoc() throws Exception {
+        File metaFile = new File(variantCommandOptions.associationVariantCommandOptions.input + ".meta.json");
+        if (!metaFile.isFile() || !metaFile.exists() || !metaFile.canRead()) {
+            throw new FileNotFoundException("Check your input metadata file.");
+        }
+
+        SparkConf sparkConf = SparkConfCreator.getConf("variant association", "local", 1, true);
+        logger.debug("sparkConf = {}", sparkConf.toDebugString());
+        SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
+
+        VariantDataset vd = new VariantDataset(sparkSession);
+        vd.load(variantCommandOptions.associationVariantCommandOptions.input);
+        vd.createOrReplaceTempView("vcf");
+        vd.show(2);
+
+        VariantMetadataManager variantMetadataManager = new VariantMetadataManager();
+        variantMetadataManager.load(metaFile.getPath());
+        Pedigree pedigree = variantMetadataManager.getPedigree("noname");
+
+        for (String key: pedigree.getIndividuals().keySet()) {
+            System.out.println(key + " = " + pedigree.getIndividuals().get(key));
+        }
+        //PedigreeManager pedigreeManager = new PedigreeManager();
+        //pedigreeManager.
+        //String pheno = variantCommandOptions.associationVariantCommandOptions.pheno;
+
+        sparkSession.stop();
     }
 }
