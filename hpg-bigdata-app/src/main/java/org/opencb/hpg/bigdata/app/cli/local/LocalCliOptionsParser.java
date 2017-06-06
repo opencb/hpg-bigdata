@@ -86,6 +86,7 @@ public class LocalCliOptionsParser {
         variantSubCommands.addCommand("query", variantCommandOptions.queryVariantCommandOptions);
         variantSubCommands.addCommand("metadata", variantCommandOptions.metadataVariantCommandOptions);
         variantSubCommands.addCommand("rvtests", variantCommandOptions.rvtestsVariantCommandOptions);
+        variantSubCommands.addCommand("association", variantCommandOptions.associationVariantCommandOptions);
 
         toolCommandOptions = new ToolCommandOptions(commonCommandOptions, jcommander);
         jcommander.addCommand("tool", toolCommandOptions);

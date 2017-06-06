@@ -21,6 +21,7 @@ public class VariantCommandOptions {
     public QueryVariantCommandOptions queryVariantCommandOptions;
     public MetadataVariantCommandOptions metadataVariantCommandOptions;
     public RvTestsVariantCommandOptions rvtestsVariantCommandOptions;
+    public AssociationVariantCommandOptions associationVariantCommandOptions;
 
     public LocalCliOptionsParser.CommonCommandOptions commonCommandOptions;
     public JCommander jCommander;
@@ -36,6 +37,7 @@ public class VariantCommandOptions {
         this.queryVariantCommandOptions = new QueryVariantCommandOptions();
         this.metadataVariantCommandOptions = new MetadataVariantCommandOptions();
         this.rvtestsVariantCommandOptions = new RvTestsVariantCommandOptions();
+        this.associationVariantCommandOptions = new AssociationVariantCommandOptions();
     }
 
     @Parameters(commandNames = {"convert"}, commandDescription = "Convert gVCF/VCF files to different big data"
@@ -128,14 +130,12 @@ public class VariantCommandOptions {
         @ParametersDelegate
         public LocalCliOptionsParser.CommonCommandOptions commonOptions = commonCommandOptions;
 
-        @Parameter(names = {"-i", "--input"}, description = "0000 Input file name, usually a gVCF/VCF but it can be"
+        @Parameter(names = {"-i", "--input"}, description = "Input file name, usually a gVCF/VCF but it can be"
                 + " an Avro file when converting to Parquet.",
                 required = true, arity = 1)
         public String input;
 
-        @Parameter(names = {"-o", "--output"}, description = "Input file name, usually a gVCF/VCF but it can be an"
-                + " Avro file when converting to Parquet.",
-                required = true, arity = 1)
+        @Parameter(names = {"-o", "--output"}, description = "Output file name.", required = true, arity = 1)
         public String ouput;
     }
 
@@ -327,7 +327,7 @@ public class VariantCommandOptions {
         public boolean summary = false;
     }
 
-    @Parameters(commandNames = {"rvtests"}, commandDescription = "Execute the 'rvtests' program.")
+    @Parameters(commandNames = {"rvtests"}, commandDescription = "Execute the 'rvtests' program")
     public class RvTestsVariantCommandOptions {
 
         @ParametersDelegate
@@ -352,5 +352,30 @@ public class VariantCommandOptions {
         @Parameter(names = {"-c", "--config"}, description = "Configuration file name containing the rvtests parameters.",
                 required = true, arity = 1)
         public String confFilename;
+    }
+
+    @Parameters(commandNames = {"association"}, commandDescription = "Execute association tests such as chi-square,"
+            + " linear and logistic regressions for additive, dominant or recessive genetic models")
+    public class AssociationVariantCommandOptions {
+
+        @ParametersDelegate
+        public LocalCliOptionsParser.CommonCommandOptions commonOptions = commonCommandOptions;
+
+        @Parameter(names = {"-i", "--input"}, description = "Input file name in Avro file format", required = true,
+                arity = 1)
+        public String input;
+
+        @Parameter(names = {"-o", "--output"}, description = "Output file name to save results", required = true,
+                arity = 1)
+        public String output;
+
+        @Parameter(names = {"--pheno"}, description = "Name of the phenotype trait to test", arity = 1)
+        public String pheno = "affection";
+
+        @Parameter(names = {"--logistic"}, description = "Logistic regression (for qualitative traits)")
+        public boolean logistic = false;
+
+        @Parameter(names = {"--linear"}, description = "Linear regression (for quantitative traits)")
+        public boolean linear = false;
     }
 }
