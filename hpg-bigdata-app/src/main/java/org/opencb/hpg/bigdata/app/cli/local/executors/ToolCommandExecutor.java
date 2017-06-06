@@ -1,4 +1,4 @@
-package org.opencb.hpg.bigdata.app.cli.local;
+package org.opencb.hpg.bigdata.app.cli.local.executors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.opencb.hpg.bigdata.analysis.tools.ToolManager;
