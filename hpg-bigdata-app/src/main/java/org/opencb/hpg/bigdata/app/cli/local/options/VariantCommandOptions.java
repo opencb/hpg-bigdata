@@ -370,7 +370,7 @@ public class VariantCommandOptions {
         public String output;
 
         @Parameter(names = {"--pheno"}, description = "Name of the phenotype trait to test", arity = 1)
-        public String pheno = "affection";
+        public String pheno = "phenotype";
 
         @Parameter(names = {"--logistic"}, description = "Logistic regression (for qualitative traits)")
         public boolean logistic = false;
