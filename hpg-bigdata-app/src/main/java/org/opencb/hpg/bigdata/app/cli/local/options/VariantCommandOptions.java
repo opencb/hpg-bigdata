@@ -377,5 +377,8 @@ public class VariantCommandOptions {
 
         @Parameter(names = {"--linear"}, description = "Linear regression (for quantitative traits)")
         public boolean linear = false;
+
+        @Parameter(names = {"--dataset"}, description = "Target dataset", arity = 1)
+        public String datasetId = "noname";
     }
 }
