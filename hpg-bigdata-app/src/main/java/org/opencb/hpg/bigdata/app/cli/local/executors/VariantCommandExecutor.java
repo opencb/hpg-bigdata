@@ -19,6 +19,7 @@ package org.opencb.hpg.bigdata.app.cli.local.executors;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFFileReader;
+import jdk.nashorn.internal.runtime.regexp.joni.exception.InternalException;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.commons.lang3.StringUtils;
@@ -30,14 +31,19 @@ import org.apache.spark.sql.SparkSession;
 import org.opencb.biodata.formats.pedigree.PedigreeManager;
 import org.opencb.biodata.models.core.Region;
 import org.opencb.biodata.models.core.pedigree.Pedigree;
+import org.opencb.biodata.models.metadata.Individual;
 import org.opencb.biodata.models.metadata.SampleSetType;
 import org.opencb.biodata.models.variant.Variant;
 import org.opencb.biodata.models.variant.VariantMetadataManager;
 import org.opencb.biodata.models.variant.avro.StudyEntry;
 import org.opencb.biodata.models.variant.avro.VariantAvro;
 import org.opencb.biodata.models.variant.avro.VariantFileMetadata;
+import org.opencb.biodata.models.variant.metadata.VariantDatasetMetadata;
+import org.opencb.biodata.models.variant.metadata.VariantMetadata;
 import org.opencb.biodata.tools.variant.converters.avro.VariantContextToVariantConverter;
 import org.opencb.commons.utils.FileUtils;
+import org.opencb.hpg.bigdata.analysis.variant.LinearRegressionAnalysis;
+import org.opencb.hpg.bigdata.analysis.variant.LogisticRegressionAnalysis;
 import org.opencb.hpg.bigdata.analysis.variant.RvTestsAdaptor;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
 import org.opencb.hpg.bigdata.app.cli.local.CliUtils;
@@ -48,14 +54,14 @@ import org.opencb.hpg.bigdata.core.converters.variation.VariantContext2VariantCo
 import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
 import org.opencb.hpg.bigdata.core.lib.VariantDataset;
 import org.opencb.hpg.bigdata.core.parquet.VariantParquetConverter;
+import scala.collection.JavaConversions;
+import scala.collection.mutable.WrappedArray;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static java.nio.file.Paths.get;
 
@@ -858,11 +864,58 @@ public class VariantCommandExecutor extends CommandExecutor {
     }
 
     public void assoc() throws Exception {
+        // check input file
         File metaFile = new File(variantCommandOptions.associationVariantCommandOptions.input + ".meta.json");
         if (!metaFile.isFile() || !metaFile.exists() || !metaFile.canRead()) {
             throw new FileNotFoundException("Check your input metadata file.");
         }
 
+        // check dataset ID
+        String datasetId = "noname";
+        if (StringUtils.isNotEmpty(variantCommandOptions.associationVariantCommandOptions.datasetId)) {
+            datasetId = variantCommandOptions.associationVariantCommandOptions.datasetId;
+        }
+
+        // check input file
+        String model = variantCommandOptions.associationVariantCommandOptions.model;
+
+        // check phenotype
+        String pheno = "phenotype";
+        if (StringUtils.isNotEmpty(variantCommandOptions.associationVariantCommandOptions.pheno)) {
+            pheno = variantCommandOptions.associationVariantCommandOptions.pheno;
+        }
+
+        // check sample IDs and phenotypes
+        VariantMetadataManager variantMetadataManager = new VariantMetadataManager();
+        variantMetadataManager.load(metaFile.getPath());
+        VariantMetadata variantMetadata = variantMetadataManager.getVariantMetadata();
+        List<String> sampleIds = null;
+        Map<String, Object> phenotypes = new HashMap<>();
+        for (VariantDatasetMetadata vdm: variantMetadata.getDatasets()) {
+            System.out.println(datasetId + " vs " + vdm.getId());
+            if (vdm.getId().equals(datasetId)) {
+                sampleIds = vdm.getFiles().get(0).getSampleIds();
+                for (Individual individual: vdm.getIndividuals()) {
+                    Object value;
+                    if ("phenotype".equals(pheno)) {
+                        // phenotype = affection
+                        phenotypes.put(individual.getId(), individual.getPhenotype());
+                    } else {
+                        // phenotype = attribute from sample info
+                        phenotypes.put(individual.getId(), individual.getSamples().get(0).getInfo().get(pheno));
+                    }
+                }
+                break;
+            }
+        }
+        if (sampleIds == null) {
+            throw new InternalException("Not sample IDs found");
+        }
+
+        // display phenotypes and sample Ids
+        for (String sampleId: sampleIds) {
+            System.out.println(sampleId + " (" + pheno + ") -> " + phenotypes.get(sampleId));
+        }
         SparkConf sparkConf = SparkConfCreator.getConf("variant association", "local", 1, true);
         logger.debug("sparkConf = {}", sparkConf.toDebugString());
         SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
@@ -871,71 +924,116 @@ public class VariantCommandExecutor extends CommandExecutor {
         vd.load(variantCommandOptions.associationVariantCommandOptions.input);
         vd.createOrReplaceTempView("vcf");
 
-        String datasetId = "noname";
-        if (StringUtils.isNotEmpty(variantCommandOptions.associationVariantCommandOptions.datasetId)) {
-            datasetId = variantCommandOptions.associationVariantCommandOptions.datasetId;
-        }
-
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT id, study.samplesData FROM vcf ");
         sb.append("LATERAL VIEW explode(studies) act as study ");
         //sb.append("LATERAL VIEW explode(study.samplesData[0]) act as samplesData ");
         sb.append("WHERE study.studyId = '" + datasetId + "' ");
 
+        List<Row> rows = vd.executeSql(sb.toString()).collectAsList();
         //vd.executeSql(sb.toString()).show();
 
-        //Encoder<Variant> variantEncoder = Encoders.bean(Variant.class);
-        //Dataset<Variant> ds = vd.executeSql(sb.toString()).as(variantEncoder);
-        List<Row> rows = vd.executeSql(sb.toString()).collectAsList();
-        for (Row row: rows) {
-            System.out.println("id = " + rows.get(0));
-            int size = row.getList(1).size();
-            for (int i = 0; i < size; i++) {
-                System.out.println(row.getList(i));
+        // get independent variable values from phenotype (metadata)
+        List<Double> depVarValues = new ArrayList<>(phenotypes.size());
+        for (int i = 0; i < phenotypes.size(); i++) {
+            //depVarValues.set(i, getPhenotypeTarget((String) phenotypes.get(sampleIds.get(i))));
+            depVarValues.add(getPhenotypeTarget((String) phenotypes.get(sampleIds.get(i))));
+            System.out.println(i + " -> " + sampleIds.get(i) + " -> " + phenotypes.get(sampleIds.get(i)) + " -> " + depVarValues.get(i));
+        }
+
+        List<Double> indepVarValues = new ArrayList<>(depVarValues.size());
+
+        if (variantCommandOptions.associationVariantCommandOptions.logistic) {
+            // and now, for each variant get dependent variable values from genotype variant data
+            for (Row row: rows) {
+                System.out.println(">>>>>>>>>>> id = " + row.get(0));
+                // sanity check
+                int size = row.getList(1).size();
+                System.out.println("dep. var (pheno): " + depVarValues);
+                System.out.println("size = " + size);
+                assert(depVarValues.size() == size);
+
+                indepVarValues.clear();
+                for (int i = 0; i < size; i++) {
+                    Object gt = JavaConversions.mutableSeqAsJavaList((WrappedArray) row.getList(1).get(i)).get(0);
+                    indepVarValues.add(getGenotypeFeature((String) gt, model));
+                }
+
+                // logistic regression
+                System.out.println("indep. var (geno): " + indepVarValues);
+                LogisticRegressionAnalysis lra = new LogisticRegressionAnalysis(null, null, null, null, sparkSession);
+                lra.execute(depVarValues, indepVarValues);
             }
-        }
-/*
-        List<Row> rows = vd.executeSql(sb.toString()).collectAsList();
-        for (Row row: rows) {
-            System.out.println("id = " + rows.get(0));
-            int size = row.getList(1).size();
-            for (int i=0; i < size; i++) {
-                System.out.println(((Seq)row.getList(1).get(i)).);
+        } else if (variantCommandOptions.associationVariantCommandOptions.linear) {
+
+            // and now, for each variant get dependent variable values from genotype variant data
+            for (Row row: rows) {
+                // sanity check
+                int size = row.getList(1).size();
+                assert(depVarValues.size() == size);
+
+                indepVarValues.clear();
+                for (int i = 0; i < size; i++) {
+                    Object gt = JavaConversions.mutableSeqAsJavaList((WrappedArray) row.getList(1).get(i)).get(0);
+                    indepVarValues.add(getGenotypeFeature((String) gt, model));
+                }
+
+                // linear regression
+                System.out.println(">>>>>>>>>>> id = " + row.get(0));
+                System.out.println("dep. var (pheno): " + depVarValues);
+                System.out.println("indep. var (geno): " + indepVarValues);
+                LinearRegressionAnalysis lra = new LinearRegressionAnalysis(null, null, null, null, sparkSession);
+                lra.execute(depVarValues, indepVarValues);
             }
-            //List<List<String>> samples = row.getList(1).;
-            //row.apply(1).togetList(1).
-            //System.out.println(row.get(0) + " -> number of samples = " + samples.size());
-            //for (List<String> formats: samples) {
-            //    System.out.println("size of formats = " + formats.size());
-            //}
-
+        } else {
+            // chi square
+            logger.error("Chi-square association not implemented yet");
         }
-        //vd1.show(false);
-        //vd1.selectExpr("samplesData[0][0]").show();
- //       Row[] rows = (Row[]) vd1.take(1);
-   //     System.out.println(rows[0].apply(2) .apply(0).apply(0).stringValue());
-        //
-        //vd.studyFilter("studyId", datasetId);
-        //vd.sampleFilter("GT", "0|0");
-//        vd1.show();
-/*
-        List<Row> rows = vd.collectAsList();
-        System.out.println("number of rows = " + rows.size());
-        for (Row row: rows) {
-            System.out.println(row.get(0) + ", " + row.get(1));
-        }
-*/
-        VariantMetadataManager variantMetadataManager = new VariantMetadataManager();
-        variantMetadataManager.load(metaFile.getPath());
-        Pedigree pedigree = variantMetadataManager.getPedigree("noname");
 
-        for (String key: pedigree.getIndividuals().keySet()) {
-            System.out.println(key + " = " + pedigree.getIndividuals().get(key));
-        }
-        //PedigreeManager pedigreeManager = new PedigreeManager();
-        //pedigreeManager.
-        //String pheno = variantCommandOptions.associationVariantCommandOptions.pheno;
-
+        // stop spark
         sparkSession.stop();
+    }
+
+    private double getGenotypeFeature(String genotype, String model) {
+        String[] split = genotype.split("[/|]");
+        if ("add".equals(model)) {
+            if (split[0].equals("0") && split[1].equals("0")) {
+                return 2;
+            } else if (split[0].equals("1") && split[1].equals("1")) {
+                return 0;
+            } else {
+                return 1;
+            }
+        } else if ("dom".equals(model)) {
+            if (split[0].equals("1") && split[1].equals("1")) {
+                return 0;
+            } else {
+                return 1;
+            }
+        } else if ("rec".equals(model)) {
+            if (split[0].equals("0") && split[1].equals("0")) {
+                return 1;
+            } else {
+                return 0;
+            }
+        } else {
+            logger.error("Invalid genetic model: " + model);
+            return 0;
+        }
+    }
+
+    private double getPhenotypeTarget(String pheno) {
+        if (pheno.equals(org.opencb.biodata.models.core.pedigree.Individual.Phenotype.UNAFFECTED.toString())) {
+            return 0;
+        } else if (pheno.equals(org.opencb.biodata.models.core.pedigree.Individual.Phenotype.AFFECTED.toString())) {
+            return 1;
+        } else {
+            try {
+                return Double.parseDouble(pheno);
+            } catch (NumberFormatException e) {
+                logger.error(e.getMessage());
+                return 0;
+            }
+        }
     }
 }

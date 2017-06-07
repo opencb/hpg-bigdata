@@ -31,6 +31,9 @@ public class VariantAssocCLITest {
             commandLine.append(" -i ").append(inPath);
             commandLine.append(" -o ").append(outPath);
             commandLine.append(" --dataset noname");
+            //commandLine.append(" --logistic");
+            commandLine.append(" --linear");
+            commandLine.append(" --pheno Age:s");
 
             VariantQueryCLITest.execute(commandLine.toString());
         } catch (Exception e) {

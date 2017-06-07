@@ -1,4 +1,4 @@
-package org.opencb.hpg.bigdata.analysis.variant;
+package org.opencb.hpg.bigdata.analysis.variant.statistics;
 
 import org.apache.spark.mllib.linalg.Matrix;
 import org.apache.spark.mllib.stat.Statistics;

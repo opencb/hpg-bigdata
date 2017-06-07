@@ -1,38 +1,27 @@
 package org.opencb.hpg.bigdata.analysis.variant;
 
-import org.apache.spark.ml.classification.BinaryLogisticRegressionSummary;
 import org.apache.spark.ml.classification.LogisticRegression;
 import org.apache.spark.ml.classification.LogisticRegressionModel;
 import org.apache.spark.ml.classification.LogisticRegressionTrainingSummary;
 import org.apache.spark.mllib.linalg.Vectors;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.functions;
+import org.apache.spark.sql.SparkSession;
 
 /**
  * Created by jtarraga on 30/05/17.
  */
-public class LogisticRegressionAnalysis extends VariantAnalysisExecutor {
+public class LogisticRegressionAnalysis extends RegressionAnalysis {
 
-    private String depVarName;
-    private String indepVarName;
-
-    private int numIterations = 10; // number of iterations
-    private double regularization = 0.3; // regularization parameter
-    private double elasticNet = 0.8; // elastic net mixing parameter
+    private LogisticRegression logisticRegression;
 
     @Override
     public void execute() {
-        LogisticRegression lr = new LogisticRegression()
-                .setMaxIter(numIterations)
-                .setRegParam(regularization)
-                .setElasticNetParam(elasticNet);
-
-        // prepare dataset
-        Dataset<Row> training = null;
+        // create dataset
+        Dataset<Row> training = createTrainingDataset();
 
         // fit the model
-        LogisticRegressionModel lrModel = lr.fit(training);
+        LogisticRegressionModel lrModel = logisticRegression.fit(training);
 
         // print the coefficients and intercept for linear regression
         System.out.println("Coefficients: "
@@ -43,6 +32,7 @@ public class LogisticRegressionAnalysis extends VariantAnalysisExecutor {
         System.out.println("numIterations: " + trainingSummary.totalIterations());
         System.out.println("objectiveHistory: " + Vectors.dense(trainingSummary.objectiveHistory()));
 
+/*
         // obtain the loss per iteration
         double[] objectiveHistory = trainingSummary.objectiveHistory();
         for (double lossPerIteration : objectiveHistory) {
@@ -68,60 +58,21 @@ public class LogisticRegressionAnalysis extends VariantAnalysisExecutor {
         double bestThreshold = fMeasure.where(fMeasure.col("F-Measure").equalTo(maxFMeasure))
                 .select("threshold").head().getDouble(0);
         lrModel.setThreshold(bestThreshold);
-    }
-
-    public LogisticRegressionAnalysis(String datasetName, String studyName, String depVarName, String indepVarName) {
-        this(datasetName, studyName, depVarName, indepVarName, 10, 0.3, 0.8);
+*/
     }
 
     public LogisticRegressionAnalysis(String datasetName, String studyName, String depVarName, String indepVarName,
-                                      int numIterations, double regularization, double elasticNet) {
-        this.datasetName = datasetName;
-        this.studyName = studyName;
-        this.depVarName = depVarName;
-        this.indepVarName = indepVarName;
-        this.numIterations = numIterations;
-        this.regularization = regularization;
-        this.elasticNet = elasticNet;
+                                      SparkSession sparkSession) {
+        this(datasetName, studyName, depVarName, indepVarName, defaultNumIterations, defaultRegularization,
+                defaultElasticNet, sparkSession);
     }
 
-    public String getDepVarName() {
-        return depVarName;
-    }
+    public LogisticRegressionAnalysis(String datasetName, String studyName, String depVarName, String indepVarName,
+                                      int numIterations, double regularization, double elasticNet,
+                                      SparkSession sparkSession) {
+        super(datasetName, studyName, depVarName, indepVarName, numIterations, regularization, elasticNet, sparkSession);
 
-    public void setDepVarName(String depVarName) {
-        this.depVarName = depVarName;
-    }
-
-    public String getIndepVarName() {
-        return indepVarName;
-    }
-
-    public void setIndepVarName(String indepVarName) {
-        this.indepVarName = indepVarName;
-    }
-
-    public int getNumIterations() {
-        return numIterations;
-    }
-
-    public void setNumIterations(int numIterations) {
-        this.numIterations = numIterations;
-    }
-
-    public double getRegularization() {
-        return regularization;
-    }
-
-    public void setRegularization(double regularization) {
-        this.regularization = regularization;
-    }
-
-    public double getElasticNet() {
-        return elasticNet;
-    }
-
-    public void setElasticNet(double elasticNet) {
-        this.elasticNet = elasticNet;
+        this.logisticRegression = new LogisticRegression().setMaxIter(numIterations).setRegParam(regularization)
+                .setElasticNetParam(elasticNet);
     }
 }
