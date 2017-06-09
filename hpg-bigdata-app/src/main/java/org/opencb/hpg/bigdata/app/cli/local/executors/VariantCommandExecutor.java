@@ -44,7 +44,7 @@ import org.opencb.biodata.tools.variant.converters.avro.VariantContextToVariantC
 import org.opencb.commons.utils.FileUtils;
 import org.opencb.hpg.bigdata.analysis.variant.LinearRegressionAnalysis;
 import org.opencb.hpg.bigdata.analysis.variant.LogisticRegressionAnalysis;
-import org.opencb.hpg.bigdata.analysis.variant.RvTestsAdaptor;
+import org.opencb.hpg.bigdata.analysis.variant.adaptors.RvTestsAdaptor;
 import org.opencb.hpg.bigdata.analysis.variant.adaptors.PlinkAdaptor;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
 import org.opencb.hpg.bigdata.app.cli.local.CliUtils;

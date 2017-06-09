@@ -1,4 +1,4 @@
-package org.opencb.hpg.bigdata.analysis.variant;
+package org.opencb.hpg.bigdata.analysis.variant.adaptors;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
