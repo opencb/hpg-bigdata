@@ -1,5 +1,6 @@
 package org.opencb.hpg.bigdata.analysis.variant;
 
+import org.apache.spark.ml.classification.BinaryLogisticRegressionSummary;
 import org.apache.spark.ml.classification.LogisticRegression;
 import org.apache.spark.ml.classification.LogisticRegressionModel;
 import org.apache.spark.ml.classification.LogisticRegressionTrainingSummary;
@@ -7,6 +8,7 @@ import org.apache.spark.mllib.linalg.Vectors;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.functions;
 
 /**
  * Created by jtarraga on 30/05/17.
@@ -26,13 +28,13 @@ public class LogisticRegressionAnalysis extends RegressionAnalysis {
         // print the coefficients and intercept for linear regression
         System.out.println("Coefficients: "
                 + lrModel.coefficients() + " Intercept: " + lrModel.intercept());
+        System.out.println("OR (for coeff.) = " + Math.exp(lrModel.coefficients().apply(1)));
 
         // summarize the model over the training set and print out some metrics
         LogisticRegressionTrainingSummary trainingSummary = lrModel.summary();
         System.out.println("numIterations: " + trainingSummary.totalIterations());
         System.out.println("objectiveHistory: " + Vectors.dense(trainingSummary.objectiveHistory()));
 
-/*
         // obtain the loss per iteration
         double[] objectiveHistory = trainingSummary.objectiveHistory();
         for (double lossPerIteration : objectiveHistory) {
@@ -58,7 +60,6 @@ public class LogisticRegressionAnalysis extends RegressionAnalysis {
         double bestThreshold = fMeasure.where(fMeasure.col("F-Measure").equalTo(maxFMeasure))
                 .select("threshold").head().getDouble(0);
         lrModel.setThreshold(bestThreshold);
-*/
     }
 
     public LogisticRegressionAnalysis(String datasetName, String studyName, String depVarName, String indepVarName,
