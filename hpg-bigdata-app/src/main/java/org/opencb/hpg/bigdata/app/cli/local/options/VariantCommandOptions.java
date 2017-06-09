@@ -7,6 +7,8 @@ import com.beust.jcommander.ParametersDelegate;
 import org.apache.parquet.hadoop.ParquetWriter;
 import org.opencb.hpg.bigdata.app.cli.local.LocalCliOptionsParser;
 
+import java.util.List;
+
 /**
  * Created by jtarraga on 01/06/17.
  */
@@ -20,6 +22,7 @@ public class VariantCommandOptions {
     public ViewVariantCommandOptions viewVariantCommandOptions;
     public QueryVariantCommandOptions queryVariantCommandOptions;
     public MetadataVariantCommandOptions metadataVariantCommandOptions;
+    public PlinkVariantCommandOptions plinkVariantCommandOptions;
     public RvTestsVariantCommandOptions rvtestsVariantCommandOptions;
     public AssociationVariantCommandOptions associationVariantCommandOptions;
 
@@ -36,6 +39,7 @@ public class VariantCommandOptions {
         this.viewVariantCommandOptions = new ViewVariantCommandOptions();
         this.queryVariantCommandOptions = new QueryVariantCommandOptions();
         this.metadataVariantCommandOptions = new MetadataVariantCommandOptions();
+        this.plinkVariantCommandOptions = new PlinkVariantCommandOptions();
         this.rvtestsVariantCommandOptions = new RvTestsVariantCommandOptions();
         this.associationVariantCommandOptions = new AssociationVariantCommandOptions();
     }
@@ -352,6 +356,117 @@ public class VariantCommandOptions {
         @Parameter(names = {"-c", "--config"}, description = "Configuration file name containing the rvtests parameters.",
                 required = true, arity = 1)
         public String confFilename;
+    }
+
+    @Parameters(commandNames = {"plink"}, commandDescription = "Execute the 'plink' program")
+    public class PlinkVariantCommandOptions {
+
+        @ParametersDelegate
+        public LocalCliOptionsParser.CommonCommandOptions commonOptions = commonCommandOptions;
+
+
+        @Parameter(names = {"-i", "--input"}, description = "Input file name (in Avro/Parquet file format)",
+                required = true, arity = 1)
+        public String inFilename;
+
+        @Parameter(names = {"-m", "--metadata"}, description = "Input metadata file name", required = true, arity = 1)
+        public String metaFilename;
+
+        @Parameter(names = {"--dataset"}, description = "Target dataset", arity = 1)
+        public String datasetId = null;
+
+        @Parameter(names = {"--plink-params"}, description = "List of space-separated key=value parameters necessary to"
+                + " run the plink program", required = true, variableArity = true)
+        public List<String> plinkParams;
+
+        @Parameter(names = {"--split-size"}, description = "Split size. Range 10000000-100000000", arity = 1)
+        public int splitSize = 10000000;
+
+        @Parameter(names = {"-o", "--output"}, description = "Output directory name to save the plink results",
+                required = true, arity = 1)
+        public String outDirname;
+
+        // filter parameters
+        @Parameter(names = {"--id"}, description = "Filter ID; comma separated list of IDs, e.g.:"
+                + " \"rs312411,rs421225\"", arity = 1)
+        public String ids;
+
+        @Parameter(names = {"--id-file"}, description = "Filter ID that are stored in a file, one ID per line,"
+                + " e.g.: rs312411", arity = 1)
+        public String idFilename;
+
+        @Parameter(names = {"--type"}, description = "Filter type; comma separated list of IDs, e.g.:"
+                + " \"INDEL,SNP,SNV\"", arity = 1)
+        public String types;
+
+        @Parameter(names = {"--s", "--study"}, description = "Filter study; comma separated list of study names",
+                arity = 1)
+        public String studies;
+
+        @Parameter(names = {"--biotype"}, description = "Filter biotype; comma separated list of biotype names,"
+                + " e.g.: protein_coding, pseudogene", arity = 1)
+        public String biotypes;
+
+        @Parameter(names = {"-r", "--region"}, description = "Filter region; comma separated list of regions,"
+                + " e.g.: 1:300000-400000000,15:343453463-8787665654", arity = 1)
+        public String regions;
+
+        @Parameter(names = {"--region-file"}, description = "Filter regions that are stored in a file, one region"
+                + " per line,  e.g.: 1:6700000-560000000", arity = 1)
+        public String regionFilename;
+
+        @Parameter(names = {"--maf"}, description = "QuerFilter Minor Allele Frequency of a given study and"
+                + " cohort. Use the following format enclosed with double quotes: \"study_name::cohort_name"
+                + "[<|>|<=|>=|==|!=]value\", e.g.: \"1000g::all>0.4\"", arity = 1)
+        public String maf;
+
+        @Parameter(names = {"--mgf"}, description = "Filter Minor Genotype Frequency of a given study and"
+                + " cohort. Use the following format enclosed with double quotes: \"study_name::cohort_name"
+                + "[<|>|<=|>=|==|!=]value\", e.g.: \"1000g::all>0.18198\"", arity = 1)
+        public String mgf;
+
+        @Parameter(names = {"--ct", "--consequence-type"}, description = "Filter Sequence Ontology term names or"
+                + " accession codes; comma separated (use double quotes if you provide term names), e.g.:"
+                + " \"transgenic insertion,SO:32234,SO:00124\"", arity = 1)
+        public String consequenceTypes;
+
+        @Parameter(names = {"--gene"}, description = "Filter gene; comma separated list of gene names, e.g.:"
+                + " \"BIN3,ZNF517\"", arity = 1)
+        public String genes;
+
+        @Parameter(names = {"--clinvar"}, description = "Filter clinvar (accession); comma separated list of"
+                + " accessions", arity = 1)
+        public String clinvar;
+
+        @Parameter(names = {"--cosmic"}, description = "Filter cosmic (mutation ID); comma separated list of"
+                + " mutations IDs", arity = 1)
+        public String cosmic;
+
+        @Parameter(names = {"--conservation"}, description = "Filter conservation scores (phastCons, phylop, gerp);"
+                + "comma separated list of scores and enclosed with double quotes, e.g.: \"phylop<0.3,phastCons<0.1\"",
+                arity = 1)
+        public String conservScores;
+
+        @Parameter(names = {"--ps", "--protein-substitution"}, description = "Filter protein substitution scores"
+                + " (polyphen, sift); comma separated list of scores and enclosed with double quotes, e.g.:"
+                + "\"polyphen>0.3,sift>0.6\"", arity = 1)
+        public String substScores;
+
+        @Parameter(names = {"--pf", "--population-frequency"}, description = "Filter alternate population"
+                + " frequency of a given study: \"study_name::population_name[<|>|<=|>=|==|!=]frequency_value\", e.g.: "
+                + " \"1000g::CEU<0.4\"",
+                arity = 1)
+        public String pf;
+
+        @Parameter(names = {"--pmaf", "--population-maf"}, description = "Filter population minor allele frequency"
+                + " of a given study: \"study_name:: population_name[<|>|<=|>=|==|!=]frequency_value\", e.g.: "
+                + "\"1000g::PJL<=0.25\"", arity = 1)
+        public String pmaf;
+
+        @Parameter(names = {"--sample"}, description = "Filter sample names; comma separated list of sample names",
+                arity = 1)
+        public String samples;
+        // end of filter parameters
     }
 
     @Parameters(commandNames = {"association"}, commandDescription = "Execute association tests such as chi-square,"

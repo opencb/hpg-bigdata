@@ -6,6 +6,9 @@ import org.apache.spark.sql.SparkSession;
  * Created by jtarraga on 30/01/17.
  */
 public abstract class AnalysisExecutor {
+
+    public static String metadataExtension = ".meta.json";
+
     protected String datasetName;
     protected SparkSession sparkSession;
 

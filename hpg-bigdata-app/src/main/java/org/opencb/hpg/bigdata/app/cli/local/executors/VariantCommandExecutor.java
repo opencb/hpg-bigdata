@@ -45,6 +45,7 @@ import org.opencb.commons.utils.FileUtils;
 import org.opencb.hpg.bigdata.analysis.variant.LinearRegressionAnalysis;
 import org.opencb.hpg.bigdata.analysis.variant.LogisticRegressionAnalysis;
 import org.opencb.hpg.bigdata.analysis.variant.RvTestsAdaptor;
+import org.opencb.hpg.bigdata.analysis.variant.adaptors.PlinkAdaptor;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
 import org.opencb.hpg.bigdata.app.cli.local.CliUtils;
 import org.opencb.hpg.bigdata.app.cli.local.options.VariantCommandOptions;
@@ -102,6 +103,9 @@ public class VariantCommandExecutor extends CommandExecutor {
                 break;
             case "metadata":
                 metadata();
+                break;
+            case "plink":
+                plink();
                 break;
             case "rvtests":
                 rvtests();
@@ -861,6 +865,21 @@ public class VariantCommandExecutor extends CommandExecutor {
 
 //        rvtests.run(variantCommandOptions.rvtestsVariantCommandOptions.datasetId);
         rvtests.run00(variantCommandOptions.rvtestsVariantCommandOptions.datasetId);
+    }
+
+    public void plink() throws Exception {
+        PlinkAdaptor plink = new PlinkAdaptor(variantCommandOptions.plinkVariantCommandOptions.inFilename,
+                variantCommandOptions.plinkVariantCommandOptions.metaFilename,
+                variantCommandOptions.plinkVariantCommandOptions.outDirname);
+
+        plink.setPlinkParams(variantCommandOptions.plinkVariantCommandOptions.plinkParams);
+        plink.setSplitSize(variantCommandOptions.plinkVariantCommandOptions.splitSize);
+        plink.setFilterOptions(CliUtils.getFilterMap(variantCommandOptions.plinkVariantCommandOptions));
+
+        plink.execute();
+
+////        rvtests.run(variantCommandOptions.rvtestsVariantCommandOptions.datasetId);
+        //rvtests.run00(variantCommandOptions.rvtestsVariantCommandOptions.datasetId);
     }
 
     public void assoc() throws Exception {

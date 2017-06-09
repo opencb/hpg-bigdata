@@ -13,9 +13,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import static java.nio.file.Paths.get;
 
@@ -211,5 +209,26 @@ public class CliUtils {
         parser.getVariantCommandOptions().queryVariantCommandOptions.pf = populationFrequencies;
 
         return parser.getVariantCommandOptions();
+    }
+
+    public static Map<String, String> getFilterMap(VariantCommandOptions.PlinkVariantCommandOptions options) {
+        Map<String, String> mapFilter = new HashMap<>();
+
+        // regions
+        if (StringUtils.isNotEmpty(options.regions)) {
+            mapFilter.put("regions", options.regions);
+        }
+
+        // types
+        if (StringUtils.isNotEmpty(options.types)) {
+            mapFilter.put("types", options.types);
+        }
+
+        // biotypes
+        if (StringUtils.isNotEmpty(options.biotypes)) {
+            mapFilter.put("biotypes", options.biotypes);
+        }
+
+        return mapFilter;
     }
 }
