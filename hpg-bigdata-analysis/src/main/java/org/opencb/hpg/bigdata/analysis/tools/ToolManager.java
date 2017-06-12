@@ -19,16 +19,19 @@ package org.opencb.hpg.bigdata.analysis.tools;
 import org.apache.commons.lang3.StringUtils;
 import org.opencb.hpg.bigdata.analysis.exceptions.AnalysisToolException;
 import org.opencb.hpg.bigdata.analysis.tools.manifest.Execution;
-import org.opencb.hpg.bigdata.analysis.tools.manifest.Param;
 import org.opencb.hpg.bigdata.analysis.tools.manifest.Manifest;
+import org.opencb.hpg.bigdata.analysis.tools.manifest.Param;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by imedina on 19/05/17.
@@ -156,6 +159,48 @@ public class ToolManager {
         this.tools.put(tool, manifest);
 
         return manifest;
+    }
+
+    public List<Param> getInputParams(String tool, String executionName) throws AnalysisToolException {
+        Manifest manifest = getManifest(tool);
+
+        // Look for the execution
+        Execution execution = null;
+        for (Execution executionTmp : manifest.getExecutions()) {
+            if (executionTmp.getId().equalsIgnoreCase(executionName)) {
+                execution = executionTmp;
+                break;
+            }
+        }
+        if (execution == null) {
+            throw new AnalysisToolException("Execution " + executionName + " not found in manifest");
+        }
+
+        return execution.getParams()
+                .stream()
+                .filter(param -> !param.isOutput() && param.getDataType().equals(Param.Type.FILE))
+                .collect(Collectors.toList());
+    }
+
+    public List<Param> getOutputParams(String tool, String executionName) throws AnalysisToolException {
+        Manifest manifest = getManifest(tool);
+
+        // Look for the execution
+        Execution execution = null;
+        for (Execution executionTmp : manifest.getExecutions()) {
+            if (executionTmp.getId().equalsIgnoreCase(executionName)) {
+                execution = executionTmp;
+                break;
+            }
+        }
+        if (execution == null) {
+            throw new AnalysisToolException("Execution " + executionName + " not found in manifest");
+        }
+
+        return execution.getParams()
+                .stream()
+                .filter(Param::isOutput)
+                .collect(Collectors.toList());
     }
 
     public void runCommandLine(String commandLine, Path outdir) throws AnalysisToolException {
