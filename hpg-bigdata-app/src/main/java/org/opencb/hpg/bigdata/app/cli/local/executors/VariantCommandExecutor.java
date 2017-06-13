@@ -42,6 +42,7 @@ import org.opencb.biodata.models.variant.metadata.VariantDatasetMetadata;
 import org.opencb.biodata.models.variant.metadata.VariantMetadata;
 import org.opencb.biodata.tools.variant.converters.avro.VariantContextToVariantConverter;
 import org.opencb.commons.utils.FileUtils;
+import org.opencb.hpg.bigdata.analysis.AnalysisExecutor;
 import org.opencb.hpg.bigdata.analysis.variant.LinearRegressionAnalysis;
 import org.opencb.hpg.bigdata.analysis.variant.LogisticRegressionAnalysis;
 import org.opencb.hpg.bigdata.analysis.variant.adaptors.RvTestsAdaptor;
@@ -872,9 +873,10 @@ public class VariantCommandExecutor extends CommandExecutor {
                 variantCommandOptions.plinkVariantCommandOptions.metaFilename,
                 variantCommandOptions.plinkVariantCommandOptions.outDirname);
 
+        plink.setDatasetName(variantCommandOptions.plinkVariantCommandOptions.datasetId);
         plink.setPlinkParams(variantCommandOptions.plinkVariantCommandOptions.plinkParams);
         plink.setSplitSize(variantCommandOptions.plinkVariantCommandOptions.splitSize);
-        plink.setFilterOptions(CliUtils.getFilterMap(variantCommandOptions.plinkVariantCommandOptions));
+        plink.setFilterOptions(CliUtils.parsePlinkFilterOptions(variantCommandOptions.plinkVariantCommandOptions));
 
         plink.execute();
 
@@ -884,7 +886,8 @@ public class VariantCommandExecutor extends CommandExecutor {
 
     public void assoc() throws Exception {
         // check input file
-        File metaFile = new File(variantCommandOptions.associationVariantCommandOptions.input + ".meta.json");
+        File metaFile = new File(variantCommandOptions.associationVariantCommandOptions.input
+                + AnalysisExecutor.metadataExtension);
         if (!metaFile.isFile() || !metaFile.exists() || !metaFile.canRead()) {
             throw new FileNotFoundException("Check your input metadata file.");
         }

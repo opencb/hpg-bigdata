@@ -1,18 +1,22 @@
 package org.opencb.hpg.bigdata.analysis;
 
 import org.apache.spark.sql.SparkSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created by jtarraga on 30/01/17.
  */
 public abstract class AnalysisExecutor {
 
+    protected static Logger logger = LoggerFactory.getLogger(AnalysisExecutor.class);
+
     public static String metadataExtension = ".meta.json";
 
     protected String datasetName;
     protected SparkSession sparkSession;
 
-    public abstract void execute() throws AnalysisExecutorException;
+    protected abstract void execute() throws AnalysisExecutorException;
 
     public String getDatasetName() {
         return datasetName;

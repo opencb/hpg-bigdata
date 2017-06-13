@@ -1,0 +1,29 @@
+{
+  "contact" : {
+    "name" : "Shaun Purcell",
+    "email" : "plink@chgr.mgh.harvard.edu"
+  },
+  "id" : "plink",
+  "name" : "PLINK",
+  "version" : "v1.90b4.1 64-bit (30 Mar 2017)",
+  "description" : "PLINK 1.9",
+  "website" : "www.cog-genomics.org/plink/1.9/",
+  "publication" : "http://www.gigasciencejournal.com/content/4/1/7",
+  "language" : {
+    "name" : "C",
+    "version" : ""
+  },
+  "dependencies" : [ ],
+  "settings" : {
+    "separator" : " ",
+    "env" : "",
+    "posix" : true
+  },
+  "executions" : [ {
+    "id" : "plink",
+    "bin" : "plink",
+    "description" : "PLINK",
+    "usage" : "plink [options]",
+    "params" : []
+  } ]
+}

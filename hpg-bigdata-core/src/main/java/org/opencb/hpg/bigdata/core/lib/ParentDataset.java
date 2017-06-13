@@ -312,10 +312,6 @@ public abstract class ParentDataset<T> {
         return ds.first();
     }
 
-    public void foreach(scala.Function1<Row, scala.runtime.BoxedUnit> f) {
-        ds.foreach(f);
-    }
-
     public void foreachPartition(scala.Function1<scala.collection.Iterator<Row>, scala.runtime.BoxedUnit> f) {
         ds.foreachPartition(f);
     }

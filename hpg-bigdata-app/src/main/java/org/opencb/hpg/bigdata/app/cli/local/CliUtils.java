@@ -3,6 +3,7 @@ package org.opencb.hpg.bigdata.app.cli.local;
 import org.apache.commons.lang3.StringUtils;
 import org.opencb.biodata.models.core.Region;
 import org.opencb.commons.utils.FileUtils;
+import org.opencb.hpg.bigdata.analysis.variant.VariantFilterOptions;
 import org.opencb.hpg.bigdata.app.cli.local.options.VariantCommandOptions;
 import org.opencb.hpg.bigdata.core.lib.ParentDataset;
 import org.opencb.hpg.bigdata.core.lib.VariantDataset;
@@ -211,24 +212,67 @@ public class CliUtils {
         return parser.getVariantCommandOptions();
     }
 
-    public static Map<String, String> getFilterMap(VariantCommandOptions.PlinkVariantCommandOptions options) {
-        Map<String, String> mapFilter = new HashMap<>();
+    /**
+     * Parse command line options for the PlinkAdaptor.
+     *
+     * @param options Command line options
+     * @return          Variant filter objects (for the PlinkAdaptor)
+     */
+    public static VariantFilterOptions parsePlinkFilterOptions(VariantCommandOptions.PlinkVariantCommandOptions options) {
+        List<String> list = null;
+        VariantFilterOptions filterOptions = new VariantFilterOptions();
+
+        // ID
+        if (StringUtils.isNotEmpty(options.ids)) {
+            list = Arrays.asList(StringUtils.split(options.ids, ","));
+        }
+        try {
+            if (StringUtils.isNotEmpty(options.idFilename) && new File(options.idFilename).exists()) {
+                if (list == null) {
+                    list = Files.readAllLines(get(options.idFilename));
+                } else {
+                    list.addAll(Files.readAllLines(get(options.idFilename)));
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Error reading ID filename: " + options.idFilename);
+        }
+        if (list != null) {
+            filterOptions.setIdList(list);
+        }
 
         // regions
+        list = new ArrayList<>();
+        List<Region> regions = new ArrayList<>();
         if (StringUtils.isNotEmpty(options.regions)) {
-            mapFilter.put("regions", options.regions);
+            list = Arrays.asList(StringUtils.split(options.regions, ","));
+        }
+        try {
+            if (options.regionFilename != null) {
+                list.addAll(Files.readAllLines(get(options.regionFilename)));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        if (list.size() > 0) {
+            for (String item: list) {
+                if (StringUtils.isNotBlank(item)) {
+                    regions.add(new Region(item));
+                }
+            }
+            filterOptions.setRegionList(regions);
         }
 
         // types
         if (StringUtils.isNotEmpty(options.types)) {
-            mapFilter.put("types", options.types);
+            filterOptions.setTypeList(Arrays.asList(StringUtils.split(options.types, ",")));
         }
 
         // biotypes
         if (StringUtils.isNotEmpty(options.biotypes)) {
-            mapFilter.put("biotypes", options.biotypes);
+            filterOptions.setBiotypeList(Arrays.asList(StringUtils.split(options.biotypes, ",")));
         }
 
-        return mapFilter;
+        return filterOptions;
     }
 }
