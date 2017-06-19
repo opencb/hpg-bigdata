@@ -21,6 +21,7 @@ import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.IndexedRecord;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.specific.SpecificDatumReader;
+import org.apache.commons.lang3.time.StopWatch;
 import org.apache.hadoop.fs.Path;
 import org.apache.parquet.avro.AvroParquetWriter;
 import org.apache.parquet.hadoop.ParquetWriter;
@@ -37,6 +38,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -116,6 +118,9 @@ public abstract class ParquetConverter<T extends IndexedRecord> {
 
         int numRecords = 0;
         T record = null;
+        StopWatch watch = new StopWatch();
+        watch.start();
+        long elapsed, startTime = watch.getTime(TimeUnit.SECONDS);
         while (dataFileStream.hasNext()) {
             record = dataFileStream.next(record);
 
@@ -123,7 +128,9 @@ public abstract class ParquetConverter<T extends IndexedRecord> {
                 parquetWriter.write(record);
 
                 if (++numRecords % 10000 == 0) {
-                    System.out.println("Number of processed records: " + numRecords);
+                    elapsed = watch.getTime(TimeUnit.SECONDS) - startTime;
+                    System.out.println(numRecords + " variants in " + elapsed + " s at "
+                            + (numRecords / elapsed) + " variants/s");
                 }
             }
         }

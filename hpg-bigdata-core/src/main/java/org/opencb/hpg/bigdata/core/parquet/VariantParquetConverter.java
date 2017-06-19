@@ -18,6 +18,7 @@ package org.opencb.hpg.bigdata.core.parquet;
 
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFHeader;
+import org.apache.commons.lang3.time.StopWatch;
 import org.apache.hadoop.fs.Path;
 import org.apache.parquet.avro.AvroParquetWriter;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
@@ -35,6 +36,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 /**
@@ -94,11 +96,19 @@ public class VariantParquetConverter extends ParquetConverter<VariantAvro> {
                 vcfHeader.getSampleNamesInOrder());
 
         List<VariantContext> variantContexts = vcfFileReader.read(1000);
+        StopWatch watch = new StopWatch();
+        watch.start();
+        long elapsed, startTime = watch.getTime(TimeUnit.SECONDS);
         while (variantContexts.size() > 0) {
             for (VariantContext vc: variantContexts) {
                 Variant variant = converter.convert(vc);
                 if (filter(variant.getImpl())) {
                     counter++;
+                    if (counter % 10000 == 0) {
+                        elapsed = watch.getTime(TimeUnit.SECONDS) - startTime;
+                        System.out.println(counter + " variants in " + elapsed + " s at "
+                                + (counter / elapsed) + " variants/s");
+                    }
                     parquetFileWriter.write(variant.getImpl());
 //                    statsCalculator.updateGlobalStats(variant);
                 }
