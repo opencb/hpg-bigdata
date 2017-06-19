@@ -48,9 +48,10 @@ public class VariantAvroAnnotator {
     public VariantAvroAnnotator() {
         ClientConfiguration clientConfiguration = new ClientConfiguration();
         clientConfiguration.setVersion("v4");
-        clientConfiguration.setRest(new RestConfig(Collections
-                .singletonList("http://bioinfodev.hpc.cam.ac.uk/cellbase-4.5.0-beta"), 30000));
-
+        String url = "http://bioinfo.hpc.cam.ac.uk/cellbase/webservices/";
+        clientConfiguration.setRest(new RestConfig(Collections.singletonList(url), 30000));
+        //clientConfiguration.setRest(new RestConfig(Collections
+//                .singletonList("http://bioinfodev.hpc.cam.ac.uk/cellbase-4.5.0-beta"), 30000));
         cellBaseClient = new CellBaseClient("hsapiens", clientConfiguration);
     }
 
