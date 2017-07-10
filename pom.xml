@@ -40,6 +40,7 @@
         <biodata.version>1.2.0-SNAPSHOT</biodata.version>
         <cellbase.version>4.5.0-beta</cellbase.version>
         <commons-lib.version>3.5.0-SNAPSHOT</commons-lib.version>
+        <spark.version>2.1.1</spark.version>
         <hadoop.version>2.6.3</hadoop.version>
         <hbase.version>1.0.1</hbase.version>
         <avro.version>1.7.7</avro.version>
