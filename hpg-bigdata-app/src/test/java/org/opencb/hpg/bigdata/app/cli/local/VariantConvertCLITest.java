@@ -1,6 +1,5 @@
 package org.opencb.hpg.bigdata.app.cli.local;
 
-import org.apache.hadoop.yarn.api.records.Resource;
 import org.junit.Test;
 
 import java.net.URISyntaxException;

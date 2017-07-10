@@ -38,6 +38,7 @@
         <hpg.version>1.0.0-beta3-SNAPSHOT</hpg.version>
         <ga4gh.version>0.6.0a5</ga4gh.version>
         <biodata.version>1.2.0-SNAPSHOT</biodata.version>
+        <cellbase.version>4.5.0-beta</cellbase.version>
         <commons-lib.version>3.5.0-SNAPSHOT</commons-lib.version>
         <hadoop.version>2.6.3</hadoop.version>
         <hbase.version>1.0.1</hbase.version>
@@ -131,7 +132,6 @@
                 <artifactId>commons-datastore-core</artifactId>
                 <version>${commons-lib.version}</version>
             </dependency>
-
 
             <!-- General dependencies -->
             <dependency>
