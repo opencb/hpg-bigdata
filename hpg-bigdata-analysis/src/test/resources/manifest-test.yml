@@ -1,0 +1,88 @@
+{
+  "id" : "Tool id",
+  "name" : "Tool name",
+  "version" : "v1",
+  "description" : "Manifest description",
+  "website" : "http://www.mywebsite.org",
+  "publication" : "URL to publication",
+  "contact" : {
+    "name" : "John",
+    "email" : "john@email.org"
+  },
+  "git" : {
+    "url" : "http://github.com",
+    "commit" : "Git commit",
+    "tag" : "tag"
+  },
+  "language" : {
+    "name" : "bash",
+    "version" : "v1"
+  },
+  "dependencies" : [ "Java", "htsjdk" ],
+  "settings" : {
+      "separator" : " ",
+      "env" : "setEnv.sh",
+      "posix" : true
+  },
+  "executions" : [ {
+    "id" : "exec1",
+    "bin" : "tool exec1",
+    "description" : "Description",
+    "usage" : "usage",
+    "params" : [ {
+      "name" : "input",
+      "description" : "Input blabla",
+      "defaultValue" : null,
+      "flag" : false,
+      "required" : true,
+      "output" : false,
+      "redirection" : false,
+      "position" : 0,
+      "hidden" : false,
+      "acceptedValues" : null,
+      "dataType" : "STRING"
+    }, {
+      "name" : "output",
+      "description" : "Output blabla",
+      "defaultValue" : null,
+      "flag" : false,
+      "required" : true,
+      "output" : true,
+      "redirection" : false,
+      "position" : 0,
+      "hidden" : false,
+      "acceptedValues" : null,
+      "dataType" : "STRING"
+    } ]
+  }, {
+    "id" : "exec2",
+    "bin" : "tool exec2",
+    "description" : "Description",
+    "usage" : "usage",
+    "params" : [ {
+      "name" : "input",
+      "description" : "Input blabla",
+      "defaultValue" : null,
+      "flag" : false,
+      "required" : true,
+      "output" : false,
+      "redirection" : false,
+      "position" : 0,
+      "hidden" : false,
+      "acceptedValues" : null,
+      "dataType" : "STRING"
+    }, {
+      "name" : "output",
+      "description" : "Output blabla",
+      "defaultValue" : null,
+      "flag" : false,
+      "required" : true,
+      "output" : true,
+      "redirection" : false,
+      "position" : 0,
+      "hidden" : false,
+      "acceptedValues" : null,
+      "dataType" : "STRING"
+    } ]
+  } ]
+}

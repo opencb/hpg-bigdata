@@ -16,140 +16,186 @@
 
 package org.opencb.hpg.bigdata.analysis.tools.manifest;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 
 public class Manifest {
 
-    private Author author;
-    private String version, id, name, description, website, publication;
-    private Icon icon;
-    private List<Option> globalParams;
+    private String id;
+    private String name;
+    private String version;
+    private String description;
+    private String website;
+    private String publication;
+
+    private Contact contact;
+    private Git git;
+
+    private ProgrammingLanguage language;
+    private List<String> dependencies;
     private List<Execution> executions;
-    private List<Example> examples;
+
+    private Settings settings;
 
     public Manifest() {
-
     }
 
-    public Manifest(Author author, String version, String id, String name, String description, String website, String publication,
-                    Icon icon, List<Option> globalParams, List<Execution> executions, List<Example> examples) {
-        this.author = author;
-        this.version = version;
-        this.id = id;
-        this.name = name;
-        this.description = description;
-        this.website = website;
-        this.publication = publication;
-        this.icon = icon;
-        this.globalParams = globalParams;
-        this.executions = executions;
-        this.examples = examples;
+    public void serialize(OutputStream configurationOututStream) throws IOException {
+        ObjectMapper jsonMapper = new ObjectMapper();
+        jsonMapper.writerWithDefaultPrettyPrinter().writeValue(configurationOututStream, this);
+    }
+
+    public static Manifest load(InputStream manifestStream) throws IOException {
+        return load(manifestStream, "json");
+    }
+
+    private static Manifest load(InputStream manifestStream, String format) throws IOException {
+        Manifest manifest;
+        ObjectMapper objectMapper;
+        switch (format) {
+            case "json":
+                objectMapper = new ObjectMapper();
+                manifest = objectMapper.readValue(manifestStream, Manifest.class);
+                break;
+            case "yml":
+            case "yaml":
+            default:
+                objectMapper = new ObjectMapper(new YAMLFactory());
+                manifest = objectMapper.readValue(manifestStream, Manifest.class);
+                break;
+        }
+        return manifest;
     }
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("Analysis{");
-        sb.append("author=").append(author);
-        sb.append(", version='").append(version).append('\'');
-        sb.append(", id='").append(id).append('\'');
+        final StringBuilder sb = new StringBuilder("Manifest{");
+        sb.append("id='").append(id).append('\'');
         sb.append(", name='").append(name).append('\'');
+        sb.append(", version='").append(version).append('\'');
         sb.append(", description='").append(description).append('\'');
         sb.append(", website='").append(website).append('\'');
         sb.append(", publication='").append(publication).append('\'');
-        sb.append(", icon=").append(icon);
-        sb.append(", globalParams=").append(globalParams);
+        sb.append(", contact=").append(contact);
+        sb.append(", git=").append(git);
+        sb.append(", language=").append(language);
+        sb.append(", dependencies=").append(dependencies);
         sb.append(", executions=").append(executions);
-        sb.append(", examples=").append(examples);
+        sb.append(", settings=").append(settings);
         sb.append('}');
         return sb.toString();
     }
 
-    public Author getAuthor() {
-        return author;
+    public Contact getContact() {
+        return contact;
     }
 
-    public void setAuthor(Author author) {
-        this.author = author;
-    }
-
-    public String getVersion() {
-        return version;
-    }
-
-    public void setVersion(String version) {
-        this.version = version;
+    public Manifest setContact(Contact contact) {
+        this.contact = contact;
+        return this;
     }
 
     public String getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public Manifest setId(String id) {
         this.id = id;
+        return this;
     }
 
     public String getName() {
         return name;
     }
 
-    public void setName(String name) {
+    public Manifest setName(String name) {
         this.name = name;
+        return this;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public Manifest setVersion(String version) {
+        this.version = version;
+        return this;
+    }
+
+    public Git getGit() {
+        return git;
+    }
+
+    public Manifest setGit(Git git) {
+        this.git = git;
+        return this;
     }
 
     public String getDescription() {
         return description;
     }
 
-    public void setDescription(String description) {
+    public Manifest setDescription(String description) {
         this.description = description;
+        return this;
     }
 
     public String getWebsite() {
         return website;
     }
 
-    public void setWebsite(String website) {
+    public Manifest setWebsite(String website) {
         this.website = website;
+        return this;
     }
 
     public String getPublication() {
         return publication;
     }
 
-    public void setPublication(String publication) {
+    public Manifest setPublication(String publication) {
         this.publication = publication;
+        return this;
     }
 
-    public Icon getIcon() {
-        return icon;
+    public ProgrammingLanguage getLanguage() {
+        return language;
     }
 
-    public void setIcon(Icon icon) {
-        this.icon = icon;
+    public Manifest setLanguage(ProgrammingLanguage language) {
+        this.language = language;
+        return this;
     }
 
-    public List<Option> getGlobalParams() {
-        return globalParams;
+    public List<String> getDependencies() {
+        return dependencies;
     }
 
-    public void setGlobalParams(List<Option> globalParams) {
-        this.globalParams = globalParams;
+    public Manifest setDependencies(List<String> dependencies) {
+        this.dependencies = dependencies;
+        return this;
     }
 
     public List<Execution> getExecutions() {
         return executions;
     }
 
-    public void setExecutions(List<Execution> executions) {
+    public Manifest setExecutions(List<Execution> executions) {
         this.executions = executions;
+        return this;
     }
 
-    public List<Example> getExamples() {
-        return examples;
+    public Settings getSettings() {
+        return settings;
     }
 
-    public void setExamples(List<Example> examples) {
-        this.examples = examples;
+    public Manifest setSettings(Settings settings) {
+        this.settings = settings;
+        return this;
     }
-
 }
