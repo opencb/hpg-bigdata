@@ -19,7 +19,7 @@ package org.opencb.hpg.bigdata.core.converters;
 /**
  * Converts between two Java classes.
  *
- * @author Joaquín Tárraga Giménez &lt;joaquintarraga@gmail.com&gt;
+ * @author Joaquin Tarraga &lt;joaquintarraga@gmail.com&gt;
  */
 public interface Converter<S, T> extends org.opencb.biodata.tools.variant.converters.Converter<S, T> {
 
