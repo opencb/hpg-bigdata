@@ -316,13 +316,6 @@ public class VariantCommandOptions {
                 + "sample_name_file\"")
         public String createCohort = null;
 
-        @Parameter(names = {"--rename-cohort"}, description = "Rename a cohort of the target dataset. Expected value"
-                + " format is: old_name::new_name")
-        public String renameCohort = null;
-
-        @Parameter(names = {"--rename-dataset"}, description = "Rename the target dataset to this new name.")
-        public String renameDataset = null;
-
         @Parameter(names = {"--summary"}, description = "Output metadata summary.")
         public boolean summary = false;
     }

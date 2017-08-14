@@ -4,10 +4,13 @@ import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFHeader;
 import org.apache.commons.lang3.StringUtils;
 import org.opencb.biodata.models.core.Region;
+import org.opencb.biodata.models.metadata.Cohort;
 import org.opencb.biodata.models.metadata.SampleSetType;
 import org.opencb.biodata.models.variant.Variant;
-import org.opencb.biodata.models.variant.VariantMetadataManager;
 import org.opencb.biodata.models.variant.avro.VariantAvro;
+import org.opencb.biodata.models.variant.metadata.VariantDatasetMetadata;
+import org.opencb.biodata.models.variant.metadata.VariantFileMetadata;
+import org.opencb.biodata.tools.variant.VariantMetadataManager;
 import org.opencb.biodata.tools.variant.VcfFileReader;
 import org.opencb.biodata.tools.variant.converters.avro.VariantContextToVariantConverter;
 import org.opencb.hpg.bigdata.core.io.avro.AvroFileWriter;
@@ -16,6 +19,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
@@ -62,9 +66,7 @@ public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
         File inputFile = new File(inputFilename);
         String filename = inputFile.getName();
 
-        VariantMetadataManager metadataManager;
-        metadataManager = new VariantMetadataManager(species, assembly,
-                datasetName, filename);
+        VariantMetadataManager metadataManager = new VariantMetadataManager();
 
         // reader
         VcfFileReader vcfFileReader = new VcfFileReader();
@@ -84,9 +86,17 @@ public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
 //        statsCalculator.pre();
 
         // metadata management
-        metadataManager.setSampleIds(filename, vcfHeader.getSampleNamesInOrder());
-        metadataManager.createCohort(datasetName, "all", vcfHeader.getSampleNamesInOrder(),
-                SampleSetType.MISCELLANEOUS);
+        VariantDatasetMetadata variantDatasetMetadata = new VariantDatasetMetadata();
+        variantDatasetMetadata.setId(datasetName);
+        metadataManager.addVariantDatasetMetadata(variantDatasetMetadata);
+
+        Cohort cohort = new Cohort("ALL", vcfHeader.getSampleNamesInOrder(), SampleSetType.MISCELLANEOUS);
+        metadataManager.addCohort(cohort, variantDatasetMetadata.getId());
+
+        VariantFileMetadata variantFileMetadata = new VariantFileMetadata();
+        variantFileMetadata.setId(filename);
+        variantFileMetadata.setSampleIds(vcfHeader.getSampleNamesInOrder());
+        metadataManager.addFile(variantFileMetadata, variantDatasetMetadata.getId());
 
         // main loop
         long counter = 0;
@@ -108,7 +118,7 @@ public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
         System.out.println("Number of processed records: " + counter);
 
         // save metadata (JSON format)
-        metadataManager.save(outputFilename + ".meta.json");
+        metadataManager.save(Paths.get(outputFilename + ".meta.json"));
 
         // close
         vcfFileReader.close();

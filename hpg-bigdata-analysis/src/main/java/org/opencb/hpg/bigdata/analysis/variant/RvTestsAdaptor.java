@@ -11,7 +11,7 @@ import org.apache.spark.sql.SparkSession;
 import org.opencb.biodata.formats.pedigree.PedigreeManager;
 import org.opencb.biodata.models.core.Region;
 import org.opencb.biodata.models.core.pedigree.Pedigree;
-import org.opencb.biodata.models.variant.VariantMetadataManager;
+import org.opencb.biodata.tools.variant.VariantMetadataManager;
 import org.opencb.commons.utils.FileUtils;
 import org.opencb.hpg.bigdata.analysis.AnalysisExecutor;
 import org.opencb.hpg.bigdata.analysis.AnalysisExecutorException;
@@ -94,7 +94,7 @@ public class RvTestsAdaptor extends AnalysisExecutor implements Serializable {
         // create temporary file for --pheno
         File phenoFile = new File(tmpDir.getAbsolutePath() + "/pheno");
         VariantMetadataManager metadataManager = new VariantMetadataManager();
-        metadataManager.load(metaFilename);
+        metadataManager.load(Paths.get(metaFilename));
         Pedigree pedigree = metadataManager.getPedigree(datasetName);
         new PedigreeManager().save(pedigree, phenoFile.toPath());
 
@@ -280,7 +280,7 @@ public class RvTestsAdaptor extends AnalysisExecutor implements Serializable {
         // create temporary file for --pheno
         File phenoFile = new File(tmpDir.getAbsolutePath() + "/pheno");
         VariantMetadataManager metadataManager = new VariantMetadataManager();
-        metadataManager.load(metaFilename);
+        metadataManager.load(Paths.get(metaFilename));
         Pedigree pedigree = metadataManager.getPedigree(datasetName);
         new PedigreeManager().save(pedigree, phenoFile.toPath());
 

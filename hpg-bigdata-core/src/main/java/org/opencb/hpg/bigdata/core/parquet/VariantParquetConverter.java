@@ -22,9 +22,12 @@ import org.apache.hadoop.fs.Path;
 import org.apache.parquet.avro.AvroParquetWriter;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.opencb.biodata.models.core.Region;
+import org.opencb.biodata.models.metadata.Cohort;
 import org.opencb.biodata.models.metadata.SampleSetType;
 import org.opencb.biodata.models.variant.Variant;
-import org.opencb.biodata.models.variant.VariantMetadataManager;
+import org.opencb.biodata.models.variant.metadata.VariantDatasetMetadata;
+import org.opencb.biodata.models.variant.metadata.VariantFileMetadata;
+import org.opencb.biodata.tools.variant.VariantMetadataManager;
 import org.opencb.biodata.models.variant.avro.VariantAvro;
 import org.opencb.biodata.tools.variant.VariantVcfHtsjdkReader;
 import org.opencb.biodata.tools.variant.VcfFileReader;
@@ -33,6 +36,7 @@ import org.opencb.biodata.tools.variant.converters.avro.VariantContextToVariantC
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
@@ -69,8 +73,7 @@ public class VariantParquetConverter extends ParquetConverter<VariantAvro> {
         String filename = inputFile.getName();
 
         VariantMetadataManager metadataManager;
-        metadataManager = new VariantMetadataManager(species, assembly,
-                datasetName, filename);
+        metadataManager = new VariantMetadataManager();
 
         // reader
         VcfFileReader vcfFileReader = new VcfFileReader();
@@ -84,9 +87,17 @@ public class VariantParquetConverter extends ParquetConverter<VariantAvro> {
 //        statsCalculator.pre();
 
         // metadata management
-        metadataManager.setSampleIds(filename, vcfHeader.getSampleNamesInOrder());
-        metadataManager.createCohort(datasetName, "all", vcfHeader.getSampleNamesInOrder(),
-                SampleSetType.MISCELLANEOUS);
+        VariantDatasetMetadata variantDatasetMetadata = new VariantDatasetMetadata();
+        variantDatasetMetadata.setId(datasetName);
+        metadataManager.addVariantDatasetMetadata(variantDatasetMetadata);
+
+        Cohort cohort = new Cohort("ALL", vcfHeader.getSampleNamesInOrder(), SampleSetType.MISCELLANEOUS);
+        metadataManager.addCohort(cohort, variantDatasetMetadata.getId());
+
+        VariantFileMetadata variantFileMetadata = new VariantFileMetadata();
+        variantFileMetadata.setId(filename);
+        variantFileMetadata.setSampleIds(vcfHeader.getSampleNamesInOrder());
+        metadataManager.addFile(variantFileMetadata, variantDatasetMetadata.getId());
 
         // main loop
         long counter = 0;
@@ -108,7 +119,7 @@ public class VariantParquetConverter extends ParquetConverter<VariantAvro> {
         System.out.println("Number of processed records: " + counter);
 
         // save metadata (JSON format)
-        metadataManager.save(outputFilename + ".meta.json");
+        metadataManager.save(Paths.get(outputFilename + ".meta.json"));
 
         // close
         vcfFileReader.close();

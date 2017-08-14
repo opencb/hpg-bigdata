@@ -29,9 +29,10 @@ import org.apache.spark.sql.SparkSession;
 import org.opencb.biodata.formats.pedigree.PedigreeManager;
 import org.opencb.biodata.models.core.Region;
 import org.opencb.biodata.models.core.pedigree.Pedigree;
+import org.opencb.biodata.models.metadata.Cohort;
 import org.opencb.biodata.models.metadata.SampleSetType;
 import org.opencb.biodata.models.variant.Variant;
-import org.opencb.biodata.models.variant.VariantMetadataManager;
+import org.opencb.biodata.tools.variant.VariantMetadataManager;
 import org.opencb.biodata.models.variant.avro.StudyEntry;
 import org.opencb.biodata.models.variant.avro.VariantAvro;
 import org.opencb.biodata.models.variant.avro.VariantFileMetadata;
@@ -781,7 +782,7 @@ public class VariantCommandExecutor extends CommandExecutor {
         if (metaFile.exists()) {
 
             VariantMetadataManager metadataManager = new VariantMetadataManager();
-            metadataManager.load(metaFile.getPath());
+            metadataManager.load(metaFile.toPath());
 
             // load pedigree ?
             if (variantCommandOptions.metadataVariantCommandOptions.loadPedFilename != null) {
@@ -810,32 +811,19 @@ public class VariantCommandExecutor extends CommandExecutor {
                     sampleIds = Arrays.asList(StringUtils.split(names[1], ","));
                 }
 
-                metadataManager.createCohort(datasetId, names[0], sampleIds, SampleSetType.MISCELLANEOUS);
-                updated = true;
-            }
-
-            // rename cohort ?
-            if (variantCommandOptions.metadataVariantCommandOptions.renameCohort != null) {
-                String[] names = variantCommandOptions.metadataVariantCommandOptions.renameCohort.split("::");
-                metadataManager.renameCohort(datasetId, names[0], names[1]);
-                updated = true;
-            }
-
-            // rename dataset ?
-            if (variantCommandOptions.metadataVariantCommandOptions.renameDataset != null) {
-                metadataManager.renameDataset(datasetId,
-                        variantCommandOptions.metadataVariantCommandOptions.renameDataset);
+                Cohort cohort = new Cohort(names[0], sampleIds, SampleSetType.MISCELLANEOUS);
+                metadataManager.addCohort(cohort, datasetId);
                 updated = true;
             }
 
             // summary ?
             if (variantCommandOptions.metadataVariantCommandOptions.summary) {
-                System.out.println(metadataManager.summary());
+                metadataManager.printSummary();
             }
 
             if (updated) {
                 // overwrite the metadata
-                metadataManager.save();
+                metadataManager.save(metaFile.toPath());
             }
         } else {
             System.out.println("Error: metafile does not exist, " + metaFile.getAbsolutePath());

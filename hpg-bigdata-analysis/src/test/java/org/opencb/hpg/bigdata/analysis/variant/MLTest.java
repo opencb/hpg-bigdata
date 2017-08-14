@@ -14,7 +14,7 @@ import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.junit.Test;
 import org.opencb.biodata.models.core.pedigree.Pedigree;
-import org.opencb.biodata.models.variant.VariantMetadataManager;
+import org.opencb.biodata.tools.variant.VariantMetadataManager;
 import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
 import org.opencb.hpg.bigdata.core.lib.VariantDataset;
 import scala.Serializable;
@@ -480,7 +480,7 @@ public class MLTest implements Serializable {
 
 
         VariantMetadataManager variantMetadataManager = new VariantMetadataManager();
-        variantMetadataManager.load(inputPath + ".meta.json");
+        variantMetadataManager.load(Paths.get(inputPath + ".meta.json"));
         Pedigree pedigree = variantMetadataManager.getPedigree("testing-pedigree");
 
         ChiSquareAnalysis.run(result, pedigree);
