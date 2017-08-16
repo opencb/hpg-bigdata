@@ -2,6 +2,8 @@ package org.opencb.hpg.bigdata.app.cli.local;
 
 import org.apache.commons.lang3.StringUtils;
 import org.opencb.biodata.models.core.Region;
+import org.opencb.biodata.models.metadata.Sample;
+import org.opencb.biodata.tools.variant.VariantMetadataManager;
 import org.opencb.commons.utils.FileUtils;
 import org.opencb.hpg.bigdata.app.cli.local.options.VariantCommandOptions;
 import org.opencb.hpg.bigdata.core.lib.ParentDataset;
@@ -93,6 +95,10 @@ public class CliUtils {
 
     public static void addVariantFilters(VariantCommandOptions variantCommandOptions,
                                          VariantDataset vd) throws IOException {
+
+        VariantMetadataManager metadataManager = new VariantMetadataManager();
+        metadataManager.load(Paths.get(variantCommandOptions.queryVariantCommandOptions.input + ".meta.json"));
+
         // query for ID (list and file)
         List<String> list = null;
         if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.ids)) {
@@ -156,8 +162,29 @@ public class CliUtils {
         }
 
         // query for sample genotypes
-        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.sampleGenotypes)) {
-            vd.sampleFilter("GT", variantCommandOptions.queryVariantCommandOptions.sampleGenotypes);
+        String sampleGenotypes = variantCommandOptions.queryVariantCommandOptions.sampleGenotypes;
+        if (StringUtils.isNotEmpty(sampleGenotypes)) {
+            // TODO: we need the ID for dataset target
+            List<Sample> samples = metadataManager.getSamples(
+                    metadataManager.getVariantMetadata().getDatasets().get(0).getId());
+
+            // e.g.: sample genotypes = sample1:0|0;sample2:1|0,1|1
+            String[] values = sampleGenotypes.split("[;]");
+            StringBuilder newSampleGenotypes = new StringBuilder();
+            if (values == null) {
+                newSampleGenotypes.append(updateSampleGenotype(sampleGenotypes, samples));
+            } else {
+                newSampleGenotypes.append(updateSampleGenotype(values[0], samples));
+                for (int i = 1; i < values.length; i++) {
+                    newSampleGenotypes.append(";");
+                    newSampleGenotypes.append(updateSampleGenotype(values[i], samples));
+                }
+            }
+            if (!StringUtils.isEmpty(newSampleGenotypes)) {
+                vd.sampleFilter("GT", newSampleGenotypes.toString());
+            } else {
+                System.err.format("Error: could not parse your sample genotypes %s.\n", sampleGenotypes);
+            }
         }
 
         // query for consequence type (Sequence Ontology term names and accession codes)
@@ -211,5 +238,41 @@ public class CliUtils {
         parser.getVariantCommandOptions().queryVariantCommandOptions.pf = populationFrequencies;
 
         return parser.getVariantCommandOptions();
+    }
+
+
+    /**
+     * Update the sample genotype query string by replacing the sample name by
+     * its sample order, e.g.: from sample2:1|0,1|1 to 32:1|0,1|1.
+     *
+     * @param sampleGenotype     Sample genotype query string
+     * @param samples            Sample list in the right order (to get the sample index)
+     * @return                   Updated sample genotype query string
+     */
+    private static String updateSampleGenotype(String sampleGenotype, List<Sample> samples) {
+        // e.g.: value = sample2:1|0,1|1
+        StringBuilder newSampleGenotype = new StringBuilder("");
+        String[] splits = sampleGenotype.split("[:]");
+        if (splits == null) {
+            // error
+            System.err.format("Error: invalid expresion %s for sample genotypes.\n", sampleGenotype);
+        } else {
+            boolean found = false;
+            // TODO: move this functionality to the VariantMetadataManager (from sample name to sample index)
+            for (int i = 0; i < samples.size(); i++) {
+                if (splits[0].equals(samples.get(i).getId())) {
+                    newSampleGenotype.append(i).append(":").append(splits[1]);
+                    found = true;
+                    break;
+                }
+            }
+            // sanity check
+            if (!found) {
+                // error
+                System.err.format("Error: sample %s not found in dataset.\n", splits[0]);
+            }
+        }
+        System.out.printf(sampleGenotype + " -> " + newSampleGenotype.toString());
+        return newSampleGenotype.toString();
     }
 }

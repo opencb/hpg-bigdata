@@ -272,8 +272,8 @@ public class VariantCommandOptions {
         public String pmaf;
 
         @Parameter(names = {"--sample-genotype"}, description = "Query for sample genotypes. Use the following the"
-                + " format enclosed with double quotes: \"sample_index1:genotype1,genotype;sample_index2:genotype1\","
-                + " e.g.: \"0:0/0;2:1/0,1/1\"", arity = 1)
+                + " format enclosed with double quotes: \"sample_name1:genotype1,genotype;sample_name2:genotype1\","
+                + " e.g.: \"HG00112:0/0;HG23412:1/0,1/1\"", arity = 1)
         public String sampleGenotypes;
 
         @Parameter(names = {"--group-by"}, description = "Display the number of output records grouped by 'gene' or"

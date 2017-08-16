@@ -8,7 +8,7 @@ import org.opencb.hpg.bigdata.app.cli.local.executors.VariantCommandExecutor;
  */
 public class VariantQueryCLITest {
 
-//        String inputFilename = "/tmp/chr8.platinum.avro";
+    //        String inputFilename = "/tmp/chr8.platinum.avro";
 //    String inputFilename = "/home/jtarraga/data150/spark/chr8.platinum.avro";
 //    String inputFilename = "/home/jtarraga/data150/spark/chr8.platinum.parquet";
     String inputFilename = "../hpg-bigdata-core/src/test/resources/org/opencb/hpg/bigdata/core/lib/100.variants.avro";
@@ -106,7 +106,7 @@ public class VariantQueryCLITest {
         }
     }
 
-//    @Test
+    //    @Test
     public void query4() {
         StringBuilder commandLine = new StringBuilder();
         commandLine.append(" variant query");
@@ -192,6 +192,24 @@ public class VariantQueryCLITest {
         commandLine.append(" --consequence-type \"missense_variant\"");
         commandLine.append(" --limit 100");
         commandLine.append(" --group-by gene");
+
+        try {
+            execute(commandLine.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    //@Test
+    public void query9() {
+
+        inputFilename = "/home/jtarraga/data150/vcf/chr22.head1k.vcf.avro";
+        StringBuilder commandLine = new StringBuilder();
+        commandLine.append(" variant query");
+        commandLine.append(" --log-level ERROR");
+        commandLine.append(" -i ").append(inputFilename);
+        commandLine.append(" --sample-genotype \"HG00100:1|0,1|1\"");
+        commandLine.append(" --limit 100");
 
         try {
             execute(commandLine.toString());
