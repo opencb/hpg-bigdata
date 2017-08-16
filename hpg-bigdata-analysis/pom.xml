@@ -55,6 +55,10 @@
                     <groupId>org.seqdoop</groupId>
                     <artifactId>htsjdk</artifactId>
                 </exclusion>
+                <exclusion>
+                    <artifactId>hadoop-client</artifactId>
+                    <groupId>org.apache.hadoop</groupId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
