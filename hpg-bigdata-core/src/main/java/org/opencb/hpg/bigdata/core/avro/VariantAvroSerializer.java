@@ -42,8 +42,6 @@ public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
     }
 
     public void toAvro(String inputFilename, String outputFilename) throws IOException {
-
-
 //
 //        throw new UnsupportedOperationException("Avro conversion not implemented yet!");
 //
@@ -117,13 +115,13 @@ public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
         }
         System.out.println("Number of processed records: " + counter);
 
-        // save metadata (JSON format)
-        metadataManager.save(Paths.get(outputFilename + ".meta.json"));
-
         // close
         vcfFileReader.close();
         avroFileWriter.close();
         outputStream.close();
+
+        // save metadata (JSON format)
+        metadataManager.save(Paths.get(outputFilename + ".meta.json"));
     }
 
     public VariantAvroSerializer addRegionFilter(Region region) {

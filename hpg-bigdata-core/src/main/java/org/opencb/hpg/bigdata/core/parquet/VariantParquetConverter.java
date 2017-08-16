@@ -25,10 +25,10 @@ import org.opencb.biodata.models.core.Region;
 import org.opencb.biodata.models.metadata.Cohort;
 import org.opencb.biodata.models.metadata.SampleSetType;
 import org.opencb.biodata.models.variant.Variant;
+import org.opencb.biodata.models.variant.avro.VariantAvro;
 import org.opencb.biodata.models.variant.metadata.VariantDatasetMetadata;
 import org.opencb.biodata.models.variant.metadata.VariantFileMetadata;
 import org.opencb.biodata.tools.variant.VariantMetadataManager;
-import org.opencb.biodata.models.variant.avro.VariantAvro;
 import org.opencb.biodata.tools.variant.VariantVcfHtsjdkReader;
 import org.opencb.biodata.tools.variant.VcfFileReader;
 import org.opencb.biodata.tools.variant.converters.avro.VariantContextToVariantConverter;
@@ -118,12 +118,12 @@ public class VariantParquetConverter extends ParquetConverter<VariantAvro> {
         }
         System.out.println("Number of processed records: " + counter);
 
-        // save metadata (JSON format)
-        metadataManager.save(Paths.get(outputFilename + ".meta.json"));
-
         // close
         vcfFileReader.close();
         parquetFileWriter.close();
+
+        // save metadata (JSON format)
+        metadataManager.save(Paths.get(outputFilename + ".meta.json"));
     }
 
     public void toParquetFromVcf(InputStream inputStream, String outputFilename) throws IOException {
