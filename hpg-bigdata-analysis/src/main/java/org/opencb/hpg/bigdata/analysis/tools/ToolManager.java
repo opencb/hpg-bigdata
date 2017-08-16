@@ -49,7 +49,7 @@ public class ToolManager {
         checkToolDirectory();
     }
 
-    public String createCommandLine(String tool, String executionName, Map<String, Object> paramsMap) throws AnalysisToolException {
+    public String createCommandLine(String tool, String executionName, Map<String, String> paramsMap) throws AnalysisToolException {
         Manifest manifest = getManifest(tool);
 
         // Look for the execution
@@ -186,7 +186,7 @@ public class ToolManager {
         }
     }
 
-    private void validateParams(Execution execution, Map<String, Object> paramsMap) throws AnalysisToolException {
+    private void validateParams(Execution execution, Map<String, String> paramsMap) throws AnalysisToolException {
         Map<String, Param> manifestParams = execution.getParamsAsMap();
 
         // We fetch which are the required parameters and we will be taking them out as we check the user paramsMap.
@@ -197,7 +197,7 @@ public class ToolManager {
             }
         }
 
-        for (Map.Entry<String, Object> entry : paramsMap.entrySet()) {
+        for (Map.Entry<String, String> entry : paramsMap.entrySet()) {
             Param inputParam = manifestParams.get(entry.getKey());
             if (inputParam != null) {
                 if (inputParam.isRequired()) {
@@ -214,13 +214,13 @@ public class ToolManager {
         }
     }
 
-    private void validateDataType(Map.Entry<String, Object> entry, Param inputParam) throws AnalysisToolException {
+    private void validateDataType(Map.Entry<String, String> entry, Param inputParam) throws AnalysisToolException {
         switch (inputParam.getDataType()) {
             case STRING:
             case BOOLEAN:
                 break;
             case NUMERIC:
-                if (!StringUtils.isNumeric((CharSequence) entry.getValue())) {
+                if (!StringUtils.isNumeric(entry.getValue())) {
                     throw new AnalysisToolException("Unexpected value for parameter " + entry.getKey() + ". Expecting a NUMERIC value");
                 }
                 break;
