@@ -30,7 +30,7 @@ public class VariantQueryCLITest {
         commandLine.append(" --log-level ERROR");
         commandLine.append(" -i ").append(inputFilename);
         commandLine.append(" --type INDEL");
-        //commandLine.append(" --limit 10");
+        commandLine.append(" --limit 10");
 
         try {
             execute(commandLine.toString());
@@ -87,7 +87,7 @@ public class VariantQueryCLITest {
         }
     }
 
-//    @Test
+    @Test
     public void query3() {
         StringBuilder commandLine = new StringBuilder();
         commandLine.append(" variant query");
@@ -125,7 +125,7 @@ public class VariantQueryCLITest {
         }
     }
 
-//    @Test
+    @Test
     public void query5() {
         StringBuilder commandLine = new StringBuilder();
         commandLine.append(" variant query");
