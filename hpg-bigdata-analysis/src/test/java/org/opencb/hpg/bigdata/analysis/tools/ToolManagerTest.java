@@ -3,7 +3,6 @@ package org.opencb.hpg.bigdata.analysis.tools;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import org.junit.Test;
-import org.opencb.commons.datastore.core.ObjectMap;
 import org.opencb.hpg.bigdata.analysis.exceptions.AnalysisToolException;
 
 import java.io.IOException;
@@ -34,7 +33,7 @@ public class ToolManagerTest {
 
         String commandLine = toolManager.createCommandLine("samtools", "index", params);
         System.out.println(commandLine);
-        Executor.execute(commandLine, tmp);
+        Executor.execute(commandLine, tmp, true);
 
         ObjectReader reader = new ObjectMapper().reader(Status.class);
         Status status = reader.readValue(tmp.resolve("status.json").toFile());

@@ -203,8 +203,8 @@ public class ToolManager {
                 .collect(Collectors.toList());
     }
 
-    public void runCommandLine(String commandLine, Path outdir) throws AnalysisToolException {
-        new Executor().execute(commandLine, outdir);
+    public void runCommandLine(String commandLine, Path outdir, boolean redirectLogs) throws AnalysisToolException {
+        new Executor().execute(commandLine, outdir, true);
     }
 
     private void checkToolDirectory() throws AnalysisToolException {
