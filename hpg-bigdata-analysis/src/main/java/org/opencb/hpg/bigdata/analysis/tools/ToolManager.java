@@ -204,7 +204,7 @@ public class ToolManager {
     }
 
     public void runCommandLine(String commandLine, Path outdir, boolean redirectLogs) throws AnalysisToolException {
-        new Executor().execute(commandLine, outdir, true);
+        new Executor().execute(commandLine, outdir, redirectLogs);
     }
 
     private void checkToolDirectory() throws AnalysisToolException {
