@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.opencb.biodata.models.core.Region;
 import org.opencb.biodata.models.metadata.Sample;
 import org.opencb.biodata.tools.variant.VariantMetadataManager;
+import org.opencb.commons.datastore.core.Query;
 import org.opencb.commons.utils.FileUtils;
 import org.opencb.hpg.bigdata.app.cli.local.options.VariantCommandOptions;
 import org.opencb.hpg.bigdata.core.lib.ParentDataset;
@@ -18,6 +19,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static java.nio.file.Paths.get;
 
@@ -26,6 +29,7 @@ import static java.nio.file.Paths.get;
  */
 public class CliUtils {
 
+    public static final Pattern OPERATION_PATTERN = Pattern.compile("([^=<>~!]+)(.*)$");
     public static String getOutputFilename(String input, String output, String to) throws IOException {
         String res = output;
         if (!res.isEmpty()) {
@@ -161,18 +165,47 @@ public class CliUtils {
             vd.regionFilter(regions);
         }
 
-        // query for sample genotypes
-        String sampleGenotypes = variantCommandOptions.queryVariantCommandOptions.sampleGenotypes;
-        if (StringUtils.isNotEmpty(sampleGenotypes)) {
+        // query for sample genotypes and/or sample filters
+        StringBuilder sampleGenotypes = new StringBuilder();
+        if (StringUtils.isNotEmpty(variantCommandOptions.queryVariantCommandOptions.sampleGenotypes)) {
+            sampleGenotypes.append(variantCommandOptions.queryVariantCommandOptions.sampleGenotypes);
+        }
+        String sampleFilters = variantCommandOptions.queryVariantCommandOptions.sampleFilters;
+        if (StringUtils.isNotEmpty(sampleGenotypes) || StringUtils.isNotEmpty(sampleFilters)) {
             // TODO: we need the ID for dataset target
-            List<Sample> samples = metadataManager.getSamples(
+            List<Sample> samples = null;
+
+
+            if (StringUtils.isNotEmpty(sampleFilters)) {
+                Query sampleQuery = new Query();
+//                final Pattern OPERATION_PATTERN = Pattern.compile("([^=<>~!]+.*)(<=?|>=?|!=|!?=?~|==?)([^=<>~!]+.*)$");
+                String[] splits = sampleFilters.split("[;]");
+                for (int i = 0; i < splits.length; i++) {
+                    Matcher matcher = OPERATION_PATTERN.matcher(splits[i]);
+                    if (matcher.matches()) {
+                        sampleQuery.put(matcher.group(1), matcher.group(2));
+                    }
+                }
+
+                samples = metadataManager.getSamples(sampleQuery,
+                        metadataManager.getVariantMetadata().getDatasets().get(0).getId());
+
+                for (Sample sample : samples) {
+                    if (sampleGenotypes.length() > 0) {
+                        sampleGenotypes.append(";");
+                    }
+                    //sampleGenotypes.append(sample.getId()).append(":0|1,1|0,1|1");
+                    sampleGenotypes.append(sample.getId()).append(":1|1");
+                }
+            }
+            samples = metadataManager.getSamples(
                     metadataManager.getVariantMetadata().getDatasets().get(0).getId());
 
             // e.g.: sample genotypes = sample1:0|0;sample2:1|0,1|1
-            String[] values = sampleGenotypes.split("[;]");
+            String[] values = sampleGenotypes.toString().split("[;]");
             StringBuilder newSampleGenotypes = new StringBuilder();
             if (values == null) {
-                newSampleGenotypes.append(updateSampleGenotype(sampleGenotypes, samples));
+                newSampleGenotypes.append(updateSampleGenotype(sampleGenotypes.toString(), samples));
             } else {
                 newSampleGenotypes.append(updateSampleGenotype(values[0], samples));
                 for (int i = 1; i < values.length; i++) {
@@ -272,7 +305,7 @@ public class CliUtils {
                 System.err.format("Error: sample %s not found in dataset.\n", splits[0]);
             }
         }
-        System.out.printf(sampleGenotype + " -> " + newSampleGenotype.toString());
+        System.out.println(sampleGenotype + " -> " + newSampleGenotype.toString());
         return newSampleGenotype.toString();
     }
 }

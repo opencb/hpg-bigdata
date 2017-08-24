@@ -32,10 +32,10 @@ import org.opencb.biodata.models.core.pedigree.Pedigree;
 import org.opencb.biodata.models.metadata.Cohort;
 import org.opencb.biodata.models.metadata.SampleSetType;
 import org.opencb.biodata.models.variant.Variant;
-import org.opencb.biodata.tools.variant.VariantMetadataManager;
 import org.opencb.biodata.models.variant.avro.StudyEntry;
 import org.opencb.biodata.models.variant.avro.VariantAvro;
 import org.opencb.biodata.models.variant.avro.VariantFileMetadata;
+import org.opencb.biodata.tools.variant.VariantMetadataManager;
 import org.opencb.biodata.tools.variant.converters.avro.VariantContextToVariantConverter;
 import org.opencb.commons.utils.FileUtils;
 import org.opencb.hpg.bigdata.analysis.variant.RvTestsAdaptor;
@@ -823,6 +823,9 @@ public class VariantCommandExecutor extends CommandExecutor {
 
             if (updated) {
                 // overwrite the metadata
+                if (metaFile.exists()) {
+                    metaFile.delete();
+                }
                 metadataManager.save(metaFile.toPath());
             }
         } else {

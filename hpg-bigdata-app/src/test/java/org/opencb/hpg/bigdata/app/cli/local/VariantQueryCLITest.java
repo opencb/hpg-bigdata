@@ -200,7 +200,7 @@ public class VariantQueryCLITest {
         }
     }
 
-    //@Test
+    @Test
     public void query9() {
 
         inputFilename = "/home/jtarraga/data150/vcf/chr22.head1k.vcf.avro";
@@ -216,5 +216,27 @@ public class VariantQueryCLITest {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+
+    @Test
+    public void query10() {
+        VariantMetadataCLITest metaCLI = new VariantMetadataCLITest();
+        metaCLI.loadPedigree();
+
+        StringBuilder commandLine = new StringBuilder();
+        commandLine.append(" variant query");
+        commandLine.append(" --log-level ERROR");
+        commandLine.append(" -i ").append(metaCLI.avroPath);
+        commandLine.append(" --sample-genotype \"5:1|0\"");
+        //commandLine.append(" --sample-filter \"Eyes==Green\"");
+        commandLine.append(" --limit 100");
+
+        try {
+            execute(commandLine.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
 }

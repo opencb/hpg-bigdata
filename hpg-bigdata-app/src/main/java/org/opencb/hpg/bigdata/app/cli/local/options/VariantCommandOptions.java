@@ -276,6 +276,11 @@ public class VariantCommandOptions {
                 + " e.g.: \"HG00112:0/0;HG23412:1/0,1/1\"", arity = 1)
         public String sampleGenotypes;
 
+        @Parameter(names = {"--sample-filter"}, description = "Query for sample filter, i.e.: individual attributes (family, father,"
+                + " mother, sex and phenotype) and user-defined attributes from pedigree information,"
+                + "  e.g.: \"individual.sex=MALE;Eyes=Blue\"", arity = 1)
+        public String sampleFilters;
+
         @Parameter(names = {"--group-by"}, description = "Display the number of output records grouped by 'gene' or"
                 + " 'consequence_type'", arity = 1)
         public String groupBy;

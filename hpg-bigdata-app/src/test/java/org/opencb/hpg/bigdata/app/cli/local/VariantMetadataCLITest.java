@@ -11,14 +11,19 @@ import java.nio.file.Paths;
  */
 public class VariantMetadataCLITest {
 
-    Path vcfPath;
-    Path pedPath;
-    Path avroPath;
+    public Path vcfPath;
+    public Path pedPath;
+    public Path avroPath;
+    public Path metadataPath;
 
     private void init() throws URISyntaxException {
+        String output = "/tmp/test.vcf.avro";
         vcfPath = Paths.get(getClass().getResource("/test.vcf").toURI());
         pedPath = Paths.get(getClass().getResource("/test.ped").toURI());
-        avroPath = Paths.get("/tmp/test.vcf.avro");
+        avroPath = Paths.get(output);
+        metadataPath = Paths.get(output + ".meta.json");
+
+        metadataPath.toFile().delete();
     }
 
     @Test
