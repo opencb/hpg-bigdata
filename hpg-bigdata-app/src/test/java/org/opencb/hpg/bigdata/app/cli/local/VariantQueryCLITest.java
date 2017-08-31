@@ -1,5 +1,7 @@
 package org.opencb.hpg.bigdata.app.cli.local;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.variantcontext.writer.Options;
 import htsjdk.variant.variantcontext.writer.VariantContextWriter;
 import htsjdk.variant.vcf.VCFHeader;
@@ -8,7 +10,9 @@ import org.apache.spark.SparkContext;
 import org.apache.spark.sql.SparkSession;
 import org.junit.Test;
 import org.opencb.biodata.formats.variant.vcf4.VcfUtils;
+import org.opencb.biodata.models.variant.Variant;
 import org.opencb.biodata.tools.variant.VariantMetadataManager;
+import org.opencb.biodata.tools.variant.converters.VariantContextToAvroVariantConverter;
 import org.opencb.biodata.tools.variant.converters.avro.VariantDatasetMetadataToVCFHeaderConverter;
 import org.opencb.hpg.bigdata.app.cli.local.executors.VariantCommandExecutor;
 import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
@@ -16,6 +20,8 @@ import org.opencb.hpg.bigdata.core.lib.VariantDataset;
 
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by jtarraga on 12/10/16.
@@ -263,6 +269,7 @@ public class VariantQueryCLITest {
         try {
             manager.load(metaCLI.metadataPath);
 
+            String datasetId = manager.getVariantMetadata().getDatasets().get(0).getId();
             VCFHeader vcfHeader = headerConverter.convert(manager.getVariantMetadata().getDatasets().get(0));
 
             // create the variant context writer
@@ -282,7 +289,28 @@ public class VariantQueryCLITest {
             vd.load(metaCLI.avroPath.toString());
             vd.createOrReplaceTempView("vcf");
 
-            vd.toJSON().foreach(s -> System.out.println(s));
+            ObjectMapper mapper = new ObjectMapper();
+            List<String> samples = vcfHeader.getSampleNamesInOrder();
+            List<String> formats = new ArrayList<>();
+            List<String> annotations = new ArrayList<>();
+            annotations.add("AN");
+            annotations.add("NS");
+            VariantContextToAvroVariantConverter converter = new VariantContextToAvroVariantConverter(datasetId, samples, formats, annotations);
+
+            List<String> list = vd.toJSON().collectAsList();
+            for (String item: list) {
+                Variant variant = mapper.readValue(item, Variant.class);
+                System.out.println(variant.getId() + ", " + variant.getChromosome() + ", " + variant.getStart());
+                VariantContext variantContext = converter.from(variant);
+                writer.add(variantContext);
+            }
+/*
+            vd.toJSON().foreach(s -> {
+                Variant variant = mapper.readValue(s, Variant.class);
+                System.out.println(variant.getId() + ", " + variant.getChromosome() + ", " + variant.getStart());
+                VariantContext variantContext = converter.from(variant);
+                writer.add(variantContext);
+            });
             /*
             javaRDD().foreach(row -> {
 
