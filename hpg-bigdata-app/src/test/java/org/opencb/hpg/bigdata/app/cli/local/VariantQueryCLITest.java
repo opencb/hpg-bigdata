@@ -1,7 +1,21 @@
 package org.opencb.hpg.bigdata.app.cli.local;
 
+import htsjdk.variant.variantcontext.writer.Options;
+import htsjdk.variant.variantcontext.writer.VariantContextWriter;
+import htsjdk.variant.vcf.VCFHeader;
+import org.apache.spark.SparkConf;
+import org.apache.spark.SparkContext;
+import org.apache.spark.sql.SparkSession;
 import org.junit.Test;
+import org.opencb.biodata.formats.variant.vcf4.VcfUtils;
+import org.opencb.biodata.tools.variant.VariantMetadataManager;
+import org.opencb.biodata.tools.variant.converters.avro.VariantDatasetMetadataToVCFHeaderConverter;
 import org.opencb.hpg.bigdata.app.cli.local.executors.VariantCommandExecutor;
+import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
+import org.opencb.hpg.bigdata.core.lib.VariantDataset;
+
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 
 /**
  * Created by jtarraga on 12/10/16.
@@ -237,6 +251,66 @@ public class VariantQueryCLITest {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
 
+    @Test
+    public void query11() {
+        VariantMetadataCLITest metaCLI = new VariantMetadataCLITest();
+        metaCLI.loadPedigree();
+
+        VariantDatasetMetadataToVCFHeaderConverter headerConverter = new VariantDatasetMetadataToVCFHeaderConverter();
+        VariantMetadataManager manager = new VariantMetadataManager();
+        try {
+            manager.load(metaCLI.metadataPath);
+
+            VCFHeader vcfHeader = headerConverter.convert(manager.getVariantMetadata().getDatasets().get(0));
+
+            // create the variant context writer
+            OutputStream outputStream = new FileOutputStream(metaCLI.metadataPath.toString() + ".vcf");
+            Options writerOptions = null;
+            VariantContextWriter writer = VcfUtils.createVariantContextWriter(outputStream,
+                    vcfHeader.getSequenceDictionary());//, writerOptions);
+
+            // write VCF header
+            writer.writeHeader(vcfHeader);
+
+
+            SparkConf sparkConf = SparkConfCreator.getConf("variant query", "local", 1, true);
+            SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
+
+            VariantDataset vd = new VariantDataset(sparkSession);
+            vd.load(metaCLI.avroPath.toString());
+            vd.createOrReplaceTempView("vcf");
+
+            vd.toJSON().foreach(s -> System.out.println(s));
+            /*
+            javaRDD().foreach(row -> {
+
+                writer.add(null);
+                System.out.println(row.get(0) + ", " + row.get(1) + ", " + row.get(2) + ", " + row.get(3));
+            });
+*/
+
+            // close everything
+            sparkSession.stop();
+            writer.close();
+            outputStream.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+/*
+        StringBuilder commandLine = new StringBuilder();
+        commandLine.append(" variant query");
+        commandLine.append(" --log-level ERROR");
+        commandLine.append(" -i ").append(metaCLI.avroPath);
+        commandLine.append(" --limit 100");
+
+        try {
+            execute(commandLine.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    */
     }
 }

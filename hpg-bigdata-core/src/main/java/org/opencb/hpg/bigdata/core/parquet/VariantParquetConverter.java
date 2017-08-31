@@ -27,7 +27,6 @@ import org.opencb.biodata.models.metadata.SampleSetType;
 import org.opencb.biodata.models.variant.Variant;
 import org.opencb.biodata.models.variant.avro.VariantAvro;
 import org.opencb.biodata.models.variant.metadata.VariantDatasetMetadata;
-import org.opencb.biodata.models.variant.metadata.VariantFileMetadata;
 import org.opencb.biodata.tools.variant.VariantMetadataManager;
 import org.opencb.biodata.tools.variant.VariantVcfHtsjdkReader;
 import org.opencb.biodata.tools.variant.VcfFileReader;
@@ -94,10 +93,10 @@ public class VariantParquetConverter extends ParquetConverter<VariantAvro> {
         Cohort cohort = new Cohort("ALL", vcfHeader.getSampleNamesInOrder(), SampleSetType.MISCELLANEOUS);
         metadataManager.addCohort(cohort, variantDatasetMetadata.getId());
 
-        VariantFileMetadata variantFileMetadata = new VariantFileMetadata();
-        variantFileMetadata.setId(filename);
-        variantFileMetadata.setSampleIds(vcfHeader.getSampleNamesInOrder());
-        metadataManager.addFile(variantFileMetadata, variantDatasetMetadata.getId());
+        // add variant file metadata from VCF header
+        metadataManager.addFile(filename, vcfHeader, variantDatasetMetadata.getId());
+        metadataManager.getVariantMetadata().getDatasets().get(0).setAggregatedHeader(
+                metadataManager.getVariantMetadata().getDatasets().get(0).getFiles().get(0).getHeader());
 
         // main loop
         long counter = 0;
@@ -123,7 +122,7 @@ public class VariantParquetConverter extends ParquetConverter<VariantAvro> {
         parquetFileWriter.close();
 
         // save metadata (JSON format)
-        metadataManager.save(Paths.get(outputFilename + ".meta.json"));
+        metadataManager.save(Paths.get(outputFilename + ".meta.json"), true);
     }
 
     public void toParquetFromVcf(InputStream inputStream, String outputFilename) throws IOException {
