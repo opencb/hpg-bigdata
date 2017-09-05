@@ -22,9 +22,9 @@ import org.apache.avro.specific.SpecificDatumReader;
 import org.opencb.biodata.models.sequence.Read;
 import org.opencb.biodata.tools.alignment.stats.SequenceStats;
 import org.opencb.biodata.tools.alignment.stats.SequenceStatsCalculator;
+import org.opencb.biodata.tools.sequence.FastqRecordToReadBiConverter;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
 import org.opencb.hpg.bigdata.app.cli.local.options.SequenceCommandOptions;
-import org.opencb.hpg.bigdata.core.converters.FastqRecord2ReadConverter;
 import org.opencb.hpg.bigdata.core.io.avro.AvroWriter;
 import org.opencb.hpg.bigdata.core.utils.AvroUtils;
 
@@ -81,9 +81,9 @@ public class SequenceCommandExecutor extends CommandExecutor {
             AvroWriter<Read> writer = new AvroWriter<>(Read.getClassSchema(), AvroUtils.getCodec(codecName), os);
 
             // main loop
-            FastqRecord2ReadConverter converter = new FastqRecord2ReadConverter();
+            FastqRecordToReadBiConverter converter = new FastqRecordToReadBiConverter();
             while (reader.hasNext()) {
-                writer.write(converter.forward(reader.next()));
+                writer.write(converter.to(reader.next()));
             }
 
             // close

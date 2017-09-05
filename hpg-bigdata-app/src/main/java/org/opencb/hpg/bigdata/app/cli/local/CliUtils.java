@@ -3,7 +3,7 @@ package org.opencb.hpg.bigdata.app.cli.local;
 import org.apache.commons.lang3.StringUtils;
 import org.opencb.biodata.models.core.Region;
 import org.opencb.biodata.models.metadata.Sample;
-import org.opencb.biodata.tools.variant.VariantMetadataManager;
+import org.opencb.biodata.tools.variant.metadata.VariantMetadataManager;
 import org.opencb.commons.datastore.core.Query;
 import org.opencb.commons.utils.FileUtils;
 import org.opencb.hpg.bigdata.app.cli.local.options.VariantCommandOptions;
@@ -188,7 +188,7 @@ public class CliUtils {
                 }
 
                 samples = metadataManager.getSamples(sampleQuery,
-                        metadataManager.getVariantMetadata().getDatasets().get(0).getId());
+                        metadataManager.getVariantMetadata().getStudies().get(0).getId());
 
                 for (Sample sample : samples) {
                     if (sampleGenotypes.length() > 0) {
@@ -199,7 +199,7 @@ public class CliUtils {
                 }
             }
             samples = metadataManager.getSamples(
-                    metadataManager.getVariantMetadata().getDatasets().get(0).getId());
+                    metadataManager.getVariantMetadata().getStudies().get(0).getId());
 
             // e.g.: sample genotypes = sample1:0|0;sample2:1|0,1|1
             String[] values = sampleGenotypes.toString().split("[;]");

@@ -22,7 +22,7 @@ package org.opencb.hpg.bigdata.core.io;
 import htsjdk.variant.variantcontext.LazyGenotypesContext;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFCodec;
-import org.opencb.biodata.tools.variant.converters.Converter;
+import org.opencb.biodata.tools.Converter;
 
 import java.nio.CharBuffer;
 import java.util.ArrayList;

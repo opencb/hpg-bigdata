@@ -35,16 +35,16 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.ga4gh.models.VariantSetMetadata;
-import org.opencb.hpg.bigdata.core.converters.Converter;
+import org.opencb.biodata.tools.BiConverter;
 
 /**
  * @author mh719
  *
  */
-public class VcfHeaderLine2VariantSetMetadataConverter implements Converter<VCFHeaderLine, VariantSetMetadata> {
+public class VcfHeaderLine2VariantSetMetadataConverter implements BiConverter<VCFHeaderLine, VariantSetMetadata> {
 
     @Override
-    public VariantSetMetadata forward(VCFHeaderLine hl) {
+    public VariantSetMetadata to(VCFHeaderLine hl) {
         if (null == hl) {
             return null;
         }
@@ -149,7 +149,7 @@ public class VcfHeaderLine2VariantSetMetadataConverter implements Converter<VCFH
     }
 
     @Override
-    public VCFHeaderLine backward(VariantSetMetadata vsm) {
+    public VCFHeaderLine from(VariantSetMetadata vsm) {
         if (null == vsm) {
             return null;
         } else if (StringUtils.equals(vsm.getKey().toString(), SupportedHeaderLineType.INFO.name())) {

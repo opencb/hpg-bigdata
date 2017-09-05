@@ -14,7 +14,7 @@ import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.junit.Test;
 import org.opencb.biodata.models.core.pedigree.Pedigree;
-import org.opencb.biodata.tools.variant.VariantMetadataManager;
+import org.opencb.biodata.tools.variant.metadata.VariantMetadataManager;
 import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
 import org.opencb.hpg.bigdata.core.lib.VariantDataset;
 import scala.Serializable;

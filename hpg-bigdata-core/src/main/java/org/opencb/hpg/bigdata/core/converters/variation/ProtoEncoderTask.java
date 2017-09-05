@@ -1,7 +1,7 @@
 package org.opencb.hpg.bigdata.core.converters.variation;
 
 import com.google.protobuf.GeneratedMessage;
-import org.opencb.biodata.tools.variant.converters.Converter;
+import org.opencb.biodata.tools.Converter;
 import org.opencb.commons.run.ParallelTaskRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

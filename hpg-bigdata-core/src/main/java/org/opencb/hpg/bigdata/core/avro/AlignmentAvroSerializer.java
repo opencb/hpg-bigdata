@@ -7,7 +7,7 @@ import htsjdk.samtools.SamReaderFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.ga4gh.models.ReadAlignment;
 import org.opencb.biodata.models.core.Region;
-import org.opencb.hpg.bigdata.core.converters.SAMRecord2ReadAlignmentConverter;
+import org.opencb.biodata.tools.alignment.converters.SAMRecordToAvroReadAlignmentBiConverter;
 import org.opencb.hpg.bigdata.core.io.avro.AvroFileWriter;
 
 import java.io.*;
@@ -52,14 +52,14 @@ public class AlignmentAvroSerializer extends AvroSerializer<ReadAlignment> {
         avroFileWriter.open();
 
         // converter
-        SAMRecord2ReadAlignmentConverter converter = new SAMRecord2ReadAlignmentConverter(binQualities);
+        SAMRecordToAvroReadAlignmentBiConverter converter = new SAMRecordToAvroReadAlignmentBiConverter(binQualities);
 
         // main loop
         long counter = 0;
         SAMRecordIterator iterator = reader.iterator();
         while (iterator.hasNext()) {
             SAMRecord record = iterator.next();
-            ReadAlignment readAlignment = converter.forward(record);
+            ReadAlignment readAlignment = converter.to(record);
             if (filter(readAlignment)) {
                 avroFileWriter.writeDatum(readAlignment);
                 counter++;

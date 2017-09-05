@@ -26,7 +26,7 @@ import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.ga4gh.models.ReadAlignment;
 import org.opencb.biodata.models.core.Region;
-import org.opencb.hpg.bigdata.core.converters.SAMRecord2ReadAlignmentConverter;
+import org.opencb.biodata.tools.alignment.converters.SAMRecordToAvroReadAlignmentBiConverter;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -63,14 +63,14 @@ public class AlignmentParquetConverter extends ParquetConverter<ReadAlignment> {
                 new AvroParquetWriter(new Path(outputFilename), schema, compressionCodecName, rowGroupSize, pageSize);
 
         // converter
-        SAMRecord2ReadAlignmentConverter converter = new SAMRecord2ReadAlignmentConverter(binQualities);
+        SAMRecordToAvroReadAlignmentBiConverter converter = new SAMRecordToAvroReadAlignmentBiConverter(binQualities);
 
         // main loop
         long counter = 0;
         SAMRecordIterator iterator = reader.iterator();
         while (iterator.hasNext()) {
             SAMRecord record = iterator.next();
-            ReadAlignment readAlignment = converter.forward(record);
+            ReadAlignment readAlignment = converter.to(record);
             if (filter(readAlignment)) {
                 parquetFileWriter.write(readAlignment);
                 counter++;

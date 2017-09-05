@@ -22,20 +22,20 @@ import java.util.List;
 import java.util.Map;
 
 import org.ga4gh.models.CallSet;
-import org.opencb.hpg.bigdata.core.converters.Converter;
+import org.opencb.biodata.tools.BiConverter;
 
 /**
  * Create full CallSet for each sample.
  *
  * @author mh719
  */
-public class Genotype2CallSet implements Converter<String, CallSet> {
+public class Genotype2CallSet implements BiConverter<String, CallSet> {
 
     public Genotype2CallSet() {
     }
 
     @Override
-    public CallSet forward(String name) {
+    public CallSet to(String name) {
         CallSet cs = new CallSet();
         cs.setId(name); // TODO - maybe generate
         cs.setName(name);
@@ -50,7 +50,7 @@ public class Genotype2CallSet implements Converter<String, CallSet> {
     }
 
     @Override
-    public String backward(CallSet callSet) {
+    public String from(CallSet callSet) {
         return callSet.getId().toString();
     }
 

@@ -11,7 +11,7 @@ import org.apache.spark.sql.SparkSession;
 import org.opencb.biodata.formats.pedigree.PedigreeManager;
 import org.opencb.biodata.models.core.Region;
 import org.opencb.biodata.models.core.pedigree.Pedigree;
-import org.opencb.biodata.tools.variant.VariantMetadataManager;
+import org.opencb.biodata.tools.variant.metadata.VariantMetadataManager;
 import org.opencb.commons.utils.FileUtils;
 import org.opencb.hpg.bigdata.analysis.AnalysisExecutor;
 import org.opencb.hpg.bigdata.analysis.AnalysisExecutorException;
