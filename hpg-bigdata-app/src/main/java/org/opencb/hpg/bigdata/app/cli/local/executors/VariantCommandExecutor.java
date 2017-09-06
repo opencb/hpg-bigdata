@@ -409,7 +409,7 @@ public class VariantCommandExecutor extends CommandExecutor {
                 if (metaFile.exists()) {
                     metaFile.delete();
                 }
-                metadataManager.save(metaFile.toPath());
+                metadataManager.save(metaFile.toPath(), true);
             }
         } else {
             System.out.println("Error: metafile does not exist, " + metaFile.getAbsolutePath());

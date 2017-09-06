@@ -8,10 +8,8 @@ import org.opencb.biodata.models.metadata.Cohort;
 import org.opencb.biodata.models.metadata.SampleSetType;
 import org.opencb.biodata.models.variant.Variant;
 import org.opencb.biodata.models.variant.avro.VariantAvro;
-import org.opencb.biodata.models.variant.metadata.VariantFileMetadata;
 import org.opencb.biodata.models.variant.metadata.VariantStudyMetadata;
 import org.opencb.biodata.tools.variant.VcfFileReader;
-import org.opencb.biodata.tools.variant.converters.avro.VCFHeaderToVariantFileHeaderConverter;
 import org.opencb.biodata.tools.variant.converters.avro.VariantContextToVariantConverter;
 import org.opencb.biodata.tools.variant.metadata.VariantMetadataManager;
 import org.opencb.hpg.bigdata.core.io.avro.AvroFileWriter;
@@ -92,13 +90,10 @@ public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
         Cohort cohort = new Cohort("ALL", vcfHeader.getSampleNamesInOrder(), SampleSetType.MISCELLANEOUS);
         metadataManager.addCohort(cohort, variantDatasetMetadata.getId());
 
-        // variant file metadata management (ID, sample IDs and header)
-        VariantFileMetadata variantFileMetadata = new VariantFileMetadata();
-        variantFileMetadata.setId(filename);
-        variantFileMetadata.setSampleIds(vcfHeader.getSampleNamesInOrder());
-        VCFHeaderToVariantFileHeaderConverter headerConverter = new VCFHeaderToVariantFileHeaderConverter();
-        variantFileMetadata.setHeader(headerConverter.convert(vcfHeader));
-        metadataManager.addFile(variantFileMetadata, variantDatasetMetadata.getId());
+        // add variant file metadata from VCF header
+        metadataManager.addFile(filename, vcfHeader, variantDatasetMetadata.getId());
+        metadataManager.getVariantMetadata().getStudies().get(0).setAggregatedHeader(
+                metadataManager.getVariantMetadata().getStudies().get(0).getFiles().get(0).getHeader());
 
         // main loop
         long counter = 0;
@@ -125,7 +120,7 @@ public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
         outputStream.close();
 
         // save metadata (JSON format)
-        metadataManager.save(Paths.get(outputFilename + ".meta.json"));
+        metadataManager.save(Paths.get(outputFilename + ".meta.json"), true);
     }
 
     public VariantAvroSerializer addRegionFilter(Region region) {
