@@ -29,7 +29,7 @@ public class ToolCommandExecutor extends CommandExecutor {
         String executionId = split.length > 1 ? split[1] : null;
 
         // Parse the params into an map
-        Map<String, Object> params = new HashMap<>(toolCommandOptions.params.size());
+        Map<String, String> params = new HashMap<>(toolCommandOptions.params.size());
         for (String param : toolCommandOptions.params) {
             split = StringUtils.split(param, "=", 2);
             params.put(split[0], split.length > 1 ? split[1] : null);
