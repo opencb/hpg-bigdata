@@ -310,9 +310,9 @@ public class AlignmentCommandExecutor extends CommandExecutor {
 //        SparkConf sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "/home/jtarraga/soft/spark-2.0.0/");
 //        SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
 
-        AlignmentDataset ad = new AlignmentDataset();
+        AlignmentDataset ad = new AlignmentDataset(sparkSession);
 
-        ad.load(alignmentCommandOptions.sortAlignmentCommandOptions.input, sparkSession);
+        ad.load(alignmentCommandOptions.sortAlignmentCommandOptions.input); //, sparkSession);
 
         // sort
         ad.orderBy("alignment.position.referenceName", "alignment.position.position");
@@ -399,9 +399,9 @@ public class AlignmentCommandExecutor extends CommandExecutor {
 //        SparkConf sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "/home/jtarraga/soft/spark-2.0.0/");
 //        SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
 
-        AlignmentDataset ad = new AlignmentDataset();
+        AlignmentDataset ad = new AlignmentDataset(sparkSession);
 
-        ad.load(alignmentCommandOptions.queryAlignmentCommandOptions.input, sparkSession);
+        ad.load(alignmentCommandOptions.queryAlignmentCommandOptions.input);
         ad.createOrReplaceTempView("alignment");
 
         // query for region
