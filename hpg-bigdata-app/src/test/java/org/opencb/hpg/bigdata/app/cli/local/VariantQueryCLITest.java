@@ -1,27 +1,20 @@
 package org.opencb.hpg.bigdata.app.cli.local;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.variantcontext.writer.Options;
-import htsjdk.variant.variantcontext.writer.VariantContextWriter;
-import htsjdk.variant.vcf.VCFHeader;
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
 import org.apache.spark.sql.SparkSession;
 import org.junit.Test;
-import org.opencb.biodata.formats.variant.vcf4.VcfUtils;
-import org.opencb.biodata.models.variant.Variant;
-import org.opencb.biodata.tools.variant.converters.avro.VariantAvroToVariantContextConverter;
+import org.opencb.biodata.models.core.Region;
+import org.opencb.biodata.models.variant.metadata.VariantStudyMetadata;
+import org.opencb.biodata.tools.variant.converters.VCFExporter;
 import org.opencb.biodata.tools.variant.converters.avro.VariantDatasetMetadataToVCFHeaderConverter;
 import org.opencb.biodata.tools.variant.metadata.VariantMetadataManager;
 import org.opencb.hpg.bigdata.app.cli.local.executors.VariantCommandExecutor;
 import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
 import org.opencb.hpg.bigdata.core.lib.VariantDataset;
 
-import java.io.FileOutputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.file.Paths;
 
 /**
  * Created by jtarraga on 12/10/16.
@@ -269,11 +262,34 @@ public class VariantQueryCLITest {
         try {
             manager.load(metaCLI.metadataPath);
 
+            SparkConf sparkConf = SparkConfCreator.getConf("variant query", "local", 1, true);
+            SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
+
+            VariantDataset vd = new VariantDataset(sparkSession);
+            vd.load(metaCLI.avroPath.toString());
+            vd.createOrReplaceTempView("vcf");
+            vd.regionFilter(new Region("22:16050114-16050214"));
+
+            // out filename
+            String outFilename = metaCLI.metadataPath.toString() + ".vcf";
+
+            VariantStudyMetadata studyMetadata = manager.getVariantMetadata().getStudies().get(0);
+            VCFExporter vcfExporter = new VCFExporter(studyMetadata);
+            vcfExporter.open(Options.ALLOW_MISSING_FIELDS_IN_HEADER, Paths.get(outFilename));
+
+            vcfExporter.export(vd.iterator());
+
+            // close everything
+            vcfExporter.close();
+            sparkSession.stop();
+
+/*
             String datasetId = manager.getVariantMetadata().getStudies().get(0).getId();
             VCFHeader vcfHeader = headerConverter.convert(manager.getVariantMetadata().getStudies().get(0));
 
             // create the variant context writer
-            OutputStream outputStream = new FileOutputStream(metaCLI.metadataPath.toString() + ".vcf");
+            String outFilename = metaCLI.metadataPath.toString() + ".vcf";
+            OutputStream outputStream = new FileOutputStream(outFilename);
             Options writerOptions = null;
             VariantContextWriter writer = VcfUtils.createVariantContextWriter(outputStream,
                     vcfHeader.getSequenceDictionary());//, writerOptions);
@@ -282,26 +298,38 @@ public class VariantQueryCLITest {
             writer.writeHeader(vcfHeader);
 
 
-            SparkConf sparkConf = SparkConfCreator.getConf("variant query", "local", 1, true);
-            SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
-
-            VariantDataset vd = new VariantDataset(sparkSession);
-            vd.load(metaCLI.avroPath.toString());
-            vd.createOrReplaceTempView("vcf");
 
             ObjectMapper mapper = new ObjectMapper();
-            List<String> samples = vcfHeader.getSampleNamesInOrder();
-            List<String> formats = new ArrayList<>();
+            List<String> samples = VariantMetadataUtils.getSampleNames(manager.getVariantMetadata().getStudies().get(0));
+            List<String> formats = Arrays.asList("GT");
             List<String> annotations = new ArrayList<>();
-            annotations.add("AN");
-            annotations.add("NS");
             VariantAvroToVariantContextConverter converter = new VariantAvroToVariantContextConverter(datasetId, samples, formats, annotations);
-
+/*
             List<String> list = vd.toJSON().collectAsList();
             for (String item: list) {
                 Variant variant = mapper.readValue(item, Variant.class);
                 System.out.println(variant.getId() + ", " + variant.getChromosome() + ", " + variant.getStart());
                 VariantContext variantContext = converter.convert(variant);
+                writer.add(variantContext);
+            }
+*/
+/*
+            Iterator<String> iterator = vd.toJSON().toLocalIterator();
+
+            VariantStudyMetadata studyMetadata = manager.getVariantMetadata().getStudies().get(0);
+            VCFExporter vcfExporter = new VCFExporter(studyMetadata);
+            SparkVariantIterator variantIterator = new SparkVariantIterator(vd);
+            vcfExporter.export(variantIterator, null, outFilename);
+
+            while (iterator.hasNext()) {
+                Variant variant = mapper.readValue(iterator.next(), Variant.class);
+                System.out.println(">>> writing to " + outFilename);
+                System.out.println(variant.getId() + ", " + variant.getChromosome() + ", " + variant.getStart());
+                System.out.println(variant.toJson());
+                VariantContext variantContext = converter.convert(variant);
+                for (int i = 0; i < 6; i++) {
+                    System.out.println("\t" + variantContext.getGenotype(i));
+                }
                 writer.add(variantContext);
             }
 /*
@@ -317,12 +345,12 @@ public class VariantQueryCLITest {
                 writer.add(null);
                 System.out.println(row.get(0) + ", " + row.get(1) + ", " + row.get(2) + ", " + row.get(3));
             });
-*/
 
             // close everything
             sparkSession.stop();
             writer.close();
             outputStream.close();
+*/
         } catch (Exception e) {
             e.printStackTrace();
         }

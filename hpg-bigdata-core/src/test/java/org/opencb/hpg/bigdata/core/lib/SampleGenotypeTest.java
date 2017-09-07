@@ -47,7 +47,7 @@ public class SampleGenotypeTest {
 //            String filename = "/home/jtarraga/data150/spark/variant-test-file-head-200.vcf.annot.avro";
 //            String filename = "/home/jtarraga/data150/spark/variant-test-file.vcf.annot.avro";
             System.out.println(">>>> opening file " + filename);
-            vd.load(filename, sparkSession);
+            vd.load(filename); //, sparkSession);
             //vd.printSchema();
             vd.createOrReplaceTempView("vcf");
         } catch (Exception e) {

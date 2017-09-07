@@ -18,19 +18,10 @@ package org.opencb.hpg.bigdata.core.lib;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
-import org.apache.spark.sql.SQLContext;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.api.java.UDF1;
-import org.apache.spark.sql.catalog.Column;
-import org.apache.spark.sql.types.DataType;
-import org.apache.spark.sql.types.DataTypes;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import scala.collection.immutable.Seq;
-import scala.collection.mutable.StringBuilder;
-
-import java.io.File;
 
 /**
  * Created by jtarraga on 04/09/16.
@@ -73,7 +64,7 @@ public class GroupByTest {
 //            String filename = "/home/jtarraga/data150/spark/variant-test-file-head-200.vcf.annot.avro";
 //            String filename = "/home/jtarraga/data150/spark/variant-test-file.vcf.annot.avro";
             System.out.println(">>>> opening file " + filename);
-            vd.load(filename, sparkSession);
+            vd.load(filename); //, sparkSession);
             //vd.printSchema();
             vd.createOrReplaceTempView("vcf");
         } catch (Exception e) {

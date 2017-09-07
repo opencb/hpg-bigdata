@@ -61,7 +61,7 @@ public class VariantDatasetTest {
         try {
             String filename = this.getClass().getResource("/100.variants.avro").getFile();
             System.out.println(">>>> opening file " + filename);
-            vd.load(filename, sparkSession);
+            vd.load(filename); //, sparkSession);
             vd.printSchema();
             vd.createOrReplaceTempView("vcf");
         } catch (Exception e) {
