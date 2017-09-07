@@ -5,10 +5,8 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
 import org.apache.spark.sql.SparkSession;
 import org.junit.Test;
-import org.opencb.biodata.models.core.Region;
 import org.opencb.biodata.models.variant.metadata.VariantStudyMetadata;
 import org.opencb.biodata.tools.variant.converters.VCFExporter;
-import org.opencb.biodata.tools.variant.converters.avro.VariantDatasetMetadataToVCFHeaderConverter;
 import org.opencb.biodata.tools.variant.metadata.VariantMetadataManager;
 import org.opencb.hpg.bigdata.app.cli.local.executors.VariantCommandExecutor;
 import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
@@ -257,7 +255,6 @@ public class VariantQueryCLITest {
         VariantMetadataCLITest metaCLI = new VariantMetadataCLITest();
         metaCLI.loadPedigree();
 
-        VariantDatasetMetadataToVCFHeaderConverter headerConverter = new VariantDatasetMetadataToVCFHeaderConverter();
         VariantMetadataManager manager = new VariantMetadataManager();
         try {
             manager.load(metaCLI.metadataPath);
@@ -268,7 +265,9 @@ public class VariantQueryCLITest {
             VariantDataset vd = new VariantDataset(sparkSession);
             vd.load(metaCLI.avroPath.toString());
             vd.createOrReplaceTempView("vcf");
-            vd.regionFilter(new Region("22:16050114-16050214"));
+
+            //vd.regionFilter(new Region("22:16050114-16050214"));
+            vd.sampleFilter("GT", "5:0|1");
 
             // out filename
             String outFilename = metaCLI.metadataPath.toString() + ".vcf";
@@ -282,91 +281,8 @@ public class VariantQueryCLITest {
             // close everything
             vcfExporter.close();
             sparkSession.stop();
-
-/*
-            String datasetId = manager.getVariantMetadata().getStudies().get(0).getId();
-            VCFHeader vcfHeader = headerConverter.convert(manager.getVariantMetadata().getStudies().get(0));
-
-            // create the variant context writer
-            String outFilename = metaCLI.metadataPath.toString() + ".vcf";
-            OutputStream outputStream = new FileOutputStream(outFilename);
-            Options writerOptions = null;
-            VariantContextWriter writer = VcfUtils.createVariantContextWriter(outputStream,
-                    vcfHeader.getSequenceDictionary());//, writerOptions);
-
-            // write VCF header
-            writer.writeHeader(vcfHeader);
-
-
-
-            ObjectMapper mapper = new ObjectMapper();
-            List<String> samples = VariantMetadataUtils.getSampleNames(manager.getVariantMetadata().getStudies().get(0));
-            List<String> formats = Arrays.asList("GT");
-            List<String> annotations = new ArrayList<>();
-            VariantAvroToVariantContextConverter converter = new VariantAvroToVariantContextConverter(datasetId, samples, formats, annotations);
-/*
-            List<String> list = vd.toJSON().collectAsList();
-            for (String item: list) {
-                Variant variant = mapper.readValue(item, Variant.class);
-                System.out.println(variant.getId() + ", " + variant.getChromosome() + ", " + variant.getStart());
-                VariantContext variantContext = converter.convert(variant);
-                writer.add(variantContext);
-            }
-*/
-/*
-            Iterator<String> iterator = vd.toJSON().toLocalIterator();
-
-            VariantStudyMetadata studyMetadata = manager.getVariantMetadata().getStudies().get(0);
-            VCFExporter vcfExporter = new VCFExporter(studyMetadata);
-            SparkVariantIterator variantIterator = new SparkVariantIterator(vd);
-            vcfExporter.export(variantIterator, null, outFilename);
-
-            while (iterator.hasNext()) {
-                Variant variant = mapper.readValue(iterator.next(), Variant.class);
-                System.out.println(">>> writing to " + outFilename);
-                System.out.println(variant.getId() + ", " + variant.getChromosome() + ", " + variant.getStart());
-                System.out.println(variant.toJson());
-                VariantContext variantContext = converter.convert(variant);
-                for (int i = 0; i < 6; i++) {
-                    System.out.println("\t" + variantContext.getGenotype(i));
-                }
-                writer.add(variantContext);
-            }
-/*
-            vd.toJSON().foreach(s -> {
-                Variant variant = mapper.readValue(s, Variant.class);
-                System.out.println(variant.getId() + ", " + variant.getChromosome() + ", " + variant.getStart());
-                VariantContext variantContext = converter.from(variant);
-                writer.add(variantContext);
-            });
-            /*
-            javaRDD().foreach(row -> {
-
-                writer.add(null);
-                System.out.println(row.get(0) + ", " + row.get(1) + ", " + row.get(2) + ", " + row.get(3));
-            });
-
-            // close everything
-            sparkSession.stop();
-            writer.close();
-            outputStream.close();
-*/
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-/*
-        StringBuilder commandLine = new StringBuilder();
-        commandLine.append(" variant query");
-        commandLine.append(" --log-level ERROR");
-        commandLine.append(" -i ").append(metaCLI.avroPath);
-        commandLine.append(" --limit 100");
-
-        try {
-            execute(commandLine.toString());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    */
     }
 }
