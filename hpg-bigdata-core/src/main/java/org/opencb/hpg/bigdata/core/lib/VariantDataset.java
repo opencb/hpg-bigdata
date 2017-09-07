@@ -19,10 +19,12 @@ package org.opencb.hpg.bigdata.core.lib;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.SparkSession;
+import org.opencb.biodata.models.variant.Variant;
 import org.opencb.commons.datastore.core.Query;
 import org.opencb.commons.datastore.core.QueryOptions;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -49,7 +51,7 @@ public class VariantDataset extends ParentDataset<VariantDataset> {
                     String[] fields = item.split(" as ");
                     this.ds = this.ds.drop(fields[1]);
                 }
-                this.ds = this.ds.dropDuplicates("id");
+                this.ds = this.ds.dropDuplicates("id", "start", "chromosome");
             }
         }
     }
@@ -165,4 +167,9 @@ public class VariantDataset extends ParentDataset<VariantDataset> {
         updateQuery("annotation." + key, values, and);
         return this;
     }
+
+     public Iterator<Variant> iterator() {
+        update();
+        return new SparkVariantIterator(this);
+     }
 }
