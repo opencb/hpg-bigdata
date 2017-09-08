@@ -23,7 +23,7 @@ public class Executor {
     private static int threadInitNumber;
     private static volatile String status;
 
-    protected static void execute(String commandLine, Path outdir, boolean redirectLogs) throws AnalysisToolException {
+    public static void execute(String commandLine, Path outdir, boolean redirectLogs) throws AnalysisToolException {
         if (!outdir.toFile().isDirectory()) {
             throw new AnalysisToolException("Output directory " + outdir + " is not an actual directory");
         }
