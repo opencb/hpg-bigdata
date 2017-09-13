@@ -43,6 +43,7 @@ public class CliUtils {
         return res;
     }
 
+    @Deprecated
     public static List<Region> getRegionList(String regions, String regionFilename) throws IOException {
         List<Region> list = null;
         if (StringUtils.isNotEmpty(regions)) {
@@ -97,6 +98,7 @@ public class CliUtils {
         dir.delete();
     }
 
+    @Deprecated
     public static void addVariantFilters(VariantCommandOptions variantCommandOptions,
                                          VariantDataset vd) throws IOException {
 
@@ -253,6 +255,7 @@ public class CliUtils {
                 variantCommandOptions.queryVariantCommandOptions.pmaf, vd);
     }
 
+    @Deprecated
     private static void annotationFilterNotEmpty(String key, String value, VariantDataset vd) {
         if (StringUtils.isNotEmpty(value)) {
             vd.annotationFilter(key, value);
@@ -282,6 +285,7 @@ public class CliUtils {
      * @param samples            Sample list in the right order (to get the sample index)
      * @return                   Updated sample genotype query string
      */
+    @Deprecated
     private static String updateSampleGenotype(String sampleGenotype, List<Sample> samples) {
         // e.g.: value = sample2:1|0,1|1
         StringBuilder newSampleGenotype = new StringBuilder("");

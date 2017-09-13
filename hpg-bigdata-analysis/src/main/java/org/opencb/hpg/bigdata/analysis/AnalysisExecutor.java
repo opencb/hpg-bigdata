@@ -4,15 +4,19 @@ package org.opencb.hpg.bigdata.analysis;
  * Created by jtarraga on 30/01/17.
  */
 public abstract class AnalysisExecutor {
-    protected String datasetName;
+    protected String studyId;
 
-    public String getDatasetName() {
-        return datasetName;
+    protected AnalysisExecutor(String studyId) {
+        this.studyId = studyId;
     }
 
-    public void setDatasetName(String datasetName) {
-        this.datasetName = datasetName;
+    protected String studyId() {
+        return studyId;
     }
 
-    public abstract void execute() throws AnalysisExecutorException;
+    protected void setStudyId(String studyId) {
+        this.studyId = studyId;
+    }
+
+    protected abstract void execute() throws AnalysisExecutorException;
 }

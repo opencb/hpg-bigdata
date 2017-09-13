@@ -20,6 +20,7 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterDescription;
 import com.beust.jcommander.ParameterException;
+import org.opencb.hpg.bigdata.analysis.variant.FilterParameters;
 import org.opencb.hpg.bigdata.app.cli.local.options.*;
 
 import java.util.Map;
@@ -35,6 +36,7 @@ public class LocalCliOptionsParser {
     private final CommandOptions commandOptions;
 
     private final CommonCommandOptions commonCommandOptions;
+    private final FilterParameters filterOptions;
 
     private AdminCommandOptions adminCommandOptions;
 
@@ -55,6 +57,7 @@ public class LocalCliOptionsParser {
 
         commandOptions = new CommandOptions();
         commonCommandOptions = new CommonCommandOptions();
+        filterOptions = new FilterParameters();
 
         adminCommandOptions = new AdminCommandOptions(commonCommandOptions, jcommander);
         jcommander.addCommand("admin", adminCommandOptions);
@@ -77,7 +80,7 @@ public class LocalCliOptionsParser {
         alignmentSubCommands.addCommand("coverage", alignmentCommandOptions.coverageAlignmentCommandOptions);
         alignmentSubCommands.addCommand("query", alignmentCommandOptions.queryAlignmentCommandOptions);
 
-        variantCommandOptions = new VariantCommandOptions(commonCommandOptions, jcommander);
+        variantCommandOptions = new VariantCommandOptions(commonCommandOptions, filterOptions, jcommander);
         jcommander.addCommand("variant", variantCommandOptions);
         JCommander variantSubCommands = jcommander.getCommands().get("variant");
         variantSubCommands.addCommand("convert", variantCommandOptions.convertVariantCommandOptions);

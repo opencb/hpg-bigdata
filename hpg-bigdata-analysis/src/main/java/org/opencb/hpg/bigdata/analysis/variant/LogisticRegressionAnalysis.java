@@ -70,14 +70,13 @@ public class LogisticRegressionAnalysis extends VariantAnalysisExecutor {
         lrModel.setThreshold(bestThreshold);
     }
 
-    public LogisticRegressionAnalysis(String datasetName, String studyName, String depVarName, String indepVarName) {
-        this(datasetName, studyName, depVarName, indepVarName, 10, 0.3, 0.8);
+    public LogisticRegressionAnalysis(String studyId, String depVarName, String indepVarName) {
+        this(studyId, depVarName, indepVarName, 10, 0.3, 0.8);
     }
 
-    public LogisticRegressionAnalysis(String datasetName, String studyName, String depVarName, String indepVarName,
+    public LogisticRegressionAnalysis(String studyId, String depVarName, String indepVarName,
                                       int numIterations, double regularization, double elasticNet) {
-        this.datasetName = datasetName;
-        this.studyName = studyName;
+        super(studyId);
         this.depVarName = depVarName;
         this.indepVarName = indepVarName;
         this.numIterations = numIterations;
