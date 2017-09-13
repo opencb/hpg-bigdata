@@ -4,7 +4,6 @@ import org.opencb.hpg.bigdata.analysis.AnalysisExecutorException;
 import org.opencb.hpg.bigdata.analysis.exceptions.AnalysisToolException;
 import org.opencb.hpg.bigdata.analysis.tools.Executor;
 import org.opencb.hpg.bigdata.analysis.variant.FilterParameters;
-import org.opencb.hpg.bigdata.analysis.variant.VariantAnalysisExecutor;
 import org.opencb.hpg.bigdata.analysis.variant.VariantAnalysisUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

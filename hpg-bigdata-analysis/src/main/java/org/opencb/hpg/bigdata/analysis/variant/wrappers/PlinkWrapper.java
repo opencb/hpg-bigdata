@@ -14,7 +14,6 @@ import org.opencb.commons.datastore.core.QueryOptions;
 import org.opencb.hpg.bigdata.analysis.tools.Executor;
 import org.opencb.hpg.bigdata.analysis.tools.Status;
 import org.opencb.hpg.bigdata.analysis.tools.ToolManager;
-import org.opencb.hpg.bigdata.analysis.variant.VariantAnalysisExecutor;
 import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
 import org.opencb.hpg.bigdata.core.lib.VariantDataset;
 import org.slf4j.Logger;
