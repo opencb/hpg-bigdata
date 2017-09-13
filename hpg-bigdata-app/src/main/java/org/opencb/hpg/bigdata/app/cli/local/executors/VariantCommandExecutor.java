@@ -31,7 +31,6 @@ import org.opencb.biodata.models.metadata.Cohort;
 import org.opencb.biodata.models.metadata.SampleSetType;
 import org.opencb.biodata.models.variant.avro.StudyEntry;
 import org.opencb.biodata.models.variant.avro.VariantAvro;
-import org.opencb.biodata.models.variant.avro.VariantFileMetadata;
 import org.opencb.biodata.tools.variant.metadata.VariantMetadataManager;
 import org.opencb.commons.utils.FileUtils;
 import org.opencb.hpg.bigdata.analysis.variant.RvTestsAdaptor;
@@ -183,24 +182,6 @@ public class VariantCommandExecutor extends CommandExecutor {
 
                 elapsedTime = System.currentTimeMillis() - startTime;
                 System.out.println("\n\nFinish AVRO->PARQUET conversion in " + (elapsedTime / 1000F) + " sec\n");
-
-                // metadata file management
-                File metaFile = new File(inputPath.toString() + ".meta.json");
-                if (1 == 0 && metaFile.exists()) {
-                    File outMetaFile = new File(output + ".meta.json");
-
-                    // read metadata JSON to update filename
-                    ObjectMapper mapper = new ObjectMapper();
-                    //mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-                    VariantFileMetadata data = mapper.readValue(metaFile, VariantFileMetadata.class);
-                    data.setFileName(outMetaFile.toString());
-
-                    // write the metadata
-                    PrintWriter writer = new PrintWriter(new FileOutputStream(outMetaFile));
-                    writer.write(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(
-                            mapper.readValue(data.toString(), Object.class)));
-                    writer.close();
-                }
             } else {
                 // convert to VCF -> PARQUET
                 System.out.println("\n\nStarting VCF->PARQUET conversion...\n");
