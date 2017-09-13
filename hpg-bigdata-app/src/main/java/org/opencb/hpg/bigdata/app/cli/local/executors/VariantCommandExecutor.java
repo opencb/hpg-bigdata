@@ -31,10 +31,10 @@ import org.opencb.biodata.models.metadata.Cohort;
 import org.opencb.biodata.models.metadata.SampleSetType;
 import org.opencb.biodata.models.variant.avro.StudyEntry;
 import org.opencb.biodata.models.variant.avro.VariantAvro;
-import org.opencb.biodata.models.variant.avro.VariantFileMetadata;
+import org.opencb.biodata.models.variant.metadata.VariantFileMetadata;
 import org.opencb.biodata.tools.variant.metadata.VariantMetadataManager;
 import org.opencb.commons.utils.FileUtils;
-import org.opencb.hpg.bigdata.analysis.variant.RvTestsAdaptor;
+import org.opencb.hpg.bigdata.analysis.variant.wrappers.RvTestsWrapper;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
 import org.opencb.hpg.bigdata.app.cli.local.CliUtils;
 import org.opencb.hpg.bigdata.app.cli.local.options.VariantCommandOptions;
@@ -53,7 +53,7 @@ import java.util.List;
 
 import static java.nio.file.Paths.get;
 
-//import org.opencb.hpg.bigdata.analysis.variant.analysis.RvTestsAdaptor;
+//import org.opencb.hpg.bigdata.analysis.variant.analysis.RvTestsWrapper;
 
 /**
  * Created by imedina on 25/06/15.
@@ -193,7 +193,7 @@ public class VariantCommandExecutor extends CommandExecutor {
                     ObjectMapper mapper = new ObjectMapper();
                     //mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
                     VariantFileMetadata data = mapper.readValue(metaFile, VariantFileMetadata.class);
-                    data.setFileName(outMetaFile.toString());
+                    data.setId(outMetaFile.toString());
 
                     // write the metadata
                     PrintWriter writer = new PrintWriter(new FileOutputStream(outMetaFile));
@@ -371,6 +371,9 @@ public class VariantCommandExecutor extends CommandExecutor {
             if (variantCommandOptions.metadataVariantCommandOptions.loadPedFilename != null) {
                 Pedigree pedigree = new PedigreeManager().parse(
                         get(variantCommandOptions.metadataVariantCommandOptions.loadPedFilename));
+
+                System.out.println(pedigree.toString());
+
                 metadataManager.loadPedigree(pedigree, datasetId);
                 updated = true;
             }
@@ -418,12 +421,14 @@ public class VariantCommandExecutor extends CommandExecutor {
 
 
     public void rvtests() throws Exception {
-        RvTestsAdaptor rvtests = new RvTestsAdaptor(variantCommandOptions.rvtestsVariantCommandOptions.inFilename,
-                variantCommandOptions.rvtestsVariantCommandOptions.metaFilename,
-                variantCommandOptions.rvtestsVariantCommandOptions.outDirname,
-                variantCommandOptions.rvtestsVariantCommandOptions.confFilename);
+        RvTestsWrapper rvtests = new RvTestsWrapper(variantCommandOptions.rvtestsVariantCommandOptions.datasetId,
+                variantCommandOptions.rvtestsVariantCommandOptions.inFilename,
+                variantCommandOptions.rvtestsVariantCommandOptions.inFilename + ".meta.json",
+                variantCommandOptions.rvtestsVariantCommandOptions.filterParameters,
+                variantCommandOptions.rvtestsVariantCommandOptions.rvtestsParams);
 
-//        rvtests.run(variantCommandOptions.rvtestsVariantCommandOptions.datasetId);
-        rvtests.run00(variantCommandOptions.rvtestsVariantCommandOptions.datasetId);
+        // TODO: get the binary path from config folder
+        rvtests.setBinPath(Paths.get("/home/jtarraga/soft/rvtests/executable/rvtest"));
+        rvtests.execute();
     }
 }

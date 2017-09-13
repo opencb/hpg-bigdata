@@ -1,11 +1,12 @@
 package org.opencb.hpg.bigdata.app.cli.local.options;
 
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
-import com.beust.jcommander.ParametersDelegate;
+import com.beust.jcommander.*;
 import org.apache.parquet.hadoop.ParquetWriter;
+import org.opencb.hpg.bigdata.analysis.variant.FilterParameters;
 import org.opencb.hpg.bigdata.app.cli.local.LocalCliOptionsParser;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by jtarraga on 01/06/17.
@@ -23,11 +24,27 @@ public class VariantCommandOptions {
     public RvTestsVariantCommandOptions rvtestsVariantCommandOptions;
 
     public LocalCliOptionsParser.CommonCommandOptions commonCommandOptions;
+    public FilterParameters commonFilterOptions;
     public JCommander jCommander;
 
     public VariantCommandOptions(LocalCliOptionsParser.CommonCommandOptions commonCommandOptions,
                                  JCommander jCommander) {
         this.commonCommandOptions = commonCommandOptions;
+        this.jCommander = jCommander;
+
+        this.convertVariantCommandOptions = new ConvertVariantCommandOptions();
+        this.annotateVariantCommandOptions = new AnnotateVariantCommandOptions();
+        this.viewVariantCommandOptions = new ViewVariantCommandOptions();
+        this.queryVariantCommandOptions = new QueryVariantCommandOptions();
+        this.metadataVariantCommandOptions = new MetadataVariantCommandOptions();
+        this.rvtestsVariantCommandOptions = new RvTestsVariantCommandOptions();
+    }
+
+    public VariantCommandOptions(LocalCliOptionsParser.CommonCommandOptions commonCommandOptions,
+                                 FilterParameters commonFilterOptions,
+                                 JCommander jCommander) {
+        this.commonCommandOptions = commonCommandOptions;
+        this.commonFilterOptions = commonFilterOptions;
         this.jCommander = jCommander;
 
         this.convertVariantCommandOptions = new ConvertVariantCommandOptions();
@@ -331,10 +348,16 @@ public class VariantCommandOptions {
         @ParametersDelegate
         public LocalCliOptionsParser.CommonCommandOptions commonOptions = commonCommandOptions;
 
+        @ParametersDelegate
+        public FilterParameters filterParameters = commonFilterOptions;
+
+        @Parameter(names = {"--dataset"}, description = "Target dataset.", arity = 1)
+        public String datasetId = null;
+
         @Parameter(names = {"-i", "--input"}, description = "Input file name (in Avro/Parquet file format).",
                 required = true, arity = 1)
         public String inFilename;
-
+/*
         @Parameter(names = {"-m", "--metadata"}, description = "Input metadata file name.",
                 required = true, arity = 1)
         public String metaFilename;
@@ -343,12 +366,8 @@ public class VariantCommandOptions {
                 required = true, arity = 1)
         public String outDirname;
 
-        @Parameter(names = {"--dataset"}, description = "Target dataset.",
-                arity = 1)
-        public String datasetId = null;
-
-        @Parameter(names = {"-c", "--config"}, description = "Configuration file name containing the rvtests parameters.",
-                required = true, arity = 1)
-        public String confFilename;
+*/
+        @DynamicParameter(names = "-D", description = "RvTests parameters")
+        public Map<String, String> rvtestsParams = new HashMap<>();
     }
 }

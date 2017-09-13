@@ -29,13 +29,12 @@ public class PCAAnalysis extends VariantAnalysisExecutor {
         result.show(false);
     }
 
-    public PCAAnalysis(String datasetName, String studyName, String featureName) {
-        this(datasetName, studyName, featureName, 3);
+    public PCAAnalysis(String studyId, String studyName, String featureName) {
+        this(studyId, studyName, featureName, 3);
     }
 
-    public PCAAnalysis(String datasetName, String studyName, String featureName, int kValue) {
-        this.datasetName = datasetName;
-        this.studyName = studyName;
+    public PCAAnalysis(String studyId, String studyName, String featureName, int kValue) {
+        super(studyId);
         this.featureName = featureName;
         this.kValue = kValue;
     }

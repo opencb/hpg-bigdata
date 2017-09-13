@@ -1,4 +1,4 @@
-package org.opencb.hpg.bigdata.analysis.tools.adaptors;
+package org.opencb.hpg.bigdata.analysis.variant.wrappers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
@@ -14,6 +14,7 @@ import org.opencb.commons.datastore.core.QueryOptions;
 import org.opencb.hpg.bigdata.analysis.tools.Executor;
 import org.opencb.hpg.bigdata.analysis.tools.Status;
 import org.opencb.hpg.bigdata.analysis.tools.ToolManager;
+import org.opencb.hpg.bigdata.analysis.variant.VariantAnalysisExecutor;
 import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
 import org.opencb.hpg.bigdata.core.lib.VariantDataset;
 import org.slf4j.Logger;
@@ -24,19 +25,20 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
-public class PlinkAdaptor {
+public class PlinkWrapper extends VariantAnalysisWrapper {
 
     private Query query;
     private QueryOptions queryOptions;
 
     private Logger logger;
 
-    public PlinkAdaptor() {
-        this.logger = LoggerFactory.getLogger(PlinkAdaptor.class);
+    public PlinkWrapper(String studyId) {
+        super(studyId);
+        this.logger = LoggerFactory.getLogger(PlinkWrapper.class);
     }
 
 
-    public void run() {
+    public void execute() {
 
         String inputAvroFilename = query.getString("input");
         String tmpVcfFilename = query.get("outdir") + "/tmp.vcf";
@@ -83,7 +85,7 @@ public class PlinkAdaptor {
             //params.put("output", "/tmp/test.bam.bai");
 
             String commandLine = toolManager.createCommandLine("plink", "index", params);
-            System.out.println(commandLine);        Path tmp = Paths.get("/tmp");
+            System.out.println(commandLine);
 
             Executor.execute(commandLine, tmp, true);
 
