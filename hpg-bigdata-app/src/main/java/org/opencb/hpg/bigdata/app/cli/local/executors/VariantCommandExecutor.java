@@ -43,7 +43,10 @@ import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
 import org.opencb.hpg.bigdata.core.lib.VariantDataset;
 import org.opencb.hpg.bigdata.core.parquet.VariantParquetConverter;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -345,24 +348,25 @@ public class VariantCommandExecutor extends CommandExecutor {
         File metaFile = new File(input.toString() + ".meta.json");
         if (metaFile.exists()) {
 
+            List<Pedigree> pedigrees = null;
             VariantMetadataManager metadataManager = new VariantMetadataManager();
             metadataManager.load(metaFile.toPath());
 
             // load pedigree ?
             if (variantCommandOptions.metadataVariantCommandOptions.loadPedFilename != null) {
-                Pedigree pedigree = new PedigreeManager().parse(
+                pedigrees = new PedigreeManager().parse(
                         get(variantCommandOptions.metadataVariantCommandOptions.loadPedFilename));
 
-                System.out.println(pedigree.toString());
+                //System.out.println(pedigree.toString());
 
-                metadataManager.loadPedigree(pedigree, datasetId);
+                metadataManager.loadPedigree(pedigrees, datasetId);
                 updated = true;
             }
 
             // save pedigree ?
             if (variantCommandOptions.metadataVariantCommandOptions.savePedFilename != null) {
-                Pedigree pedigree = metadataManager.getPedigree(datasetId);
-                new PedigreeManager().save(pedigree,
+                pedigrees = metadataManager.getPedigree(datasetId);
+                new PedigreeManager().save(pedigrees,
                         get(variantCommandOptions.metadataVariantCommandOptions.savePedFilename));
 
             }

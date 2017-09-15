@@ -2,12 +2,14 @@ package org.opencb.hpg.bigdata.analysis.variant;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.MapFunction;
-import org.apache.spark.mllib.linalg.Matrices;
 import org.apache.spark.mllib.linalg.Matrix;
-import org.apache.spark.mllib.stat.Statistics;
-import org.apache.spark.mllib.stat.test.ChiSqTestResult;
+import org.apache.spark.mllib.linalg.Vector;
+import org.apache.spark.mllib.linalg.Vectors;
+import org.apache.spark.mllib.linalg.distributed.RowMatrix;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
@@ -19,6 +21,7 @@ import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
 import org.opencb.hpg.bigdata.core.lib.VariantDataset;
 import scala.Serializable;
 import scala.Tuple2;
+import scala.collection.Iterator;
 import scala.collection.mutable.StringBuilder;
 import scala.collection.mutable.WrappedArray;
 
@@ -27,9 +30,13 @@ import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.apache.spark.sql.functions.desc;
+
+// $example on$
+// $example off$
 
 /**
  * Created by jtarraga on 23/12/16.
@@ -49,7 +56,7 @@ public class MLTest implements Serializable {
 //    }
 
 
-//    @Test
+    //    @Test
     public void streaming() throws Exception {
 
         // it doesn't matter what we set to spark's home directory
@@ -107,7 +114,7 @@ public class MLTest implements Serializable {
         list.forEach(i -> System.out.println(i));
     }
 
-//    @Test
+    //    @Test
     public void streaming00() throws Exception {
 
         // it doesn't matter what we set to spark's home directory
@@ -364,10 +371,10 @@ public class MLTest implements Serializable {
 
         wordCounts.print();
 *///      ssc.start();
-  //      ssc.awaitTermination();
+        //      ssc.awaitTermination();
     }
 
-//    @Test
+    //    @Test
     public void map() throws Exception {
 
         // it doesn't matter what we set to spark's home directory
@@ -428,7 +435,7 @@ public class MLTest implements Serializable {
 
     }
 
-//    @Test
+    //    @Test
     public void getSamples() throws Exception {
 
         // it doesn't matter what we set to spark's home directory
@@ -481,9 +488,9 @@ public class MLTest implements Serializable {
 
         VariantMetadataManager variantMetadataManager = new VariantMetadataManager();
         variantMetadataManager.load(Paths.get(inputPath + ".meta.json"));
-        Pedigree pedigree = variantMetadataManager.getPedigree("testing-pedigree");
+        List<Pedigree> pedigrees = variantMetadataManager.getPedigree("testing-pedigree");
 
-        ChiSquareAnalysis.run(result, pedigree);
+        //ChiSquareAnalysis.run(result, pedigree);
 
 //        //result.show();
 //        Encoder<TestResult> testResultEncoder = Encoders.bean(TestResult.class);
@@ -616,16 +623,80 @@ public class MLTest implements Serializable {
 //            Matrix mat = Matrices.dense(2, 2, new double[]{1.0, 3.0, 2.0, 4.0});
             // first column (case)    : allele 1: 2.0, allele 2: 0.0
             // second column (control): allele 1: 1.0, allele 2: 1.0
-            Matrix mat = Matrices.dense(2, 2, new double[]{2.0, 0.0, 1.0, 1.0});
+            //Matrix mat = Matrices.dense(2, 2, new double[]{2.0, 0.0, 1.0, 1.0});
 
             // conduct Pearson's independence test on the input contingency matrix
-            ChiSqTestResult independenceTestResult = Statistics.chiSqTest(mat);
+            //ChiSqTestResult independenceTestResult = Statistics.chiSqTest(mat);
             // summary of the test including the p-value, degrees of freedom...
-            System.out.println(independenceTestResult + "\n");
+            //System.out.println(independenceTestResult + "\n");
 
 //            sparkSession.stop();
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+/*
+    @Test
+    public void pca() {
+        SparkConf conf = new SparkConf().setAppName("JavaPCAExample").setMaster("local");
+        JavaSparkContext jsc = new JavaSparkContext(conf);
+        SQLContext jsql = new SQLContext(jsc);
+
+        // $example on$
+        JavaRDD<Row> data = jsc.parallelize(Arrays.asList(
+                RowFactory.create(Vectors.sparse(5, new int[]{1, 3}, new double[]{1.0, 7.0})),
+                RowFactory.create(Vectors.dense(2.0, 0.0, 3.0, 4.0, 5.0)),
+                RowFactory.create(Vectors.dense(4.0, 0.0, 0.0, 6.0, 7.0))
+        ));
+
+        StructType schema = new StructType(new StructField[]{
+                new StructField("features", new VectorUDT(), false, Metadata.empty()),
+        });
+
+        Dataset<Row> df = jsql.createDataFrame(data, schema);
+
+        PCAModel pca = new PCA()
+                .setInputCol("features")
+                .setOutputCol("pcaFeatures")
+                .setK(3)
+                .fit(df);
+
+        DenseMatrix pc = pca.pc();
+        Dataset<Row> result = pca.transform(df).select("pcaFeatures");
+
+        df.show(false);
+        System.out.println(pc.toString());
+        result.show(false);
+        // $example off$
+        jsc.stop();
+    }
+*/
+    @Test
+    public void pca1() {
+        SparkConf conf = new SparkConf().setAppName("JavaPCAExample").setMaster("local");
+        JavaSparkContext jsc = new JavaSparkContext(conf);
+        List<Vector> data = Arrays.asList(
+                Vectors.sparse(5, new int[] {1, 3}, new double[] {1.0, 7.0}),
+                Vectors.dense(2.0, 0.0, 3.0, 4.0, 5.0),
+                Vectors.dense(4.0, 0.0, 0.0, 6.0, 7.0)
+        );
+
+        JavaRDD<Vector> rows = jsc.parallelize(data);
+
+        // Create a RowMatrix from JavaRDD<Vector>.
+        RowMatrix mat = new RowMatrix(rows.rdd());
+
+        // Compute the top 4 principal components.
+        // Principal components are stored in a local dense matrix.
+        Matrix pc = mat.computePrincipalComponents(4);
+
+        // Project the rows to the linear space spanned by the top 4 principal components.
+        RowMatrix projected = mat.multiply(pc);
+
+        System.out.println(pc.toString());
+        Iterator<Vector> it = projected.rows().toLocalIterator();
+        while (it.hasNext()) {
+            System.out.println(it.next());
         }
     }
 }

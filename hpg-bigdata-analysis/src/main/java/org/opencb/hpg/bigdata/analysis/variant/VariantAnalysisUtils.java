@@ -280,8 +280,8 @@ public class VariantAnalysisUtils {
     public static void exportPedigree(String metaFilename, String studyId, String pedFilename) throws IOException {
         VariantMetadataManager metadataManager = new VariantMetadataManager();
         metadataManager.load(Paths.get(metaFilename));
-        Pedigree pedigree = metadataManager.getPedigree(studyId);
+        List<Pedigree> pedigrees = metadataManager.getPedigree(studyId);
         PedigreeManager pedigreeManager = new PedigreeManager();
-        pedigreeManager.save(pedigree, Paths.get(pedFilename));
+        pedigreeManager.save(pedigrees, Paths.get(pedFilename));
     }
 }

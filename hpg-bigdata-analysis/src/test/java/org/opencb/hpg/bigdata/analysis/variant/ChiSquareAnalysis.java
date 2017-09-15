@@ -27,12 +27,12 @@ public class ChiSquareAnalysis {
         data.show();
 
         System.out.println(pedigree);
-        List<Individual.Phenotype> phenotype = new ArrayList<>(pedigree.getIndividuals().size());
-        for (Individual indivual: pedigree.getIndividuals().values()) {
-            phenotype.add(indivual.getPhenotype());
+        List<Individual.AffectionStatus> affection = new ArrayList<>(pedigree.getMembers().size());
+        for (Individual indivual: pedigree.getMembers()) {
+            affection.add(indivual.getAffectionStatus());
         }
 
-        System.out.println(phenotype);
+        System.out.println(affection);
 
         //result.show();
         Encoder<ChiSquareAnalysisResult> resultEncoder = Encoders.bean(ChiSquareAnalysisResult.class);
@@ -43,21 +43,21 @@ public class ChiSquareAnalysis {
                 double[] counters = new double[]{0, 0, 0, 0};
 
                 System.out.print("Variant at " + r.get(1) + ":" + r.get(2) + " -> ");
-                for (int i = 0; i < phenotype.size(); i++) {
+                for (int i = 0; i < affection.size(); i++) {
                     final int length = 2;
                     String pheno = ((WrappedArray) r.getList(5).get(i)).head().toString();
                     System.out.print(pheno + "\t");
 
                     String[] fields = pheno.split("[|/]");
                     if (fields.length == length) {
-                        if (phenotype.get(i) != Individual.Phenotype.MISSING) {
+                        if (affection.get(i) != Individual.AffectionStatus.UNKNOWN) {
                             for (int j = 0; j < length; j++) {
                                 switch (fields[j]) {
                                     case "0":
-                                        counters[phenotype.get(i) == Individual.Phenotype.UNAFFECTED ? 0 : 2]++;
+                                        counters[affection.get(i) == Individual.AffectionStatus.UNAFFECTED ? 0 : 2]++;
                                         break;
                                     case "1":
-                                        counters[phenotype.get(i) == Individual.Phenotype.UNAFFECTED ? 1 : 3]++;
+                                        counters[affection.get(i) == Individual.AffectionStatus.UNAFFECTED ? 1 : 3]++;
                                         break;
                                 }
                             }
