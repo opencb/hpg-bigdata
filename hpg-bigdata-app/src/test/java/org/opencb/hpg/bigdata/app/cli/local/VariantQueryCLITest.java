@@ -1,6 +1,5 @@
 package org.opencb.hpg.bigdata.app.cli.local;
 
-import htsjdk.variant.variantcontext.writer.Options;
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
 import org.apache.spark.sql.SparkSession;
@@ -274,7 +273,7 @@ public class VariantQueryCLITest {
 
             VariantStudyMetadata studyMetadata = manager.getVariantMetadata().getStudies().get(0);
             VCFExporter vcfExporter = new VCFExporter(studyMetadata);
-            vcfExporter.open(Options.ALLOW_MISSING_FIELDS_IN_HEADER, Paths.get(outFilename));
+            vcfExporter.open(Paths.get(outFilename));
 
             vcfExporter.export(vd.iterator());
 

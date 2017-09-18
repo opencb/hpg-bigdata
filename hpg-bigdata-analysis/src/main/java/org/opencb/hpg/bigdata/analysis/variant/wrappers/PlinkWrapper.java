@@ -2,7 +2,6 @@ package org.opencb.hpg.bigdata.analysis.variant.wrappers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
-import htsjdk.variant.variantcontext.writer.Options;
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
 import org.apache.spark.sql.SparkSession;
@@ -61,7 +60,7 @@ public class PlinkWrapper extends VariantAnalysisWrapper {
             // out filename
             VariantStudyMetadata studyMetadata = manager.getVariantMetadata().getStudies().get(0);
             VCFExporter vcfExporter = new VCFExporter(studyMetadata);
-            vcfExporter.open(Options.ALLOW_MISSING_FIELDS_IN_HEADER, Paths.get(tmpVcfFilename));
+            vcfExporter.open(Paths.get(tmpVcfFilename));
 
             vcfExporter.export(vd.iterator());
 

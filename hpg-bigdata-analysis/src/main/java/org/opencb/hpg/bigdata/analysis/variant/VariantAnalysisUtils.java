@@ -1,6 +1,5 @@
 package org.opencb.hpg.bigdata.analysis.variant;
 
-import htsjdk.variant.variantcontext.writer.Options;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
@@ -53,7 +52,7 @@ public class VariantAnalysisUtils {
             // out filename
             VariantStudyMetadata studyMetadata = manager.getVariantMetadata().getStudies().get(0);
             VCFExporter vcfExporter = new VCFExporter(studyMetadata);
-            vcfExporter.open(Options.ALLOW_MISSING_FIELDS_IN_HEADER, Paths.get(vcfFilename));
+            vcfExporter.open(Paths.get(vcfFilename));
 
             vcfExporter.export(vd.iterator());
 
