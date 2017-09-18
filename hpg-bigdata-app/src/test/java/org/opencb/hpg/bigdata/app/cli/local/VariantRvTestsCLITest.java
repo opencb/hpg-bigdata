@@ -9,18 +9,18 @@ import java.nio.file.Paths;
  * Created by joaquin on 1/19/17.
  */
 public class VariantRvTestsCLITest {
-    String datasetName = "test";
+    public String datasetName = "test";
 
-    String vcfFilename = "../hpg-bigdata-app/src/test/resources/example.vcf";
-    String phenoFilename = "../hpg-bigdata-app/src/test/resources/pheno";
-    String outDir = "/tmp/";
+    public String vcfFilename = "../hpg-bigdata-app/src/test/resources/example.vcf";
+    public String phenoFilename = "../hpg-bigdata-app/src/test/resources/pheno";
+    public String outDir = "/tmp/";
 
-    Path vcfPath;
-    Path phenoPath;
-    Path avroPath;
-    Path metaPath;
+    public Path vcfPath;
+    public Path phenoPath;
+    public Path avroPath;
+    public Path metaPath;
 
-    private void init() throws Exception {
+    public void init() throws Exception {
         vcfPath = Paths.get(vcfFilename);
         phenoPath = Paths.get(phenoFilename);
         avroPath = Paths.get(outDir + "/" + vcfPath.getFileName() + ".avro");
