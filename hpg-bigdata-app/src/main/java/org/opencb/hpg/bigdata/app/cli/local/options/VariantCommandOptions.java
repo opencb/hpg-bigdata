@@ -357,17 +357,11 @@ public class VariantCommandOptions {
         @Parameter(names = {"-i", "--input"}, description = "Input file name (in Avro/Parquet file format).",
                 required = true, arity = 1)
         public String inFilename;
-/*
-        @Parameter(names = {"-m", "--metadata"}, description = "Input metadata file name.",
-                required = true, arity = 1)
-        public String metaFilename;
 
-        @Parameter(names = {"-o", "--output"}, description = "Output directory name to save the rvtests results.",
-                required = true, arity = 1)
-        public String outDirname;
-
-*/
         @DynamicParameter(names = "-D", description = "RvTests parameters")
         public Map<String, String> rvtestsParams = new HashMap<>();
+
+        @Parameter(names = {"--rvtest-path"}, description = "Path to the RvTest executable.", arity = 1)
+        public String binPath = null;
     }
 }

@@ -412,8 +412,12 @@ public class VariantCommandExecutor extends CommandExecutor {
                 variantCommandOptions.rvtestsVariantCommandOptions.filterParameters,
                 variantCommandOptions.rvtestsVariantCommandOptions.rvtestsParams);
 
-        // TODO: get the binary path from config folder
-        rvtests.setBinPath(Paths.get("/home/jtarraga/soft/rvtests/executable/rvtest"));
+        // Get the binary path from input parameter
+        String binPath = variantCommandOptions.rvtestsVariantCommandOptions.binPath;
+        if (StringUtils.isEmpty(binPath)) {
+            binPath = "rvtest";
+        }
+        rvtests.setBinPath(Paths.get(binPath));
         rvtests.execute();
     }
 }

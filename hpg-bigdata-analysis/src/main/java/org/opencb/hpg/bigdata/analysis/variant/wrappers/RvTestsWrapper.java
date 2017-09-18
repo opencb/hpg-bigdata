@@ -40,9 +40,9 @@ public class RvTestsWrapper extends VariantAnalysisWrapper { // extends Analysis
     public void execute() throws AnalysisExecutorException {
         // Sanity chek
         if (binPath == null || !binPath.toFile().exists()) {
-            String msg = "RvTests binary path is missing.";
-            logger.error("RvTests binary path is missing.");
-            throw new AnalysisExecutorException("RvTests binary path is missing.");
+            String msg = "RvTests binary path is missing or does not exist:  '" + binPath + "'.";
+            logger.error(msg);
+            throw new AnalysisExecutorException(msg);
         }
 
         // Get output dir

@@ -57,6 +57,7 @@ public class VariantRvTestsCLITest {
             commandLine.append(" variant rvtests");
             commandLine.append(" --log-level ERROR");
             commandLine.append(" --dataset ").append(datasetName);
+            commandLine.append(" --rvtest-path ../../../soft/rvtests/executable/rvtest");
             commandLine.append(" -i ").append(avroPath);
             commandLine.append(" -Dsingle=wald");
             commandLine.append(" -Dout=/tmp/out.wald");
