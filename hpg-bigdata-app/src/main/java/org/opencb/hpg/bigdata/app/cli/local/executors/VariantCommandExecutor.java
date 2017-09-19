@@ -33,6 +33,7 @@ import org.opencb.biodata.models.variant.avro.StudyEntry;
 import org.opencb.biodata.models.variant.avro.VariantAvro;
 import org.opencb.biodata.tools.variant.metadata.VariantMetadataManager;
 import org.opencb.commons.utils.FileUtils;
+import org.opencb.hpg.bigdata.analysis.variant.wrappers.PlinkWrapper;
 import org.opencb.hpg.bigdata.analysis.variant.wrappers.RvTestsWrapper;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
 import org.opencb.hpg.bigdata.app.cli.local.CliUtils;
@@ -95,6 +96,9 @@ public class VariantCommandExecutor extends CommandExecutor {
                 break;
             case "rvtests":
                 rvtests();
+                break;
+            case "plink":
+                plink();
                 break;
             default:
                 logger.error("Variant subcommand '" + subCommandString + "' not valid");
@@ -404,7 +408,6 @@ public class VariantCommandExecutor extends CommandExecutor {
         }
     }
 
-
     public void rvtests() throws Exception {
         RvTestsWrapper rvtests = new RvTestsWrapper(variantCommandOptions.rvtestsVariantCommandOptions.datasetId,
                 variantCommandOptions.rvtestsVariantCommandOptions.inFilename,
@@ -419,5 +422,21 @@ public class VariantCommandExecutor extends CommandExecutor {
         }
         rvtests.setBinPath(Paths.get(binPath));
         rvtests.execute();
+    }
+
+    public void plink() throws Exception {
+        PlinkWrapper plink = new PlinkWrapper(variantCommandOptions.plinkVariantCommandOptions.datasetId,
+                variantCommandOptions.plinkVariantCommandOptions.inFilename,
+                variantCommandOptions.plinkVariantCommandOptions.inFilename + ".meta.json",
+                variantCommandOptions.plinkVariantCommandOptions.filterParameters,
+                variantCommandOptions.plinkVariantCommandOptions.plinkParams);
+
+        // Get the binary path from input parameter
+        String binPath = variantCommandOptions.plinkVariantCommandOptions.binPath;
+        if (StringUtils.isEmpty(binPath)) {
+            binPath = "plink";
+        }
+        plink.setBinPath(Paths.get(binPath));
+        plink.execute();
     }
 }

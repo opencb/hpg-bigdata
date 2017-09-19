@@ -22,6 +22,7 @@ public class VariantCommandOptions {
     public QueryVariantCommandOptions queryVariantCommandOptions;
     public MetadataVariantCommandOptions metadataVariantCommandOptions;
     public RvTestsVariantCommandOptions rvtestsVariantCommandOptions;
+    public PlinkVariantCommandOptions plinkVariantCommandOptions;
 
     public LocalCliOptionsParser.CommonCommandOptions commonCommandOptions;
     public FilterParameters commonFilterOptions;
@@ -38,6 +39,7 @@ public class VariantCommandOptions {
         this.queryVariantCommandOptions = new QueryVariantCommandOptions();
         this.metadataVariantCommandOptions = new MetadataVariantCommandOptions();
         this.rvtestsVariantCommandOptions = new RvTestsVariantCommandOptions();
+        this.plinkVariantCommandOptions = new PlinkVariantCommandOptions();
     }
 
     public VariantCommandOptions(LocalCliOptionsParser.CommonCommandOptions commonCommandOptions,
@@ -53,6 +55,7 @@ public class VariantCommandOptions {
         this.queryVariantCommandOptions = new QueryVariantCommandOptions();
         this.metadataVariantCommandOptions = new MetadataVariantCommandOptions();
         this.rvtestsVariantCommandOptions = new RvTestsVariantCommandOptions();
+        this.plinkVariantCommandOptions = new PlinkVariantCommandOptions();
     }
 
     @Parameters(commandNames = {"convert"}, commandDescription = "Convert gVCF/VCF files to different big data"
@@ -361,7 +364,30 @@ public class VariantCommandOptions {
         @DynamicParameter(names = "-D", description = "RvTests parameters")
         public Map<String, String> rvtestsParams = new HashMap<>();
 
-        @Parameter(names = {"--rvtest-path"}, description = "Path to the RvTest executable.", arity = 1)
+        @Parameter(names = {"--rvtests-path"}, description = "Path to the RvTests executable.", arity = 1)
+        public String binPath = null;
+    }
+
+    @Parameters(commandNames = {"plink"}, commandDescription = "Execute the 'plink' program.")
+    public class PlinkVariantCommandOptions {
+
+        @ParametersDelegate
+        public LocalCliOptionsParser.CommonCommandOptions commonOptions = commonCommandOptions;
+
+        @ParametersDelegate
+        public FilterParameters filterParameters = commonFilterOptions;
+
+        @Parameter(names = {"--dataset"}, description = "Target dataset.", arity = 1)
+        public String datasetId = null;
+
+        @Parameter(names = {"-i", "--input"}, description = "Input file name (in Avro/Parquet file format).",
+                required = true, arity = 1)
+        public String inFilename;
+
+        @DynamicParameter(names = "-D", description = "PLINK parameters")
+        public Map<String, String> plinkParams = new HashMap<>();
+
+        @Parameter(names = {"--plink-path"}, description = "Path to the PLINK executable.", arity = 1)
         public String binPath = null;
     }
 }
