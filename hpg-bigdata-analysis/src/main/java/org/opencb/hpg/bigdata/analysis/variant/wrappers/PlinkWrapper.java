@@ -13,7 +13,6 @@ import org.opencb.biodata.tools.variant.metadata.VariantMetadataUtils;
 import org.opencb.hpg.bigdata.analysis.AnalysisExecutorException;
 import org.opencb.hpg.bigdata.analysis.exceptions.AnalysisToolException;
 import org.opencb.hpg.bigdata.analysis.tools.Executor;
-import org.opencb.hpg.bigdata.analysis.tools.ToolManager;
 import org.opencb.hpg.bigdata.analysis.variant.FilterParameters;
 import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
 import org.opencb.hpg.bigdata.core.lib.VariantDataset;
@@ -24,7 +23,6 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -132,10 +130,6 @@ public class PlinkWrapper extends VariantAnalysisWrapper {
                 if (markers[i] == null) {
                     markers[i] = new StringBuilder();
                 }
-                //if (markers.get(i) == null) {
-                //    markers.set(i, "");
-                //}
-                //markers[i].set(i, markers.get(i) + "\t" + gt[0] + "\t" + gt[1]);
                 markers[i].append("\t"
                         + (gt[0].equals("1") ? variant.getAlternate() : variant.getReference())
                         + "\t"
@@ -179,7 +173,6 @@ public class PlinkWrapper extends VariantAnalysisWrapper {
         pedWriter.close();
         mapWriter.close();
     }
-
 
     private Individual getIndividualBySampleName(String sampleName, VariantStudyMetadata studyMetadata) {
         for (Individual individual: studyMetadata.getIndividuals()) {
