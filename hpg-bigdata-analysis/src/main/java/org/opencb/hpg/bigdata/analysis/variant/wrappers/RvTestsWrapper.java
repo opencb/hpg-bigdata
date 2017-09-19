@@ -16,8 +16,7 @@ import java.util.Map;
 /**
  * Created by joaquin on 1/19/17.
  */
-//public class RvTestsWrapper extends AnalysisExecutor implements Serializable {
-public class RvTestsWrapper extends VariantAnalysisWrapper { // extends AnalysisExecutor implements Serializable {
+public class RvTestsWrapper extends VariantAnalysisWrapper {
     private String inFilename;
     private String metaFilename;
     private FilterParameters filterParams;
@@ -33,12 +32,12 @@ public class RvTestsWrapper extends VariantAnalysisWrapper { // extends Analysis
         this.filterParams = filterParams;
         this.rvtestsParams = rvtestsParams;
 
-        this.logger = LoggerFactory.getLogger(PlinkWrapper.class);
+        this.logger = LoggerFactory.getLogger(RvTestsWrapper.class);
     }
 
     @Override
     public void execute() throws AnalysisExecutorException {
-        // Sanity chek
+        // Sanity check
         if (binPath == null || !binPath.toFile().exists()) {
             String msg = "RvTests binary path is missing or does not exist:  '" + binPath + "'.";
             logger.error(msg);
