@@ -1,18 +1,24 @@
 package org.opencb.hpg.bigdata.core.lib;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
 import org.opencb.biodata.models.variant.Variant;
 
 import java.io.IOException;
 import java.util.Iterator;
 
 public class SparkVariantIterator implements Iterator<Variant> {
+
     private Iterator<String> strIterator;
-    private ObjectMapper objMapper;
+
+    private ObjectReader objectReader;
 
     public SparkVariantIterator(VariantDataset variantDataset) {
         strIterator = variantDataset.toJSON().toLocalIterator();
-        objMapper = new ObjectMapper();
+
+        // We use ObjectReader for performance reasons.
+        ObjectMapper objMapper = new ObjectMapper();
+        objectReader = objMapper.readerFor(Variant.class);
     }
 
     @Override
@@ -23,10 +29,10 @@ public class SparkVariantIterator implements Iterator<Variant> {
     @Override
     public Variant next() {
         try {
-            return objMapper.readValue(strIterator.next(), Variant.class);
+            return objectReader.readValue(strIterator.next());
         } catch (IOException e) {
             e.printStackTrace();
-            return new Variant();
+            return null;
         }
     }
 }
