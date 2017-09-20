@@ -2,7 +2,7 @@ package org.opencb.hpg.bigdata.analysis.variant;
 
 import com.beust.jcommander.Parameter;
 
-public class FilterParameters {
+public class VariantFilterParameters {
     @Parameter(names = {"--id"}, description = "Query for ID; comma separated list of IDs, e.g.:"
             + " \"rs312411,rs421225\"", arity = 1)
     public String ids;

@@ -412,7 +412,7 @@ public class VariantCommandExecutor extends CommandExecutor {
         RvTestsWrapper rvtests = new RvTestsWrapper(variantCommandOptions.rvtestsVariantCommandOptions.datasetId,
                 variantCommandOptions.rvtestsVariantCommandOptions.inFilename,
                 variantCommandOptions.rvtestsVariantCommandOptions.inFilename + ".meta.json",
-                variantCommandOptions.rvtestsVariantCommandOptions.filterParameters,
+                variantCommandOptions.rvtestsVariantCommandOptions.variantFilterParameters,
                 variantCommandOptions.rvtestsVariantCommandOptions.rvtestsParams);
 
         // Get the binary path from input parameter
@@ -428,7 +428,7 @@ public class VariantCommandExecutor extends CommandExecutor {
         PlinkWrapper plink = new PlinkWrapper(variantCommandOptions.plinkVariantCommandOptions.datasetId,
                 variantCommandOptions.plinkVariantCommandOptions.inFilename,
                 variantCommandOptions.plinkVariantCommandOptions.inFilename + ".meta.json",
-                variantCommandOptions.plinkVariantCommandOptions.filterParameters,
+                variantCommandOptions.plinkVariantCommandOptions.variantFilterParameters,
                 variantCommandOptions.plinkVariantCommandOptions.plinkParams);
 
         // Get the binary path from input parameter

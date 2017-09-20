@@ -3,7 +3,7 @@ package org.opencb.hpg.bigdata.analysis.variant.wrappers;
 import org.opencb.hpg.bigdata.analysis.AnalysisExecutorException;
 import org.opencb.hpg.bigdata.analysis.exceptions.AnalysisToolException;
 import org.opencb.hpg.bigdata.analysis.tools.Executor;
-import org.opencb.hpg.bigdata.analysis.variant.FilterParameters;
+import org.opencb.hpg.bigdata.analysis.variant.VariantFilterParameters;
 import org.opencb.hpg.bigdata.analysis.variant.VariantAnalysisUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,13 +19,13 @@ import java.util.Map;
 public class RvTestsWrapper extends VariantAnalysisWrapper {
     private String inFilename;
     private String metaFilename;
-    private FilterParameters filterParams;
+    private VariantFilterParameters filterParams;
     private Map<String, String> rvtestsParams;
 
     private Logger logger;
 
     public RvTestsWrapper(String studyId, String inFilename, String metaFilename,
-                          FilterParameters filterParams, Map<String, String> rvtestsParams) {
+                          VariantFilterParameters filterParams, Map<String, String> rvtestsParams) {
         super(studyId);
         this.inFilename = inFilename;
         this.metaFilename = metaFilename;

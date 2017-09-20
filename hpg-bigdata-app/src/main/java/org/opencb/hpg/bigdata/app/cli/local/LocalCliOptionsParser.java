@@ -20,7 +20,7 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterDescription;
 import com.beust.jcommander.ParameterException;
-import org.opencb.hpg.bigdata.analysis.variant.FilterParameters;
+import org.opencb.hpg.bigdata.analysis.variant.VariantFilterParameters;
 import org.opencb.hpg.bigdata.app.cli.local.options.*;
 
 import java.util.Map;
@@ -36,7 +36,7 @@ public class LocalCliOptionsParser {
     private final CommandOptions commandOptions;
 
     private final CommonCommandOptions commonCommandOptions;
-    private final FilterParameters filterOptions;
+    private final VariantFilterParameters filterOptions;
 
     private AdminCommandOptions adminCommandOptions;
 
@@ -57,7 +57,7 @@ public class LocalCliOptionsParser {
 
         commandOptions = new CommandOptions();
         commonCommandOptions = new CommonCommandOptions();
-        filterOptions = new FilterParameters();
+        filterOptions = new VariantFilterParameters();
 
         adminCommandOptions = new AdminCommandOptions(commonCommandOptions, jcommander);
         jcommander.addCommand("admin", adminCommandOptions);

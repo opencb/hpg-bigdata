@@ -13,7 +13,7 @@ import org.opencb.biodata.tools.variant.metadata.VariantMetadataUtils;
 import org.opencb.hpg.bigdata.analysis.AnalysisExecutorException;
 import org.opencb.hpg.bigdata.analysis.exceptions.AnalysisToolException;
 import org.opencb.hpg.bigdata.analysis.tools.Executor;
-import org.opencb.hpg.bigdata.analysis.variant.FilterParameters;
+import org.opencb.hpg.bigdata.analysis.variant.VariantFilterParameters;
 import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
 import org.opencb.hpg.bigdata.core.lib.VariantDataset;
 import org.slf4j.Logger;
@@ -30,13 +30,13 @@ import java.util.Map;
 public class PlinkWrapper extends VariantAnalysisWrapper {
     private String inFilename;
     private String metaFilename;
-    private FilterParameters filterParams;
+    private VariantFilterParameters filterParams;
     private Map<String, String> plinkParams;
 
     private Logger logger;
 
     public PlinkWrapper(String studyId, String inFilename, String metaFilename,
-                        FilterParameters filterParams, Map<String, String> plinkParams) {
+                        VariantFilterParameters filterParams, Map<String, String> plinkParams) {
         super(studyId);
         this.inFilename = inFilename;
         this.metaFilename = metaFilename;

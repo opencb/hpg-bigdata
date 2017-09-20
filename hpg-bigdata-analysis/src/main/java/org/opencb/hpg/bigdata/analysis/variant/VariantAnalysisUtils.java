@@ -31,13 +31,13 @@ public class VariantAnalysisUtils {
     public static final Pattern OPERATION_PATTERN = Pattern.compile("([^=<>~!]+)(.*)$");
 
     public static void exportVCF(String inputAvroFilename, String metaFilename,
-                                 FilterParameters filterParams, String vcfFilename) {
+                                 VariantFilterParameters filterParams, String vcfFilename) {
         // Generate VCF file by calling VCF exporter from query and query options
         VariantMetadataManager manager = new VariantMetadataManager();
         try {
             manager.load(Paths.get(metaFilename));
 
-            SparkConf sparkConf = SparkConfCreator.getConf("tool plink", "local", 1, true);
+            SparkConf sparkConf = SparkConfCreator.getConf("VCF exporter", "local", 1, true);
             SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
 
             VariantDataset vd = new VariantDataset(sparkSession);
@@ -49,26 +49,25 @@ public class VariantAnalysisUtils {
                 addVariantFilters(filterParams, vd);
             }
 
-            // out filename
+            // Export to VCF file
             VariantStudyMetadata studyMetadata = manager.getVariantMetadata().getStudies().get(0);
             VCFExporter vcfExporter = new VCFExporter(studyMetadata);
             vcfExporter.open(Paths.get(vcfFilename));
 
             vcfExporter.export(vd.iterator());
 
-            // close everything
+            // Close everything
             vcfExporter.close();
             sparkSession.stop();
         } catch (Exception e) {
-            System.out.println("Error retrieving variants from Avro to VCF file: " + e.getMessage());
+            System.out.println("Error retrieving variants from Avro/Parquet to VCF file: " + e.getMessage());
         }
     }
 
-    public static void addVariantFilters(FilterParameters filterParams, VariantDataset vd) throws IOException {
+    public static void addVariantFilters(VariantFilterParameters filterParams, VariantDataset vd) throws IOException {
         VariantMetadataManager metadataManager = new VariantMetadataManager();
-        //metadataManager.load(Paths.get(variantCommandOptions.queryVariantCommandOptions.input + ".meta.json"));
 
-        // query for ID (list and file)
+        // Query for ID (list and file)
         List<String> list = null;
         if (StringUtils.isNotEmpty(filterParams.ids)) {
             list = Arrays.asList(StringUtils.split(filterParams.ids, ","));
@@ -85,52 +84,52 @@ public class VariantAnalysisUtils {
             vd.idFilter(list, false);
         }
 
-        // query for type
+        // Query for type
         if (StringUtils.isNotEmpty(filterParams.types)) {
             vd.typeFilter(Arrays.asList(
                     StringUtils.split(filterParams.types, ",")));
         }
 
-        // query for biotype
+        // Query for biotype
         if (StringUtils.isNotEmpty(filterParams.biotypes)) {
             vd.annotationFilter("biotype", Arrays.asList(
                     StringUtils.split(filterParams.biotypes, ",")));
         }
 
-        // query for study
+        // Query for study
         if (StringUtils.isNotEmpty(filterParams.studies)) {
             vd.studyFilter("studyId", Arrays.asList(
                     StringUtils.split(filterParams.studies, ",")));
         }
 
-        // query for maf (study:cohort)
+        // Query for maf (study:cohort)
         if (StringUtils.isNotEmpty(filterParams.maf)) {
             vd.studyFilter("stats.maf", filterParams.maf);
         }
 
-        // query for mgf (study:cohort)
+        // Query for mgf (study:cohort)
         if (StringUtils.isNotEmpty(filterParams.mgf)) {
             vd.studyFilter("stats.mgf", filterParams.mgf);
         }
 
-        // query for number of missing alleles (study:cohort)
+        // Query for number of missing alleles (study:cohort)
         if (StringUtils.isNotEmpty(filterParams.missingAlleles)) {
             vd.studyFilter("stats.missingAlleles", filterParams.missingAlleles);
         }
 
-        // query for number of missing genotypes (study:cohort)
+        // Query for number of missing genotypes (study:cohort)
         if (StringUtils.isNotEmpty(filterParams.missingGenotypes)) {
             vd.studyFilter("stats.missingGenotypes", filterParams.missingGenotypes);
         }
 
-        // query for region (list and file)
+        // Query for region (list and file)
         List<Region> regions = getRegionList(filterParams.regions,
                 filterParams.regionFilename);
         if (regions != null && regions.size() > 0) {
             vd.regionFilter(regions);
         }
 
-        // query for sample genotypes and/or sample filters
+        // Query for sample genotypes and/or sample filters
         StringBuilder sampleGenotypes = new StringBuilder();
         if (StringUtils.isNotEmpty(filterParams.sampleGenotypes)) {
             sampleGenotypes.append(filterParams.sampleGenotypes);
@@ -143,7 +142,6 @@ public class VariantAnalysisUtils {
 
             if (StringUtils.isNotEmpty(sampleFilters)) {
                 Query sampleQuery = new Query();
-//                final Pattern OPERATION_PATTERN = Pattern.compile("([^=<>~!]+.*)(<=?|>=?|!=|!?=?~|==?)([^=<>~!]+.*)$");
                 String[] splits = sampleFilters.split("[;]");
                 for (int i = 0; i < splits.length; i++) {
                     Matcher matcher = OPERATION_PATTERN.matcher(splits[i]);
@@ -166,7 +164,7 @@ public class VariantAnalysisUtils {
             samples = metadataManager.getSamples(
                     metadataManager.getVariantMetadata().getStudies().get(0).getId());
 
-            // e.g.: sample genotypes = sample1:0|0;sample2:1|0,1|1
+            // Genotype format: sample genotypes = sample1:0|0;sample2:1|0,1|1
             String[] values = sampleGenotypes.toString().split("[;]");
             StringBuilder newSampleGenotypes = new StringBuilder();
             if (values == null) {
@@ -185,28 +183,28 @@ public class VariantAnalysisUtils {
             }
         }
 
-        // query for consequence type (Sequence Ontology term names and accession codes)
+        // Query for consequence type (Sequence Ontology term names and accession codes)
         annotationFilterNotEmpty("consequenceTypes.sequenceOntologyTerms", filterParams.consequenceTypes, vd);
 
-        // query for consequence type (gene names)
+        // Query for consequence type (gene names)
         annotationFilterNotEmpty("consequenceTypes.geneName", filterParams.genes, vd);
 
-        // query for clinvar (accession)
+        // Query for clinvar (accession)
         annotationFilterNotEmpty("variantTraitAssociation.clinvar.accession", filterParams.clinvar, vd);
 
-        // query for cosmic (mutation ID)
+        // Query for cosmic (mutation ID)
         annotationFilterNotEmpty("variantTraitAssociation.cosmic.mutationId", filterParams.cosmic, vd);
 
-        // query for conservation (phastCons, phylop, gerp)
+        // Query for conservation (phastCons, phylop, gerp)
         annotationFilterNotEmpty("conservation", filterParams.conservScores, vd);
 
-        // query for protein substitution scores (polyphen, sift)
+        // Query for protein substitution scores (polyphen, sift)
         annotationFilterNotEmpty("consequenceTypes.proteinVariantAnnotation.substitutionScores", filterParams.substScores, vd);
 
-        // query for alternate population frequency (study:population)
+        // Query for alternate population frequency (study:population)
         annotationFilterNotEmpty("populationFrequencies.altAlleleFreq", filterParams.pf, vd);
 
-        // query for population minor allele frequency (study:population)
+        // Query for population minor allele frequency (study:population)
         annotationFilterNotEmpty("populationFrequencies.refAlleleFreq", filterParams.pmaf, vd);
     }
 
@@ -242,11 +240,11 @@ public class VariantAnalysisUtils {
      * @return                   Updated sample genotype query string
      */
     private static String updateSampleGenotype(String sampleGenotype, List<Sample> samples) {
-        // e.g.: value = sample2:1|0,1|1
+        // Genotype format, e.g.: value = sample2:1|0,1|1
         StringBuilder newSampleGenotype = new StringBuilder("");
         String[] splits = sampleGenotype.split("[:]");
         if (splits == null) {
-            // error
+            // Error
             System.err.format("Error: invalid expresion %s for sample genotypes.\n", sampleGenotype);
         } else {
             boolean found = false;
