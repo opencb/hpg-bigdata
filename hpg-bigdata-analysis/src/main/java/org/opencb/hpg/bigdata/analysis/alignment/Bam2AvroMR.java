@@ -35,7 +35,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.ga4gh.models.ReadAlignment;
 import org.opencb.biodata.tools.alignment.converters.SAMRecordToAvroReadAlignmentBiConverter;
 import org.opencb.hpg.bigdata.analysis.utils.ChunkKey;
-import org.opencb.hpg.bigdata.analysis.utils.CompressionUtils;
+import org.opencb.hpg.bigdata.core.utils.CompressionUtils;
 import org.seqdoop.hadoop_bam.AnySAMInputFormat;
 import org.seqdoop.hadoop_bam.SAMRecordWritable;
 import org.seqdoop.hadoop_bam.util.WrapSeekable;

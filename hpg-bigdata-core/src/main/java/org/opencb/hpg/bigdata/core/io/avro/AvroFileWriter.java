@@ -17,20 +17,20 @@
 package org.opencb.hpg.bigdata.core.io.avro;
 
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.ByteBuffer;
-import java.util.List;
-
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.specific.SpecificDatumWriter;
 import org.opencb.commons.io.DataWriter;
-import org.opencb.hpg.bigdata.core.utils.AvroUtils;
+import org.opencb.hpg.bigdata.core.utils.CompressionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.util.List;
 
 /**
  * Created by hpccoll1 on 02/04/15.
@@ -53,7 +53,7 @@ public class AvroFileWriter<T extends GenericRecord> implements DataWriter<ByteB
 
         datumWriter = new SpecificDatumWriter<>();
         writer = new DataFileWriter<>(datumWriter);
-        writer.setCodec(AvroUtils.getCodec(this.codecName));
+        writer.setCodec(CompressionUtils.getAvroCodec(this.codecName));
     }
 
     @Override

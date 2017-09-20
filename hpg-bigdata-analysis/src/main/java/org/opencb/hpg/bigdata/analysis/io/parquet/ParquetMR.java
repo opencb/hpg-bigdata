@@ -24,7 +24,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.parquet.avro.AvroParquetOutputFormat;
-import org.opencb.hpg.bigdata.analysis.utils.CompressionUtils;
+import org.opencb.hpg.bigdata.core.utils.CompressionUtils;
 
 /**
  * Created by hpccoll1 on 05/05/15.
