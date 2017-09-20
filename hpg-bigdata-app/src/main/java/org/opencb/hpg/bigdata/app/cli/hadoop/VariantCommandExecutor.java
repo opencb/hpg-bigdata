@@ -93,9 +93,9 @@ public class VariantCommandExecutor extends CommandExecutor {
 //        if (variantCommandOptions.convertVariantCommandOptions.toParquet) {
 //            logger.info("Transform {} to parquet", input);
 //
-//            new ParquetMR(Variant.getClassSchema()).run(input, output, compression);
+//            new ParquetConverterMapReduce(Variant.getClassSchema()).run(input, output, compression);
 ////            if (PathUtils.isHdfs(input)) {
-////                new ParquetMR(Variant.getClassSchema()).run(input, output, compression);
+////                new ParquetConverterMapReduce(Variant.getClassSchema()).run(input, output, compression);
 ////            } else {
 ////                new ParquetConverter<Variant>(Variant.getClassSchema()).toParquet(new FileInputStream(input), output);
 ////            }

@@ -87,7 +87,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
             Bam2AvroMR.run(input, output, compressionCodecName, alignmentCommandOptions.convertAlignmentCommandOptions.adjustQuality);
             // Parquet runs from Avro file
             if (alignmentCommandOptions.convertAlignmentCommandOptions.toParquet) {
-                new ParquetMR(ReadAlignment.getClassSchema()).run(output, output + ".parquet", compressionCodecName);
+                new ParquetConverterMapReduce(ReadAlignment.getClassSchema()).run(output, output + ".parquet", compressionCodecName);
             }
         } catch (Exception e) {
             throw e;

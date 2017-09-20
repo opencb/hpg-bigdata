@@ -14,26 +14,32 @@
  * limitations under the License.
  */
 
-package org.opencb.hpg.bigdata.analysis.io.parquet;
+package org.opencb.hpg.bigdata.core.parquet;
 
 import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.mapred.AvroKey;
 import org.apache.avro.mapreduce.AvroJob;
 import org.apache.avro.mapreduce.AvroKeyInputFormat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.parquet.avro.AvroParquetOutputFormat;
 import org.opencb.hpg.bigdata.core.utils.CompressionUtils;
 
+import java.io.IOException;
+
 /**
  * Created by hpccoll1 on 05/05/15.
  */
-public class ParquetMR {
+public class ParquetConverterMapReduce {
 
     private final Schema schema;
 
-    public ParquetMR(Schema schema) {
+    public ParquetConverterMapReduce(Schema schema) {
         this.schema = schema;
     }
 
@@ -41,7 +47,7 @@ public class ParquetMR {
 
         Configuration conf = new Configuration();
 
-        Job job = Job.getInstance(conf, "ParquetMR");
+        Job job = Job.getInstance(conf, "ParquetConverterMapReduce");
         job.setJarByClass(this.getClass());
 
         // point to input data
@@ -63,5 +69,14 @@ public class ParquetMR {
         job.setNumReduceTasks(0);
 
         return (job.waitForCompletion(true) ? 0 : 1);
+    }
+
+    class ParquetMapper extends Mapper<AvroKey<GenericRecord>, NullWritable, Void, GenericRecord> {
+
+        @Override
+        protected void map(AvroKey<GenericRecord> key, NullWritable value, Context context)
+                throws IOException, InterruptedException {
+            context.write(null, key.datum());
+        }
     }
 }
