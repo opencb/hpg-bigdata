@@ -41,6 +41,7 @@ import org.opencb.biodata.tools.BiConverter;
  * @author mh719
  *
  */
+@Deprecated
 public class VcfHeaderLine2VariantSetMetadataConverter implements BiConverter<VCFHeaderLine, VariantSetMetadata> {
 
     @Override

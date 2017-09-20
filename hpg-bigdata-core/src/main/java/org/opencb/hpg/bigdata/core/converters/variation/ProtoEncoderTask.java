@@ -18,6 +18,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * @author Jacobo Coll &lt;jacobo167@gmail.com&gt;
  */
+@Deprecated
 public class ProtoEncoderTask<T extends GeneratedMessage> implements ParallelTaskRunner.Task<CharSequence, ByteBuffer> {
 
     private final Converter<CharSequence, T> converter;

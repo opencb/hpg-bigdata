@@ -27,6 +27,7 @@ import org.ga4gh.models.CallSet;
  * @author mh719
  *
  */
+@Deprecated
 public class VariantConverterContext {
 
     // public final AtomicReferenceArray<CallSet> callsetArray;
