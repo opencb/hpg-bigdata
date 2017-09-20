@@ -7,13 +7,13 @@ import org.opencb.biodata.models.variant.Variant;
 import java.io.IOException;
 import java.util.Iterator;
 
-public class SparkVariantIterator implements Iterator<Variant> {
+public class VariantDatasetIterator implements Iterator<Variant> {
 
     private Iterator<String> strIterator;
 
     private ObjectReader objectReader;
 
-    public SparkVariantIterator(VariantDataset variantDataset) {
+    public VariantDatasetIterator(VariantDataset variantDataset) {
         strIterator = variantDataset.toJSON().toLocalIterator();
 
         // We use ObjectReader for performance reasons.
