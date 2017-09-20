@@ -1,4 +1,4 @@
-package org.opencb.hpg.bigdata.analysis;
+package org.opencb.hpg.bigdata.analysis.exceptions;
 
 /**
  * Created by jtarraga on 30/01/17.
@@ -28,8 +28,7 @@ public class AnalysisExecutorException extends Exception {
         super(cause);
     }
 
-    public AnalysisExecutorException(String message, Throwable cause,
-                                     boolean enableSuppression, boolean writableStackTrace) {
+    public AnalysisExecutorException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 }

@@ -18,6 +18,7 @@ package org.opencb.hpg.bigdata.analysis.alignment.stats;
 
 //TODO: fix using the new RegionCoverage, JT
 
+@Deprecated
 public class ReadAlignmentDepthMR {
 
 //    public static final String OUTPUT_SUMMARY_JSON = "summary.depth.json";

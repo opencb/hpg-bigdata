@@ -23,6 +23,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+@Deprecated
 public class RegionCoverageWritable implements Writable {
 
     private RegionCoverage regionCoverage;

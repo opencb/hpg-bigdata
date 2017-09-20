@@ -1,5 +1,7 @@
 package org.opencb.hpg.bigdata.analysis;
 
+import org.opencb.hpg.bigdata.analysis.exceptions.AnalysisExecutorException;
+
 /**
  * Created by jtarraga on 30/01/17.
  */

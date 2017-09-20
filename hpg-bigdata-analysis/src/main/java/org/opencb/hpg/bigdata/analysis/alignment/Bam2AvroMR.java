@@ -44,6 +44,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 
+@Deprecated
 public class Bam2AvroMR {
 
     public static final String ADJUST_QUALITY = "adjustQuality";

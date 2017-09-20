@@ -10,7 +10,7 @@ import org.opencb.biodata.models.variant.Variant;
 import org.opencb.biodata.models.variant.metadata.VariantStudyMetadata;
 import org.opencb.biodata.tools.variant.metadata.VariantMetadataManager;
 import org.opencb.biodata.tools.variant.metadata.VariantMetadataUtils;
-import org.opencb.hpg.bigdata.analysis.AnalysisExecutorException;
+import org.opencb.hpg.bigdata.analysis.exceptions.AnalysisExecutorException;
 import org.opencb.hpg.bigdata.analysis.exceptions.AnalysisToolException;
 import org.opencb.hpg.bigdata.analysis.tools.Executor;
 import org.opencb.hpg.bigdata.analysis.variant.VariantFilterParameters;

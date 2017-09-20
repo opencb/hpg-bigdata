@@ -1,6 +1,6 @@
 package org.opencb.hpg.bigdata.analysis.variant.wrappers;
 
-import org.opencb.hpg.bigdata.analysis.AnalysisExecutorException;
+import org.opencb.hpg.bigdata.analysis.exceptions.AnalysisExecutorException;
 import org.opencb.hpg.bigdata.analysis.exceptions.AnalysisToolException;
 import org.opencb.hpg.bigdata.analysis.tools.Executor;
 import org.opencb.hpg.bigdata.analysis.variant.VariantFilterParameters;
