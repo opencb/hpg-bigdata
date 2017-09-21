@@ -417,10 +417,9 @@ public class VariantCommandExecutor extends CommandExecutor {
 
         // Get the binary path from input parameter
         String binPath = variantCommandOptions.rvtestsVariantCommandOptions.binPath;
-        if (StringUtils.isEmpty(binPath)) {
-            binPath = "rvtest";
+        if (!StringUtils.isEmpty(binPath)) {
+            rvtests.setBinPath(Paths.get(binPath));
         }
-        rvtests.setBinPath(Paths.get(binPath));
         rvtests.execute();
     }
 
@@ -433,10 +432,9 @@ public class VariantCommandExecutor extends CommandExecutor {
 
         // Get the binary path from input parameter
         String binPath = variantCommandOptions.plinkVariantCommandOptions.binPath;
-        if (StringUtils.isEmpty(binPath)) {
-            binPath = "plink";
+        if (!StringUtils.isEmpty(binPath)) {
+            plink.setBinPath(Paths.get(binPath));
         }
-        plink.setBinPath(Paths.get(binPath));
         plink.execute();
     }
 }

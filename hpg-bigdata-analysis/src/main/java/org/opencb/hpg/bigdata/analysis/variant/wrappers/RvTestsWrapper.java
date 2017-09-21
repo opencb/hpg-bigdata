@@ -26,7 +26,7 @@ public class RvTestsWrapper extends VariantAnalysisWrapper {
 
     public RvTestsWrapper(String studyId, String inFilename, String metaFilename,
                           VariantFilterParameters filterParams, Map<String, String> rvtestsParams) {
-        super(studyId);
+        super(studyId, Paths.get("rvtest"));
         this.inFilename = inFilename;
         this.metaFilename = metaFilename;
         this.filterParams = filterParams;

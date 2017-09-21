@@ -37,7 +37,7 @@ public class PlinkWrapper extends VariantAnalysisWrapper {
 
     public PlinkWrapper(String studyId, String inFilename, String metaFilename,
                         VariantFilterParameters filterParams, Map<String, String> plinkParams) {
-        super(studyId);
+        super(studyId, Paths.get("plink"));
         this.inFilename = inFilename;
         this.metaFilename = metaFilename;
         this.filterParams = filterParams;

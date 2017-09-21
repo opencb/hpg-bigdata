@@ -12,13 +12,21 @@ public abstract class AnalysisExecutor {
         this.studyId = studyId;
     }
 
-    protected String studyId() {
+    protected abstract void execute() throws AnalysisExecutorException;
+
+    @Override
+    public String toString() {
+        return "AnalysisExecutor{" +
+                "studyId='" + studyId + '\'' +
+                '}';
+    }
+
+    public String getStudyId() {
         return studyId;
     }
 
-    protected void setStudyId(String studyId) {
+    public AnalysisExecutor setStudyId(String studyId) {
         this.studyId = studyId;
+        return this;
     }
-
-    protected abstract void execute() throws AnalysisExecutorException;
 }
