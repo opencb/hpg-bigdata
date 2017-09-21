@@ -709,4 +709,13 @@ public abstract class ParentDataset<T> {
     public DataFrameWriter write() {
         return ds.write();
     }
+
+    public Query getQuery() {
+        return query;
+    }
+
+    public ParentDataset<T> setQuery(Query query) {
+        this.query = query;
+        return this;
+    }
 }
