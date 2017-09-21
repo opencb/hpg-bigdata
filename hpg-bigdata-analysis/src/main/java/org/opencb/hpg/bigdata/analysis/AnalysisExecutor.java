@@ -16,9 +16,9 @@ public abstract class AnalysisExecutor {
 
     @Override
     public String toString() {
-        return "AnalysisExecutor{" +
-                "studyId='" + studyId + '\'' +
-                '}';
+        return "AnalysisExecutor{"
+                + "studyId='" + studyId + '\''
+                + '}';
     }
 
     public String getStudyId() {
