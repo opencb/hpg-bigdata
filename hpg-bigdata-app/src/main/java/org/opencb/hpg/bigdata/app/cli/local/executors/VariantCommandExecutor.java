@@ -29,9 +29,12 @@ import org.opencb.biodata.models.core.Region;
 import org.opencb.biodata.models.core.pedigree.Pedigree;
 import org.opencb.biodata.models.metadata.Cohort;
 import org.opencb.biodata.models.metadata.SampleSetType;
+import org.opencb.biodata.models.variant.Variant;
 import org.opencb.biodata.models.variant.avro.StudyEntry;
 import org.opencb.biodata.models.variant.avro.VariantAvro;
+import org.opencb.biodata.models.variant.metadata.*;
 import org.opencb.biodata.tools.variant.metadata.VariantMetadataManager;
+import org.opencb.biodata.tools.variant.stats.VariantSetStatsCalculator;
 import org.opencb.commons.utils.FileUtils;
 import org.opencb.hpg.bigdata.analysis.variant.wrappers.PlinkWrapper;
 import org.opencb.hpg.bigdata.analysis.variant.wrappers.RvTestsWrapper;
@@ -51,7 +54,9 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 import static java.nio.file.Paths.get;
@@ -81,6 +86,9 @@ public class VariantCommandExecutor extends CommandExecutor {
         switch (subCommandString) {
             case "convert":
                 convert();
+                break;
+            case "stats":
+                stats();
                 break;
             case "annotate":
                 annotate();
@@ -282,6 +290,35 @@ public class VariantCommandExecutor extends CommandExecutor {
         }
     }
 
+    public void stats() throws IOException {
+        Path inputPath = Paths.get(variantCommandOptions.statsVariantCommandOptions.input);
+        Path metadataPath = Paths.get(variantCommandOptions.statsVariantCommandOptions.input + ".meta.json");
+
+        // Read variant metadata to check if stats have been already computed
+        boolean existStats = true;
+        VariantMetadataManager metadataManager = new VariantMetadataManager();
+        metadataManager.load(metadataPath);
+        VariantMetadata metadata = metadataManager.getVariantMetadata();
+        for (VariantStudyMetadata studyMetadata: metadata.getStudies()) {
+            if (studyMetadata.getStats() == null) {
+                existStats = false;
+                break;
+            }
+        }
+        if (!existStats) {
+            // Compute stats, update variant metadata
+            metadata = computeStats(metadata, inputPath);
+
+            // Save
+            metadataPath.toFile().delete();
+            metadataManager.setVariantMetadata(metadata);
+            metadataManager.save(metadataPath);
+        }
+
+        // Display stats
+        displayMetadataStats(metadata);
+    }
+
     public void annotate() throws IOException {
         VariantAvroAnnotator variantAvroAnnotator = new VariantAvroAnnotator();
 
@@ -438,5 +475,159 @@ public class VariantCommandExecutor extends CommandExecutor {
         }
         plink.setBinPath(Paths.get(binPath));
         plink.execute();
+    }
+
+    private VariantMetadata computeStats(VariantMetadata metadata, Path inputPath) {
+        for (VariantStudyMetadata studyMetadata: metadata.getStudies()) {
+
+            VariantSetStatsCalculator statsTask = new VariantSetStatsCalculator(studyMetadata);
+            statsTask.pre();
+
+            SparkConf sparkConf = SparkConfCreator.getConf("PLINK", "local", 1, true);
+            SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
+
+            VariantDataset vd = new VariantDataset(sparkSession);
+            try {
+                vd.load(inputPath.toString());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            vd.createOrReplaceTempView("vcf");
+
+            Iterator<Variant> iterator = vd.iterator();
+            List<Variant> list = new ArrayList<>();
+            while (iterator.hasNext()) {
+                Variant variant = iterator.next();
+                if (list.size() >= 10) {
+                    statsTask.apply(list);
+                    list.clear();
+                }
+                list.add(variant);
+            }
+            if (!list.isEmpty()) {
+                statsTask.apply(list);
+            }
+            statsTask.post();
+
+            // stop
+            sparkSession.stop();
+        }
+        return metadata;
+    }
+
+    private void displayMetadataStats(VariantMetadata metadata) {
+        // Sanity check
+        if (metadata == null) {
+            System.out.println("Stats not found.");
+            return;
+        }
+
+        // File stats
+        for (VariantStudyMetadata studyMetadata: metadata.getStudies()) {
+            System.out.println(">> File stats:");
+            for (VariantFileMetadata fileMetadata: studyMetadata.getFiles()) {
+                System.out.print("\t>> " + fileMetadata.getId() + " (path: " + fileMetadata.getPath() + ")");
+                if (fileMetadata.getStats() == null) {
+                    System.out.println(" stats not found.");
+                } else {
+                    System.out.println(":");
+                    displayStats(fileMetadata.getStats(), "\t\t");
+                }
+            }
+
+            // Cohort and sample stats
+            if (studyMetadata.getStats() == null) {
+                System.out.println(">> Sample stats not found.");
+                System.out.println(">> Cohort stats not found.");
+                return;
+            } else {
+                // Cohort stats
+                if (studyMetadata.getStats().getCohortStats() == null) {
+                    System.out.println(">> Cohort stats not found.");
+                } else {
+                    System.out.println(">> Cohort stats:");
+                    for (String key: studyMetadata.getStats().getCohortStats().keySet()) {
+                        if (studyMetadata.getStats().getCohortStats().get(key) == null) {
+                            System.out.println("\t>> '" + key + "' cohort stats not found.");
+                        } else {
+                            // Display cohort stats
+                            displayStats(studyMetadata.getStats().getCohortStats().get(key), "\t\t");
+                        }
+                    }
+                }
+
+                // Sample stats
+                if (studyMetadata.getStats().getSampleStats() == null) {
+                    System.out.println(">> Sample stats not found.");
+                } else {
+                    System.out.println(">> Sample stats:");
+                    for (String key: studyMetadata.getStats().getSampleStats().keySet()) {
+                        if (studyMetadata.getStats().getSampleStats().get(key) == null) {
+                            System.out.println("\t>> '" + key + "' sample stats not found.");
+                        } else {
+                            // Display cohort stats
+                            displayStats(studyMetadata.getStats().getSampleStats().get(key), "\t\t");
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void displayStats(VariantSetStats stats, String indent) {
+        System.out.println(indent + "Mean quality: " + stats.getMeanQuality());
+        System.out.print(indent + "Chromosome stats: ");
+        if (stats.getChromosomeStats() != null) {
+            System.out.println();
+            for (String key : stats.getChromosomeStats().keySet()) {
+                System.out.println(indent + "\t" + key
+                        + ": count = " + stats.getChromosomeStats().get(key).getCount()
+                        + ", density = " + stats.getChromosomeStats().get(key).getDensity());
+            }
+        } else {
+            System.out.println("not available.");
+        }
+        System.out.print(indent + "Consequence type counts: ");
+        if (stats.getConsequenceTypesCounts() != null) {
+            System.out.println();
+            for (String key : stats.getConsequenceTypesCounts().keySet()) {
+                System.out.println(indent + "\t" + key + ": " + stats.getConsequenceTypesCounts().get(key));
+            }
+        } else {
+            System.out.println("not available.");
+        }
+        System.out.println(indent + "Num. passed filter: " + stats.getNumPass());
+        System.out.print(indent + "Num. rare variants: ");
+        if (stats.getNumRareVariants() != null) {
+            System.out.println();
+            for (VariantsByFrequency freq: stats.getNumRareVariants()) {
+                System.out.println(indent + "\t"
+                        + freq.getStartFrequency() + "-" + freq.getEndFrequency() + ": " + freq.getCount());
+            }
+        } else {
+            System.out.println("not available.");
+        }
+        System.out.println(indent + "Num. samples: " + stats.getNumSamples());
+        System.out.println(indent + "Num. variants: " + stats.getNumVariants());
+        System.out.println(indent + "Std. deviation quality: " + stats.getStdDevQuality());
+        System.out.println(indent + "Transition/Transversion ratio: " + stats.getTiTvRatio());
+        System.out.print(indent + "Variant biotype counts: ");
+        if (stats.getVariantBiotypeCounts() != null) {
+            System.out.println();
+            for (String key : stats.getVariantBiotypeCounts().keySet()) {
+                System.out.println(indent + "\t" + key + ": " + stats.getVariantBiotypeCounts().get(key));
+            }
+        } else {
+            System.out.println("not available.");
+        }
+        System.out.print(indent + "Variant type counts: ");
+        if (stats.getVariantTypeCounts() != null) {
+            System.out.println();
+            for (String key : stats.getVariantTypeCounts().keySet()) {
+                System.out.println(indent + "\t" + key + ": " + stats.getVariantTypeCounts().get(key));
+            }
+        } else {
+            System.out.println("not available.");
+        }
     }
 }

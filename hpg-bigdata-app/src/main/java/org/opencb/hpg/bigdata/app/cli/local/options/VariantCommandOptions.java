@@ -17,6 +17,7 @@ public class VariantCommandOptions {
      * Variant (VCF) CLI options
      */
     public ConvertVariantCommandOptions convertVariantCommandOptions;
+    public StatsVariantCommandOptions statsVariantCommandOptions;
     public AnnotateVariantCommandOptions annotateVariantCommandOptions;
     public ViewVariantCommandOptions viewVariantCommandOptions;
     public QueryVariantCommandOptions queryVariantCommandOptions;
@@ -34,6 +35,7 @@ public class VariantCommandOptions {
         this.jCommander = jCommander;
 
         this.convertVariantCommandOptions = new ConvertVariantCommandOptions();
+        this.statsVariantCommandOptions = new StatsVariantCommandOptions();
         this.annotateVariantCommandOptions = new AnnotateVariantCommandOptions();
         this.viewVariantCommandOptions = new ViewVariantCommandOptions();
         this.queryVariantCommandOptions = new QueryVariantCommandOptions();
@@ -50,6 +52,7 @@ public class VariantCommandOptions {
         this.jCommander = jCommander;
 
         this.convertVariantCommandOptions = new ConvertVariantCommandOptions();
+        this.statsVariantCommandOptions = new StatsVariantCommandOptions();
         this.annotateVariantCommandOptions = new AnnotateVariantCommandOptions();
         this.viewVariantCommandOptions = new ViewVariantCommandOptions();
         this.queryVariantCommandOptions = new QueryVariantCommandOptions();
@@ -140,6 +143,16 @@ public class VariantCommandOptions {
 //        public Map<String, String> options = new HashMap<>();
     }
 
+    @Parameters(commandNames = {"stats"}, commandDescription = "Compute statistics")
+    public class StatsVariantCommandOptions {
+
+        @ParametersDelegate
+        public LocalCliOptionsParser.CommonCommandOptions commonOptions = commonCommandOptions;
+
+        @Parameter(names = {"-i", "--input"}, description = "Input file name (Avro or Parquet file format)",
+                required = true, arity = 1)
+        public String input;
+    }
 
     @Parameters(commandNames = {"annotate"}, commandDescription = "Convert gVCF/VCF files to different big data"
             + " formats such as Avro and Parquet using GA4GH models")

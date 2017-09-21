@@ -84,6 +84,7 @@ public class LocalCliOptionsParser {
         jcommander.addCommand("variant", variantCommandOptions);
         JCommander variantSubCommands = jcommander.getCommands().get("variant");
         variantSubCommands.addCommand("convert", variantCommandOptions.convertVariantCommandOptions);
+        variantSubCommands.addCommand("stats", variantCommandOptions.statsVariantCommandOptions);
         variantSubCommands.addCommand("annotate", variantCommandOptions.annotateVariantCommandOptions);
         variantSubCommands.addCommand("view", variantCommandOptions.viewVariantCommandOptions);
         variantSubCommands.addCommand("query", variantCommandOptions.queryVariantCommandOptions);
