@@ -1,9 +1,9 @@
 package org.opencb.hpg.bigdata.analysis.variant.wrappers;
 
-import org.opencb.hpg.bigdata.analysis.AnalysisExecutorException;
+import org.opencb.commons.datastore.core.Query;
+import org.opencb.hpg.bigdata.analysis.exceptions.AnalysisExecutorException;
 import org.opencb.hpg.bigdata.analysis.exceptions.AnalysisToolException;
 import org.opencb.hpg.bigdata.analysis.tools.Executor;
-import org.opencb.hpg.bigdata.analysis.variant.VariantFilterParameters;
 import org.opencb.hpg.bigdata.analysis.variant.VariantAnalysisUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,17 +19,17 @@ import java.util.Map;
 public class RvTestsWrapper extends VariantAnalysisWrapper {
     private String inFilename;
     private String metaFilename;
-    private VariantFilterParameters filterParams;
+    private Query query;
     private Map<String, String> rvtestsParams;
 
     private Logger logger;
 
     public RvTestsWrapper(String studyId, String inFilename, String metaFilename,
-                          VariantFilterParameters filterParams, Map<String, String> rvtestsParams) {
-        super(studyId);
+                          Query query, Map<String, String> rvtestsParams) {
+        super(studyId, Paths.get("rvtest"));
         this.inFilename = inFilename;
         this.metaFilename = metaFilename;
-        this.filterParams = filterParams;
+        this.query = query;
         this.rvtestsParams = rvtestsParams;
 
         this.logger = LoggerFactory.getLogger(RvTestsWrapper.class);
@@ -52,7 +52,7 @@ public class RvTestsWrapper extends VariantAnalysisWrapper {
 
         // Export target variants to VCF file
         String vcfFilename = outDir.toString() + "/tmp.vcf";
-        VariantAnalysisUtils.exportVCF(inFilename, metaFilename, filterParams, vcfFilename);
+        VariantAnalysisUtils.exportVCF(inFilename, metaFilename, query, vcfFilename);
 
         // Export pedigree
         String pedFilename = outDir.toString() + "/tmp.vcf.ped";

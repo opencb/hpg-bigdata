@@ -26,7 +26,7 @@ import org.opencb.biodata.tools.sequence.FastqRecordToReadBiConverter;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
 import org.opencb.hpg.bigdata.app.cli.local.options.SequenceCommandOptions;
 import org.opencb.hpg.bigdata.core.io.avro.AvroWriter;
-import org.opencb.hpg.bigdata.core.utils.AvroUtils;
+import org.opencb.hpg.bigdata.core.utils.CompressionUtils;
 
 import java.io.*;
 
@@ -78,7 +78,7 @@ public class SequenceCommandExecutor extends CommandExecutor {
             // writer
             OutputStream os = new FileOutputStream(output);
 
-            AvroWriter<Read> writer = new AvroWriter<>(Read.getClassSchema(), AvroUtils.getCodec(codecName), os);
+            AvroWriter<Read> writer = new AvroWriter<>(Read.getClassSchema(), CompressionUtils.getAvroCodec(codecName), os);
 
             // main loop
             FastqRecordToReadBiConverter converter = new FastqRecordToReadBiConverter();

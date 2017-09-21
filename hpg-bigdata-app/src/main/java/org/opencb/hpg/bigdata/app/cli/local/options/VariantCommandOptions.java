@@ -2,7 +2,6 @@ package org.opencb.hpg.bigdata.app.cli.local.options;
 
 import com.beust.jcommander.*;
 import org.apache.parquet.hadoop.ParquetWriter;
-import org.opencb.hpg.bigdata.analysis.variant.VariantFilterParameters;
 import org.opencb.hpg.bigdata.app.cli.local.LocalCliOptionsParser;
 
 import java.util.HashMap;
@@ -26,7 +25,7 @@ public class VariantCommandOptions {
     public PlinkVariantCommandOptions plinkVariantCommandOptions;
 
     public LocalCliOptionsParser.CommonCommandOptions commonCommandOptions;
-    public VariantFilterParameters commonFilterOptions;
+    public VariantFilterOptions commonFilterOptions;
     public JCommander jCommander;
 
     public VariantCommandOptions(LocalCliOptionsParser.CommonCommandOptions commonCommandOptions,
@@ -45,7 +44,7 @@ public class VariantCommandOptions {
     }
 
     public VariantCommandOptions(LocalCliOptionsParser.CommonCommandOptions commonCommandOptions,
-                                 VariantFilterParameters commonFilterOptions,
+                                 VariantFilterOptions commonFilterOptions,
                                  JCommander jCommander) {
         this.commonCommandOptions = commonCommandOptions;
         this.commonFilterOptions = commonFilterOptions;
@@ -365,7 +364,7 @@ public class VariantCommandOptions {
         public LocalCliOptionsParser.CommonCommandOptions commonOptions = commonCommandOptions;
 
         @ParametersDelegate
-        public VariantFilterParameters variantFilterParameters = commonFilterOptions;
+        public VariantFilterOptions variantFilterOptions = commonFilterOptions;
 
         @Parameter(names = {"--dataset"}, description = "Target dataset.", arity = 1)
         public String datasetId = null;
@@ -388,7 +387,7 @@ public class VariantCommandOptions {
         public LocalCliOptionsParser.CommonCommandOptions commonOptions = commonCommandOptions;
 
         @ParametersDelegate
-        public VariantFilterParameters variantFilterParameters = commonFilterOptions;
+        public VariantFilterOptions variantFilterOptions = commonFilterOptions;
 
         @Parameter(names = {"--dataset"}, description = "Target dataset.", arity = 1)
         public String datasetId = null;

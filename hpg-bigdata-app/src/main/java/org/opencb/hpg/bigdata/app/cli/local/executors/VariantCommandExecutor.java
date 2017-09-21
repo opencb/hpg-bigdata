@@ -35,11 +35,13 @@ import org.opencb.biodata.models.variant.avro.VariantAvro;
 import org.opencb.biodata.models.variant.metadata.*;
 import org.opencb.biodata.tools.variant.metadata.VariantMetadataManager;
 import org.opencb.biodata.tools.variant.stats.VariantSetStatsCalculator;
+import org.opencb.commons.datastore.core.Query;
 import org.opencb.commons.utils.FileUtils;
 import org.opencb.hpg.bigdata.analysis.variant.wrappers.PlinkWrapper;
 import org.opencb.hpg.bigdata.analysis.variant.wrappers.RvTestsWrapper;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
 import org.opencb.hpg.bigdata.app.cli.local.CliUtils;
+import org.opencb.hpg.bigdata.app.cli.local.LocalCliOptionsParser;
 import org.opencb.hpg.bigdata.app.cli.local.options.VariantCommandOptions;
 import org.opencb.hpg.bigdata.core.avro.VariantAvroAnnotator;
 import org.opencb.hpg.bigdata.core.avro.VariantAvroSerializer;
@@ -446,34 +448,42 @@ public class VariantCommandExecutor extends CommandExecutor {
     }
 
     public void rvtests() throws Exception {
+        Query query = null;
+        if (variantCommandOptions.rvtestsVariantCommandOptions.variantFilterOptions != null) {
+            query = LocalCliOptionsParser.variantFilterOptionsParser(
+                    variantCommandOptions.rvtestsVariantCommandOptions.variantFilterOptions);
+        }
+
         RvTestsWrapper rvtests = new RvTestsWrapper(variantCommandOptions.rvtestsVariantCommandOptions.datasetId,
                 variantCommandOptions.rvtestsVariantCommandOptions.inFilename,
                 variantCommandOptions.rvtestsVariantCommandOptions.inFilename + ".meta.json",
-                variantCommandOptions.rvtestsVariantCommandOptions.variantFilterParameters,
-                variantCommandOptions.rvtestsVariantCommandOptions.rvtestsParams);
+                query, variantCommandOptions.rvtestsVariantCommandOptions.rvtestsParams);
 
         // Get the binary path from input parameter
         String binPath = variantCommandOptions.rvtestsVariantCommandOptions.binPath;
-        if (StringUtils.isEmpty(binPath)) {
-            binPath = "rvtest";
+        if (!StringUtils.isEmpty(binPath)) {
+            rvtests.setBinPath(Paths.get(binPath));
         }
-        rvtests.setBinPath(Paths.get(binPath));
         rvtests.execute();
     }
 
     public void plink() throws Exception {
+        Query query = null;
+        if (variantCommandOptions.rvtestsVariantCommandOptions.variantFilterOptions != null) {
+            query = LocalCliOptionsParser.variantFilterOptionsParser(
+                    variantCommandOptions.rvtestsVariantCommandOptions.variantFilterOptions);
+        }
+
         PlinkWrapper plink = new PlinkWrapper(variantCommandOptions.plinkVariantCommandOptions.datasetId,
                 variantCommandOptions.plinkVariantCommandOptions.inFilename,
                 variantCommandOptions.plinkVariantCommandOptions.inFilename + ".meta.json",
-                variantCommandOptions.plinkVariantCommandOptions.variantFilterParameters,
-                variantCommandOptions.plinkVariantCommandOptions.plinkParams);
+                query, variantCommandOptions.plinkVariantCommandOptions.plinkParams);
 
         // Get the binary path from input parameter
         String binPath = variantCommandOptions.plinkVariantCommandOptions.binPath;
-        if (StringUtils.isEmpty(binPath)) {
-            binPath = "plink";
+        if (!StringUtils.isEmpty(binPath)) {
+            plink.setBinPath(Paths.get(binPath));
         }
-        plink.setBinPath(Paths.get(binPath));
         plink.execute();
     }
 

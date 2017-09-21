@@ -10,10 +10,10 @@ import org.opencb.biodata.models.variant.Variant;
 import org.opencb.biodata.models.variant.metadata.VariantStudyMetadata;
 import org.opencb.biodata.tools.variant.metadata.VariantMetadataManager;
 import org.opencb.biodata.tools.variant.metadata.VariantMetadataUtils;
-import org.opencb.hpg.bigdata.analysis.AnalysisExecutorException;
+import org.opencb.commons.datastore.core.Query;
+import org.opencb.hpg.bigdata.analysis.exceptions.AnalysisExecutorException;
 import org.opencb.hpg.bigdata.analysis.exceptions.AnalysisToolException;
 import org.opencb.hpg.bigdata.analysis.tools.Executor;
-import org.opencb.hpg.bigdata.analysis.variant.VariantFilterParameters;
 import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
 import org.opencb.hpg.bigdata.core.lib.VariantDataset;
 import org.slf4j.Logger;
@@ -30,17 +30,17 @@ import java.util.Map;
 public class PlinkWrapper extends VariantAnalysisWrapper {
     private String inFilename;
     private String metaFilename;
-    private VariantFilterParameters filterParams;
+    private Query query;
     private Map<String, String> plinkParams;
 
     private Logger logger;
 
     public PlinkWrapper(String studyId, String inFilename, String metaFilename,
-                        VariantFilterParameters filterParams, Map<String, String> plinkParams) {
-        super(studyId);
+                        Query query, Map<String, String> plinkParams) {
+        super(studyId, Paths.get("plink"));
         this.inFilename = inFilename;
         this.metaFilename = metaFilename;
-        this.filterParams = filterParams;
+        this.query = query;
         this.plinkParams = plinkParams;
 
         this.logger = LoggerFactory.getLogger(PlinkWrapper.class);
@@ -73,8 +73,9 @@ public class PlinkWrapper extends VariantAnalysisWrapper {
             vd.load(inFilename);
             vd.createOrReplaceTempView("vcf");
 
-            //vd.regionFilter(new Region("22:16050114-16050214"));
-            //vd.sampleFilter("GT", "5:0|1");
+            if (query != null) {
+                vd.setQuery(query);
+            }
 
             // out filename
             VariantStudyMetadata studyMetadata = manager.getVariantMetadata().getStudies().get(0);

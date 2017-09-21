@@ -16,6 +16,7 @@
 
 package org.opencb.hpg.bigdata.core.utils;
 
+@Deprecated
 public final class PathUtils {
 
     private static final String FILE_URI = "file://";

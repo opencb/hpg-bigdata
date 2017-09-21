@@ -170,6 +170,6 @@ public class VariantDataset extends ParentDataset<VariantDataset> {
 
      public Iterator<Variant> iterator() {
         update();
-        return new SparkVariantIterator(this);
+        return new VariantDatasetIterator(this);
      }
 }

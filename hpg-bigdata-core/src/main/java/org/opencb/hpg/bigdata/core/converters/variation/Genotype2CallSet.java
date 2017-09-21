@@ -29,6 +29,7 @@ import org.opencb.biodata.tools.BiConverter;
  *
  * @author mh719
  */
+@Deprecated
 public class Genotype2CallSet implements BiConverter<String, CallSet> {
 
     public Genotype2CallSet() {

@@ -18,6 +18,7 @@ package org.opencb.hpg.bigdata.core.utils;
 
 import org.opencb.biodata.models.sequence.Read;
 
+@Deprecated
 public final class ReadUtils {
 
     private ReadUtils() {

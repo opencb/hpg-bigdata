@@ -41,6 +41,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Created by hpccoll1 on 10/04/15.
  */
+@Deprecated
 public class VariantAvroEncoderTask<T extends GenericRecord> implements ParallelTaskRunner.Task<CharBuffer, ByteBuffer> {
 
     public static final int BATCH_SIZE = 1000;
