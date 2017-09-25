@@ -11,7 +11,9 @@ import java.nio.file.Paths;
 public class VariantRvTestsCLITest {
     public String datasetName = "test";
 
-    public String vcfFilename = "../hpg-bigdata-app/src/test/resources/example.vcf";
+    //public String vcfFilename = "../hpg-bigdata-app/src/test/resources/example.vcf"
+    //public String vcfFilename = "/home/jtarraga/data150/vcf/chr22.head1k.vcf";
+    public String vcfFilename = "/home/jtarraga/data150/vcf/chr22.head100k.vcf";
     public String phenoFilename = "../hpg-bigdata-app/src/test/resources/pheno";
     public String outDir = "/tmp/";
 
@@ -38,14 +40,16 @@ public class VariantRvTestsCLITest {
         commandLine.append(" --dataset ").append(datasetName);
         VariantQueryCLITest.execute(commandLine.toString());
 
-        // load pedigree file
-        commandLine.setLength(0);
-        commandLine.append(" variant metadata");
-        commandLine.append(" --log-level ERROR");
-        commandLine.append(" -i ").append(avroPath);
-        commandLine.append(" --load-pedigree ").append(phenoPath);
-        commandLine.append(" --dataset ").append(datasetName);
-        VariantQueryCLITest.execute(commandLine.toString());
+        if (!vcfFilename.startsWith("/")) {
+            // load pedigree file
+            commandLine.setLength(0);
+            commandLine.append(" variant metadata");
+            commandLine.append(" --log-level ERROR");
+            commandLine.append(" -i ").append(avroPath);
+            commandLine.append(" --load-pedigree ").append(phenoPath);
+            commandLine.append(" --dataset ").append(datasetName);
+            VariantQueryCLITest.execute(commandLine.toString());
+        }
     }
 
     @Test

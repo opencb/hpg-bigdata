@@ -17,12 +17,17 @@
 package org.opencb.hpg.bigdata.app.cli.local.executors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
+import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.Function2;
+import org.apache.spark.api.java.function.PairFunction;
+import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.sql.SparkSession;
 import org.opencb.biodata.formats.pedigree.PedigreeManager;
 import org.opencb.biodata.models.core.Region;
@@ -34,7 +39,6 @@ import org.opencb.biodata.models.variant.avro.StudyEntry;
 import org.opencb.biodata.models.variant.avro.VariantAvro;
 import org.opencb.biodata.models.variant.metadata.*;
 import org.opencb.biodata.tools.variant.metadata.VariantMetadataManager;
-import org.opencb.biodata.tools.variant.stats.VariantSetStatsCalculator;
 import org.opencb.commons.datastore.core.Query;
 import org.opencb.commons.utils.FileUtils;
 import org.opencb.hpg.bigdata.analysis.variant.wrappers.PlinkWrapper;
@@ -48,6 +52,7 @@ import org.opencb.hpg.bigdata.core.avro.VariantAvroSerializer;
 import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
 import org.opencb.hpg.bigdata.core.lib.VariantDataset;
 import org.opencb.hpg.bigdata.core.parquet.VariantParquetConverter;
+import scala.Tuple2;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -56,9 +61,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
 import static java.nio.file.Paths.get;
@@ -489,12 +492,15 @@ public class VariantCommandExecutor extends CommandExecutor {
 
     private VariantMetadata computeStats(VariantMetadata metadata, Path inputPath) {
         for (VariantStudyMetadata studyMetadata: metadata.getStudies()) {
-
+/*
             VariantSetStatsCalculator statsTask = new VariantSetStatsCalculator(studyMetadata);
             statsTask.pre();
-
+*/
             SparkConf sparkConf = SparkConfCreator.getConf("PLINK", "local", 1, true);
-            SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
+
+            JavaSparkContext sc = new JavaSparkContext(sparkConf);
+            SparkSession sparkSession = new SparkSession(sc.sc());
+            //SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
 
             VariantDataset vd = new VariantDataset(sparkSession);
             try {
@@ -504,6 +510,54 @@ public class VariantCommandExecutor extends CommandExecutor {
             }
             vd.createOrReplaceTempView("vcf");
 
+
+            ObjectMapper objMapper = new ObjectMapper();
+            ObjectReader objectReader = objMapper.readerFor(Variant.class);
+
+            Broadcast<ObjectReader> broad = sc.broadcast(objectReader);
+
+            List<Tuple2<String, Integer>> list = vd.toJSON().toJavaRDD().mapToPair((PairFunction<String, String, Integer>) s -> {
+                Variant variant = broad.getValue().readValue(s);
+                String key = "" + variant.getStart(); //variant.getChromosome();
+                int value = variant.getStart();
+                return new Tuple2<>(key, value);
+            }).reduceByKey((Function2<Integer, Integer, Integer>) (i1, i2) -> {
+                return i1 + i2;
+            }).collect();
+            for (Tuple2<String, Integer> item: list) {
+                System.out.println(item._1 + " -> " + item._2);
+            }
+/*
+            Encoder encoder = Encoders.STRING();
+            String str = vd.toJSON().flatMap((FlatMapFunction<String, String>) s -> {
+                Variant variant = broad.getValue().readValue(s);
+                List<String> list = new ArrayList<>();
+                for (int i = 0; i < 3; i++) {
+                    list.add("+" + i + "_" + variant.getStart() + "+");
+                }
+                return list.iterator();
+            }, encoder).reduce((ReduceFunction<String>) (s1, s2) -> {
+                return s1 + s2;
+            }).toString();
+            System.out.println(str);
+            */
+/*
+                    .map((MapFunction<String, Map>) s -> {
+                Variant variant = broad.getValue().readValue(s);
+                Map<String, Integer> stats = new HashMap<>();
+                stats.put("hello", variant.getStart());
+                return stats;
+            }, encoder).show();
+*/
+/*
+            vd.toJSON().map((MapFunction<String, String>) s -> {
+                Variant variant = broad.getValue().readValue(s);
+                return variant.getAlternate();
+                }, Encoders.STRING()).show();
+*/
+            //FlatMapFunction<Row, U> tuFlatMapFunction = ;
+            //vd.toJSON().m.flatMap(tuFlatMapFunction)
+/*
             Iterator<Variant> iterator = vd.iterator();
             List<Variant> list = new ArrayList<>();
             while (iterator.hasNext()) {
@@ -518,7 +572,7 @@ public class VariantCommandExecutor extends CommandExecutor {
                 statsTask.apply(list);
             }
             statsTask.post();
-
+*/
             // stop
             sparkSession.stop();
         }

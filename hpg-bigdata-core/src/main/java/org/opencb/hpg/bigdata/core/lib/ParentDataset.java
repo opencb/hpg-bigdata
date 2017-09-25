@@ -68,7 +68,8 @@ public abstract class ParentDataset<T> {
         } else if (StringUtils.endsWithAny(filename, "json", "json.gz")) {
             ds = sqlContext.read().json(filename);
         } else {
-            ds = sqlContext.read().load(filename);
+            ds = sqlContext.read().format("com.databricks.spark.avro").load(filename);
+            //ds = sqlContext.read().load(filename);
         }
     }
 
@@ -92,7 +93,6 @@ public abstract class ParentDataset<T> {
             // error
             System.err.println("\nError: nested countBy are not allowed!\n");
             System.exit(-1);
-
         }
         return this;
     }
@@ -389,8 +389,7 @@ public abstract class ParentDataset<T> {
     protected org.apache.spark.sql.catalyst.plans.logical.LogicalPlan logicalPlan() {
         return ds.logicalPlan();
     }
-
-    /*
+/*
     public Dataset<U> map(Function1<Row, U> f, Encoder<U> encoder) {
         return ds.map(f, encoder);
     }
@@ -404,7 +403,6 @@ public abstract class ParentDataset<T> {
         return ds.mapPartitions(f, evidence);
     }
 */
-
     public DataFrameNaFunctions na() {
         return ds.na();
     }
