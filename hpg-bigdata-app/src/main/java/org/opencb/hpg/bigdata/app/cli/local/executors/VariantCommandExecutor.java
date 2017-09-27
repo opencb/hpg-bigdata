@@ -169,6 +169,10 @@ public class VariantCommandExecutor extends CommandExecutor {
             VariantParquetConverter parquetConverter = new VariantParquetConverter(
                     CompressionCodecName.fromConf(compressionCodecName), rowGroupSize, pageSize);
 
+            parquetConverter.setSpecies(variantCommandOptions.convertVariantCommandOptions.species);
+            parquetConverter.setAssembly(variantCommandOptions.convertVariantCommandOptions.assembly);
+            parquetConverter.setDatasetName(variantCommandOptions.convertVariantCommandOptions.dataset);
+
             // valid id filter
             if (variantCommandOptions.convertVariantCommandOptions.validId) {
                 parquetConverter.addValidIdFilter();

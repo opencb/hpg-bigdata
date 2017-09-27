@@ -186,4 +186,30 @@ public class VariantParquetConverter extends ParquetConverter<VariantAvro> {
         return this;
     }
 
+    public String getSpecies() {
+        return species;
+    }
+
+    public VariantParquetConverter setSpecies(String species) {
+        this.species = species;
+        return this;
+    }
+
+    public String getAssembly() {
+        return assembly;
+    }
+
+    public VariantParquetConverter setAssembly(String assembly) {
+        this.assembly = assembly;
+        return this;
+    }
+
+    public String getDatasetName() {
+        return datasetName;
+    }
+
+    public VariantParquetConverter setDatasetName(String datasetName) {
+        this.datasetName = datasetName;
+        return this;
+    }
 }
