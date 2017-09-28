@@ -2,6 +2,7 @@ package org.opencb.hpg.bigdata.app.cli.local;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
+import org.apache.avro.Schema;
 import org.apache.spark.Partition;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
@@ -9,9 +10,11 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.*;
 import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.sql.*;
+import org.apache.spark.sql.catalyst.encoders.RowEncoder;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -46,6 +49,7 @@ public class SparkTest implements Serializable {
 
     String inParquet = "/tmp/test.vcf.parquet";
     String inParquet2 = "/tmp/test.vcf.parquet2";
+    String inParquet3 = "/tmp/test.vcf.parquet3";
 
 //    public class AvgCount implements Serializable {
 //        public AvgCount() {
@@ -276,6 +280,7 @@ public class SparkTest implements Serializable {
     public void test7() throws IOException {
         Dataset<Row> ds1 = sparkSession.read().parquet(inParquet);
 
+
         ObjectMapper objMapper = new ObjectMapper();
         ObjectReader objectReader = objMapper.readerFor(VariantAvro.class);
 
@@ -323,6 +328,452 @@ public class SparkTest implements Serializable {
 */
     }
 
+    @Test
+    public void test8() {
+        Dataset<Row> ds1 = sparkSession.read().parquet(inParquet);
+        StructType schema = ds1.head().schema();
+
+        StructType svSchema = DataTypes.createStructType(
+                new StructField[] {
+                        DataTypes.createStructField("ciStartLeft", DataTypes.IntegerType, true),
+                        DataTypes.createStructField("ciStartRight", DataTypes.IntegerType, true),
+                        DataTypes.createStructField("ciEndLeft", DataTypes.IntegerType, true),
+                        DataTypes.createStructField("ciEndRight", DataTypes.IntegerType, true),
+                        DataTypes.createStructField("copyNumber", DataTypes.IntegerType, true),
+                        DataTypes.createStructField("leftSvInsSeq", DataTypes.StringType, true),
+                        DataTypes.createStructField("rightSvInsSeq", DataTypes.StringType, true),
+                        DataTypes.createStructField("type", DataTypes.StringType, true)
+                });
+
+        StructType studySchema = DataTypes.createStructType(
+                new StructField[] {
+                        DataTypes.createStructField("studyId", DataTypes.StringType, true),
+                        DataTypes.createStructField(
+                                "files",
+                                DataTypes.createArrayType(DataTypes.createStructType(
+                                        new StructField[] {
+                                                DataTypes.createStructField("fileId", DataTypes.StringType, true),
+                                                DataTypes.createStructField("call", DataTypes.StringType, true),
+                                                DataTypes.createStructField("attributes", DataTypes.createMapType(DataTypes.StringType, DataTypes.StringType, true), true)
+                                        }), true),
+                                true),
+                        DataTypes.createStructField(
+                                "secondaryAlternates",
+                                DataTypes.createArrayType(DataTypes.createStructType(
+                                        new StructField[] {
+                                                DataTypes.createStructField("chromosome", DataTypes.StringType, true),
+                                                DataTypes.createStructField("start", DataTypes.IntegerType, true),
+                                                DataTypes.createStructField("end", DataTypes.IntegerType, true),
+                                                DataTypes.createStructField("reference", DataTypes.StringType, true),
+                                                DataTypes.createStructField("alternate", DataTypes.StringType, true),
+                                                DataTypes.createStructField("type", DataTypes.StringType, true)
+                                        }), true),
+                                true),
+                        DataTypes.createStructField("format", DataTypes.createArrayType(DataTypes.StringType, true), true),
+                        DataTypes.createStructField("samplesData", DataTypes.createArrayType(DataTypes.createArrayType(DataTypes.StringType,true),true),true),
+                        DataTypes.createStructField("stats", DataTypes.createMapType(
+                                DataTypes.StringType,
+                                DataTypes.createStructType(
+                                        new StructField[] {
+                                                DataTypes.createStructField("refAllele", DataTypes.StringType, true),
+                                                DataTypes.createStructField("altAllele", DataTypes.StringType, true),
+                                                DataTypes.createStructField("refAlleleCount", DataTypes.IntegerType, true),
+                                                DataTypes.createStructField("altAlleleCount", DataTypes.IntegerType, true),
+                                                DataTypes.createStructField("genotypesCount", DataTypes.createMapType(DataTypes.StringType,  DataTypes.IntegerType, true), true),
+                                                DataTypes.createStructField("genotypesFreq", DataTypes.createMapType(DataTypes.StringType, DataTypes.FloatType, true), true),
+                                                DataTypes.createStructField("missingAlleles", DataTypes.IntegerType,true),
+                                                DataTypes.createStructField("missingGenotypes", DataTypes.IntegerType,true),
+                                                DataTypes.createStructField("refAlleleFreq", DataTypes.FloatType,true),
+                                                DataTypes.createStructField("altAlleleFreq", DataTypes.FloatType,true),
+                                                DataTypes.createStructField("maf", DataTypes.FloatType,true),
+                                                DataTypes.createStructField("mgf", DataTypes.FloatType,true),
+                                                DataTypes.createStructField("mafAllele", DataTypes.StringType,true),
+                                                DataTypes.createStructField("mgfGenotype", DataTypes.StringType,true),
+                                                DataTypes.createStructField("passedFilters", DataTypes.BooleanType,true),
+                                                DataTypes.createStructField("mendelianErrors", DataTypes.IntegerType,true),
+                                                DataTypes.createStructField("casesPercentDominant", DataTypes.FloatType,true),
+                                                DataTypes.createStructField("controlsPercentDominant", DataTypes.FloatType,true),
+                                                DataTypes.createStructField("casesPercentRecessive", DataTypes.FloatType,true),
+                                                DataTypes.createStructField("controlsPercentRecessive", DataTypes.FloatType,true),
+                                                DataTypes.createStructField("quality", DataTypes.FloatType,true),
+                                                DataTypes.createStructField("numSamples", DataTypes.IntegerType,true),
+                                                DataTypes.createStructField("variantType", DataTypes.StringType,true),
+                                                DataTypes.createStructField(
+                                                        "hw",
+                                                        DataTypes.createStructType(
+                                                                new StructField[] {
+                                                                        DataTypes.createStructField("chi2", DataTypes.FloatType, true),
+                                                                        DataTypes.createStructField("pValue", DataTypes.FloatType, true),
+                                                                        DataTypes.createStructField("n", DataTypes.IntegerType, true),
+                                                                        DataTypes.createStructField("n_AA_11", DataTypes.IntegerType, true),
+                                                                        DataTypes.createStructField("n_Aa_10", DataTypes.IntegerType, true),
+                                                                        DataTypes.createStructField("n_aa_00", DataTypes.IntegerType, true),
+                                                                        DataTypes.createStructField("e_AA_11", DataTypes.FloatType, true),
+                                                                        DataTypes.createStructField("e_Aa_10", DataTypes.FloatType, true),
+                                                                        DataTypes.createStructField("e_aa_00", DataTypes.FloatType, true),
+                                                                        DataTypes.createStructField("p", DataTypes.FloatType, true),
+                                                                        DataTypes.createStructField("q", DataTypes.FloatType, true)
+                                                                }),
+                                                        true)
+                                        }),
+                                true),
+                                true)});
+
+        StructType annotationSchema = DataTypes.createStructType(
+                new StructField[] {
+                        DataTypes.createStructField("chromosome", DataTypes.StringType, true),
+                        DataTypes.createStructField("start", DataTypes.IntegerType, true),
+                        DataTypes.createStructField("end", DataTypes.IntegerType, true),
+                        DataTypes.createStructField("reference", DataTypes.StringType, true),
+                        DataTypes.createStructField("alternate", DataTypes.StringType, true),
+                        DataTypes.createStructField("ancestralAllele", DataTypes.StringType, true),
+                        DataTypes.createStructField("id", DataTypes.StringType, true),
+                        DataTypes.createStructField(
+                                "xrefs",
+                                DataTypes.createArrayType(DataTypes.createStructType(
+                                        new StructField[] {
+                                                DataTypes.createStructField("id", DataTypes.StringType, true),
+                                                DataTypes.createStructField("source", DataTypes.StringType, true)}), true),
+
+                                true),
+                        DataTypes.createStructField("hgvs", DataTypes.createArrayType(DataTypes.StringType, true), true),
+                        DataTypes.createStructField("displayConsequenceType", DataTypes.StringType, true),
+                        DataTypes.createStructField(
+                                "consequenceTypes",
+                                DataTypes.createArrayType(DataTypes.createStructType(
+                                        new StructField[] {
+                                                DataTypes.createStructField("geneName", DataTypes.StringType, true),
+                                                DataTypes.createStructField("ensemblGeneId", DataTypes.StringType, true),
+                                                DataTypes.createStructField("ensemblTranscriptId", DataTypes.StringType, true),
+                                                DataTypes.createStructField("strand", DataTypes.StringType, true),
+                                                DataTypes.createStructField("biotype", DataTypes.StringType, true),
+                                                DataTypes.createStructField(
+                                                        "exonOverlap",
+                                                        DataTypes.createArrayType(DataTypes.createStructType(
+                                                                new StructField[] {
+                                                                        DataTypes.createStructField("number", DataTypes.StringType, true),
+                                                                        DataTypes.createStructField("percentage", DataTypes.FloatType, true)}), true)
+                                                        ,true),
+                                                DataTypes.createStructField("transcriptAnnotationFlags", DataTypes.createArrayType(DataTypes.StringType, true), true),
+                                                DataTypes.createStructField("cdnaPosition", DataTypes.IntegerType, true),
+                                                DataTypes.createStructField("cdsPosition", DataTypes.IntegerType, true),
+                                                DataTypes.createStructField("codon", DataTypes.StringType, true)}), true),
+                                true)});
+/*
+                                        DataTypes.createStructField(proteinVariantAnnotation,
+                                                StructType(
+                                                        DataTypes.createStructField(uniprotAccession,StringType,true),
+                                                        DataTypes.createStructField(uniprotName,StringType,true),
+                                                        DataTypes.createStructField(position,IntegerType,true),
+                                                        DataTypes.createStructField(reference,StringType,true),
+                                                        DataTypes.createStructField(alternate,StringType,true),
+                                                        DataTypes.createStructField(uniprotVariantId,StringType,true),
+                                                        DataTypes.createStructField(functionalDescription,StringType,true),
+                                                        DataTypes.createStructField(substitutionScores,ArrayType(
+                                                                StructType(
+                                                                        DataTypes.createStructField(score,DoubleType,true),
+                                                                        DataTypes.createStructField(source,StringType,true),
+                                                                        DataTypes.createStructField(description,StringType,true))
+                                                                ,true)
+                                                                ,true),
+                                                        DataTypes.createStructField(keywords,ArrayType(StringType,true),true),
+                                                        DataTypes.createStructField(features,ArrayType(
+                                                                StructType(
+                                                                        DataTypes.createStructField(id,StringType,true),
+                                                                        DataTypes.createStructField(start,IntegerType,true),
+                                                                        DataTypes.createStructField(end,IntegerType,true),
+                                                                        DataTypes.createStructField(type,StringType,true),
+                                                                        DataTypes.createStructField(description,StringType,true))
+                                                                ,true)
+                                                                ,true))
+                                                ,true),
+                                        DataTypes.createStructField(sequenceOntologyTerms,ArrayType(
+                                                StructType(
+                                                        DataTypes.createStructField(accession,StringType,true),
+                                                        DataTypes.createStructField(name,StringType,true))
+                                                ,true)
+                                                ,true))
+                                ,true)
+                                ,true),
+                        DataTypes.createStructField(populationFrequencies,ArrayType(
+                                StructType(
+                                        DataTypes.createStructField(study,StringType,true),
+                                        DataTypes.createStructField(population,StringType,true),
+                                        DataTypes.createStructField(refAllele,StringType,true),
+                                        DataTypes.createStructField(altAllele,StringType,true),
+                                        DataTypes.createStructField(refAlleleFreq,FloatType,true),
+                                        DataTypes.createStructField(altAlleleFreq,FloatType,true),
+                                        DataTypes.createStructField(refHomGenotypeFreq,FloatType,true),
+                                        DataTypes.createStructField(hetGenotypeFreq,FloatType,true),
+                                        DataTypes.createStructField(altHomGenotypeFreq,FloatType,true))
+                                ,true)
+                                ,true),
+                        DataTypes.createStructField(minorAllele,StringType,true),
+                        DataTypes.createStructField(minorAlleleFreq,FloatType,true),
+                        DataTypes.createStructField(conservation,ArrayType(
+                                StructType(
+                                        DataTypes.createStructField(score,DoubleType,true),
+                                        DataTypes.createStructField(source,StringType,true),
+                                        DataTypes.createStructField(description,StringType,true))
+                                ,true)
+                                ,true),
+                        DataTypes.createStructField(geneExpression,ArrayType(
+                                StructType(
+                                        DataTypes.createStructField(geneName,StringType,true),
+                                        DataTypes.createStructField(transcriptId,StringType,true),
+                                        DataTypes.createStructField(experimentalFactor,StringType,true),
+                                        DataTypes.createStructField(factorValue,StringType,true),
+                                        DataTypes.createStructField(experimentId,StringType,true),
+                                        DataTypes.createStructField(technologyPlatform,StringType,true),
+                                        DataTypes.createStructField(expression,StringType,true),
+                                        DataTypes.createStructField(pvalue,FloatType,true))
+                                ,true)
+                                ,true),
+                        DataTypes.createStructField(geneTraitAssociation,ArrayType(
+                                StructType(
+                                        DataTypes.createStructField(id,StringType,true),
+                                        DataTypes.createStructField(name,StringType,true),
+                                        DataTypes.createStructField(hpo,StringType,true),
+                                        DataTypes.createStructField(score,FloatType,true),
+                                        DataTypes.createStructField(numberOfPubmeds,IntegerType,true),
+                                        DataTypes.createStructField(associationTypes,ArrayType(StringType,true),true),
+                                        DataTypes.createStructField(sources,ArrayType(StringType,true),true),
+                                        DataTypes.createStructField(source,StringType,true))
+                                ,true)
+                                ,true),
+                        DataTypes.createStructField(geneDrugInteraction,ArrayType(
+                                StructType(
+                                        DataTypes.createStructField(geneName,StringType,true),
+                                        DataTypes.createStructField(drugName,StringType,true),
+                                        DataTypes.createStructField(source,StringType,true),
+                                        DataTypes.createStructField(studyType,StringType,true),
+                                        DataTypes.createStructField(type,StringType,true)),true)
+                                ,true),
+                        DataTypes.createStructField(variantTraitAssociation,
+                                StructType(
+                                        StructField(clinvar,ArrayType(
+                                                StructType(
+                                                        StructField(accession,StringType,true),
+                                                        StructField(clinicalSignificance,StringType,true),
+                                                        StructField(traits,ArrayType(StringType,true),true),
+                                                        StructField(geneNames,ArrayType(StringType,true),true),
+                                                        StructField(reviewStatus,StringType,true))
+                                                ,true)
+                                                ,true),
+                                        StructField(gwas,ArrayType(
+                                                StructType(
+                                                        StructField(snpIdCurrent,StringType,true),
+                                                        StructField(traits,ArrayType(StringType,true),true),
+                                                StructField(riskAlleleFrequency,DoubleType,true),
+                                                StructField(reportedGenes,StringType,true))
+                                        ,true)
+                                        ,true),
+                                StructField(cosmic,ArrayType(
+                                        StructType(
+                                                StructField(mutationId,StringType,true),
+                                                StructField(primarySite,StringType,true),
+                                                StructField(siteSubtype,StringType,true),
+                                                StructField(primaryHistology,StringType,true),
+                                                StructField(histologySubtype,StringType,true),
+                                                StructField(sampleSource,StringType,true),
+                                                StructField(tumourOrigin,StringType,true),
+                                                StructField(geneName,StringType,true),
+                                                StructField(mutationSomaticStatus,StringType,true))
+                                        ,true)
+                                        ,true))
+                        ,true),
+                        StructField(traitAssociation,ArrayType(
+                                StructType(
+                                        StructField(source,
+                                                StructType(
+                                                        StructField(name,StringType,true),
+                                                        StructField(version,StringType,true),
+                                                        StructField(date,StringType,true))
+                                                ,true),
+                                        StructField(submissions,ArrayType(
+                                                StructType(
+                                                        StructField(submitter,StringType,true),
+                                                        StructField(date,StringType,true),
+                                                        StructField(id,StringType,true))
+                                                ,true)
+                                                ,true),
+                                        StructField(somaticInformation,
+                                                StructType(
+                                                        StructField(primarySite,StringType,true),
+                                                        StructField(siteSubtype,StringType,true),
+                                                        StructField(primaryHistology,StringType,true),
+                                                        StructField(histologySubtype,StringType,true),
+                                                        StructField(tumourOrigin,StringType,true),
+                                                        StructField(sampleSource,StringType,true))
+                                                ,true),
+                                        StructField(url,StringType,true),
+                                        StructField(id,StringType,true),
+                                        StructField(assembly,StringType,true),
+                                        StructField(alleleOrigin,ArrayType(StringType,true),true),
+                                        StructField(heritableTraits,ArrayType(
+                                                StructType(
+                                                        StructField(trait,StringType,true),
+                                                        StructField(inheritanceMode,StringType,true))
+                                                ,true)
+                                                ,true),
+                                        StructField(genomicFeatures,ArrayType(
+                                                StructType(
+                                                        StructField(featureType,StringType,true),
+                                                        StructField(ensemblId,StringType,true),
+                                                        StructField(xrefs,MapType(StringType,StringType,true),true))
+                                                ,true)
+                                                ,true),
+                                        StructField(variantClassification,
+                                                StructType(
+                                                        StructField(clinicalSignificance,StringType,true),
+                                                        StructField(drugResponseClassification,StringType,true),
+                                                        StructField(traitAssociation,StringType,true),
+                                                        StructField(tumorigenesisClassification,StringType,true),
+                                                        StructField(functionalEffect,StringType,true))
+                                                ,true),
+                                        StructField(impact,StringType,true),
+                                        StructField(confidence,StringType,true),
+                                        StructField(consistencyStatus,StringType,true),
+                                        StructField(ethnicity,StringType,true),
+                                        StructField(penetrance,StringType,true),
+                                        StructField(variableExpressivity,BooleanType,true),
+                                        StructField(description,StringType,true),
+                                        StructField(additionalProperties,ArrayType(
+                                                StructType(
+                                                        StructField(id,StringType,true),
+                                                        StructField(name,StringType,true),
+                                                        StructField(value,StringType,true))
+                                                ,true)
+                                                ,true),
+                                        StructField(bibliography,ArrayType(StringType,true),true))
+                                ,true)
+                                ,true),
+                        StructField(functionalScore,ArrayType(
+                                StructType(
+                                        StructField(score,DoubleType,true),
+                                        StructField(source,StringType,true),
+                                        StructField(description,StringType,true))
+                                ,true)
+                                ,true),
+                        StructField(cytoband,ArrayType(
+                                StructType(
+                                        StructField(stain,StringType,true),
+                                        StructField(name,StringType,true),
+                                        StructField(start,IntegerType,true),
+                                        StructField(end,IntegerType,true))
+                                ,true)
+                                ,true),
+                        StructField(repeat,ArrayType(
+                                StructType(
+                                        StructField(id,StringType,true),
+                                        StructField(chromosome,StringType,true),
+                                        StructField(start,IntegerType,true),
+                                        StructField(end,IntegerType,true),
+                                        StructField(period,IntegerType,true),
+                                        StructField(copyNumber,FloatType,true),
+                                        StructField(percentageMatch,FloatType,true),
+                                        StructField(score,FloatType,true),
+                                        StructField(sequence,StringType,true),
+                                        StructField(source,StringType,true))
+                                ,true)
+                                ,true),
+                        StructField(additionalAttributes,MapType(StringType,
+                                StructType(
+                                        StructField(attribute,MapType(StringType,StringType,true),true))
+                                ,true)
+                                ,true))
+
+        }
+        );
+*/
+        StructType schema2 = DataTypes.createStructType(
+                new StructField[] {
+                        DataTypes.createStructField("id", DataTypes.StringType, true),
+                        DataTypes.createStructField("names", DataTypes.createArrayType(DataTypes.StringType, true), true),
+                        DataTypes.createStructField("chromosome", DataTypes.StringType, true),
+                        DataTypes.createStructField("start", DataTypes.IntegerType, true),
+                        DataTypes.createStructField("end", DataTypes.IntegerType, true),
+                        DataTypes.createStructField("reference", DataTypes.StringType, true),
+                        DataTypes.createStructField("alternate", DataTypes.StringType, true),
+                        DataTypes.createStructField("strand", DataTypes.StringType, true),
+                        DataTypes.createStructField("sv", svSchema, true),
+                        DataTypes.createStructField("length", DataTypes.IntegerType, true),
+                        DataTypes.createStructField("type", DataTypes.StringType, true),
+                        DataTypes.createStructField("hgvs", DataTypes.createMapType(DataTypes.StringType, DataTypes.createArrayType(DataTypes.StringType, true), true), true),
+                        DataTypes.createStructField("studies", DataTypes.createArrayType(studySchema, true), true),
+                        DataTypes.createStructField("annotation", annotationSchema, true)
+                }
+        );
+
+//        Iterator<StructField> iterator = (Iterator<StructField>) ds1.head().schema().iterator();
+//        while (iterator.hasNext()) {
+//            System.out.println(iterator.next());
+//        }
+
+        Dataset<Row> dsRow = ds1.mapPartitions(new MapPartitionsFunction<Row, Row>() {
+            @Override
+            public Iterator<Row> call(Iterator<Row> input) throws Exception {
+                List<Row> output = new ArrayList<>(1000);
+                while (input.hasNext()) {
+                    VariantAvro variantAvro = new VariantAvro();
+                    Row inputRow = input.next();
+//                    Row outputRow = RowFactory.create(
+//                            inputRow.getSeq(0),    // id
+//                            inputRow.getList(1),   // names
+//                            inputRow.getString(2), // chromosome
+//                            inputRow.getInt(3),    // start
+//                            inputRow.getInt(4),    // end
+//                            inputRow.getString(5), // reference
+//                            inputRow.getString(6), // alternate
+//                            inputRow.getString(7), // strand
+//                            inputRow.get(8),       // sv
+//                            inputRow.getInt(9),    // length
+//                            inputRow.getString(10),// type
+//                            inputRow.getMap(11),   // hgvs
+//                            inputRow.get(12),      // studies
+//                            inputRow.get(13)       // annotation
+//                    );
+                    //output.add(outputRow);
+                    output.add(inputRow);
+                }
+                return output.iterator();
+            }
+        }, RowEncoder.apply(schema));
+        System.out.println("row count = " + dsRow.count());
+
+        // gzip, snappy, lzo, uncompressed
+        sparkSession.sqlContext().setConf("spark.sql.parquet.compression.codec", "gzip");
+        dsRow.write().parquet(inParquet2);
+
+        Dataset<Row> ds2 = sparkSession.read().parquet(inParquet2);
+        dsRow.write().parquet(inParquet3);
+
+    }
+
+    @Test
+    public void test9() {
+        Dataset<Row> ds1 = sparkSession.read().parquet(inParquet);
+        Row inputRow = ds1.head();
+        Row outputRow = RowFactory.create(
+                inputRow.getString(0), // id
+                inputRow.getList(1),   // names
+                inputRow.getString(2), // chromosome
+                inputRow.getInt(3),    // start
+                inputRow.getInt(4),    // end
+                inputRow.getString(5), // reference
+                inputRow.getString(6), // alternate
+                inputRow.getString(7), // strand
+                inputRow.get(8),       // sv
+                inputRow.getInt(9),    // length
+                inputRow.getString(10),// type
+                inputRow.getMap(11),   // hgvs
+                inputRow.get(12),      // studies
+                inputRow.get(13)       // annotation
+        );
+        System.out.println(inputRow.toString());
+        System.out.println(outputRow.toString());
+    }
+
     @Before
     public void setUp() throws Exception {
         VariantRvTestsCLITest rvTestsCLITest = new VariantRvTestsCLITest();
@@ -334,7 +785,7 @@ public class SparkTest implements Serializable {
         sparkSession = new SparkSession(sc.sc());
         //SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
 
-       // ds = sparkSession.sqlContext().read().format("com.databricks.spark.avro").load(avroDirname);
+        // ds = sparkSession.sqlContext().read().format("com.databricks.spark.avro").load(avroDirname);
 
         rdd = sc.parallelize(Arrays.asList(1, 2, 3, 4, 5));
 
@@ -475,11 +926,11 @@ public class SparkTest implements Serializable {
     public void mapPartition() {
         List<Partition> list = vd.toJSON().toJavaRDD().mapPartitions(
                 new FlatMapFunction<Iterator<String>, VariantSetStats>() {
-            @Override
-            public Iterator<VariantSetStats> call(Iterator<String> stringIterator) throws Exception {
-                return null;
-            }
-        }).partitions(); //.mapPartitions()partitions();
+                    @Override
+                    public Iterator<VariantSetStats> call(Iterator<String> stringIterator) throws Exception {
+                        return null;
+                    }
+                }).partitions(); //.mapPartitions()partitions();
         for (Partition item: list) {
             System.out.println(item.toString());
         }
@@ -523,3 +974,354 @@ public class SparkTest implements Serializable {
     }
 
 }
+
+
+
+/*
+
+        StructType(
+                StructField(id,StringType,true),
+                StructField(names,ArrayType(StringType,true),true),
+                StructField(chromosome,StringType,true),
+                StructField(start,IntegerType,true),
+                StructField(end,IntegerType,true),
+                StructField(reference,StringType,true),
+                StructField(alternate,StringType,true),
+                StructField(strand,StringType,true),
+                StructField(sv,
+                        StructType(
+                                StructField(ciStartLeft,IntegerType,true),
+                                StructField(ciStartRight,IntegerType,true),
+                                StructField(ciEndLeft,IntegerType,true),
+                                StructField(ciEndRight,IntegerType,true),
+                                StructField(copyNumber,IntegerType,true),
+                                StructField(leftSvInsSeq,StringType,true),
+                                StructField(rightSvInsSeq,StringType,true),
+                                StructField(type,StringType,true)
+                        ),true),
+                StructField(length,IntegerType,true),
+                StructField(type,StringType,true),
+                StructField(hgvs,MapType(StringType,ArrayType(StringType,true),true),true),
+                StructField(studies,ArrayType(
+                        StructType(
+                                StructField(studyId,StringType,true),
+                                StructField(files,ArrayType(
+                                        StructType(
+                                                StructField(fileId,StringType,true),
+                                                StructField(call,StringType,true),
+                                                StructField(attributes,MapType(StringType,StringType,true),true))
+                                        ,true)
+                                        ,true),
+                                StructField(secondaryAlternates,ArrayType(
+                                        StructType(
+                                                StructField(chromosome,StringType,true),
+                                                StructField(start,IntegerType,true),
+                                                StructField(end,IntegerType,true),
+                                                StructField(reference,StringType,true),
+                                                StructField(alternate,StringType,true),
+                                                StructField(type,StringType,true))
+                                        ,true)
+                                        ,true),
+                                StructField(format,ArrayType(StringType,true),true),
+                                StructField(samplesData,ArrayType(ArrayType(StringType,true),true),true),
+                                StructField(stats,MapType(StringType,
+                                        StructType(
+                                                StructField(refAllele,StringType,true),
+                                                StructField(altAllele,StringType,true),
+                                                StructField(refAlleleCount,IntegerType,true),
+                                                StructField(altAlleleCount,IntegerType,true),
+                                                StructField(genotypesCount,MapType(StringType,IntegerType,true),true),
+                                                StructField(genotypesFreq,MapType(StringType,FloatType,true),true),
+                                                StructField(missingAlleles,IntegerType,true),
+                                                StructField(missingGenotypes,IntegerType,true),
+                                                StructField(refAlleleFreq,FloatType,true),
+                                                StructField(altAlleleFreq,FloatType,true),
+                                                StructField(maf,FloatType,true),
+                                                StructField(mgf,FloatType,true),
+                                                StructField(mafAllele,StringType,true),
+                                                StructField(mgfGenotype,StringType,true),
+                                                StructField(passedFilters,BooleanType,true),
+                                                StructField(mendelianErrors,IntegerType,true),
+                                                StructField(casesPercentDominant,FloatType,true),
+                                                StructField(controlsPercentDominant,FloatType,true),
+                                                StructField(casesPercentRecessive,FloatType,true),
+                                                StructField(controlsPercentRecessive,FloatType,true),
+                                                StructField(quality,FloatType,true),
+                                                StructField(numSamples,IntegerType,true),
+                                                StructField(variantType,StringType,true),
+                                                StructField(hw,
+                                                        StructType(
+                                                                StructField(chi2,FloatType,true),
+                                                                StructField(pValue,FloatType,true),
+                                                                StructField(n,IntegerType,true),
+                                                                StructField(n_AA_11,IntegerType,true),
+                                                                StructField(n_Aa_10,IntegerType,true),
+                                                                StructField(n_aa_00,IntegerType,true),
+                                                                StructField(e_AA_11,FloatType,true),
+                                                                StructField(e_Aa_10,FloatType,true),
+                                                                StructField(e_aa_00,FloatType,true),
+                                                                StructField(p,FloatType,true),
+                                                                StructField(q,FloatType,true))
+                                                        ,true))
+                                        ,true)
+                                        ,true))
+                        ,true)
+                        ,true),
+                StructField(annotation,
+                        StructType(
+                                StructField(chromosome,StringType,true),
+                                StructField(start,IntegerType,true),
+                                StructField(end,IntegerType,true),
+                                StructField(reference,StringType,true),
+                                StructField(alternate,StringType,true),
+                                StructField(ancestralAllele,StringType,true),
+                                StructField(id,StringType,true),
+                                StructField(xrefs,ArrayType(
+                                        StructType(
+                                                StructField(id,StringType,true),
+                                                StructField(source,StringType,true))
+                                        ,true)
+                                        ,true),
+                                StructField(hgvs,ArrayType(StringType,true),true),
+                                StructField(displayConsequenceType,StringType,true),
+                                StructField(consequenceTypes,ArrayType(
+                                        StructType(
+                                                StructField(geneName,StringType,true),
+                                                StructField(ensemblGeneId,StringType,true),
+                                                StructField(ensemblTranscriptId,StringType,true),
+                                                StructField(strand,StringType,true),
+                                                StructField(biotype,StringType,true),
+                                                StructField(exonOverlap,ArrayType(
+                                                        StructType(
+                                                                StructField(number,StringType,true),
+                                                                StructField(percentage,FloatType,true))
+                                                        ,true)
+                                                        ,true),
+                                                StructField(transcriptAnnotationFlags,ArrayType(StringType,true),true),
+                                                StructField(cdnaPosition,IntegerType,true),
+                                                StructField(cdsPosition,IntegerType,true),
+                                                StructField(codon,StringType,true),
+                                                StructField(proteinVariantAnnotation,
+                                                        StructType(
+                                                                StructField(uniprotAccession,StringType,true),
+                                                                StructField(uniprotName,StringType,true),
+                                                                StructField(position,IntegerType,true),
+                                                                StructField(reference,StringType,true),
+                                                                StructField(alternate,StringType,true),
+                                                                StructField(uniprotVariantId,StringType,true),
+                                                                StructField(functionalDescription,StringType,true),
+                                                                StructField(substitutionScores,ArrayType(
+                                                                        StructType(
+                                                                                StructField(score,DoubleType,true),
+                                                                                StructField(source,StringType,true),
+                                                                                StructField(description,StringType,true))
+                                                                        ,true)
+                                                                        ,true),
+                                                                StructField(keywords,ArrayType(StringType,true),true),
+                                                                StructField(features,ArrayType(
+                                                                        StructType(
+                                                                                StructField(id,StringType,true),
+                                                                                StructField(start,IntegerType,true),
+                                                                                StructField(end,IntegerType,true),
+                                                                                StructField(type,StringType,true),
+                                                                                StructField(description,StringType,true))
+                                                                        ,true)
+                                                                        ,true))
+                                                        ,true),
+                                                StructField(sequenceOntologyTerms,ArrayType(
+                                                        StructType(
+                                                                StructField(accession,StringType,true),
+                                                                StructField(name,StringType,true))
+                                                        ,true)
+                                                        ,true))
+                                        ,true)
+                                        ,true),
+                                StructField(populationFrequencies,ArrayType(
+                                        StructType(
+                                                StructField(study,StringType,true),
+                                                StructField(population,StringType,true),
+                                                StructField(refAllele,StringType,true),
+                                                StructField(altAllele,StringType,true),
+                                                StructField(refAlleleFreq,FloatType,true),
+                                                StructField(altAlleleFreq,FloatType,true),
+                                                StructField(refHomGenotypeFreq,FloatType,true),
+                                                StructField(hetGenotypeFreq,FloatType,true),
+                                                StructField(altHomGenotypeFreq,FloatType,true))
+                                        ,true)
+                                        ,true),
+                                StructField(minorAllele,StringType,true),
+                                StructField(minorAlleleFreq,FloatType,true),
+                                StructField(conservation,ArrayType(
+                                        StructType(
+                                                StructField(score,DoubleType,true),
+                                                StructField(source,StringType,true),
+                                                StructField(description,StringType,true))
+                                        ,true)
+                                        ,true),
+                                StructField(geneExpression,ArrayType(
+                                        StructType(
+                                                StructField(geneName,StringType,true),
+                                                StructField(transcriptId,StringType,true),
+                                                StructField(experimentalFactor,StringType,true),
+                                                StructField(factorValue,StringType,true),
+                                                StructField(experimentId,StringType,true),
+                                                StructField(technologyPlatform,StringType,true),
+                                                StructField(expression,StringType,true),
+                                                StructField(pvalue,FloatType,true))
+                                        ,true)
+                                        ,true),
+                                StructField(geneTraitAssociation,ArrayType(
+                                        StructType(
+                                                StructField(id,StringType,true),
+                                                StructField(name,StringType,true),
+                                                StructField(hpo,StringType,true),
+                                                StructField(score,FloatType,true),
+                                                StructField(numberOfPubmeds,IntegerType,true),
+                                                StructField(associationTypes,ArrayType(StringType,true),true),
+                                                StructField(sources,ArrayType(StringType,true),true),
+                                                StructField(source,StringType,true))
+                                        ,true)
+                                        ,true),
+                                StructField(geneDrugInteraction,ArrayType(
+                                        StructType(
+                                                StructField(geneName,StringType,true),
+                                                StructField(drugName,StringType,true),
+                                                StructField(source,StringType,true),
+                                                StructField(studyType,StringType,true),
+                                                StructField(type,StringType,true)),true)
+                                        ,true), StructField(variantTraitAssociation,
+                                        StructType(StructField(clinvar,ArrayType(
+                                                StructType(
+                                                        StructField(accession,StringType,true),
+                                                        StructField(clinicalSignificance,StringType,true),
+                                                        StructField(traits,ArrayType(StringType,true),true),
+                                                        StructField(geneNames,ArrayType(StringType,true),true),
+                                                        StructField(reviewStatus,StringType,true))
+                                                ,true)
+                                                ,true),
+                                                StructField(gwas,ArrayType(
+                                                        StructType(
+                                                                StructField(snpIdCurrent,StringType,true),
+                                                                StructField(traits,ArrayType(StringType,true),true),
+                                                                StructField(riskAlleleFrequency,DoubleType,true),
+                                                                StructField(reportedGenes,StringType,true))
+                                                        ,true)
+                                                        ,true),
+                                                StructField(cosmic,ArrayType(
+                                                        StructType(
+                                                                StructField(mutationId,StringType,true),
+                                                                StructField(primarySite,StringType,true),
+                                                                StructField(siteSubtype,StringType,true),
+                                                                StructField(primaryHistology,StringType,true),
+                                                                StructField(histologySubtype,StringType,true),
+                                                                StructField(sampleSource,StringType,true),
+                                                                StructField(tumourOrigin,StringType,true),
+                                                                StructField(geneName,StringType,true),
+                                                                StructField(mutationSomaticStatus,StringType,true))
+                                                        ,true)
+                                                        ,true))
+                                        ,true),
+                                StructField(traitAssociation,ArrayType(
+                                        StructType(
+                                                StructField(source,
+                                                        StructType(
+                                                                StructField(name,StringType,true),
+                                                                StructField(version,StringType,true),
+                                                                StructField(date,StringType,true))
+                                                        ,true),
+                                                StructField(submissions,ArrayType(
+                                                        StructType(
+                                                                StructField(submitter,StringType,true),
+                                                                StructField(date,StringType,true),
+                                                                StructField(id,StringType,true))
+                                                        ,true)
+                                                        ,true),
+                                                StructField(somaticInformation,
+                                                        StructType(
+                                                                StructField(primarySite,StringType,true),
+                                                                StructField(siteSubtype,StringType,true),
+                                                                StructField(primaryHistology,StringType,true),
+                                                                StructField(histologySubtype,StringType,true),
+                                                                StructField(tumourOrigin,StringType,true),
+                                                                StructField(sampleSource,StringType,true))
+                                                        ,true),
+                                                StructField(url,StringType,true),
+                                                StructField(id,StringType,true),
+                                                StructField(assembly,StringType,true),
+                                                StructField(alleleOrigin,ArrayType(StringType,true),true),
+                                                StructField(heritableTraits,ArrayType(
+                                                        StructType(
+                                                                StructField(trait,StringType,true),
+                                                                StructField(inheritanceMode,StringType,true))
+                                                        ,true)
+                                                        ,true),
+                                                StructField(genomicFeatures,ArrayType(
+                                                        StructType(
+                                                                StructField(featureType,StringType,true),
+                                                                StructField(ensemblId,StringType,true),
+                                                                StructField(xrefs,MapType(StringType,StringType,true),true))
+                                                        ,true)
+                                                        ,true),
+                                                StructField(variantClassification,
+                                                        StructType(
+                                                                StructField(clinicalSignificance,StringType,true),
+                                                                StructField(drugResponseClassification,StringType,true),
+                                                                StructField(traitAssociation,StringType,true),
+                                                                StructField(tumorigenesisClassification,StringType,true),
+                                                                StructField(functionalEffect,StringType,true))
+                                                        ,true),
+                                                StructField(impact,StringType,true),
+                                                StructField(confidence,StringType,true),
+                                                StructField(consistencyStatus,StringType,true),
+                                                StructField(ethnicity,StringType,true),
+                                                StructField(penetrance,StringType,true),
+                                                StructField(variableExpressivity,BooleanType,true),
+                                                StructField(description,StringType,true),
+                                                StructField(additionalProperties,ArrayType(
+                                                        StructType(
+                                                                StructField(id,StringType,true),
+                                                                StructField(name,StringType,true),
+                                                                StructField(value,StringType,true))
+                                                        ,true)
+                                                        ,true),
+                                                StructField(bibliography,ArrayType(StringType,true),true))
+                                        ,true)
+                                        ,true),
+                                StructField(functionalScore,ArrayType(
+                                        StructType(
+                                                StructField(score,DoubleType,true),
+                                                StructField(source,StringType,true),
+                                                StructField(description,StringType,true))
+                                        ,true)
+                                        ,true),
+                                StructField(cytoband,ArrayType(
+                                        StructType(
+                                                StructField(stain,StringType,true),
+                                                StructField(name,StringType,true),
+                                                StructField(start,IntegerType,true),
+                                                StructField(end,IntegerType,true))
+                                        ,true)
+                                        ,true),
+                                StructField(repeat,ArrayType(
+                                        StructType(
+                                                StructField(id,StringType,true),
+                                                StructField(chromosome,StringType,true),
+                                                StructField(start,IntegerType,true),
+                                                StructField(end,IntegerType,true),
+                                                StructField(period,IntegerType,true),
+                                                StructField(copyNumber,FloatType,true),
+                                                StructField(percentageMatch,FloatType,true),
+                                                StructField(score,FloatType,true),
+                                                StructField(sequence,StringType,true),
+                                                StructField(source,StringType,true))
+                                        ,true)
+                                        ,true),
+                                StructField(additionalAttributes,MapType(StringType,
+                                        StructType(
+                                                StructField(attribute,MapType(StringType,StringType,true),true))
+                                        ,true)
+                                        ,true))
+                        ,true))
+
+
+ */
