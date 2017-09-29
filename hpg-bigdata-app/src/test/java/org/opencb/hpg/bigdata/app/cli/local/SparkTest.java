@@ -2,7 +2,6 @@ package org.opencb.hpg.bigdata.app.cli.local;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
-import org.apache.avro.Schema;
 import org.apache.spark.Partition;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
@@ -10,30 +9,35 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.*;
 import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.sql.*;
+import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder;
 import org.apache.spark.sql.catalyst.encoders.RowEncoder;
-import org.apache.spark.sql.types.DataType;
-import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.StructField;
-import org.apache.spark.sql.types.StructType;
+import org.apache.spark.sql.catalyst.expressions.*;
+import org.apache.spark.sql.catalyst.expressions.objects.AssertNotNull;
+import org.apache.spark.sql.types.*;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.opencb.biodata.models.variant.StudyEntry;
 import org.opencb.biodata.models.variant.Variant;
 import org.opencb.biodata.models.variant.avro.VariantAvro;
+import org.opencb.biodata.models.variant.avro.VariantType;
 import org.opencb.biodata.models.variant.metadata.VariantSetStats;
+import org.opencb.biodata.models.variant.stats.VariantStats;
+import org.opencb.biodata.tools.variant.stats.VariantStatsCalculator;
 import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
 import org.opencb.hpg.bigdata.core.lib.VariantDataset;
+import org.spark_project.guava.reflect.TypeToken;
+import scala.Predef;
 import scala.Tuple2;
 import scala.collection.*;
-import scala.collection.mutable.WrappedArray;
+import scala.reflect.ClassTag;
+import scala.reflect.ClassTag$;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.*;
 import java.util.Iterator;
 import java.util.Map;
-
-import static org.apache.parquet.example.Paper.schema;
 
 public class SparkTest implements Serializable {
 
@@ -742,7 +746,6 @@ public class SparkTest implements Serializable {
         System.out.println("row count = " + dsRow.count());
 
         // gzip, snappy, lzo, uncompressed
-        sparkSession.sqlContext().setConf("spark.sql.parquet.compression.codec", "gzip");
         dsRow.write().parquet(inParquet2);
 
         Dataset<Row> ds2 = sparkSession.read().parquet(inParquet2);
@@ -750,28 +753,176 @@ public class SparkTest implements Serializable {
 
     }
 
+    public Row computeVariantStats(Row inputRow) {
+        Variant variant = null;
+        for (StudyEntry entry : variant.getStudies()) {
+            VariantStats stats = new VariantStats(inputRow.getString(5), inputRow.getString(6), VariantType.INDEL); // VariantType(inputRow.getString(10)));
+            VariantStatsCalculator.calculate(entry, entry.getAttributes(), null, stats);
+            entry.setStats(StudyEntry.DEFAULT_COHORT, stats);
+        }
+
+        VariantStats stats = new VariantStats();
+        stats.setAltAllele("A");
+        stats.setAltAlleleFreq(0.0004f);
+
+        Row outputRow = RowFactory.create(
+                stats.getRefAllele(),
+                stats.getAltAllele(),
+                stats.getRefAlleleCount(),
+                stats.getAltAlleleCount(),
+                null, //JavaConverters.asScalanull,
+                null,
+                stats.getMissingAlleles(),
+                stats.getMissingGenotypes(),
+                stats.getRefAlleleFreq(),
+                stats.getAltAlleleFreq(),
+                stats.getMaf(),
+                stats.getMgf(),
+                stats.getMafAllele(),
+                stats.getMgfGenotype(),
+                stats.getPassedFilters(),
+                stats.getMendelianErrors(),
+                stats.getCasesPercentDominant(),
+                stats.getControlsPercentDominant(),
+                stats.getCasesPercentRecessive(),
+                stats.getControlsPercentRecessive(),
+                stats.getQuality(),
+                stats.getNumSamples(),
+                stats.getVariantType().toString(),
+                (stats.getHw() == null ? null : RowFactory.create(
+                        stats.getHw().getChi2(),
+                        stats.getHw().getPValue(),
+                        stats.getHw().getN(),
+                        stats.getHw().getNAA11(),
+                        stats.getHw().getNAa10(),
+                        stats.getHw().getNAa00(),
+                        stats.getHw().getEAa00(),
+                        stats.getHw().getEAa10(),
+                        stats.getHw().getEAa00(),
+                        stats.getHw().getP(),
+                        stats.getHw().getQ())
+                )
+        );
+
+        return outputRow;
+    }
+
+    public Row updateRowStats(Row inputRow) {
+
+        List<Row> inputRowStudies = inputRow.getList(12);
+        Row outputRowStudies[] = new Row[inputRowStudies.size()];
+
+        for (int i = 0; i < inputRowStudies.size(); i++) {
+            Row inputRowStudy = inputRowStudies.get(i);
+            Map<String, Row> stats = new HashMap<>();
+            stats.put("key-" + i + "-" + inputRowStudy.getString(0), computeVariantStats());
+
+            Row outputRowStudy = RowFactory.create(
+                    inputRowStudy.get(0), // studyId
+                    inputRowStudy.get(1), // files
+                    inputRowStudy.get(2), // secondaryAlternates
+                    inputRowStudy.get(3), // format
+                    inputRowStudy.get(4), // samplesData
+                    JavaConverters.mapAsScalaMapConverter(stats).asScala().toMap(Predef.conforms()));
+
+            outputRowStudies[i] = outputRowStudy;
+        }
+
+        Row outputRow = RowFactory.create(
+                inputRow.get(0),  // id
+                inputRow.get(1),  // names
+                inputRow.get(2),  // chromosome
+                inputRow.get(3),  // start
+                inputRow.get(4),  // end
+                inputRow.get(5),  // reference
+                inputRow.get(6),  // alternate
+                inputRow.get(7),  // strand
+                inputRow.get(8),  // sv
+                inputRow.get(9),  // length
+                inputRow.get(10), // type
+                inputRow.get(11), // hgvs
+                outputRowStudies, // studies: inputRow.get(12)
+                inputRow.get(13)  // annotation
+        );
+
+        return outputRow;
+    }
+
     @Test
     public void test9() {
         Dataset<Row> ds1 = sparkSession.read().parquet(inParquet);
         Row inputRow = ds1.head();
-        Row outputRow = RowFactory.create(
-                inputRow.getString(0), // id
-                inputRow.getList(1),   // names
-                inputRow.getString(2), // chromosome
-                inputRow.getInt(3),    // start
-                inputRow.getInt(4),    // end
-                inputRow.getString(5), // reference
-                inputRow.getString(6), // alternate
-                inputRow.getString(7), // strand
-                inputRow.get(8),       // sv
-                inputRow.getInt(9),    // length
-                inputRow.getString(10),// type
-                inputRow.getMap(11),   // hgvs
-                inputRow.get(12),      // studies
-                inputRow.get(13)       // annotation
-        );
+        Row outputRow = updateRowStats(inputRow);
         System.out.println(inputRow.toString());
         System.out.println(outputRow.toString());
+    }
+
+    @Test
+    public void test10() {
+        Dataset<Row> ds1 = sparkSession.read().parquet(inParquet);
+        Row row1 = ds1.head();
+        StructType schema = row1.schema();
+
+        ds1.mapPartitions(new MapPartitionsFunction<Row, Row>() {
+            @Override
+            public Iterator<Row> call(Iterator<Row> input) throws Exception {
+                List<Row> output = new ArrayList<>(1000);
+                while (input.hasNext()) {
+                    output.add(updateRowStats(input.next()));
+                }
+                return output.iterator();
+            }
+        }, RowEncoder.apply(schema)).write().parquet(inParquet2);
+
+        Dataset<Row> ds2 = sparkSession.read().parquet(inParquet2);
+        Row row2 = ds2.head();
+
+        System.out.println(row1.toString());
+        System.out.println(row2.toString());
+    }
+
+    @Test
+    public void test11() {
+        Dataset<Row> ds1 = sparkSession.read().parquet(inParquet);
+        Row row1 = ds1.head();
+        StructType schema = row1.schema();
+
+        ds1.map(new MapFunction<Row, Row>() {
+            @Override
+            public Row call(Row input) throws Exception {
+                return updateRowStats(input);
+            }
+        }, RowEncoder.apply(schema)).write().parquet(inParquet2);
+
+        Dataset<Row> ds2 = sparkSession.read().parquet(inParquet2);
+        Row row2 = ds2.head();
+
+        ds2.write().parquet(inParquet3);
+
+        System.out.println(row1.toString());
+        System.out.println(row2.toString());
+    }
+
+    @Test
+    public void test12() {
+        Dataset<Row> ds1 = sparkSession.read().parquet(inParquet);
+        Row row1 = ds1.head();
+        StructType schema = row1.schema();
+
+        ds1.map(new MapFunction<Row, Row>() {
+            @Override
+            public Row call(Row input) throws Exception {
+                return updateRowStats(input);
+            }
+        }, Encoders.bean(Row.class)).write().parquet(inParquet2);
+
+        Dataset<Row> ds2 = sparkSession.read().parquet(inParquet2);
+        Row row2 = ds2.head();
+
+        ds2.write().parquet(inParquet3);
+
+        System.out.println(row1.toString());
+        System.out.println(row2.toString());
     }
 
     @Before
@@ -783,6 +934,8 @@ public class SparkTest implements Serializable {
 
         sc = new JavaSparkContext(sparkConf);
         sparkSession = new SparkSession(sc.sc());
+        sparkSession.sqlContext().setConf("spark.sql.parquet.compression.codec", "snappy");
+        //sparkSession.sqlContext().setConf("spark.sql.parquet.compression.codec", "gzip");
         //SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
 
         // ds = sparkSession.sqlContext().read().format("com.databricks.spark.avro").load(avroDirname);
