@@ -1,7 +1,11 @@
 package org.opencb.hpg.bigdata.app.cli.local;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import htsjdk.samtools.util.Tuple;
+import org.apache.commons.collections.map.HashedMap;
 import org.apache.spark.Partition;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
@@ -19,22 +23,29 @@ import org.junit.Before;
 import org.junit.Test;
 import org.opencb.biodata.models.variant.StudyEntry;
 import org.opencb.biodata.models.variant.Variant;
-import org.opencb.biodata.models.variant.avro.VariantAvro;
-import org.opencb.biodata.models.variant.avro.VariantType;
 import org.opencb.biodata.models.variant.metadata.VariantSetStats;
 import org.opencb.biodata.models.variant.stats.VariantStats;
+import org.opencb.biodata.tools.variant.metadata.VariantMetadataManager;
+import org.opencb.biodata.tools.variant.metadata.VariantMetadataUtils;
+import org.opencb.biodata.tools.variant.stats.VariantSetStatsCalculator;
 import org.opencb.biodata.tools.variant.stats.VariantStatsCalculator;
+import org.opencb.hpg.bigdata.app.cli.local.avro.AlternateCoordinate;
+import org.opencb.hpg.bigdata.app.cli.local.avro.FileEntry;
+import org.opencb.hpg.bigdata.app.cli.local.avro.VariantAvro;
+import org.opencb.hpg.bigdata.app.cli.local.avro.VariantType;
 import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
 import org.opencb.hpg.bigdata.core.lib.VariantDataset;
 import org.spark_project.guava.reflect.TypeToken;
 import scala.Predef;
 import scala.Tuple2;
 import scala.collection.*;
+import scala.collection.mutable.WrappedArray;
 import scala.reflect.ClassTag;
 import scala.reflect.ClassTag$;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.Iterator;
 import java.util.Map;
@@ -50,6 +61,8 @@ public class SparkTest implements Serializable {
 
     public Dataset<Row> ds;
     public JavaRDD<Integer> rdd;
+
+    LinkedHashMap<String, Integer> sortSamplesPosition;
 
     String inParquet = "/tmp/test.vcf.parquet";
     String inParquet2 = "/tmp/test.vcf.parquet2";
@@ -208,13 +221,23 @@ public class SparkTest implements Serializable {
         Encoder<VariantAvro> encoder = Encoders.bean(VariantAvro.class);
         String inDir = "/tmp/test6/partitions";
 
-        Dataset<Row> ds1 = sparkSession.read().parquet(inParquet);
-        System.out.println("\n\n\nDataset - printSchema");
-        ds1.printSchema();
-        System.out.println("\n\n\nRow - schema");
-        System.out.println(ds1.head().schema());
-        System.out.println("\n\n\nRow - mkString");
-        System.out.println(ds1.head().schema().mkString());
+        Dataset<VariantAvro> ds1 = sparkSession.read().parquet(inParquet).as(encoder);
+
+        VariantAvro variantAvro = ds1.head();
+        ObjectMapper objMapper = new ObjectMapper();
+        ObjectWriter objectWriter = objMapper.writerFor(VariantAvro.class);
+        try {
+            System.out.println(objectWriter.withDefaultPrettyPrinter().writeValueAsString(variantAvro));
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
+        //System.out.println("\n\n\nDataset - printSchema");
+        //ds1.printSchema();
+        //System.out.println("\n\n\nRow - schema");
+        //System.out.println(ds1.head().schema());
+        //System.out.println("\n\n\nRow - mkString");
+        //System.out.println(ds1.head().schema().mkString());
 
         //String outDir = "/tmp/test6/partitions";
         //Dataset<VariantAvro> ds1 = sparkSession.read().parquet(inParquet).as(encoder);
@@ -756,7 +779,7 @@ public class SparkTest implements Serializable {
     public Row computeVariantStats(Row inputRow) {
         Variant variant = null;
         for (StudyEntry entry : variant.getStudies()) {
-            VariantStats stats = new VariantStats(inputRow.getString(5), inputRow.getString(6), VariantType.INDEL); // VariantType(inputRow.getString(10)));
+            VariantStats stats = null; //new VariantStats(inputRow.getString(5), inputRow.getString(6), VariantType.INDEL); // VariantType(inputRow.getString(10)));
             VariantStatsCalculator.calculate(entry, entry.getAttributes(), null, stats);
             entry.setStats(StudyEntry.DEFAULT_COHORT, stats);
         }
@@ -807,22 +830,148 @@ public class SparkTest implements Serializable {
         return outputRow;
     }
 
-    public Row updateRowStats(Row inputRow) {
+    public StudyEntry convertRow2StudyEntry(Row studyRow, LinkedHashMap<String, Integer> samplePosition) {
+        StudyEntry studyEntry = new StudyEntry();
 
+        // study ID
+        studyEntry.setStudyId(studyRow.getString(0));
+//        System.out.println("study ID = " + studyEntry.getStudyId());
+
+        // files
+        List<Row> fileRows = studyRow.getList(1);
+        List<FileEntry> files = new ArrayList<>();
+        for (Row fileRow: fileRows) {
+            FileEntry fileEntry = new FileEntry();
+            fileEntry.setFileId(fileRow.getString(0));
+            fileEntry.setCall(fileRow.getString(1));
+            fileEntry.setAttributes(fileRow.getJavaMap(2));
+            files.add(fileEntry);
+        }
+//        studyEntry.setFiles(files);
+//        for (FileEntry file: studyEntry.getFiles()) {
+//            System.out.println("file = " + file.toString());
+//        }
+
+        // secondaryAlternates
+        List<AlternateCoordinate> secondaryAlternates = new ArrayList<>();
+        List<Row> secondaryAlternatesRows = studyRow.getList(2);
+        for (Row secondaryAlternatesRow: secondaryAlternatesRows) {
+//            secondaryAlternates.add(new AlternateCoordinate(
+//                    secondaryAlternatesRow.getString(0),
+//                    secondaryAlternatesRow.getInt(1),
+//                    secondaryAlternatesRow.getInt(2),
+//                    secondaryAlternatesRow.getString(3),
+//                    secondaryAlternatesRow.getString(4),
+//                    VariantType.INDEL));
+        }
+//        studyEntry.setSecondaryAlternates(secondaryAlternates);
+//        for (AlternateCoordinate alt: studyEntry.getSecondaryAlternates()) {
+//            System.out.println("secondary alterante = " + alt.toString());
+//        }
+
+        // format
+        List<String> format = studyRow.getList(3);
+        studyEntry.setFormat(format);
+//        for (String f: studyEntry.getFormat()) {
+//            System.out.println("format = " + f);
+//        }
+
+        // samplesData
+        List<List<String>> samplesData = new ArrayList<>();
+        List<Object> list = studyRow.getList(4);
+        for (Object item: list) {
+            List<String> l1 = new ArrayList<String>();
+            scala.collection.Iterator it = ((WrappedArray) item).iterator();
+            while (it.hasNext()) {
+                l1.add((String) it.next());
+            }
+            samplesData.add(l1);
+        }
+        studyEntry.setSamplesData(samplesData);
+//        for (List<String> l: studyEntry.getSamplesData()) {
+//            System.out.println("--");
+//            for (String str: l) {
+//                System.out.println("\tsample data = " + str);
+//            }
+//        }
+
+        // set sorted samples position map
+        studyEntry.setSamplesPosition(samplePosition);
+
+        System.out.println(studyEntry.toString());
+        return studyEntry;
+    }
+
+    public Row convertVariantStats2Row(VariantStats variantStats) {
+        Row row = RowFactory.create(
+                variantStats.getRefAllele(),
+                variantStats.getAltAllele(),
+                variantStats.getRefAlleleCount(),
+                variantStats.getAltAlleleCount(),
+                null, //JavaConverters.asScalanull,
+                null,
+                variantStats.getMissingAlleles(),
+                variantStats.getMissingGenotypes(),
+                variantStats.getRefAlleleFreq(),
+                variantStats.getAltAlleleFreq(),
+                variantStats.getMaf(),
+                variantStats.getMgf(),
+                variantStats.getMafAllele(),
+                variantStats.getMgfGenotype(),
+                variantStats.getPassedFilters(),
+                variantStats.getMendelianErrors(),
+                variantStats.getCasesPercentDominant(),
+                variantStats.getControlsPercentDominant(),
+                variantStats.getCasesPercentRecessive(),
+                variantStats.getControlsPercentRecessive(),
+                variantStats.getQuality(),
+                variantStats.getNumSamples(),
+                variantStats.getVariantType().toString(),
+                (variantStats.getHw() == null ? null : RowFactory.create(
+                        variantStats.getHw().getChi2(),
+                        variantStats.getHw().getPValue(),
+                        variantStats.getHw().getN(),
+                        variantStats.getHw().getNAA11(),
+                        variantStats.getHw().getNAa10(),
+                        variantStats.getHw().getNAa00(),
+                        variantStats.getHw().getEAa00(),
+                        variantStats.getHw().getEAa10(),
+                        variantStats.getHw().getEAa00(),
+                        variantStats.getHw().getP(),
+                        variantStats.getHw().getQ())
+                )
+        );
+        return row;
+    }
+
+    public Row updateRowStats(Row inputRow, LinkedHashMap<String, Integer> sortSamplesPosition) {
         List<Row> inputRowStudies = inputRow.getList(12);
         Row outputRowStudies[] = new Row[inputRowStudies.size()];
 
         for (int i = 0; i < inputRowStudies.size(); i++) {
-            Row inputRowStudy = inputRowStudies.get(i);
-            Map<String, Row> stats = new HashMap<>();
-            stats.put("key-" + i + "-" + inputRowStudy.getString(0), computeVariantStats());
+            Row studyRow = inputRowStudies.get(i);
 
+            // convert: Row -> StudyEntry
+            StudyEntry studyEntry = convertRow2StudyEntry(studyRow, sortSamplesPosition);
+
+            // compute stats for cohort ALL
+            //VariantStats variantStats = new VariantStats(inputRow.getString(5), inputRow.getString(6), VariantType.INDEL);
+            //VariantStatsCalculator.calculate(studyEntry, studyEntry.getAllAttributes(), null, variantStats);
+
+            // convert: VariantStats -> Row
+            //Row statsRow = convertVariantStats2Row(variantStats);
+
+            // create stats map
+            Map<String, Row> stats = new HashMap<>();
+           // stats.put("ALL", statsRow);
+
+            // create row for that study with the updated stats
             Row outputRowStudy = RowFactory.create(
-                    inputRowStudy.get(0), // studyId
-                    inputRowStudy.get(1), // files
-                    inputRowStudy.get(2), // secondaryAlternates
-                    inputRowStudy.get(3), // format
-                    inputRowStudy.get(4), // samplesData
+                    studyRow.get(0), // studyId
+                    studyRow.get(1), // files
+                    studyRow.get(2), // secondaryAlternates
+                    studyRow.get(3), // format
+                    studyRow.get(4), // samplesData
                     JavaConverters.mapAsScalaMapConverter(stats).asScala().toMap(Predef.conforms()));
 
             outputRowStudies[i] = outputRowStudy;
@@ -852,7 +1001,8 @@ public class SparkTest implements Serializable {
     public void test9() {
         Dataset<Row> ds1 = sparkSession.read().parquet(inParquet);
         Row inputRow = ds1.head();
-        Row outputRow = updateRowStats(inputRow);
+
+        Row outputRow = updateRowStats(inputRow, sortSamplesPosition);
         System.out.println(inputRow.toString());
         System.out.println(outputRow.toString());
     }
@@ -868,7 +1018,7 @@ public class SparkTest implements Serializable {
             public Iterator<Row> call(Iterator<Row> input) throws Exception {
                 List<Row> output = new ArrayList<>(1000);
                 while (input.hasNext()) {
-                    output.add(updateRowStats(input.next()));
+                    output.add(updateRowStats(input.next(), sortSamplesPosition));
                 }
                 return output.iterator();
             }
@@ -883,14 +1033,27 @@ public class SparkTest implements Serializable {
 
     @Test
     public void test11() {
+        VariantMetadataManager manager = new VariantMetadataManager();
+        try {
+            manager.load(Paths.get(inParquet + ".meta.json"));
+            List<String> samples = VariantMetadataUtils.getSampleNames(manager.getVariantMetadata().getStudies().get(0));
+            sortSamplesPosition = new LinkedHashMap<>();
+            for (int i = 0; i < samples.size(); i++) {
+                sortSamplesPosition.put(samples.get(i), i);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         Dataset<Row> ds1 = sparkSession.read().parquet(inParquet);
         Row row1 = ds1.head();
+
         StructType schema = row1.schema();
 
+        Broadcast<LinkedHashMap> broad = sc.broadcast(sortSamplesPosition);
         ds1.map(new MapFunction<Row, Row>() {
             @Override
             public Row call(Row input) throws Exception {
-                return updateRowStats(input);
+                return updateRowStats(input, broad.getValue());
             }
         }, RowEncoder.apply(schema)).write().parquet(inParquet2);
 
@@ -912,9 +1075,57 @@ public class SparkTest implements Serializable {
         ds1.map(new MapFunction<Row, Row>() {
             @Override
             public Row call(Row input) throws Exception {
-                return updateRowStats(input);
+                return updateRowStats(input, sortSamplesPosition);
             }
         }, Encoders.bean(Row.class)).write().parquet(inParquet2);
+
+        Dataset<Row> ds2 = sparkSession.read().parquet(inParquet2);
+        Row row2 = ds2.head();
+
+        ds2.write().parquet(inParquet3);
+
+        System.out.println(row1.toString());
+        System.out.println(row2.toString());
+    }
+
+    @Test
+    public void test13() {
+        Dataset<Row> ds1 = sparkSession.read().parquet(inParquet);
+        Row row1 = ds1.head();
+
+        for (Object row: row1.getList(12)) {
+            convertRow2StudyEntry((Row) row, sortSamplesPosition);
+        }
+    }
+
+    @Test
+    public void test14() {
+        VariantMetadataManager manager = new VariantMetadataManager();
+        try {
+            manager.load(Paths.get(inParquet + ".meta.json"));
+            List<String> samples = VariantMetadataUtils.getSampleNames(manager.getVariantMetadata().getStudies().get(0));
+            sortSamplesPosition = new LinkedHashMap<>();
+            for (int i = 0; i < samples.size(); i++) {
+                sortSamplesPosition.put(samples.get(i), i);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Dataset<Row> ds1 = sparkSession.read().parquet(inParquet);
+        Row row1 = ds1.head();
+
+        StructType schema = row1.schema();
+
+
+        //VariantSetStatsCalculator calculator = new VariantSetStatsCalculator();
+
+        Broadcast<LinkedHashMap> broad = sc.broadcast(sortSamplesPosition);
+//        ds1.map(new MapFunction<org.opencb.hpg.bigdata.app.cli.local.avro.VariantAvro, Map<String, VariantSetStats>>() {
+//            @Override
+//            public Map<String, VariantSetStats> call(Row input) throws Exception {
+//                return updateRowStats(input, broad.getValue());
+//            }
+//        }, RowEncoder.apply(schema)).rewrite().parquet(inParquet2);
 
         Dataset<Row> ds2 = sparkSession.read().parquet(inParquet2);
         Row row2 = ds2.head();
@@ -959,6 +1170,14 @@ public class SparkTest implements Serializable {
         }
         vd.createOrReplaceTempView("vcf");
 */
+        sortSamplesPosition = new LinkedHashMap<>();
+        sortSamplesPosition.put("1", 0);
+        sortSamplesPosition.put("2", 1);
+        sortSamplesPosition.put("3", 2);
+        sortSamplesPosition.put("4", 3);
+        sortSamplesPosition.put("5", 4);
+        sortSamplesPosition.put("6", 5);
+
     }
 
     @After
