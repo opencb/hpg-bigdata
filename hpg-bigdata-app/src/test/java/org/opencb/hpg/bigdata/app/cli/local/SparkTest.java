@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import htsjdk.samtools.util.Tuple;
 import org.apache.commons.collections.map.HashedMap;
+import org.apache.hadoop.fs.Path;
+import org.apache.parquet.avro.AvroParquetWriter;
 import org.apache.spark.Partition;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
@@ -221,16 +223,20 @@ public class SparkTest implements Serializable {
         Encoder<VariantAvro> encoder = Encoders.bean(VariantAvro.class);
         String inDir = "/tmp/test6/partitions";
 
-        Dataset<VariantAvro> ds1 = sparkSession.read().parquet(inParquet).as(encoder);
+        Dataset<Row> ds2 = sparkSession.read().parquet(inParquet);
+        System.out.println(ds2.schema().toString());
+        //ds2.printSchema();
 
-        VariantAvro variantAvro = ds1.head();
-        ObjectMapper objMapper = new ObjectMapper();
-        ObjectWriter objectWriter = objMapper.writerFor(VariantAvro.class);
-        try {
-            System.out.println(objectWriter.withDefaultPrettyPrinter().writeValueAsString(variantAvro));
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
+//        Dataset<VariantAvro> ds1 = sparkSession.read().parquet(inParquet).as(encoder);
+//
+//        VariantAvro variantAvro = ds1.head();
+//        ObjectMapper objMapper = new ObjectMapper();
+//        ObjectWriter objectWriter = objMapper.writerFor(VariantAvro.class);
+//        try {
+//            System.out.println(objectWriter.withDefaultPrettyPrinter().writeValueAsString(variantAvro));
+//        } catch (JsonProcessingException e) {
+//            e.printStackTrace();
+//        }
 
         //System.out.println("\n\n\nDataset - printSchema");
         //ds1.printSchema();
@@ -1134,6 +1140,13 @@ public class SparkTest implements Serializable {
 
         System.out.println(row1.toString());
         System.out.println(row2.toString());
+    }
+
+    @Test
+    public void test15() {
+//        AvroParquetWriter parquetFileWriter = new AvroParquetWriter();
+//               new AvroParquetWriter(new Path(outputFilename), schema, compressionCodecName, rowGroupSize, pageSize);
+//
     }
 
     @Before

@@ -53,9 +53,9 @@ public class VariantAvro implements Serializable {
    private java.util.Map<String,java.util.List<String>> hgvs;
   /** * Information specific to each study the variant was read from, such as
          * samples or statistics. */
-   //private java.util.List<StudyEntry> studies;
+   private java.util.List<StudyEntry> studies;
   /** * Annotations of the genomic variation. */
- //  private VariantAnnotation annotation;
+   private VariantAnnotation annotation;
 
   /**
    * Default constructor.  Note that this does not initialize fields
@@ -80,8 +80,8 @@ public class VariantAvro implements Serializable {
     this.length = length;
     this.type = type;
     this.hgvs = hgvs;
-    //this.studies = studies;
-   // this.annotation = annotation;
+    this.studies = studies;
+    this.annotation = annotation;
   }
 
   /**
@@ -300,35 +300,35 @@ public class VariantAvro implements Serializable {
     this.hgvs = value;
   }
 
-//  /**
-//   * Gets the value of the 'studies' field.
-//   * * Information specific to each study the variant was read from, such as
-//         * samples or statistics.   */
-//  public java.util.List<StudyEntry> getStudies() {
-//    return studies;
-//  }
-//
-//  /**
-//   * Sets the value of the 'studies' field.
-//   * * Information specific to each study the variant was read from, such as
-//         * samples or statistics.   * @param value the value to set.
-//   */
-//  public void setStudies(java.util.List<StudyEntry> value) {
-//    this.studies = value;
-//  }
+  /**
+   * Gets the value of the 'studies' field.
+   * * Information specific to each study the variant was read from, such as
+         * samples or statistics.   */
+  public java.util.List<StudyEntry> getStudies() {
+    return studies;
+  }
 
-//  /**
-//   * Gets the value of the 'annotation' field.
-//   * * Annotations of the genomic variation.   */
-//  public VariantAnnotation getAnnotation() {
-//    return annotation;
-//  }
-//
-//  /**
-//   * Sets the value of the 'annotation' field.
-//   * * Annotations of the genomic variation.   * @param value the value to set.
-//   */
-//  public void setAnnotation(VariantAnnotation value) {
-//    this.annotation = value;
-//  }
+  /**
+   * Sets the value of the 'studies' field.
+   * * Information specific to each study the variant was read from, such as
+         * samples or statistics.   * @param value the value to set.
+   */
+  public void setStudies(java.util.List<StudyEntry> value) {
+    this.studies = value;
+  }
+
+  /**
+   * Gets the value of the 'annotation' field.
+   * * Annotations of the genomic variation.   */
+  public VariantAnnotation getAnnotation() {
+    return annotation;
+  }
+
+  /**
+   * Sets the value of the 'annotation' field.
+   * * Annotations of the genomic variation.   * @param value the value to set.
+   */
+  public void setAnnotation(VariantAnnotation value) {
+    this.annotation = value;
+  }
 }
