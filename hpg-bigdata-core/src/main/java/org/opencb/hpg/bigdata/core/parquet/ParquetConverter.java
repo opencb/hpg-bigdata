@@ -33,7 +33,6 @@ import org.opencb.hpg.bigdata.core.utils.FilterTask;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -153,7 +152,7 @@ public abstract class ParquetConverter<T extends IndexedRecord> {
         taskSupplier = () -> new FilterTask<>(filters);
 
         // parallel task runner
-        ParallelTaskRunner<String, ByteBuffer> ptr;
+        ParallelTaskRunner<T, T> ptr;
         try {
             ptr = new ParallelTaskRunner<>(dataReader, taskSupplier, dataWriter, config);
         } catch (Exception e) {

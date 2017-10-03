@@ -40,37 +40,18 @@ public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
         this.datasetName = datasetName;
     }
 
-    public void toAvro(String inputFilename, String outputFilename) throws IOException {
-//
-//        throw new UnsupportedOperationException("Avro conversion not implemented yet!");
-//
-//        VcfManager vcfManager = new VcfManager(Paths.get(inputFilename));
-//        vcfManager.
-
-
-//             Path path = Paths.get(getClass().getResource(filename).toURI());
-//        VcfManager vcfManager = new VcfManager(path);
-//        index(vcfManager);
-//        VcfIterator<VariantContext> iterator = vcfManager.iterator();
-//        int count = 0;
-//        while (iterator.hasNext()) {
-//            VariantContext vc = iterator.next();
-//            System.out.println(vc);
-//            count++;
-//        }
-//        assertEquals(3, count);
-
+    public void toAvro(String inputFilename, String outputFilename, boolean annotate) throws IOException {
         File inputFile = new File(inputFilename);
         String filename = inputFile.getName();
 
         VariantMetadataManager metadataManager = new VariantMetadataManager();
 
-        // reader
+        // VCF reader
         VcfFileReader vcfFileReader = new VcfFileReader();
         vcfFileReader.open(inputFilename);
         VCFHeader vcfHeader = vcfFileReader.getVcfHeader();
 
-        // writer
+        // Avro writer
         OutputStream outputStream;
         if (StringUtils.isEmpty(outputFilename) || outputFilename.equals("STDOUT")) {
             outputStream = System.out;
@@ -82,7 +63,7 @@ public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
 //        VariantGlobalStatsCalculator statsCalculator = new VariantGlobalStatsCalculator(vcfReader.getSource());
 //        statsCalculator.pre();
 
-        // metadata management
+        // Metadata management
         VariantStudyMetadata variantDatasetMetadata = new VariantStudyMetadata();
         variantDatasetMetadata.setId(datasetName);
         metadataManager.addVariantDatasetMetadata(variantDatasetMetadata);
@@ -90,36 +71,62 @@ public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
         Cohort cohort = new Cohort("ALL", vcfHeader.getSampleNamesInOrder(), SampleSetType.MISCELLANEOUS);
         metadataManager.addCohort(cohort, variantDatasetMetadata.getId());
 
-        // add variant file metadata from VCF header
+        // Add variant file metadata from VCF header
         metadataManager.addFile(filename, vcfHeader, variantDatasetMetadata.getId());
         metadataManager.getVariantMetadata().getStudies().get(0).setAggregatedHeader(
                 metadataManager.getVariantMetadata().getStudies().get(0).getFiles().get(0).getHeader());
 
-        // main loop
         long counter = 0;
         VariantContextToVariantConverter converter = new VariantContextToVariantConverter(datasetName, filename,
                 vcfHeader.getSampleNamesInOrder());
 
-        List<VariantContext> variantContexts = vcfFileReader.read(1000);
-        while (variantContexts.size() > 0) {
-            for (VariantContext vc: variantContexts) {
-                Variant variant = converter.convert(vc);
-                if (filter(variant.getImpl())) {
-                    counter++;
-                    avroFileWriter.writeDatum(variant.getImpl());
+        // Main loop
+        List<VariantContext> variantContexts = vcfFileReader.read(2000);
+        if (annotate) {
+            // Annotate before converting to Avro
+            // Duplicate code for efficiency purposes
+            VariantAvroAnnotator variantAvroAnnotator = new VariantAvroAnnotator();
+            List<VariantAvro> variants = new ArrayList<>(2000);
+
+            while (variantContexts.size() > 0) {
+                for (VariantContext vc : variantContexts) {
+                    Variant variant = converter.convert(vc);
+                    if (filter(variant.getImpl())) {
+                        counter++;
+                        variants.add(variant.getImpl());
 //                    statsCalculator.updateGlobalStats(variant);
+                    }
                 }
+                // Annotate variants and then write them to disk
+                List<VariantAvro> annotatedVariants = variantAvroAnnotator.annotate(variants);
+                for (VariantAvro annotatedVariant: annotatedVariants) {
+                    // Write to disk
+                    avroFileWriter.writeDatum(annotatedVariant);
+                }
+                variantContexts = vcfFileReader.read(2000);
             }
-            variantContexts = vcfFileReader.read(1000);
+        } else {
+            // Convert to Avro without annotating
+            while (variantContexts.size() > 0) {
+                for (VariantContext vc : variantContexts) {
+                    Variant variant = converter.convert(vc);
+                    if (filter(variant.getImpl())) {
+                        counter++;
+                        avroFileWriter.writeDatum(variant.getImpl());
+//                    statsCalculator.updateGlobalStats(variant);
+                    }
+                }
+                variantContexts = vcfFileReader.read(2000);
+            }
         }
         System.out.println("Number of processed records: " + counter);
 
-        // close
+        // Close
         vcfFileReader.close();
         avroFileWriter.close();
         outputStream.close();
 
-        // save metadata (JSON format)
+        // Save metadata (JSON format)
         metadataManager.save(Paths.get(outputFilename + ".meta.json"), true);
     }
 

@@ -33,7 +33,7 @@ public class AlignmentAvroSerializer extends AvroSerializer<ReadAlignment> {
     }
 
     @Override
-    public void toAvro(String inputFilename, String outputFilename) throws IOException {
+    public void toAvro(String inputFilename, String outputFilename, boolean annotate) throws IOException {
 
         // reader
         SamReader reader = SamReaderFactory.makeDefault().open(new File(inputFilename));
