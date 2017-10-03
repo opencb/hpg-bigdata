@@ -149,6 +149,9 @@ public class VariantCommandExecutor extends CommandExecutor {
         String output = CliUtils.getOutputFilename(variantCommandOptions.convertVariantCommandOptions.input,
                 variantCommandOptions.convertVariantCommandOptions.output, to);
 
+        // annotate before converting
+        boolean annotate = variantCommandOptions.convertVariantCommandOptions.annotate;
+
         long startTime, elapsedTime;
 
         // convert to parquet if required
@@ -168,6 +171,7 @@ public class VariantCommandExecutor extends CommandExecutor {
             // create the Parquet writer and add the necessary filters
             VariantParquetConverter parquetConverter = new VariantParquetConverter(
                     CompressionCodecName.fromConf(compressionCodecName), rowGroupSize, pageSize);
+            parquetConverter.setDatasetName(variantCommandOptions.convertVariantCommandOptions.dataset);
 
             parquetConverter.setSpecies(variantCommandOptions.convertVariantCommandOptions.species);
             parquetConverter.setAssembly(variantCommandOptions.convertVariantCommandOptions.assembly);
@@ -210,7 +214,7 @@ public class VariantCommandExecutor extends CommandExecutor {
                 // convert to VCF -> PARQUET
                 System.out.println("\n\nStarting VCF->PARQUET conversion...\n");
                 startTime = System.currentTimeMillis();
-                parquetConverter.toParquetFromVcf(inputPath.toString(), output);
+                parquetConverter.toParquetFromVcf(inputPath.toString(), output, annotate);
                 elapsedTime = System.currentTimeMillis() - startTime;
                 System.out.println("\n\nFinish VCF->PARQUET conversion in " + (elapsedTime / 1000F) + " sec\n");
             }
@@ -244,7 +248,7 @@ public class VariantCommandExecutor extends CommandExecutor {
 
             System.out.println("\n\nStarting VCF->AVRO conversion...\n");
             startTime = System.currentTimeMillis();
-            avroSerializer.toAvro(inputPath.toString(), output);
+            avroSerializer.toAvro(inputPath.toString(), output, annotate);
             elapsedTime = System.currentTimeMillis() - startTime;
             System.out.println("\n\nFinish VCF->AVRO conversion in " + (elapsedTime / 1000F) + " sec\n");
         }

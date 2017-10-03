@@ -134,6 +134,9 @@ public class VariantCommandOptions {
                 + " less than the number of cores")
         public int numThreads = 1;
 
+        @Parameter(names = {"--annotate"}, description = "Annotate variants before converting to Avro/Paquet")
+        public boolean annotate = false;
+
 //        @Parameter(names = {"--skip-normalization"}, description = "Whether to skip variant normalization",
 // required = false)
 //        public boolean skipNormalization;

@@ -78,4 +78,47 @@ public class VariantConvertCLITest {
             e.printStackTrace();
         }
     }
+
+    @Test
+    public void avroAnnotate() {
+        String vcfFilename = "../hpg-bigdata-core/src/test/resources/org/opencb/hpg/bigdata/core/utils/VariantContextBlockIteratorTest.vcf";
+        vcfPath = Paths.get(vcfFilename);
+        avroPath = Paths.get("/tmp/" + vcfPath.getFileName() + ".avro");
+
+        try {
+            StringBuilder commandLine = new StringBuilder();
+            commandLine.append(" variant convert");
+            commandLine.append(" --log-level ERROR");
+            commandLine.append(" -i ").append(vcfPath);
+            commandLine.append(" -o ").append(avroPath);
+            commandLine.append(" --dataset test-dataset");
+            commandLine.append(" --annotate");
+
+            VariantQueryCLITest.execute(commandLine.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void parquetAnnotate() {
+        String vcfFilename = "../hpg-bigdata-core/src/test/resources/org/opencb/hpg/bigdata/core/utils/VariantContextBlockIteratorTest.vcf";
+        vcfPath = Paths.get(vcfFilename);
+        Path parquetPath = Paths.get("/tmp/" + vcfPath.getFileName() + ".parquet");
+
+        try {
+            StringBuilder commandLine = new StringBuilder();
+            commandLine.append(" variant convert");
+            commandLine.append(" --log-level ERROR");
+            commandLine.append(" -i ").append(vcfPath);
+            commandLine.append(" -o ").append(parquetPath);
+            commandLine.append(" --to parquet");
+            commandLine.append(" --dataset test-dataset");
+            commandLine.append(" --annotate");
+
+            VariantQueryCLITest.execute(commandLine.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }

@@ -215,7 +215,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
 
             System.out.println("\n\nStarting BAM->AVRO conversion...\n");
             startTime = System.currentTimeMillis();
-            avroSerializer.toAvro(inputPath.toString(), output);
+            avroSerializer.toAvro(inputPath.toString(), output, false);
             elapsedTime = System.currentTimeMillis() - startTime;
             System.out.println("\n\nFinish BAM->AVRO conversion in " + (elapsedTime / 1000F) + " sec\n");
         }

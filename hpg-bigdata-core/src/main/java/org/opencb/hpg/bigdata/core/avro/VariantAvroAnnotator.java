@@ -49,8 +49,8 @@ public class VariantAvroAnnotator {
         ClientConfiguration clientConfiguration = new ClientConfiguration();
         clientConfiguration.setVersion("v4");
         clientConfiguration.setRest(new RestConfig(Collections
-                .singletonList("http://bioinfodev.hpc.cam.ac.uk/cellbase-4.5.0-beta"), 30000));
-
+//                .singletonList("http://bioinfodev.hpc.cam.ac.uk/cellbase-4.5.0-beta"), 30000));
+                .singletonList("http://bioinfo.hpc.cam.ac.uk/cellbase"), 30000));
         cellBaseClient = new CellBaseClient("hsapiens", clientConfiguration);
     }
 
@@ -111,5 +111,27 @@ public class VariantAvroAnnotator {
 
         inputStream.close();
         dataFileStream.close();
+    }
+
+    public List<VariantAvro> annotate(List<VariantAvro> variants) {
+        VariationClient variationClient = cellBaseClient.getVariationClient();
+
+        List<String> ids = new ArrayList<>(variants.size());
+        for (VariantAvro variant: variants) {
+            ids.add(variant.getChromosome() + ":" + variant.getStart() + ":" + variant.getReference()
+                    + ":" + variant.getAlternate());
+        }
+        System.out.println("Annotating " + variants.size() + " variants batch...");
+        try {
+            QueryResponse<VariantAnnotation> annotations = variationClient.getAnnotations(ids,
+                    new QueryOptions(QueryOptions.EXCLUDE, "expression"));
+            assert(variants.size() == annotations.getResponse().size());
+            for (int i = 0; i < annotations.getResponse().size(); i++) {
+                variants.get(i).setAnnotation(annotations.getResponse().get(i).first());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return variants;
     }
 }
