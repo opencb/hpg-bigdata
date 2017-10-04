@@ -1,13 +1,7 @@
 package org.opencb.hpg.bigdata.app.cli.local;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import htsjdk.samtools.util.Tuple;
-import org.apache.commons.collections.map.HashedMap;
-import org.apache.hadoop.fs.Path;
-import org.apache.parquet.avro.AvroParquetWriter;
 import org.apache.spark.Partition;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
@@ -15,42 +9,34 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.*;
 import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.sql.*;
-import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder;
 import org.apache.spark.sql.catalyst.encoders.RowEncoder;
-import org.apache.spark.sql.catalyst.expressions.*;
-import org.apache.spark.sql.catalyst.expressions.objects.AssertNotNull;
-import org.apache.spark.sql.types.*;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.opencb.biodata.models.variant.StudyEntry;
+import org.opencb.biodata.models.variant.avro.AlternateCoordinate;
+import org.opencb.biodata.models.variant.avro.FileEntry;
+import org.opencb.biodata.models.variant.avro.VariantAvro;
 import org.opencb.biodata.models.variant.Variant;
 import org.opencb.biodata.models.variant.metadata.VariantSetStats;
 import org.opencb.biodata.models.variant.stats.VariantStats;
 import org.opencb.biodata.tools.variant.metadata.VariantMetadataManager;
 import org.opencb.biodata.tools.variant.metadata.VariantMetadataUtils;
-import org.opencb.biodata.tools.variant.stats.VariantSetStatsCalculator;
 import org.opencb.biodata.tools.variant.stats.VariantStatsCalculator;
-import org.opencb.hpg.bigdata.app.cli.local.avro.AlternateCoordinate;
-import org.opencb.hpg.bigdata.app.cli.local.avro.FileEntry;
-import org.opencb.hpg.bigdata.app.cli.local.avro.VariantAvro;
-import org.opencb.hpg.bigdata.app.cli.local.avro.VariantType;
 import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
 import org.opencb.hpg.bigdata.core.lib.VariantDataset;
-import org.spark_project.guava.reflect.TypeToken;
 import scala.Predef;
 import scala.Tuple2;
-import scala.collection.*;
+import scala.collection.JavaConverters;
 import scala.collection.mutable.WrappedArray;
-import scala.reflect.ClassTag;
-import scala.reflect.ClassTag$;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.Iterator;
-import java.util.Map;
 
 public class SparkTest implements Serializable {
 
