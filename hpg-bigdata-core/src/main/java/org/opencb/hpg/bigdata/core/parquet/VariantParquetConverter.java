@@ -30,13 +30,18 @@ import org.opencb.biodata.models.variant.metadata.VariantStudyMetadata;
 import org.opencb.biodata.tools.variant.VcfFileReader;
 import org.opencb.biodata.tools.variant.converters.avro.VariantContextToVariantConverter;
 import org.opencb.biodata.tools.variant.metadata.VariantMetadataManager;
+import org.opencb.commons.io.DataWriter;
+import org.opencb.commons.run.ParallelTaskRunner;
 import org.opencb.hpg.bigdata.core.avro.VariantAvroAnnotator;
+import org.opencb.hpg.bigdata.core.io.ConvertTask;
+import org.opencb.hpg.bigdata.core.io.VcfDataReader;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 
 /**
@@ -148,6 +153,41 @@ public class VariantParquetConverter extends ParquetConverter<VariantAvro> {
 
         // Save metadata (JSON format)
         metadataManager.save(Paths.get(outputFilename + ".meta.json"), true);
+    }
+
+    public void toParquetFromVcf(String inputFilename, String outputFilename, boolean annotate, int numThreads)
+            throws IOException {
+        // Config parallel task runner
+        ParallelTaskRunner.Config config = ParallelTaskRunner.Config.builder()
+                .setNumTasks(numThreads)
+                .setBatchSize(2000)
+                .setSorted(true)
+                .build();
+
+        // VCF reader
+        VcfDataReader vcfDataReader = new VcfDataReader(inputFilename);
+
+        // Parquet writer
+        DataWriter dataWriter = new ParquetFileWriter(outputFilename, schema, compressionCodecName, rowGroupSize,
+                pageSize);
+
+        // Converter
+        VariantContextToVariantConverter converter = new VariantContextToVariantConverter(datasetName,
+                new File(inputFilename).getName(), vcfDataReader.vcfHeader().getSampleNamesInOrder());
+
+        // Create the parallel task runner
+        ParallelTaskRunner<VariantContext, VariantAvro> ptr;
+        try {
+            ConvertTask convertTask = new ConvertTask(converter, filters, annotate);
+            ptr = new ParallelTaskRunner(vcfDataReader, convertTask, dataWriter, config);
+        } catch (Exception e) {
+            throw new IOException("Error while creating ParallelTaskRunner", e);
+        }
+        try {
+            ptr.run();
+        } catch (ExecutionException e) {
+            throw new IOException("Error while converting VCF to Avro in ParallelTaskRunner", e);
+        }
     }
 
     public VariantParquetConverter addRegionFilter(Region region) {
