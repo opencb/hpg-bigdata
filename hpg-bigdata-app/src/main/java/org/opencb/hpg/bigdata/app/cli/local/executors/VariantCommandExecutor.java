@@ -149,8 +149,9 @@ public class VariantCommandExecutor extends CommandExecutor {
         String output = CliUtils.getOutputFilename(variantCommandOptions.convertVariantCommandOptions.input,
                 variantCommandOptions.convertVariantCommandOptions.output, to);
 
-        // annotate before converting
+        // annotate before converting and number of threads
         boolean annotate = variantCommandOptions.convertVariantCommandOptions.annotate;
+        int numThreads = variantCommandOptions.convertVariantCommandOptions.numThreads;
 
         long startTime, elapsedTime;
 
@@ -201,9 +202,8 @@ public class VariantCommandExecutor extends CommandExecutor {
                 System.out.println("\n\nStarting AVRO->PARQUET conversion...\n");
                 startTime = System.currentTimeMillis();
 
-                if (variantCommandOptions.convertVariantCommandOptions.numThreads > 1) {
-                    parquetConverter.toParquetFromAvro(inputStream, output,
-                            variantCommandOptions.convertVariantCommandOptions.numThreads);
+                if (numThreads > 1) {
+                    parquetConverter.toParquetFromAvro(inputStream, output, numThreads);
                 } else {
                     parquetConverter.toParquetFromAvro(inputStream, output);
                 }
@@ -214,7 +214,11 @@ public class VariantCommandExecutor extends CommandExecutor {
                 // convert to VCF -> PARQUET
                 System.out.println("\n\nStarting VCF->PARQUET conversion...\n");
                 startTime = System.currentTimeMillis();
-                parquetConverter.toParquetFromVcf(inputPath.toString(), output, annotate);
+                if (numThreads > 1) {
+                    parquetConverter.toParquetFromVcf(inputPath.toString(), output, annotate, numThreads);
+                } else {
+                    parquetConverter.toParquetFromVcf(inputPath.toString(), output, annotate);
+                }
                 elapsedTime = System.currentTimeMillis() - startTime;
                 System.out.println("\n\nFinish VCF->PARQUET conversion in " + (elapsedTime / 1000F) + " sec\n");
             }
@@ -248,7 +252,11 @@ public class VariantCommandExecutor extends CommandExecutor {
 
             System.out.println("\n\nStarting VCF->AVRO conversion...\n");
             startTime = System.currentTimeMillis();
-            avroSerializer.toAvro(inputPath.toString(), output, annotate);
+            if (numThreads > 1) {
+                avroSerializer.toAvro(inputPath.toString(), output, annotate, numThreads);
+            } else {
+                avroSerializer.toAvro(inputPath.toString(), output, annotate);
+            }
             elapsedTime = System.currentTimeMillis() - startTime;
             System.out.println("\n\nFinish VCF->AVRO conversion in " + (elapsedTime / 1000F) + " sec\n");
         }
