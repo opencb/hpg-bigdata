@@ -1,5 +1,6 @@
 package org.opencb.hpg.bigdata.core.parquet;
 
+import avro.shaded.com.google.common.base.Throwables;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.hadoop.fs.Path;
@@ -27,7 +28,7 @@ public class ParquetFileWriter<T extends GenericRecord> implements DataWriter<T>
         try {
             parquetWriter = new AvroParquetWriter(new Path(outputFilename), schema, compression, rowGroupSize, pageSize);
         } catch (IOException e) {
-            e.printStackTrace();
+            throw Throwables.propagate(e);
         }
     }
 
@@ -41,8 +42,7 @@ public class ParquetFileWriter<T extends GenericRecord> implements DataWriter<T>
         try {
             parquetWriter.close();
         } catch (IOException e) {
-            e.printStackTrace();
-            return false;
+            throw Throwables.propagate(e);
         }
         return true;
     }
@@ -72,7 +72,7 @@ public class ParquetFileWriter<T extends GenericRecord> implements DataWriter<T>
             try {
                 parquetWriter.write(item);
             } catch (IOException e) {
-                e.printStackTrace();
+                throw Throwables.propagate(e);
             }
         }
         return true;

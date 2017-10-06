@@ -38,13 +38,17 @@ public class ConvertTask implements ParallelTaskRunner.Task<VariantContext, Vari
             // Annotate before converting to Avro
             // Duplicate code for efficiency purposes
             VariantAvroAnnotator variantAvroAnnotator = new VariantAvroAnnotator();
-            List<VariantAvro> variants = new ArrayList<>(2000);
+            List<VariantAvro> variants = new ArrayList<>(variantContexts.size());
 
             for (VariantContext vc : variantContexts) {
-                Variant variant = converter.convert(vc);
-                if (filter(variant.getImpl())) {
-                    variants.add(variant.getImpl());
+                try {
+                    Variant variant = converter.convert(vc);
+                    if (filter(variant.getImpl())) {
+                        variants.add(variant.getImpl());
 //                    statsCalculator.updateGlobalStats(variant);
+                    }
+                } catch (IllegalArgumentException e) {
+                    e.printStackTrace();
                 }
             }
             // Annotate variants and then write them to disk
@@ -62,16 +66,6 @@ public class ConvertTask implements ParallelTaskRunner.Task<VariantContext, Vari
 
         // Return variants
         return variantAvros;
-//
-//
-//        // Encode
-//        List<ByteBuffer> encoded;
-//        try {
-//            encoded = encoder.encode(variantAvros);
-//        } catch (IOException e) {
-//            throw new RuntimeException(e);
-//        }
-//        return encoded;
     }
 
     public boolean filter(VariantAvro record) {

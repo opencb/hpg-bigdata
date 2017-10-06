@@ -13,7 +13,6 @@ import org.opencb.biodata.tools.variant.converters.avro.VariantContextToVariantC
 import org.opencb.biodata.tools.variant.metadata.VariantMetadataManager;
 import org.opencb.commons.run.ParallelTaskRunner;
 import org.opencb.hpg.bigdata.core.io.ConvertEncodeTask;
-import org.opencb.hpg.bigdata.core.io.VcfDataReader;
 import org.opencb.hpg.bigdata.core.io.avro.AvroFileWriter;
 
 import java.io.File;
@@ -31,6 +30,8 @@ import java.util.function.Predicate;
  * Created by jtarraga on 03/08/16.
  */
 public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
+
+    private final int batchSize = 100;
 
     private String species = null;
     private String assembly = null;
@@ -59,8 +60,8 @@ public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
         VariantMetadataManager metadataManager = new VariantMetadataManager();
 
         // VCF reader
-        VcfFileReader vcfFileReader = new VcfFileReader();
-        vcfFileReader.open(inputFilename);
+        VcfFileReader vcfFileReader = new VcfFileReader(inputFilename, true);
+        vcfFileReader.open();
         VCFHeader vcfHeader = vcfFileReader.getVcfHeader();
 
         // Avro writer
@@ -94,12 +95,12 @@ public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
 
         // Main loop
         ConvertEncodeTask convertEncodeTask = new ConvertEncodeTask(converter, filters, annotate);
-        List<VariantContext> variantContexts = vcfFileReader.read(2000);
+        List<VariantContext> variantContexts = vcfFileReader.read(batchSize);
         while (variantContexts.size() > 0) {
             List<ByteBuffer> buffers = convertEncodeTask.apply(variantContexts);
             avroFileWriter.write(buffers);
             counter += buffers.size();
-            variantContexts = vcfFileReader.read(2000);
+            variantContexts = vcfFileReader.read(batchSize);
         }
         System.out.println("Number of processed records: " + counter);
 
@@ -126,12 +127,12 @@ public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
         // Config parallel task runner
         ParallelTaskRunner.Config config = ParallelTaskRunner.Config.builder()
                 .setNumTasks(numThreads)
-                .setBatchSize(2000)
+                .setBatchSize(batchSize)
                 .setSorted(true)
                 .build();
 
         // VCF reader
-        VcfDataReader vcfDataReader = new VcfDataReader(inputFilename);
+        VcfFileReader vcfFileReader = new VcfFileReader(inputFilename, false);
 
         // Avro writer
         OutputStream outputStream;
@@ -144,13 +145,13 @@ public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
 
         // Converter
         VariantContextToVariantConverter converter = new VariantContextToVariantConverter(datasetName,
-                new File(inputFilename).getName(), vcfDataReader.vcfHeader().getSampleNamesInOrder());
+                new File(inputFilename).getName(), vcfFileReader.getVcfHeader().getSampleNamesInOrder());
 
         // Create the parallel task runner
         ParallelTaskRunner<VariantContext, ByteBuffer> ptr;
         try {
             ConvertEncodeTask convertTask = new ConvertEncodeTask(converter, filters, annotate);
-            ptr = new ParallelTaskRunner(vcfDataReader, convertTask, avroFileWriter, config);
+            ptr = new ParallelTaskRunner(vcfFileReader, convertTask, avroFileWriter, config);
         } catch (Exception e) {
             throw new IOException("Error while creating ParallelTaskRunner", e);
         }
