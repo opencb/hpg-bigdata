@@ -16,14 +16,14 @@
 
 package org.opencb.hpg.bigdata.core.avro;
 
+import avro.shaded.com.google.common.base.Throwables;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
-import org.opencb.biodata.models.variant.avro.VariantAnnotation;
-import org.opencb.biodata.models.variant.avro.VariantAvro;
+import org.opencb.biodata.models.variant.avro.*;
 import org.opencb.cellbase.client.config.ClientConfiguration;
 import org.opencb.cellbase.client.config.RestConfig;
 import org.opencb.cellbase.client.rest.CellBaseClient;
@@ -125,12 +125,75 @@ public class VariantAvroAnnotator {
         try {
             QueryResponse<VariantAnnotation> annotations = variationClient.getAnnotations(ids,
                     new QueryOptions(QueryOptions.EXCLUDE, "expression"));
-            assert(variants.size() == annotations.getResponse().size());
+//            assert(variants.size() == annotations.getResponse().size());
             for (int i = 0; i < annotations.getResponse().size(); i++) {
-                variants.get(i).setAnnotation(annotations.getResponse().get(i).first());
+                VariantAnnotation annotation = annotations.getResponse().get(i).first();
+                // Patch to remove by updating the Evidence avdl model
+                if (annotation.getTraitAssociation() != null) {
+                    for (EvidenceEntry evidenceEntry : annotation.getTraitAssociation()) {
+                        if (evidenceEntry.getSubmissions() == null) {
+                            evidenceEntry.setSubmissions(Collections.emptyList());
+                        }
+                        if (evidenceEntry.getHeritableTraits() == null) {
+                            evidenceEntry.setHeritableTraits(Collections.emptyList());
+                        } else {
+                            for (HeritableTrait heritableTrait: evidenceEntry.getHeritableTraits()) {
+                                if (heritableTrait.getInheritanceMode() == null) {
+                                    heritableTrait.setInheritanceMode(ModeOfInheritance.unknown);
+                                }
+                            }
+                        }
+                        if (evidenceEntry.getGenomicFeatures() == null) {
+                            evidenceEntry.setGenomicFeatures(Collections.emptyList());
+                        }
+                        if (evidenceEntry.getAdditionalProperties() == null) {
+                            evidenceEntry.setAdditionalProperties(Collections.emptyList());
+                        }
+                        if (evidenceEntry.getEthnicity() == null) {
+                            evidenceEntry.setEthnicity(EthnicCategory.Z);
+                        }
+                        if (evidenceEntry.getBibliography() == null) {
+                            evidenceEntry.setBibliography(Collections.emptyList());
+                        }
+                        if (evidenceEntry.getSomaticInformation() != null) {
+                            if (evidenceEntry.getSomaticInformation().getSampleSource() == null) {
+                                evidenceEntry.getSomaticInformation().setSampleSource("");
+                            }
+                            if (evidenceEntry.getSomaticInformation().getTumourOrigin() == null) {
+                                evidenceEntry.getSomaticInformation().setTumourOrigin("");
+                            }
+                        }
+                    }
+                }
+                if (annotation.getVariantTraitAssociation() != null) {
+                    if (annotation.getVariantTraitAssociation().getCosmic() != null) {
+                        for (Cosmic cosmic: annotation.getVariantTraitAssociation().getCosmic()) {
+                            if (cosmic.getSiteSubtype() == null) {
+                                cosmic.setSiteSubtype("");
+                            }
+                            if (cosmic.getSampleSource() == null) {
+                                cosmic.setSampleSource("");
+                            }
+                            if (cosmic.getTumourOrigin() == null) {
+                                cosmic.setTumourOrigin("");
+                            }
+                            if (cosmic.getHistologySubtype() == null) {
+                                cosmic.setHistologySubtype("");
+                            }
+                            if (cosmic.getPrimarySite() == null) {
+                                cosmic.setPrimarySite("");
+                            }
+                            if (cosmic.getPrimaryHistology() == null) {
+                                cosmic.setPrimaryHistology("");
+                            }
+                        }
+                    }
+                }
+                // End of patch
+                variants.get(i).setAnnotation(annotation);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            throw Throwables.propagate(e);
         }
         return variants;
     }
