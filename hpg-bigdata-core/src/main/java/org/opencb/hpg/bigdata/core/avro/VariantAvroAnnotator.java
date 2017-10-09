@@ -165,6 +165,7 @@ public class VariantAvroAnnotator {
                         }
                     }
                 }
+                // TODO This data model is obsolete, this code must be removed
                 if (annotation.getVariantTraitAssociation() != null) {
                     if (annotation.getVariantTraitAssociation().getCosmic() != null) {
                         for (Cosmic cosmic: annotation.getVariantTraitAssociation().getCosmic()) {
