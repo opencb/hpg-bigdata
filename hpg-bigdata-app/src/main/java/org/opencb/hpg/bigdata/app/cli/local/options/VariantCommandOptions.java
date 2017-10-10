@@ -132,7 +132,7 @@ public class VariantCommandOptions {
 
         @Parameter(names = {"-t", "--num-threads"}, description = "Number of threads to use, usually this must be"
                 + " less than the number of cores")
-        public int numThreads = 1;
+        public int numThreads = 2;
 
         @Parameter(names = {"--annotate"}, description = "Annotate variants before converting to Avro/Paquet")
         public boolean annotate = false;
