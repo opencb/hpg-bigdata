@@ -36,10 +36,9 @@ public class ConvertTask implements ParallelTaskRunner.Task<VariantContext, Vari
 
     @Override
     public List<VariantAvro> apply(List<VariantContext> variantContexts) throws RuntimeException {
-        List<VariantAvro> variantAvros;
-
         // Convert and filter (from VariantContext to Avro)
         List<Variant> variants = new ArrayList<>(variantContexts.size());
+        List<VariantAvro> variantAvros = new ArrayList<>(variantContexts.size());
         for (VariantContext vc : variantContexts) {
             Variant variant = converter.convert(vc);
             if (filter(variant.getImpl())) {
@@ -50,15 +49,14 @@ public class ConvertTask implements ParallelTaskRunner.Task<VariantContext, Vari
         // Normalize
         variants = variantNormalizer.apply(variants);
 
-        variantAvros = new ArrayList<>(variants.size());
-        for (Variant variant: variants) {
-            variantAvros.add(variant.getImpl());
-        }
-
+        // Annotate if necessary
         if (annotate) {
             VariantAvroAnnotator variantAvroAnnotator = new VariantAvroAnnotator();
-            variantAvros = variantAvroAnnotator.annotate(variantAvros);
+            variants = variantAvroAnnotator.annotate(variants);
         }
+
+        // Get Avro objects
+        variants.forEach(v -> variantAvros.add(v.getImpl()));
 
         // Return variants (Avro objects)
         return variantAvros;

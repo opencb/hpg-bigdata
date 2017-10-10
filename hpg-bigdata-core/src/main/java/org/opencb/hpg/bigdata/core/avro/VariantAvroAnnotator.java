@@ -23,6 +23,7 @@ import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
+import org.opencb.biodata.models.variant.Variant;
 import org.opencb.biodata.models.variant.avro.*;
 import org.opencb.cellbase.client.config.ClientConfiguration;
 import org.opencb.cellbase.client.config.RestConfig;
@@ -59,6 +60,13 @@ public class VariantAvroAnnotator {
         cellBaseClient = new CellBaseClient("hsapiens", clientConfiguration);
     }
 
+    /**
+     * Avro file annotator.
+     *
+     * @param avroPath              Input file (in Avro format)
+     * @param annotatedAvroPath     Output file (in Avro format)
+     * @throws IOException          IO exception
+     */
     public void annotate(Path avroPath, Path annotatedAvroPath) throws IOException {
         FileUtils.checkFile(avroPath);
         FileUtils.checkDirectory(annotatedAvroPath.getParent(), true);
@@ -79,60 +87,63 @@ public class VariantAvroAnnotator {
 
         VariantClient variantClient = cellBaseClient.getVariantClient();
 
-        List<String> variants = new ArrayList<>(2000);
-        List<VariantAvro> records = new ArrayList<>(2000);
+        List<Variant> variants = new ArrayList<>(2000);
         VariantAvro record;
         int counter = 1, batchSize = 200;
         while (dataFileStream.hasNext()) {
             record = dataFileStream.next();
 
-            records.add(record);
-            variants.add(record.getChromosome() + ":" + record.getStart() + ":" + record.getReference() + ":" + record.getAlternate());
-
+            variants.add(new Variant(record));
             if (counter++ % batchSize == 0) {
                 logger.debug("Annotating {} variants batch...", batchSize);
-                QueryResponse<VariantAnnotation> annotations = variantClient.getAnnotationByVariantIds(variants,
+                QueryResponse<Variant> annotatedVariants = variantClient.annotate(variants,
                         new QueryOptions(QueryOptions.EXCLUDE, "expression"));
-                for (int i = 0; i < annotations.getResponse().size(); i++) {
-                    records.get(i).setAnnotation(annotations.getResponse().get(i).first());
-                    dataFileWriter.append(records.get(i));
+                for (int i = 0; i < annotatedVariants.getResponse().size(); i++) {
+                    dataFileWriter.append(annotatedVariants.getResponse().get(i).first().getImpl());
                 }
 
                 dataFileWriter.flush();
-                records.clear();
                 variants.clear();
             }
         }
 
-        // annotate remaining variants
-        if (records.size() > 0) {
-            QueryResponse<VariantAnnotation> annotations = variantClient.getAnnotationByVariantIds(variants,
+        // Annotate remaining variants
+        if (variants.size() > 0) {
+            QueryResponse<Variant> annotatedVariants = variantClient.annotate(variants,
                     new QueryOptions(QueryOptions.EXCLUDE, "expression"));
-            for (int i = 0; i < annotations.getResponse().size(); i++) {
-                records.get(i).setAnnotation(annotations.getResponse().get(i).first());
-                dataFileWriter.append(records.get(i));
+            for (int i = 0; i < annotatedVariants.getResponse().size(); i++) {
+                dataFileWriter.append(annotatedVariants.getResponse().get(i).first().getImpl());
             }
 
             dataFileWriter.flush();
         }
 
+        // Close
         dataFileWriter.close();
-
         inputStream.close();
         dataFileStream.close();
     }
 
-    public List<VariantAvro> annotate(List<VariantAvro> variants) {
+    /**
+     * Annotator of variant lists.
+     *
+     * @param variants  Input list of variant objects
+     * @return          Output list of annotated variant objects
+     */
+    public List<Variant> annotate(List<Variant> variants) {
+        List<Variant> annotatedVariants = null;
         VariantClient variantClient = cellBaseClient.getVariantClient();
 
-        List<String> ids = new ArrayList<>(variants.size());
-        for (VariantAvro variant: variants) {
-            ids.add(variant.getChromosome() + ":" + variant.getStart() + ":" + variant.getReference()
-                    + ":" + variant.getAlternate());
-        }
         logger.debug("Annotating {} variants batch...", variants.size());
         try {
-            QueryResponse<VariantAnnotation> annotations = variantClient.getAnnotationByVariantIds(ids,
+            QueryResponse<Variant> response = variantClient.annotate(variants,
+                    new QueryOptions(QueryOptions.EXCLUDE, "expression"));
+            annotatedVariants = new ArrayList<>(response.getResponse().size());
+            for (int i = 0; i < response.getResponse().size(); i++) {
+                annotatedVariants.add(response.getResponse().get(i).first());
+            }
+/*
+            QueryResponse<VariantAnnotation> annotations = variantClient.getAnnotation(variants,
                     new QueryOptions(QueryOptions.EXCLUDE, "expression"));
 //            assert(variants.size() == annotations.getResponse().size());
             for (int i = 0; i < annotations.getResponse().size(); i++) {
@@ -202,9 +213,10 @@ public class VariantAvroAnnotator {
                 // End of patch
                 variants.get(i).setAnnotation(annotation);
             }
+            */
         } catch (IOException e) {
             throw Throwables.propagate(e);
         }
-        return variants;
+        return annotatedVariants;
     }
 }
