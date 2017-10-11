@@ -50,10 +50,12 @@ public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
      *
      * @param inputFilename     VCF file name (input)
      * @param outputFilename    Avro file name (output)
-     * @param annotate          Annotation flag
+     * @param annotator         Variant annotator
      * @throws IOException      Exception
      */
-    public void toAvro(String inputFilename, String outputFilename, boolean annotate) throws IOException {
+    public void toAvro(String inputFilename, String outputFilename, Object annotator) throws IOException {
+        VariantAvroAnnotator variantAvroAnnotator = (VariantAvroAnnotator) annotator;
+
         File inputFile = new File(inputFilename);
         String filename = inputFile.getName();
 
@@ -94,7 +96,7 @@ public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
                 vcfHeader.getSampleNamesInOrder());
 
         // Main loop
-        ConvertEncodeTask convertEncodeTask = new ConvertEncodeTask(converter, filters, annotate);
+        ConvertEncodeTask convertEncodeTask = new ConvertEncodeTask(converter, filters, variantAvroAnnotator);
         List<VariantContext> variantContexts = vcfFileReader.read(batchSize);
         while (variantContexts.size() > 0) {
             List<ByteBuffer> buffers = convertEncodeTask.apply(variantContexts);
@@ -118,12 +120,14 @@ public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
      *
      * @param inputFilename     VCF file name (input)
      * @param outputFilename    Avro file name (output)
-     * @param annotate          Annotation flag
+     * @param annotator         Variant annotator
      * @param numThreads        Number of threads
      * @throws IOException      Exception
      */
-    public void toAvro(String inputFilename, String outputFilename, boolean annotate, int numThreads)
+    public void toAvro(String inputFilename, String outputFilename, Object annotator, int numThreads)
             throws IOException {
+        VariantAvroAnnotator variantAvroAnnotator = (VariantAvroAnnotator) annotator;
+
         // Config parallel task runner
         ParallelTaskRunner.Config config = ParallelTaskRunner.Config.builder()
                 .setNumTasks(numThreads)
@@ -150,7 +154,7 @@ public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
         // Create the parallel task runner
         ParallelTaskRunner<VariantContext, ByteBuffer> ptr;
         try {
-            ConvertEncodeTask convertTask = new ConvertEncodeTask(converter, filters, annotate);
+            ConvertEncodeTask convertTask = new ConvertEncodeTask(converter, filters, variantAvroAnnotator);
             ptr = new ParallelTaskRunner(vcfFileReader, convertTask, avroFileWriter, config);
         } catch (Exception e) {
             throw new IOException("Error while creating ParallelTaskRunner", e);

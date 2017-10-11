@@ -82,7 +82,7 @@ public abstract class AvroSerializer<T> {
         return this;
     }
 
-    public abstract void toAvro(String inputFilename, String outputFilename, boolean annotate) throws IOException;
+    public abstract void toAvro(String inputFilename, String outputFilename, Object annotator) throws IOException;
 
     @Override
     public String toString() {

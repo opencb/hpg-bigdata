@@ -29,6 +29,7 @@ import org.opencb.biodata.tools.variant.converters.avro.VariantContextToVariantC
 import org.opencb.biodata.tools.variant.metadata.VariantMetadataManager;
 import org.opencb.commons.io.DataWriter;
 import org.opencb.commons.run.ParallelTaskRunner;
+import org.opencb.hpg.bigdata.core.avro.VariantAvroAnnotator;
 import org.opencb.hpg.bigdata.core.io.ConvertTask;
 
 import java.io.File;
@@ -60,7 +61,8 @@ public class VariantParquetConverter extends ParquetConverter<VariantAvro> {
         this.schema = VariantAvro.SCHEMA$;
     }
 
-    public void toParquetFromVcf(String inputFilename, String outputFilename, boolean annotate) throws IOException {
+    public void toParquetFromVcf(String inputFilename, String outputFilename, VariantAvroAnnotator annotator)
+            throws IOException {
         File inputFile = new File(inputFilename);
         String filename = inputFile.getName();
 
@@ -94,7 +96,7 @@ public class VariantParquetConverter extends ParquetConverter<VariantAvro> {
                 vcfHeader.getSampleNamesInOrder());
 
         // Main loop
-        ConvertTask convertTask = new ConvertTask(converter, filters, annotate);
+        ConvertTask convertTask = new ConvertTask(converter, filters, annotator);
         List<VariantContext> variantContexts = vcfFileReader.read(batchSize);
         while (variantContexts.size() > 0) {
             List<VariantAvro> variantAvros = convertTask.apply(variantContexts);
@@ -112,8 +114,8 @@ public class VariantParquetConverter extends ParquetConverter<VariantAvro> {
         metadataManager.save(Paths.get(outputFilename + ".meta.json"), true);
     }
 
-    public void toParquetFromVcf(String inputFilename, String outputFilename, boolean annotate, int numThreads)
-            throws IOException {
+    public void toParquetFromVcf(String inputFilename, String outputFilename, VariantAvroAnnotator annotator,
+                                 int numThreads) throws IOException {
         // Config parallel task runner
         ParallelTaskRunner.Config config = ParallelTaskRunner.Config.builder()
                 .setNumTasks(numThreads)
@@ -134,7 +136,7 @@ public class VariantParquetConverter extends ParquetConverter<VariantAvro> {
             // Converter
             VariantContextToVariantConverter converter = new VariantContextToVariantConverter(datasetName,
                     new File(inputFilename).getName(), vcfFileReader.getVcfHeader().getSampleNamesInOrder());
-            ConvertTask convertTask = new ConvertTask(converter, filters, annotate);
+            ConvertTask convertTask = new ConvertTask(converter, filters, annotator);
             ptr = new ParallelTaskRunner<>(vcfFileReader, convertTask, dataWriter, config);
         } catch (Exception e) {
             throw new IOException("Error while creating ParallelTaskRunner", e);

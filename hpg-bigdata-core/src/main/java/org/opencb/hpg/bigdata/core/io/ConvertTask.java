@@ -19,16 +19,16 @@ import java.util.function.Predicate;
 public class ConvertTask implements ParallelTaskRunner.Task<VariantContext, VariantAvro> {
     private VariantContextToVariantConverter converter;
     private List<List<Predicate<VariantAvro>>> filters;
-    private boolean annotate = false;
+    private VariantAvroAnnotator annotator;
 
     protected VariantNormalizer variantNormalizer;
     protected final AvroEncoder<VariantAvro> encoder;
 
     public ConvertTask(VariantContextToVariantConverter converter, List<List<Predicate<VariantAvro>>> filters,
-                       boolean annotate) {
+                       VariantAvroAnnotator annotator) {
         this.converter = converter;
         this.filters = filters;
-        this.annotate = annotate;
+        this.annotator = annotator;
 
         this.variantNormalizer = new VariantNormalizer(true, true, false);
         this.encoder = new AvroEncoder<>(VariantAvro.getClassSchema());
@@ -50,9 +50,8 @@ public class ConvertTask implements ParallelTaskRunner.Task<VariantContext, Vari
         variants = variantNormalizer.apply(variants);
 
         // Annotate if necessary
-        if (annotate) {
-            VariantAvroAnnotator variantAvroAnnotator = new VariantAvroAnnotator();
-            variants = variantAvroAnnotator.annotate(variants);
+        if (annotator != null) {
+            variants = annotator.annotate(variants);
         }
 
         // Get Avro objects

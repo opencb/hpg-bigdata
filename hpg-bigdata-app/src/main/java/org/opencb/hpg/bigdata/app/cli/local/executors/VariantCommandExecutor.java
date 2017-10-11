@@ -49,6 +49,7 @@ import org.opencb.hpg.bigdata.app.cli.local.LocalCliOptionsParser;
 import org.opencb.hpg.bigdata.app.cli.local.options.VariantCommandOptions;
 import org.opencb.hpg.bigdata.core.avro.VariantAvroAnnotator;
 import org.opencb.hpg.bigdata.core.avro.VariantAvroSerializer;
+import org.opencb.hpg.bigdata.core.config.OskarConfiguration;
 import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
 import org.opencb.hpg.bigdata.core.lib.VariantDataset;
 import org.opencb.hpg.bigdata.core.parquet.VariantParquetConverter;
@@ -150,7 +151,16 @@ public class VariantCommandExecutor extends CommandExecutor {
                 variantCommandOptions.convertVariantCommandOptions.output, to);
 
         // annotate before converting and number of threads
-        boolean annotate = variantCommandOptions.convertVariantCommandOptions.annotate;
+        VariantAvroAnnotator variantAvroAnnotator = null;
+        if (variantCommandOptions.convertVariantCommandOptions.annotate) {
+            if (!StringUtils.isEmpty(variantCommandOptions.convertVariantCommandOptions.commonOptions.conf)) {
+                Path confPath = Paths.get(variantCommandOptions.convertVariantCommandOptions.commonOptions.conf);
+                OskarConfiguration oskarConfiguration = OskarConfiguration.load(new FileInputStream(confPath.toFile()));
+                variantAvroAnnotator = new VariantAvroAnnotator(oskarConfiguration);
+            } else {
+                variantAvroAnnotator = new VariantAvroAnnotator();
+            }
+        }
         int numThreads = variantCommandOptions.convertVariantCommandOptions.numThreads;
 
         long startTime, elapsedTime;
@@ -215,9 +225,9 @@ public class VariantCommandExecutor extends CommandExecutor {
                 System.out.println("\n\nStarting VCF->PARQUET conversion...\n");
                 startTime = System.currentTimeMillis();
                 if (numThreads > 1) {
-                    parquetConverter.toParquetFromVcf(inputPath.toString(), output, annotate, numThreads);
+                    parquetConverter.toParquetFromVcf(inputPath.toString(), output, variantAvroAnnotator, numThreads);
                 } else {
-                    parquetConverter.toParquetFromVcf(inputPath.toString(), output, annotate);
+                    parquetConverter.toParquetFromVcf(inputPath.toString(), output, variantAvroAnnotator);
                 }
                 elapsedTime = System.currentTimeMillis() - startTime;
                 System.out.println("\n\nFinish VCF->PARQUET conversion in " + (elapsedTime / 1000F) + " sec\n");
@@ -253,9 +263,9 @@ public class VariantCommandExecutor extends CommandExecutor {
             System.out.println("\n\nStarting VCF->AVRO conversion...\n");
             startTime = System.currentTimeMillis();
             if (numThreads > 1) {
-                avroSerializer.toAvro(inputPath.toString(), output, annotate, numThreads);
+                avroSerializer.toAvro(inputPath.toString(), output, variantAvroAnnotator, numThreads);
             } else {
-                avroSerializer.toAvro(inputPath.toString(), output, annotate);
+                avroSerializer.toAvro(inputPath.toString(), output, variantAvroAnnotator);
             }
             elapsedTime = System.currentTimeMillis() - startTime;
             System.out.println("\n\nFinish VCF->AVRO conversion in " + (elapsedTime / 1000F) + " sec\n");

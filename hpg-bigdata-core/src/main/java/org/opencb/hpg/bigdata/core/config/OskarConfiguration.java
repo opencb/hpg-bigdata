@@ -44,4 +44,40 @@ public class OskarConfiguration {
         ObjectMapper jsonMapper = new ObjectMapper(new YAMLFactory());
         jsonMapper.writerWithDefaultPrettyPrinter().writeValue(configurationOutputStream, this);
     }
+
+    public String getLogLevel() {
+        return logLevel;
+    }
+
+    public OskarConfiguration setLogLevel(String logLevel) {
+        this.logLevel = logLevel;
+        return this;
+    }
+
+    public String getLogFile() {
+        return logFile;
+    }
+
+    public OskarConfiguration setLogFile(String logFile) {
+        this.logFile = logFile;
+        return this;
+    }
+
+    public String getToolFolder() {
+        return toolFolder;
+    }
+
+    public OskarConfiguration setToolFolder(String toolFolder) {
+        this.toolFolder = toolFolder;
+        return this;
+    }
+
+    public CellBaseConfiguration getCellbase() {
+        return cellbase;
+    }
+
+    public OskarConfiguration setCellbase(CellBaseConfiguration cellbase) {
+        this.cellbase = cellbase;
+        return this;
+    }
 }

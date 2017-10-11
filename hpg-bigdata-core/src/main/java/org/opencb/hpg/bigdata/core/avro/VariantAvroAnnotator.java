@@ -32,6 +32,7 @@ import org.opencb.cellbase.client.rest.VariantClient;
 import org.opencb.commons.datastore.core.QueryOptions;
 import org.opencb.commons.datastore.core.QueryResponse;
 import org.opencb.commons.utils.FileUtils;
+import org.opencb.hpg.bigdata.core.config.OskarConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,6 +59,19 @@ public class VariantAvroAnnotator {
 //                .singletonList("http://bioinfodev.hpc.cam.ac.uk/cellbase-4.5.0-beta"), 30000));
                 .singletonList("http://bioinfo.hpc.cam.ac.uk/cellbase"), 30000));
         cellBaseClient = new CellBaseClient("hsapiens", clientConfiguration);
+    }
+
+    public VariantAvroAnnotator(OskarConfiguration configuration) {
+        logger = LoggerFactory.getLogger(VariantAvroAnnotator.class);
+
+        ClientConfiguration clientConfiguration = configuration.getCellbase().toClientConfiguration();
+        cellBaseClient = new CellBaseClient(clientConfiguration.getDefaultSpecies(), clientConfiguration);
+    }
+
+    public VariantAvroAnnotator(String species, ClientConfiguration clientConfiguration) {
+        logger = LoggerFactory.getLogger(VariantAvroAnnotator.class);
+
+        cellBaseClient = new CellBaseClient(species, clientConfiguration);
     }
 
     /**

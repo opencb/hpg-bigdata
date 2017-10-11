@@ -4,6 +4,7 @@ import htsjdk.variant.variantcontext.VariantContext;
 import org.opencb.biodata.models.variant.avro.VariantAvro;
 import org.opencb.biodata.tools.variant.converters.avro.VariantContextToVariantConverter;
 import org.opencb.commons.run.ParallelTaskRunner;
+import org.opencb.hpg.bigdata.core.avro.VariantAvroAnnotator;
 import org.opencb.hpg.bigdata.core.io.avro.AvroEncoder;
 
 import java.io.IOException;
@@ -19,8 +20,8 @@ public class ConvertEncodeTask implements ParallelTaskRunner.Task<VariantContext
     protected final AvroEncoder<VariantAvro> encoder;
 
     public ConvertEncodeTask(VariantContextToVariantConverter converter, List<List<Predicate<VariantAvro>>> filters,
-                             boolean annotate) {
-        convertTask = new ConvertTask(converter, filters, annotate);
+                             VariantAvroAnnotator annotator) {
+        convertTask = new ConvertTask(converter, filters, annotator);
         this.encoder = new AvroEncoder<>(VariantAvro.getClassSchema());
     }
 

@@ -156,10 +156,10 @@ public class VariantConvertCLITest {
 
     @Test
     public void parquetAnnotateParallel() {
-        String vcfFilename = "../hpg-bigdata-core/src/test/resources/org/opencb/hpg/bigdata/core/utils/VariantContextBlockIteratorTest.vcf";
+        //String vcfFilename = "../hpg-bigdata-core/src/test/resources/org/opencb/hpg/bigdata/core/utils/VariantContextBlockIteratorTest.vcf";
         //String vcfFilename = "/home/jtarraga/data150/vcf/ALL.chr1.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf";
         //String vcfFilename = "/home/jtarraga/data150/vcf/2.vcf";
-        //String vcfFilename = "/home/jtarraga/data150/vcf/5k.vcf";
+        String vcfFilename = "/home/jtarraga/data150/vcf/5k.vcf";
         //String vcfFilename = "/home/jtarraga/data150/vcf/100k.vcf";
         vcfPath = Paths.get(vcfFilename);
         Path parquetPath = Paths.get("/tmp/" + vcfPath.getFileName() + ".parquet");
