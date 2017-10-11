@@ -34,7 +34,7 @@ public class GroupByTest {
 
     @BeforeClass
     public static void setup() {
-        sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "/home/joaquin/softs/spark-2.0.0-bin-hadoop2.7/bin");
+        sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "~/softs/spark-2.0.0-bin-hadoop2.7/bin");
 
 //        sparkConf.set("spark.broadcast.compress", "true");
 //        sparkConf.set("spark.io.compression.codec", "org.apache.spark.io.SnappyCompressionCodec");

@@ -52,7 +52,7 @@ public class VariantDatasetFacetTest implements Serializable {
     }
 
 
-    @Test
+    //@Test
     public void test1() {
         String path;
         SparkConf sparkConf = SparkConfCreator.getConf("Dataset Variant", "local", 1,

@@ -17,7 +17,7 @@ public class SampleGenotypeTest {
 
     @BeforeClass
     public static void setup() {
-        sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "/home/joaquin/softs/spark-2.0.0-bin-hadoop2.7/bin");
+        sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "~/softs/spark-2.0.0-bin-hadoop2.7/bin");
 
 //        sparkConf.set("spark.broadcast.compress", "true");
 //        sparkConf.set("spark.io.compression.codec", "org.apache.spark.io.SnappyCompressionCodec");
@@ -44,8 +44,6 @@ public class SampleGenotypeTest {
         vd = new VariantDataset(sparkSession);
         try {
             String filename = this.getClass().getResource("100.variants.avro").getFile();
-//            String filename = "/home/jtarraga/data150/spark/variant-test-file-head-200.vcf.annot.avro";
-//            String filename = "/home/jtarraga/data150/spark/variant-test-file.vcf.annot.avro";
             System.out.println(">>>> opening file " + filename);
             vd.load(filename); //, sparkSession);
             //vd.printSchema();

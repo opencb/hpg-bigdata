@@ -512,7 +512,7 @@ public class MLTest implements Serializable {
         sparkSession.stop();
     }
 
-    @Test
+    //@Test
     public void logistic() throws Exception {
 //        init();
 //
@@ -566,7 +566,7 @@ public class MLTest implements Serializable {
 //        sparkSession.stop();
     }
 
-    @Test
+    //@Test
     public void chiSquare() throws Exception {
 
         try {
@@ -671,7 +671,7 @@ public class MLTest implements Serializable {
         jsc.stop();
     }
 */
-    @Test
+    //@Test
     public void pca1() {
         SparkConf conf = new SparkConf().setAppName("JavaPCAExample").setMaster("local");
         JavaSparkContext jsc = new JavaSparkContext(conf);

@@ -52,7 +52,7 @@ public class VariantRvTestsCLITest {
         }
     }
 
-    @Test
+    //@Test
     public void skat() {
         try {
             init();

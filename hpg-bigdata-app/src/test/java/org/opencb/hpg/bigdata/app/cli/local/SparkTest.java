@@ -147,7 +147,7 @@ public class SparkTest implements Serializable {
         }
     }
 
-    @Test
+    //@Test
     public void test3() {
         List<String> list = ds.toJSON().toJavaRDD().mapPartitions((Iterator<String> iter) -> {
             ObjectMapper objMapper = new ObjectMapper();
@@ -166,7 +166,7 @@ public class SparkTest implements Serializable {
         }
     }
 
-    @Test
+    //@Test
     public void test4() {
         List<Variant> list = ds.toJSON().toJavaRDD().mapPartitions((Iterator<String> iter) -> {
             ObjectMapper objMapper = new ObjectMapper();
@@ -186,7 +186,7 @@ public class SparkTest implements Serializable {
         }
     }
 
-    @Test
+    //@Test
     public void test5() {
         Encoder<Row> encoder = Encoders.kryo(Row.class);
         String outDir = "/tmp/test5/partitions";
@@ -203,7 +203,7 @@ public class SparkTest implements Serializable {
         //Dataset<Row> ds1 = sparkSession.read().format("com.databricks.spark.avro").load(outDir);
     }
 
-    @Test
+    //@Test
     public void test6() {
         //Encoder<VariantAvro> encoder = Encoders.kryo(VariantAvro.class);
         Encoder<VariantAvro> encoder = Encoders.bean(VariantAvro.class);
@@ -295,7 +295,7 @@ public class SparkTest implements Serializable {
         }
     }
 
-    @Test
+    //@Test
     public void test7() throws IOException {
         Dataset<Row> ds1 = sparkSession.read().parquet(inParquet);
 
@@ -347,7 +347,7 @@ public class SparkTest implements Serializable {
 */
     }
 
-    @Test
+    //@Test
     public void test8() {
         Dataset<Row> ds1 = sparkSession.read().parquet(inParquet);
         StructType schema = ds1.head().schema();
@@ -989,7 +989,7 @@ public class SparkTest implements Serializable {
         return outputRow;
     }
 
-    @Test
+    //@Test
     public void test9() {
         Dataset<Row> ds1 = sparkSession.read().parquet(inParquet);
         Row inputRow = ds1.head();
@@ -999,7 +999,7 @@ public class SparkTest implements Serializable {
         System.out.println(outputRow.toString());
     }
 
-    @Test
+    //@Test
     public void test10() {
         Dataset<Row> ds1 = sparkSession.read().parquet(inParquet);
         Row row1 = ds1.head();
@@ -1023,7 +1023,7 @@ public class SparkTest implements Serializable {
         System.out.println(row2.toString());
     }
 
-    @Test
+    //@Test
     public void test11() {
         VariantMetadataManager manager = new VariantMetadataManager();
         try {
@@ -1058,7 +1058,7 @@ public class SparkTest implements Serializable {
         System.out.println(row2.toString());
     }
 
-    @Test
+    //@Test
     public void test12() {
         Dataset<Row> ds1 = sparkSession.read().parquet(inParquet);
         Row row1 = ds1.head();
@@ -1080,7 +1080,7 @@ public class SparkTest implements Serializable {
         System.out.println(row2.toString());
     }
 
-    @Test
+    //@Test
     public void test13() {
         Dataset<Row> ds1 = sparkSession.read().parquet(inParquet);
         Row row1 = ds1.head();
@@ -1090,7 +1090,7 @@ public class SparkTest implements Serializable {
         }
     }
 
-    @Test
+    //@Test
     public void test14() {
         VariantMetadataManager manager = new VariantMetadataManager();
         try {
@@ -1126,13 +1126,6 @@ public class SparkTest implements Serializable {
 
         System.out.println(row1.toString());
         System.out.println(row2.toString());
-    }
-
-    @Test
-    public void test15() {
-//        AvroParquetWriter parquetFileWriter = new AvroParquetWriter();
-//               new AvroParquetWriter(new Path(outputFilename), schema, compressionCodecName, rowGroupSize, pageSize);
-//
     }
 
     @Before
@@ -1184,7 +1177,7 @@ public class SparkTest implements Serializable {
         sparkSession.stop();
     }
 
-    @Test
+    //@Test
     public void map() {
         ObjectMapper objMapper = new ObjectMapper();
         ObjectReader objectReader = objMapper.readerFor(Variant.class);
@@ -1201,7 +1194,7 @@ public class SparkTest implements Serializable {
 
 
 
-    @Test
+    //@Test
     public void mapToPair() {
         ObjectMapper objMapper = new ObjectMapper();
         ObjectReader objectReader = objMapper.readerFor(Variant.class);
@@ -1219,7 +1212,7 @@ public class SparkTest implements Serializable {
         }
     }
 
-    @Test
+    //@Test
     public void reduce() {
         ObjectMapper objMapper = new ObjectMapper();
         ObjectReader objectReader = objMapper.readerFor(Variant.class);
@@ -1239,7 +1232,7 @@ public class SparkTest implements Serializable {
         }
     }
 
-    @Test
+    //@Test
     public void reduceStats() {
         ObjectMapper objMapper = new ObjectMapper();
         ObjectReader objectReader = objMapper.readerFor(Variant.class);
@@ -1262,7 +1255,7 @@ public class SparkTest implements Serializable {
         }
     }
 
-    @Test
+    //@Test
     public void write() {
         String tmpDir = "/home/jtarraga/data150/partitions";
         vd.repartition(10).write().format("com.databricks.spark.avro").save(tmpDir);
@@ -1270,7 +1263,7 @@ public class SparkTest implements Serializable {
         //vd.write().format("com.databricks.spark.avro").save(tmpDir);
     }
 
-    @Test
+    //@Test
     public void read() {
         String tmpDir = "/home/jtarraga/data150/partitions";
         try {
@@ -1285,7 +1278,7 @@ public class SparkTest implements Serializable {
         //vd.write().format("com.databricks.spark.avro").save(tmpDir);
     }
 
-    @Test
+    //@Test
     public void partition() {
         List<Partition> list = vd.toJSON().toJavaRDD().partitions();
         for (Partition item: list) {
@@ -1293,7 +1286,7 @@ public class SparkTest implements Serializable {
         }
     }
 
-    @Test
+    //@Test
     public void mapPartition() {
         List<Partition> list = vd.toJSON().toJavaRDD().mapPartitions(
                 new FlatMapFunction<Iterator<String>, VariantSetStats>() {
@@ -1308,7 +1301,7 @@ public class SparkTest implements Serializable {
     }
 
 
-    @Test
+    //@Test
     public void reduceStatsMap() {
         ObjectMapper objMapper = new ObjectMapper();
         ObjectReader objectReader = objMapper.readerFor(Variant.class);

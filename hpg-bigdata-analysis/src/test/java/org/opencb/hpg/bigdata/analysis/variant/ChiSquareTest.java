@@ -32,7 +32,7 @@ public class ChiSquareTest {
 
     @BeforeClass
     public static void setup() {
-        sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "/home/joaquin/softs/spark-2.0.0-bin-hadoop2.7/bin");
+        sparkConf = SparkConfCreator.getConf("MyTest", "local", 1, true, "~/softs/spark-2.0.0-bin-hadoop2.7/bin");
 
         System.out.println("sparkConf = " + sparkConf.toDebugString());
         SparkContext sc = new SparkContext(sparkConf);
@@ -45,7 +45,7 @@ public class ChiSquareTest {
         sparkSession.sparkContext().stop();
     }
 
-    @Test
+ //   @Test
     public void test() {
 //        // create a contingency matrix ((3.0, 4.0), (5.0, 6.0))
 //        Matrix matrix = Matrices.dense(2, 2, new double[]{3.0, 5.0, 4.0, 6.0});

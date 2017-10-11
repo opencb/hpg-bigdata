@@ -28,7 +28,7 @@ public class VariantConvertCLITest {
 //        metaPath = Paths.get("/tmp/test.vcf.avro.meta.json");
     }
 
-    @Test
+    //@Test
     public void vcf2avro() {
         try {
             StringBuilder commandLine = new StringBuilder();
@@ -45,7 +45,7 @@ public class VariantConvertCLITest {
         }
     }
 
-    @Test
+    //@Test
     public void vcf2parquet() {
         try {
             StringBuilder commandLine = new StringBuilder();
@@ -62,7 +62,7 @@ public class VariantConvertCLITest {
         }
     }
 
-    @Test
+    //@Test
     public void avro2parquet() {
         try {
             StringBuilder commandLine = new StringBuilder();

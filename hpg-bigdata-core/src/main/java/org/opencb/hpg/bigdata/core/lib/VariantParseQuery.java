@@ -135,6 +135,7 @@ public class VariantParseQuery extends ParseQuery {
             sqlQueryString.append(suffix);
         } else {
             buildSimpleQueryString(viewName, queryOptions);
+            sqlQueryString.append(" ORDER BY chromosome, start ASC");
         }
 
         System.err.println(sqlQueryString.toString());

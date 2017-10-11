@@ -71,6 +71,7 @@ public class AlignmentParseQuery extends ParseQuery {
 
         // Build the SQL string from the processed query using explodes and filters
         buildSimpleQueryString(viewName, queryOptions);
+        //sqlQueryString.append(" ORDER BY position ASC");
 
         return sqlQueryString.toString();
     }

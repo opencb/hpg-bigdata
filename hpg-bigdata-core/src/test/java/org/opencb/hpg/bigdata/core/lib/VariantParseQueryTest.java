@@ -61,7 +61,8 @@ public class VariantParseQueryTest {
     public void parseConservationOR() throws Exception {
         String result = "SELECT * FROM test LATERAL VIEW explode(annotation.conservation) acons as cons " +
                 "WHERE ((cons.source = 'phastCons' AND cons.score<03) " +
-                "OR (cons.source = 'phylop' AND cons.score>0.5))";
+                "OR (cons.source = 'phylop' AND cons.score>0.5)) " +
+                "ORDER BY chromosome, start ASC";
 
         Query query = new Query();
         query.put("annotation.conservation", "phastCons<03,phylop>0.5");
@@ -74,7 +75,8 @@ public class VariantParseQueryTest {
     public void parseConservationAND() throws Exception {
         String result = "SELECT * FROM test LATERAL VIEW explode(annotation.conservation) acons as cons " +
                 "WHERE ((cons.source = 'phastCons' AND cons.score<03) " +
-                "AND (cons.source = 'phylop' AND cons.score>0.5))";
+                "AND (cons.source = 'phylop' AND cons.score>0.5)) " +
+                "ORDER BY chromosome, start ASC";
 
         Query query = new Query();
         query.put("annotation.conservation", "phastCons<03;phylop>0.5");
@@ -86,7 +88,8 @@ public class VariantParseQueryTest {
     @Test
     public void parseConsequenceTypeName() throws Exception {
         String result = "SELECT * FROM test LATERAL VIEW explode(annotation.consequenceTypes) act as ct " +
-                "LATERAL VIEW explode(ct.sequenceOntologyTerms) ctso as so WHERE so.name = 'missense_variant'";
+                "LATERAL VIEW explode(ct.sequenceOntologyTerms) ctso as so WHERE so.name = 'missense_variant' " +
+                "ORDER BY chromosome, start ASC";
 
         Query query = new Query();
         query.put("annotation.consequenceTypes.sequenceOntologyTerms.name", "missense_variant");
@@ -98,7 +101,8 @@ public class VariantParseQueryTest {
     @Test
     public void parseConsequenceTypeAccession() throws Exception {
         String result = "SELECT * FROM test LATERAL VIEW explode(annotation.consequenceTypes) act as ct " +
-                "LATERAL VIEW explode(ct.sequenceOntologyTerms) ctso as so WHERE so.accession = 'SO:0001566'";
+                "LATERAL VIEW explode(ct.sequenceOntologyTerms) ctso as so WHERE so.accession = 'SO:0001566' " +
+                "ORDER BY chromosome, start ASC";
 
         Query query = new Query();
         query.put("annotation.consequenceTypes.sequenceOntologyTerms.accession", "SO:0001566");
@@ -111,7 +115,8 @@ public class VariantParseQueryTest {
     public void parsePopulationFrequenciesOR() throws Exception {
         String result = "SELECT * FROM test LATERAL VIEW explode(annotation.populationFrequencies) apf as popfreq " +
                 "WHERE ((popfreq.study = '1000G' AND popfreq.population = 'CEU' AND popfreq.altAlleleFreq<1.2) " +
-                "OR (popfreq.study = '1000G' AND popfreq.population = 'ASW' AND popfreq.altAlleleFreq<1.25))";
+                "OR (popfreq.study = '1000G' AND popfreq.population = 'ASW' AND popfreq.altAlleleFreq<1.25)) " +
+                "ORDER BY chromosome, start ASC";
 
         Query query = new Query();
         query.put("annotation.populationFrequencies.altAlleleFreq", "1000G::CEU<1.2,1000G::ASW<1.25");
@@ -124,7 +129,8 @@ public class VariantParseQueryTest {
     public void parsePopulationFrequenciesAND() throws Exception {
         String result = "SELECT * FROM test LATERAL VIEW explode(annotation.populationFrequencies) apf as popfreq " +
                 "WHERE ((popfreq.study = '1000G' AND popfreq.population = 'CEU' AND popfreq.altAlleleFreq<1.2) " +
-                "AND (popfreq.study = '1000G' AND popfreq.population = 'ASW' AND popfreq.altAlleleFreq<1.25))";
+                "AND (popfreq.study = '1000G' AND popfreq.population = 'ASW' AND popfreq.altAlleleFreq<1.25)) " +
+                "ORDER BY chromosome, start ASC";
 
         Query query = new Query();
         query.put("annotation.populationFrequencies.altAlleleFreq", "1000G::CEU<1.2;1000G::ASW<1.25");
@@ -135,7 +141,8 @@ public class VariantParseQueryTest {
 
     @Test
     public void parseMultipleIds() throws Exception {
-        String result = "SELECT * FROM test  WHERE (id = 'rs587604674' OR id = 'rs587603352')";
+        String result = "SELECT * FROM test  WHERE (id = 'rs587604674' OR id = 'rs587603352') " +
+        "ORDER BY chromosome, start ASC";
 
         Query query = new Query();
         query.put("id", "rs587604674,rs587603352");
