@@ -8,6 +8,10 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.*;
 import org.apache.spark.broadcast.Broadcast;
+import org.apache.spark.mllib.linalg.Matrix;
+import org.apache.spark.mllib.linalg.Vector;
+import org.apache.spark.mllib.linalg.Vectors;
+import org.apache.spark.mllib.linalg.distributed.RowMatrix;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.catalyst.encoders.RowEncoder;
 import org.apache.spark.sql.types.DataTypes;
@@ -17,10 +21,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.opencb.biodata.models.variant.StudyEntry;
+import org.opencb.biodata.models.variant.Variant;
 import org.opencb.biodata.models.variant.avro.AlternateCoordinate;
 import org.opencb.biodata.models.variant.avro.FileEntry;
 import org.opencb.biodata.models.variant.avro.VariantAvro;
-import org.opencb.biodata.models.variant.Variant;
 import org.opencb.biodata.models.variant.metadata.VariantSetStats;
 import org.opencb.biodata.models.variant.stats.VariantStats;
 import org.opencb.biodata.tools.variant.metadata.VariantMetadataManager;
@@ -955,7 +959,7 @@ public class SparkTest implements Serializable {
 
             // create stats map
             Map<String, Row> stats = new HashMap<>();
-           // stats.put("ALL", statsRow);
+            // stats.put("ALL", statsRow);
 
             // create row for that study with the updated stats
             Row outputRowStudy = RowFactory.create(
@@ -1128,6 +1132,162 @@ public class SparkTest implements Serializable {
         System.out.println(row2.toString());
     }
 
+    //@Test
+    public void test15() {
+        VariantConvertCLITest variantConvertCLITest = new VariantConvertCLITest();
+        variantConvertCLITest.vcf2parquet();
+        vd = new VariantDataset(sparkSession);
+        try {
+            vd.load(variantConvertCLITest.parquetPath.toString());
+            vd.createOrReplaceTempView("vcf");
+
+            vd.show(10, false);
+
+            // Generate the schema based on the string of schema
+            final int numValues = 1092;
+            List<StructField> fields = new ArrayList<>();
+            for (int i = 0; i < numValues; i++) {
+                StructField field = DataTypes.createStructField("v" + i, DataTypes.IntegerType, true);
+                //StructField field = DataTypes.createStructField("v", DataTypes.createArrayType(DataTypes.DoubleType), true);
+                fields.add(field);
+            }
+            StructType schema = DataTypes.createStructType(fields);
+
+            JavaRDD<Vector> rows = vd.getDs().toJavaRDD().map((Function<Row, Vector>) r -> {
+                // Studies, by default get first study
+                List<Row> studies = r.getList(12);
+                Row study = studies.get(0);
+
+                // samplesData
+                List<List<String>> samplesData = new ArrayList<>();
+                List<Object> list = study.getList(4);
+                int i = 0;
+                double values[] = new double[numValues];
+                for (Object item: list) {
+                    String gt = (String) ((WrappedArray) item).head();
+                    if (gt.equals("0|0")) {
+                        values[i] = 0;
+                    } else if (gt.equals("1|1")) {
+                        values[i] = 2;
+                    } else {
+                        values[i] = 1;
+                    }
+                    i++;
+                }
+                Vector output = Vectors.dense(values);
+                return output;
+            });
+
+            //System.out.println("first = " + rows.first());
+            //Dataset<Vector> gts = sparkSession.createDataFrame(jrdd, schema);
+            //gts.show(10, false);
+
+
+            Iterator<Vector> iterator = rows.collect().iterator();
+            while (iterator.hasNext()) {
+                Vector vector = iterator.next();
+                System.out.println(vector.size() + ": " + iterator.next());
+            }
+
+//
+//            System.out.println("row = " + jrdd.first());
+//
+//
+//            Dataset<Row> peopleDataFrame = sparkSession.createDataFrame(jrdd, schema);
+//            peopleDataFrame.show(1);
+
+//            // $example on$
+//            List<Vector> data = new ArrayList<>();
+//            data.add(Vectors.sparse(5, new int[] {1, 3}, new double[] {1.0, 7.0}));
+//            data.add(Vectors.dense(2.0, 0.0, 3.0, 4.0, 5.0));
+//            data.add(Vectors.dense(4.0, 0.0, 0.0, 6.0, 7.0));
+//
+//            JavaRDD<Vector> rows = sc.parallelize(data);
+//
+//            System.out.println(rows.take(1).toString());
+//
+            // Create a RowMatrix from JavaRDD<Vector>.
+            RowMatrix mat = new RowMatrix(rows.rdd());
+
+//            // Compute the top 4 principal components.
+//            // Principal components are stored in a local dense matrix.
+            Matrix pc = mat.computePrincipalComponents(4);
+//
+//            // Project the rows to the linear space spanned by the top 4 principal components.
+//            RowMatrix projected = mat.multiply(pc);
+//            // $example off$
+//            Vector[] collectPartitions = (Vector[])projected.rows().collect();
+//            System.out.println("Projected vector of principal component:");
+//            for (Vector vector : collectPartitions) {
+//                System.out.println("\t" + vector);
+//            }
+
+//            System.out.println(vd.first());
+//
+//
+//            RowEncoder.
+            //vd.getDs().col()
+            //StructType schema2 = vd.schema();
+
+            //Dataset<Row> ds = vd.getDs();
+
+            //StructType schema1 = ds.schema();
+            //StructType schema = DataTypes.createStructType(new StructField[] { DataTypes.createStructField("id", DataTypes.DoubleType, false)});
+            //StructType newSchema = DataTypes.createStructType(Collections.singleton(DataTypes.createArrayType(DataTypes.DoubleType, true)));
+            //Row row = RowFactory.create(3.0, 45.6, 5.6);
+            //System.out.println(row.schema().toString());
+//            Dataset<Row> doubleDs = ds.map(new MapFunction<Row, Row>() {
+//                @Override
+//                public Row call(Row input) throws Exception {
+//                    Row output = RowFactory.create(Vectors.dense(4.0, 0.0, 0.0, 6.0, 7.0));
+//                    return output;
+//                    //return input;
+//                }
+//            }, RowEncoder.apply(schema));
+//            //System.out.println("count = " + doubleDs.count());
+//            doubleDs.show();
+
+
+//            ds.map(new Function1<Row, Row>() {
+//                @Override
+//                public Row apply(Row row) {
+//                    RowFactory.create(Vectors.dense(4.0, 0.0, 0.0, 6.0, 7.0));
+//                    Row outputRow = null;
+//                    return outputRow;
+//                }
+//            }, RowEncoder.class);
+//
+//            //JavaRDD<Vector> rows = jsc.parallelize(data);
+//
+//            List<Vector> data = Arrays.asList(
+//                    Vectors.sparse(5, new int[] {1, 3}, new double[] {1.0, 7.0}),
+//                    Vectors.dense(2.0, 0.0, 3.0, 4.0, 5.0),
+//                    Vectors.dense(4.0, 0.0, 0.0, 6.0, 7.0)
+//            );
+//            Vector vector1 = new Vector(Arrays.asList("1,2,3,4,5".split(",")));
+//            Vectors.dense()
+//
+//
+//            // Create a RowMatrix from JavaRDD<Vector>.
+//            RowMatrix mat = new RowMatrix(rows.rdd());
+//
+//            // Compute the top 4 principal components.
+//            // Principal components are stored in a local dense matrix.
+//            Matrix pc = mat.computePrincipalComponents(4);
+//
+//            // Project the rows to the linear space spanned by the top 4 principal components.
+//            RowMatrix projected = mat.multiply(pc);
+//            // $example off$
+//            Vector[] collectPartitions = (Vector[])projected.rows().collect();
+//            System.out.println("Projected vector of principal component:");
+//            for (Vector vector : collectPartitions) {
+//                System.out.println("\t" + vector);
+//            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     @Before
     public void setUp() throws Exception {
         VariantRvTestsCLITest rvTestsCLITest = new VariantRvTestsCLITest();
@@ -1135,7 +1295,6 @@ public class SparkTest implements Serializable {
 
         SparkConf sparkConf = SparkConfCreator.getConf("TEST", "local", 1, true);
         sparkConf.set("spark.driver.allowMultipleContexts", "true");
-
 
         sc = new JavaSparkContext(sparkConf);
         sparkSession = new SparkSession(sc.sc());

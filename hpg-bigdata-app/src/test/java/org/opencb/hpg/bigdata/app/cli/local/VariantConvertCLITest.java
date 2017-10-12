@@ -13,11 +13,11 @@ import java.nio.file.Paths;
  */
 public class VariantConvertCLITest {
 
-    Path vcfPath;
-    Path pedPath;
-    Path avroPath;
-    Path parquetPath;
-    Path metaPath;
+    public Path vcfPath;
+    public Path pedPath;
+    public Path avroPath;
+    public Path parquetPath;
+    public Path metaPath;
 
     @Before
     public void init() throws URISyntaxException {
@@ -45,8 +45,16 @@ public class VariantConvertCLITest {
         }
     }
 
-    //@Test
+    @Test
     public void vcf2parquet() {
+        //String vcfFilename = "../hpg-bigdata-core/src/test/resources/org/opencb/hpg/bigdata/core/utils/VariantContextBlockIteratorTest.vcf";
+        String vcfFilename = "../hpg-bigdata-core/src/test/resources/org/opencb/hpg/bigdata/core/utils/VcfBlockIteratorTest.vcf";
+        vcfPath = Paths.get(vcfFilename);
+        parquetPath = Paths.get("/tmp/" + vcfPath.getFileName() + ".parquet");
+
+        new File(parquetPath.toString()).delete();
+        new File(parquetPath.toString() + ".meta.json").delete();
+
         try {
             StringBuilder commandLine = new StringBuilder();
             commandLine.append(" variant convert");

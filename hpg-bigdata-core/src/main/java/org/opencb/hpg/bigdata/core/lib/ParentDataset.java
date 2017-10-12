@@ -67,6 +67,8 @@ public abstract class ParentDataset<T> {
             ds = sqlContext.read().format("com.databricks.spark.avro").load(filename);
         } else if (StringUtils.endsWithAny(filename, "json", "json.gz")) {
             ds = sqlContext.read().json(filename);
+        } else if (StringUtils.endsWithAny(filename, "parquet")) {
+            ds = sqlContext.read().parquet(filename);
         } else {
             ds = sqlContext.read().format("com.databricks.spark.avro").load(filename);
             //ds = sqlContext.read().load(filename);
@@ -714,6 +716,15 @@ public abstract class ParentDataset<T> {
 
     public ParentDataset<T> setQuery(Query query) {
         this.query = query;
+        return this;
+    }
+
+    public Dataset<Row> getDs() {
+        return ds;
+    }
+
+    public ParentDataset setDs(Dataset<Row> ds) {
+        this.ds = ds;
         return this;
     }
 }

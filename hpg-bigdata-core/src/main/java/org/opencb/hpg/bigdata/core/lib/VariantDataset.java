@@ -23,6 +23,7 @@ import org.opencb.biodata.models.variant.Variant;
 import org.opencb.commons.datastore.core.Query;
 import org.opencb.commons.datastore.core.QueryOptions;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -30,7 +31,7 @@ import java.util.List;
 /**
  * Created by imedina on 04/08/16.
  */
-public class VariantDataset extends ParentDataset<VariantDataset> {
+public class VariantDataset extends ParentDataset<VariantDataset> implements Serializable {
 
     private VariantParseQuery variantParseQuery;
     private String sql;

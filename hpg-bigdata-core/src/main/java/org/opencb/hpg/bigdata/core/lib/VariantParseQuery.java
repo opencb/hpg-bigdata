@@ -20,6 +20,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.opencb.commons.datastore.core.Query;
 import org.opencb.commons.datastore.core.QueryOptions;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,7 +28,7 @@ import java.util.regex.Pattern;
 /**
  * Created by imedina on 09/08/16.
  */
-public class VariantParseQuery extends ParseQuery {
+public class VariantParseQuery extends ParseQuery implements Serializable {
 
 //    private static final Pattern POPULATION_PATTERN =
 //            Pattern.compile("^([^=<>]+)::([^=<>]+)(<=|>=|!=|=~|==|<|>)([^=<>]+)$");
