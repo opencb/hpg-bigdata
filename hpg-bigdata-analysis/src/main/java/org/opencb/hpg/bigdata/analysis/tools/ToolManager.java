@@ -92,8 +92,8 @@ public class ToolManager {
         SortedMap<String, Object> sortedMap = new TreeMap<>(comparator);
         sortedMap.putAll(paramsMap);
 
-        StringBuilder commandLine = new StringBuilder(toolDirectory.resolve(tool).toString()).append("/")
-                .append(execution.getBin()).append(" ");
+        StringBuilder commandLine = new StringBuilder("'").append(toolDirectory.resolve(tool).toString()).append("/")
+                .append(execution.getBin()).append("' ");
         for (Map.Entry<String, Object> objectEntry : sortedMap.entrySet()) {
             Param inputParam = manifestParams.get(objectEntry.getKey());
             if (inputParam != null) {
