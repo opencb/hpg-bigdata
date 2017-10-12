@@ -1134,6 +1134,8 @@ public class SparkTest implements Serializable {
         //rvTestsCLITest.init();
 
         SparkConf sparkConf = SparkConfCreator.getConf("TEST", "local", 1, true);
+        sparkConf.set("spark.driver.allowMultipleContexts", "true");
+
 
         sc = new JavaSparkContext(sparkConf);
         sparkSession = new SparkSession(sc.sc());
