@@ -23,8 +23,8 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.SparkSession;
-import org.opencb.hpg.bigdata.app.cli.local.CliUtils;
-import org.opencb.hpg.bigdata.app.cli.local.options.VariantCommandOptions;
+import org.opencb.hpg.bigdata.app.cli.CliUtils;
+import org.opencb.hpg.bigdata.app.cli.options.VariantCommandOptions;
 import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
 import org.opencb.hpg.bigdata.core.lib.VariantDataset;
 

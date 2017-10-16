@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.opencb.hpg.bigdata.app.cli.local;
+package org.opencb.hpg.bigdata.app.cli;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -25,8 +25,8 @@ import org.opencb.biodata.models.core.Region;
 import org.opencb.biodata.models.metadata.Sample;
 import org.opencb.biodata.tools.variant.metadata.VariantMetadataManager;
 import org.opencb.commons.datastore.core.Query;
-import org.opencb.hpg.bigdata.app.cli.local.options.VariantFilterOptions;
-import org.opencb.hpg.bigdata.app.cli.local.options.*;
+import org.opencb.hpg.bigdata.app.cli.options.VariantFilterOptions;
+import org.opencb.hpg.bigdata.app.cli.options.*;
 import org.opencb.hpg.bigdata.core.lib.VariantDataset;
 
 import java.io.File;

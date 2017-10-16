@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.opencb.hpg.bigdata.app.cli.local.executors;
+package org.opencb.hpg.bigdata.app.cli.executors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import htsjdk.samtools.SAMFileHeader;
@@ -34,8 +34,8 @@ import org.opencb.biodata.tools.alignment.BamUtils;
 import org.opencb.biodata.tools.alignment.stats.AlignmentGlobalStats;
 import org.opencb.commons.utils.FileUtils;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
-import org.opencb.hpg.bigdata.app.cli.local.CliUtils;
-import org.opencb.hpg.bigdata.app.cli.local.options.AlignmentCommandOptions;
+import org.opencb.hpg.bigdata.app.cli.CliUtils;
+import org.opencb.hpg.bigdata.app.cli.options.AlignmentCommandOptions;
 import org.opencb.hpg.bigdata.core.avro.AlignmentAvroSerializer;
 import org.opencb.hpg.bigdata.core.lib.AlignmentDataset;
 import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;

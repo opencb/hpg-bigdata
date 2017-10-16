@@ -1,8 +1,8 @@
-package org.opencb.hpg.bigdata.app.cli.local.options;
+package org.opencb.hpg.bigdata.app.cli.options;
 
 import com.beust.jcommander.*;
 import org.apache.parquet.hadoop.ParquetWriter;
-import org.opencb.hpg.bigdata.app.cli.local.LocalCliOptionsParser;
+import org.opencb.hpg.bigdata.app.cli.LocalCliOptionsParser;
 
 import java.util.HashMap;
 import java.util.Map;

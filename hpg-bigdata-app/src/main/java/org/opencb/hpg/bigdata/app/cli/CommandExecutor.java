@@ -19,7 +19,6 @@ package org.opencb.hpg.bigdata.app.cli;
 import com.beust.jcommander.JCommander;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
-import org.opencb.hpg.bigdata.app.cli.local.LocalCliOptionsParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

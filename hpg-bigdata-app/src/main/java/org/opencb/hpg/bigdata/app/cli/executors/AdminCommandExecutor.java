@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package org.opencb.hpg.bigdata.app.cli.local.executors;
+package org.opencb.hpg.bigdata.app.cli.executors;
 
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
-import org.opencb.hpg.bigdata.app.cli.local.options.AdminCommandOptions;
+import org.opencb.hpg.bigdata.app.cli.options.AdminCommandOptions;
 import org.opencb.hpg.bigdata.app.rest.RestServer;
 
 /**

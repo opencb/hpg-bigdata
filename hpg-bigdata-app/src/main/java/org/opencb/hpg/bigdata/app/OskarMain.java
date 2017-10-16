@@ -18,13 +18,13 @@ package org.opencb.hpg.bigdata.app;
 
 import com.beust.jcommander.ParameterException;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
-import org.opencb.hpg.bigdata.app.cli.local.*;
-import org.opencb.hpg.bigdata.app.cli.local.executors.*;
+import org.opencb.hpg.bigdata.app.cli.LocalCliOptionsParser;
+import org.opencb.hpg.bigdata.app.cli.executors.*;
 
 /**
  * Created by hpccoll1 on 18/05/15.
  */
-public class BigDataLocalMain {
+public class OskarMain {
 
     public static void main(String[] args) {
         LocalCliOptionsParser localCliOptionsParser = new LocalCliOptionsParser();

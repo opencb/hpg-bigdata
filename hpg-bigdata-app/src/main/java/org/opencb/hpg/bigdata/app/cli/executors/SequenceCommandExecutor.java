@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.opencb.hpg.bigdata.app.cli.local.executors;
+package org.opencb.hpg.bigdata.app.cli.executors;
 
 import htsjdk.samtools.fastq.FastqReader;
 import org.apache.avro.file.DataFileStream;
@@ -24,7 +24,7 @@ import org.opencb.biodata.tools.alignment.stats.SequenceStats;
 import org.opencb.biodata.tools.alignment.stats.SequenceStatsCalculator;
 import org.opencb.biodata.tools.sequence.FastqRecordToReadBiConverter;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
-import org.opencb.hpg.bigdata.app.cli.local.options.SequenceCommandOptions;
+import org.opencb.hpg.bigdata.app.cli.options.SequenceCommandOptions;
 import org.opencb.hpg.bigdata.core.io.avro.AvroWriter;
 import org.opencb.hpg.bigdata.core.utils.CompressionUtils;
 

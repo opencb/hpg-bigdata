@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.opencb.hpg.bigdata.app.cli.local.executors;
+package org.opencb.hpg.bigdata.app.cli.executors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
@@ -44,9 +44,9 @@ import org.opencb.commons.utils.FileUtils;
 import org.opencb.hpg.bigdata.analysis.variant.wrappers.PlinkWrapper;
 import org.opencb.hpg.bigdata.analysis.variant.wrappers.RvTestsWrapper;
 import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
-import org.opencb.hpg.bigdata.app.cli.local.CliUtils;
-import org.opencb.hpg.bigdata.app.cli.local.LocalCliOptionsParser;
-import org.opencb.hpg.bigdata.app.cli.local.options.VariantCommandOptions;
+import org.opencb.hpg.bigdata.app.cli.CliUtils;
+import org.opencb.hpg.bigdata.app.cli.LocalCliOptionsParser;
+import org.opencb.hpg.bigdata.app.cli.options.VariantCommandOptions;
 import org.opencb.hpg.bigdata.core.avro.VariantAvroAnnotator;
 import org.opencb.hpg.bigdata.core.avro.VariantAvroSerializer;
 import org.opencb.hpg.bigdata.core.config.OskarConfiguration;

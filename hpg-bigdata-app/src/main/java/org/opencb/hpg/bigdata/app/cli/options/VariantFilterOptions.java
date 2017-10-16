@@ -1,4 +1,4 @@
-package org.opencb.hpg.bigdata.app.cli.local.options;
+package org.opencb.hpg.bigdata.app.cli.options;
 
 import com.beust.jcommander.Parameter;
 

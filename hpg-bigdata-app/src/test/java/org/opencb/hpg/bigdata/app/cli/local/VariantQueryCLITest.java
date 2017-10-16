@@ -7,7 +7,8 @@ import org.junit.Test;
 import org.opencb.biodata.models.variant.metadata.VariantStudyMetadata;
 import org.opencb.biodata.tools.variant.converters.VCFExporter;
 import org.opencb.biodata.tools.variant.metadata.VariantMetadataManager;
-import org.opencb.hpg.bigdata.app.cli.local.executors.VariantCommandExecutor;
+import org.opencb.hpg.bigdata.app.cli.LocalCliOptionsParser;
+import org.opencb.hpg.bigdata.app.cli.executors.VariantCommandExecutor;
 import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
 import org.opencb.hpg.bigdata.core.lib.VariantDataset;
 
