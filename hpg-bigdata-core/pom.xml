@@ -46,10 +46,6 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>org.opencb.commons</groupId>
-            <artifactId>commons-datastore-core</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.opencb.cellbase</groupId>
             <artifactId>cellbase-client</artifactId>
             <version>${cellbase.version}</version>
@@ -84,23 +80,8 @@
         </dependency>
         <dependency>
             <groupId>org.apache.parquet</groupId>
-            <artifactId>parquet-column</artifactId>
-            <version>${parquet.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.parquet</groupId>
             <artifactId>parquet-hadoop</artifactId>
             <version>${parquet.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.parquet</groupId>
-            <artifactId>parquet-column</artifactId>
-            <version>1.8.2</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.parquet</groupId>
-            <artifactId>parquet-hadoop</artifactId>
-            <version>1.8.2</version>
         </dependency>
         <dependency>
             <groupId>com.google.protobuf</groupId>
