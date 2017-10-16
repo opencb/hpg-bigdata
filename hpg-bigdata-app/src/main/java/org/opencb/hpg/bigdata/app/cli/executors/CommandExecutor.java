@@ -17,11 +17,20 @@
 package org.opencb.hpg.bigdata.app.cli.executors;
 
 import com.beust.jcommander.JCommander;
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.opencb.hpg.bigdata.app.cli.options.LocalCliOptionsParser;
+import org.opencb.hpg.bigdata.core.config.OskarConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Created by imedina on 03/02/15.
@@ -30,7 +39,10 @@ public abstract class CommandExecutor {
 
     protected String logLevel;
     protected boolean verbose;
+    @Deprecated
     protected String configFile;
+
+    protected OskarConfiguration configuration;
 
     protected String appHome;
 
@@ -40,6 +52,7 @@ public abstract class CommandExecutor {
 
     public CommandExecutor(LocalCliOptionsParser.CommonCommandOptions options) {
         this.options = options;
+
         init(options.logLevel, options.verbose, options.conf);
     }
 
@@ -77,6 +90,28 @@ public abstract class CommandExecutor {
          * then CELLBASE_HOME environment variable is used instead.
          */
         this.appHome = System.getProperty("app.home", "/opt/hpg-bigdata");
+
+        try {
+            Path confPath;
+            // We first read the CLi parameter, otherwise we assume the default configuration file
+            if (StringUtils.isNotEmpty(configFile) && new File(configFile).exists()) {
+                confPath = Paths.get(configFile);
+            } else {
+                confPath = Paths.get(this.appHome).resolve("configuration.yml");
+            }
+
+            // We load the config file from disk or from the JAR file
+            if (Files.exists(confPath)) {
+                System.out.println("Loading configuration from '" + confPath.toAbsolutePath() + "'");
+                this.configuration = OskarConfiguration.load(new FileInputStream(confPath.toFile()));
+            } else {
+                System.out.println("Loading configuration from JAR file");
+                this.configuration = OskarConfiguration
+                        .load(OskarConfiguration.class.getClassLoader().getResourceAsStream("configuration.yml"));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         if (logLevel == null || logLevel.isEmpty()) {
             logLevel = "info";

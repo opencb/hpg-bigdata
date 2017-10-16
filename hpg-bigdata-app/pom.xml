@@ -182,6 +182,7 @@
                                     <arg value="${project.basedir}/app/data"/>
                                     <arg value="${project.basedir}/app/examples"/>
                                     <arg value="${project.basedir}/app/libs"/>
+                                    <arg value="${project.basedir}/../hpg-bigdata-core/target/classes/configuration.yml"/>
                                     <arg value="${project.basedir}/../README.md"/>
                                     <arg value="${project.basedir}/../LICENSE"/>
                                     <arg value="${build.dir}"/>

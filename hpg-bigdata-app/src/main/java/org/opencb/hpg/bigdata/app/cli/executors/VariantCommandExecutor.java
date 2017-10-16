@@ -119,6 +119,7 @@ public class VariantCommandExecutor extends CommandExecutor {
     }
 
     private void convert() throws IOException {
+        System.out.println(configuration.toString());
         // sanity check: paremeter 'to'
         String to = variantCommandOptions.convertVariantCommandOptions.to.toLowerCase();
         if (!to.equals("avro") && !to.equals("parquet")) {

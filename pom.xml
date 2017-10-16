@@ -182,6 +182,16 @@
 
     <profiles>
         <profile>
+            <id>default-config</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <!-- General -->
+                <OSKAR.CELLBASE.REST.HOST>http://bioinfo.hpc.cam.ac.uk/cellbase/</OSKAR.CELLBASE.REST.HOST>
+            </properties>
+        </profile>
+        <profile>
             <id>deploy</id>
             <build>
                 <plugins>

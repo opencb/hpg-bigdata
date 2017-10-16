@@ -1,0 +1,24 @@
+---
+logLevel: "INFO"
+logFile: ""
+
+
+toolFolder: ""
+
+## Cellbase client configuration
+cellbase:
+  hosts:
+  - "${OSKAR.CELLBASE.REST.HOST}"
+  version: "v3"
+  database:
+    hosts:
+    - "localhost"
+    user: "user"
+    password: "password"
+    options: {}
+  preferred: "local"
+
+#execution:
+#  binaries: {
+#    "plink": "/../../.."
+#  }

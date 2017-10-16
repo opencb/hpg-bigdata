@@ -45,6 +45,17 @@ public class OskarConfiguration {
         jsonMapper.writerWithDefaultPrettyPrinter().writeValue(configurationOutputStream, this);
     }
 
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("OskarConfiguration{");
+        sb.append("logLevel='").append(logLevel).append('\'');
+        sb.append(", logFile='").append(logFile).append('\'');
+        sb.append(", toolFolder='").append(toolFolder).append('\'');
+        sb.append(", cellbase=").append(cellbase);
+        sb.append('}');
+        return sb.toString();
+    }
+
     public String getLogLevel() {
         return logLevel;
     }
