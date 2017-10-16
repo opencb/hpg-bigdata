@@ -5,7 +5,6 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.ParametersDelegate;
 import org.apache.parquet.hadoop.ParquetWriter;
-import org.opencb.hpg.bigdata.app.cli.LocalCliOptionsParser;
 
 /**
  * Created by jtarraga on 01/06/17.

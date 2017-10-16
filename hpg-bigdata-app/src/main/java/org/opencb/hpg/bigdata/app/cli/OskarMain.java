@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package org.opencb.hpg.bigdata.app;
+package org.opencb.hpg.bigdata.app.cli;
 
 import com.beust.jcommander.ParameterException;
-import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
-import org.opencb.hpg.bigdata.app.cli.LocalCliOptionsParser;
+import org.opencb.hpg.bigdata.app.cli.executors.CommandExecutor;
+import org.opencb.hpg.bigdata.app.cli.options.LocalCliOptionsParser;
 import org.opencb.hpg.bigdata.app.cli.executors.*;
 
 /**

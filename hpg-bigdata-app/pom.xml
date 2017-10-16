@@ -123,7 +123,14 @@
                     <programs>
                         <program>
                             <name>hpg-bigdata.sh</name>
-                            <mainClass>org.opencb.hpg.bigdata.app.OskarMain</mainClass>
+                            <mainClass>org.opencb.hpg.bigdata.app.cli.OskarMain</mainClass>
+                            <platforms>
+                                <platform>unix</platform>
+                            </platforms>
+                        </program>
+                        <program>
+                            <id>hpg-bigdata-clicompletion.sh</id>
+                            <mainClass>org.opencb.hpg.bigdata.app.cli.utils.CliCompletionMain</mainClass>
                             <platforms>
                                 <platform>unix</platform>
                             </platforms>
@@ -163,7 +170,8 @@
                                 </exec>
 
                                 <exec executable="mkdir">
-                                    <arg value="${build.dir}"/>
+                                    <arg value="-p"/>
+                                    <arg value="${build.dir}/completion"/>
                                 </exec>
 
                                 <echo>Copying app files</echo>
@@ -191,6 +199,10 @@
                                     <arg value="${project.basedir}/target/appassembler/libs"/>
                                     <arg value="${project.basedir}/target/hpg-bigdata-app-${hpg.version}-jar-with-dependencies.jar"/>
                                     <arg value="${build.dir}"/>
+                                </exec>
+
+                                <exec executable="${project.basedir}/target/appassembler/bin/hpg-bigdata-clicompletion.sh">
+                                    <arg value="${build.dir}/completion"/>
                                 </exec>
 
                                 <!--<echo>Copying to ${build.dir}</echo>-->

@@ -163,7 +163,7 @@
                         <phase>validate</phase>
                         <configuration>
                             <configLocation>checkstyle.xml</configLocation>
-                            <excludes>org/opencb/hpg/bigdata/app/cli/LocalCliOptionsParser.java</excludes>
+                            <excludes>org/opencb/hpg/bigdata/app/cli/options/LocalCliOptionsParser.java</excludes>
                         </configuration>
                         <goals>
                             <goal>check</goal>

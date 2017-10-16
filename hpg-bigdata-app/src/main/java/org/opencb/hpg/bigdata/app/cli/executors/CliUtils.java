@@ -1,4 +1,4 @@
-package org.opencb.hpg.bigdata.app.cli;
+package org.opencb.hpg.bigdata.app.cli.executors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.opencb.biodata.models.core.Region;
@@ -6,6 +6,7 @@ import org.opencb.biodata.models.metadata.Sample;
 import org.opencb.biodata.tools.variant.metadata.VariantMetadataManager;
 import org.opencb.commons.datastore.core.Query;
 import org.opencb.commons.utils.FileUtils;
+import org.opencb.hpg.bigdata.app.cli.options.LocalCliOptionsParser;
 import org.opencb.hpg.bigdata.app.cli.options.VariantCommandOptions;
 import org.opencb.hpg.bigdata.core.lib.ParentDataset;
 import org.opencb.hpg.bigdata.core.lib.VariantDataset;

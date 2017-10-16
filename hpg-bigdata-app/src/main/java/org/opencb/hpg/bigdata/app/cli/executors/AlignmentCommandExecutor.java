@@ -33,8 +33,6 @@ import org.opencb.biodata.tools.alignment.BamManager;
 import org.opencb.biodata.tools.alignment.BamUtils;
 import org.opencb.biodata.tools.alignment.stats.AlignmentGlobalStats;
 import org.opencb.commons.utils.FileUtils;
-import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
-import org.opencb.hpg.bigdata.app.cli.CliUtils;
 import org.opencb.hpg.bigdata.app.cli.options.AlignmentCommandOptions;
 import org.opencb.hpg.bigdata.core.avro.AlignmentAvroSerializer;
 import org.opencb.hpg.bigdata.core.lib.AlignmentDataset;

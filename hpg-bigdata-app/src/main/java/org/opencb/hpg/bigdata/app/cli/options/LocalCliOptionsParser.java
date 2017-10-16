@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.opencb.hpg.bigdata.app.cli;
+package org.opencb.hpg.bigdata.app.cli.options;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -466,6 +466,10 @@ public class LocalCliOptionsParser {
             }
         }
         return list;
+    }
+
+    public JCommander getJCommander() {
+        return jcommander;
     }
 
     public GeneralOptions getGeneralOptions() {

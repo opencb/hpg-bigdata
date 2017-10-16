@@ -23,7 +23,6 @@ import org.opencb.biodata.models.sequence.Read;
 import org.opencb.biodata.tools.alignment.stats.SequenceStats;
 import org.opencb.biodata.tools.alignment.stats.SequenceStatsCalculator;
 import org.opencb.biodata.tools.sequence.FastqRecordToReadBiConverter;
-import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
 import org.opencb.hpg.bigdata.app.cli.options.SequenceCommandOptions;
 import org.opencb.hpg.bigdata.core.io.avro.AvroWriter;
 import org.opencb.hpg.bigdata.core.utils.CompressionUtils;

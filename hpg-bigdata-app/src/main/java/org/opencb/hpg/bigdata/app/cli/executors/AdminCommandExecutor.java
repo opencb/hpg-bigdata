@@ -16,7 +16,6 @@
 
 package org.opencb.hpg.bigdata.app.cli.executors;
 
-import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
 import org.opencb.hpg.bigdata.app.cli.options.AdminCommandOptions;
 import org.opencb.hpg.bigdata.app.rest.RestServer;
 

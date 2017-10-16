@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package org.opencb.hpg.bigdata.app.cli;
+package org.opencb.hpg.bigdata.app.cli.executors;
 
 import com.beust.jcommander.JCommander;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
+import org.opencb.hpg.bigdata.app.cli.options.LocalCliOptionsParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

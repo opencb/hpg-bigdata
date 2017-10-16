@@ -2,7 +2,6 @@ package org.opencb.hpg.bigdata.app.cli.executors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.opencb.hpg.bigdata.analysis.tools.ToolManager;
-import org.opencb.hpg.bigdata.app.cli.CommandExecutor;
 import org.opencb.hpg.bigdata.app.cli.options.ToolCommandOptions;
 
 import java.nio.file.Paths;
