@@ -12,10 +12,11 @@ public class OskarConfiguration {
     private String logLevel;
     private String logFile;
 
+    private int numThreads;
     private String toolFolder;
 
     private CellBaseConfiguration cellbase;
-
+    private AnalysisConfiguration analysis;
 
     public OskarConfiguration() {
         this.cellbase = new CellBaseConfiguration();
@@ -47,13 +48,31 @@ public class OskarConfiguration {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("OskarConfiguration{");
-        sb.append("logLevel='").append(logLevel).append('\'');
-        sb.append(", logFile='").append(logFile).append('\'');
-        sb.append(", toolFolder='").append(toolFolder).append('\'');
-        sb.append(", cellbase=").append(cellbase);
-        sb.append('}');
-        return sb.toString();
+        return "OskarConfiguration{"
+                + "logLevel='" + logLevel + '\''
+                + ", logFile='" + logFile + '\''
+                + ", numThreads=" + numThreads
+                + ", toolFolder='" + toolFolder + '\''
+                + ", cellbase=" + cellbase
+                + ", analysis=" + analysis + '}';
+    }
+
+    public int getNumThreads() {
+        return numThreads;
+    }
+
+    public OskarConfiguration setNumThreads(int numThreads) {
+        this.numThreads = numThreads;
+        return this;
+    }
+
+    public AnalysisConfiguration getAnalysis() {
+        return analysis;
+    }
+
+    public OskarConfiguration setAnalysis(AnalysisConfiguration analysis) {
+        this.analysis = analysis;
+        return this;
     }
 
     public String getLogLevel() {

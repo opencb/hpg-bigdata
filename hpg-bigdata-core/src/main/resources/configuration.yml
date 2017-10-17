@@ -2,7 +2,7 @@
 logLevel: "INFO"
 logFile: ""
 
-
+numThreads: 2
 toolFolder: ""
 
 ## Cellbase client configuration
@@ -18,7 +18,8 @@ cellbase:
     options: {}
   preferred: "local"
 
-#execution:
-#  binaries: {
-#    "plink": "/../../.."
-#  }
+analysis:
+  binaries: {
+    "plink": "~/soft/plink-1.9/plink",
+    "rvtests": "~/soft/rvtests/executable/rvtest"
+  }
