@@ -92,8 +92,13 @@ public class ToolManager {
         SortedMap<String, Object> sortedMap = new TreeMap<>(comparator);
         sortedMap.putAll(paramsMap);
 
+        // Manage spaces in the binary path
+        String[] fields = execution.getBin().split(" ");
         StringBuilder commandLine = new StringBuilder("'").append(toolDirectory.resolve(tool).toString()).append("/")
-                .append(execution.getBin()).append("' ");
+                .append(fields[0]).append("' ");
+        for (int i = 1; i < fields.length; i++) {
+            commandLine.append(fields[i]).append(" ");
+        }
         for (Map.Entry<String, Object> objectEntry : sortedMap.entrySet()) {
             Param inputParam = manifestParams.get(objectEntry.getKey());
             if (inputParam != null) {
@@ -110,7 +115,10 @@ public class ToolManager {
                 // Value
                 if (inputParam.getDataType() != Param.Type.BOOLEAN) {
                     if (inputParam.isRedirection()) {
-                        commandLine.append("> ").append(objectEntry.getValue().toString());
+                        commandLine.append("> '").append(objectEntry.getValue().toString()).append("'");
+                    } else if (inputParam.getDataType() == Param.Type.FILE
+                            || inputParam.getDataType() == Param.Type.FOLDER) {
+                        commandLine.append("'").append(objectEntry.getValue().toString()).append("' ");
                     } else {
                         commandLine.append(objectEntry.getValue().toString()).append(" ");
                     }
