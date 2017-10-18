@@ -7,7 +7,6 @@ import org.opencb.biodata.tools.variant.VariantNormalizer;
 import org.opencb.biodata.tools.variant.converters.avro.VariantContextToVariantConverter;
 import org.opencb.commons.run.ParallelTaskRunner;
 import org.opencb.hpg.bigdata.core.avro.VariantAvroAnnotator;
-import org.opencb.hpg.bigdata.core.io.avro.AvroEncoder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +21,6 @@ public class ConvertTask implements ParallelTaskRunner.Task<VariantContext, Vari
     private VariantAvroAnnotator annotator;
 
     protected VariantNormalizer variantNormalizer;
-    protected final AvroEncoder<VariantAvro> encoder;
 
     public ConvertTask(VariantContextToVariantConverter converter, List<List<Predicate<VariantAvro>>> filters,
                        VariantAvroAnnotator annotator) {
@@ -31,7 +29,6 @@ public class ConvertTask implements ParallelTaskRunner.Task<VariantContext, Vari
         this.annotator = annotator;
 
         this.variantNormalizer = new VariantNormalizer(true, true, false);
-        this.encoder = new AvroEncoder<>(VariantAvro.getClassSchema());
     }
 
     @Override

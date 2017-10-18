@@ -17,7 +17,7 @@ import java.util.function.Predicate;
  */
 public class ConvertEncodeTask implements ParallelTaskRunner.Task<VariantContext, ByteBuffer> {
     private ConvertTask convertTask;
-    protected final AvroEncoder<VariantAvro> encoder;
+    protected AvroEncoder<VariantAvro> encoder;
 
     public ConvertEncodeTask(VariantContextToVariantConverter converter, List<List<Predicate<VariantAvro>>> filters,
                              VariantAvroAnnotator annotator) {
@@ -30,6 +30,7 @@ public class ConvertEncodeTask implements ParallelTaskRunner.Task<VariantContext
         List<VariantAvro> variantAvros = convertTask.apply(variantContexts);
 
         // Encode
+        encoder = new AvroEncoder<>(VariantAvro.getClassSchema());
         List<ByteBuffer> encoded;
         try {
             encoded = encoder.encode(variantAvros);
