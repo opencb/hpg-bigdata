@@ -13,7 +13,6 @@ import java.nio.file.Paths;
 public class VariantConvertCLITest {
 
     public Path vcfPath;
-    public Path pedPath;
     public Path avroPath;
     public Path metaAvroPath;
     public Path parquetPath;
@@ -23,12 +22,10 @@ public class VariantConvertCLITest {
     public void init() throws URISyntaxException {
         String vcfFilename = "../hpg-bigdata-core/src/test/resources/org/opencb/hpg/bigdata/core/utils/VariantContextBlockIteratorTest.vcf";
         //String vcfFilename = "../hpg-bigdata-core/src/test/resources/org/opencb/hpg/bigdata/core/utils/VcfBlockIteratorTest.vcf";
-        //String vcfFilename = "~/data150/vcf/ALL.chr1.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf";
-        //String vcfFilename = "~/data150/vcf/2.vcf";
-        //String vcfFilename = "~/data150/vcf/5k.vcf";
-        //String vcfFilename = "~/data150/vcf/100k.vcf";
-        vcfPath = Paths.get(vcfFilename);
-        Path parquetPath = Paths.get("/tmp/" + vcfPath.getFileName() + ".parquet");
+        //String vcfFilename = "../../../data150/vcf/ALL.chr1.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf";
+        //String vcfFilename = "../../../data150/vcf/2.vcf";
+        //String vcfFilename = "../../../data150/vcf/5k.vcf";
+        //String vcfFilename = "../../../data150/vcf/100k.vcf";
 
         vcfPath = Paths.get(vcfFilename);
         avroPath = Paths.get("/tmp/" + vcfPath.getFileName() + ".avro");
