@@ -19,7 +19,9 @@ cellbase:
   preferred: "local"
 
 analysis:
-  binaries: {
-    "plink": "~/soft/plink-1.9/plink",
-    "rvtests": "~/soft/rvtests/executable/rvtest"
-  }
+    plink:
+      path: "~/soft/plink-1.9/plink"
+      version: "1.9"
+    rvtests:
+      path : "~/soft/rvtests/executable/rvtest"
+      version : "20170106"
