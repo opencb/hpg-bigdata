@@ -59,8 +59,6 @@ public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
         File inputFile = new File(inputFilename);
         String filename = inputFile.getName();
 
-        VariantMetadataManager metadataManager = new VariantMetadataManager();
-
         // VCF reader
         VcfFileReader vcfFileReader = new VcfFileReader(inputFilename, true);
         vcfFileReader.open();
@@ -79,6 +77,7 @@ public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
 //        statsCalculator.pre();
 
         // Metadata management
+        VariantMetadataManager metadataManager = new VariantMetadataManager();
         VariantStudyMetadata variantDatasetMetadata = new VariantStudyMetadata();
         variantDatasetMetadata.setId(datasetName);
         metadataManager.addVariantDatasetMetadata(variantDatasetMetadata);
@@ -91,17 +90,21 @@ public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
         metadataManager.getVariantMetadata().getStudies().get(0).setAggregatedHeader(
                 metadataManager.getVariantMetadata().getStudies().get(0).getFiles().get(0).getHeader());
 
-        long counter = 0;
+        // VariantContext-to-Variant converter
         VariantContextToVariantConverter converter = new VariantContextToVariantConverter(datasetName, filename,
                 vcfHeader.getSampleNamesInOrder());
 
         // Main loop
+        long i = 0, counter = 0;
         ConvertEncodeTask convertEncodeTask = new ConvertEncodeTask(converter, filters, variantAvroAnnotator);
         List<VariantContext> variantContexts = vcfFileReader.read(batchSize);
         while (variantContexts.size() > 0) {
             List<ByteBuffer> buffers = convertEncodeTask.apply(variantContexts);
             avroFileWriter.write(buffers);
             counter += buffers.size();
+            if ((++i % 100) == 0) {
+                System.out.println("\t... " + counter + " variants");
+            }
             variantContexts = vcfFileReader.read(batchSize);
         }
         System.out.println("Number of processed records: " + counter);
@@ -128,6 +131,9 @@ public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
             throws IOException {
         VariantAvroAnnotator variantAvroAnnotator = (VariantAvroAnnotator) annotator;
 
+        File inputFile = new File(inputFilename);
+        String filename = inputFile.getName();
+
         // Config parallel task runner
         ParallelTaskRunner.Config config = ParallelTaskRunner.Config.builder()
                 .setNumTasks(numThreads)
@@ -137,6 +143,8 @@ public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
 
         // VCF reader
         VcfFileReader vcfFileReader = new VcfFileReader(inputFilename, false);
+        vcfFileReader.open();
+        VCFHeader vcfHeader = vcfFileReader.getVcfHeader();
 
         // Avro writer
         OutputStream outputStream;
@@ -147,7 +155,21 @@ public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
         }
         AvroFileWriter<VariantAvro> avroFileWriter = new AvroFileWriter<>(VariantAvro.SCHEMA$, compression, outputStream);
 
-        // Converter
+        // Metadata management
+        VariantMetadataManager metadataManager = new VariantMetadataManager();
+        VariantStudyMetadata variantDatasetMetadata = new VariantStudyMetadata();
+        variantDatasetMetadata.setId(datasetName);
+        metadataManager.addVariantDatasetMetadata(variantDatasetMetadata);
+
+        Cohort cohort = new Cohort("ALL", vcfHeader.getSampleNamesInOrder(), SampleSetType.MISCELLANEOUS);
+        metadataManager.addCohort(cohort, variantDatasetMetadata.getId());
+
+        // Add variant file metadata from VCF header
+        metadataManager.addFile(filename, vcfHeader, variantDatasetMetadata.getId());
+        metadataManager.getVariantMetadata().getStudies().get(0).setAggregatedHeader(
+                metadataManager.getVariantMetadata().getStudies().get(0).getFiles().get(0).getHeader());
+
+        // VariantContext-to-Variant converter
         VariantContextToVariantConverter converter = new VariantContextToVariantConverter(datasetName,
                 new File(inputFilename).getName(), vcfFileReader.getVcfHeader().getSampleNamesInOrder());
 
@@ -164,6 +186,14 @@ public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
         } catch (ExecutionException e) {
             throw new IOException("Error while converting VCF to Avro in ParallelTaskRunner", e);
         }
+
+        // Close
+        vcfFileReader.close();
+        avroFileWriter.close();
+        outputStream.close();
+
+        // Save metadata (JSON format)
+        metadataManager.save(Paths.get(outputFilename + ".meta.json"), true);
     }
 
     /**

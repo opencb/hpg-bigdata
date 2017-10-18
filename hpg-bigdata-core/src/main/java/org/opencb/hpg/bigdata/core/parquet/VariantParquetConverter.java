@@ -66,9 +66,6 @@ public class VariantParquetConverter extends ParquetConverter<VariantAvro> {
         File inputFile = new File(inputFilename);
         String filename = inputFile.getName();
 
-        VariantMetadataManager metadataManager;
-        metadataManager = new VariantMetadataManager();
-
         // VCF reader
         VcfFileReader vcfFileReader = new VcfFileReader(inputFilename, true);
         vcfFileReader.open();
@@ -79,6 +76,7 @@ public class VariantParquetConverter extends ParquetConverter<VariantAvro> {
                 pageSize);
 
         // Metadata management
+        VariantMetadataManager metadataManager = new VariantMetadataManager();
         VariantStudyMetadata variantDatasetMetadata = new VariantStudyMetadata();
         variantDatasetMetadata.setId(datasetName);
         metadataManager.addVariantDatasetMetadata(variantDatasetMetadata);
@@ -116,6 +114,9 @@ public class VariantParquetConverter extends ParquetConverter<VariantAvro> {
 
     public void toParquetFromVcf(String inputFilename, String outputFilename, VariantAvroAnnotator annotator,
                                  int numThreads) throws IOException {
+        File inputFile = new File(inputFilename);
+        String filename = inputFile.getName();
+
         // Config parallel task runner
         ParallelTaskRunner.Config config = ParallelTaskRunner.Config.builder()
                 .setNumTasks(numThreads)
@@ -125,10 +126,26 @@ public class VariantParquetConverter extends ParquetConverter<VariantAvro> {
 
         // VCF reader
         VcfFileReader vcfFileReader = new VcfFileReader(inputFilename, false);
+        vcfFileReader.open();
+        VCFHeader vcfHeader = vcfFileReader.getVcfHeader();
 
         // Parquet writer
         DataWriter<VariantAvro> dataWriter = new ParquetFileWriter<>(outputFilename, schema, compressionCodecName, rowGroupSize,
                 pageSize);
+
+        // Metadata management
+        VariantMetadataManager metadataManager = new VariantMetadataManager();
+        VariantStudyMetadata variantDatasetMetadata = new VariantStudyMetadata();
+        variantDatasetMetadata.setId(datasetName);
+        metadataManager.addVariantDatasetMetadata(variantDatasetMetadata);
+
+        Cohort cohort = new Cohort("ALL", vcfHeader.getSampleNamesInOrder(), SampleSetType.MISCELLANEOUS);
+        metadataManager.addCohort(cohort, variantDatasetMetadata.getId());
+
+        // Add variant file metadata from VCF header
+        metadataManager.addFile(filename, vcfHeader, variantDatasetMetadata.getId());
+        metadataManager.getVariantMetadata().getStudies().get(0).setAggregatedHeader(
+                metadataManager.getVariantMetadata().getStudies().get(0).getFiles().get(0).getHeader());
 
         // Create the parallel task runner
         ParallelTaskRunner<VariantContext, VariantAvro> ptr;
@@ -146,6 +163,13 @@ public class VariantParquetConverter extends ParquetConverter<VariantAvro> {
         } catch (ExecutionException e) {
             throw new IOException("Error while converting VCF to Avro in ParallelTaskRunner", e);
         }
+
+        // Close
+        vcfFileReader.close();
+        dataWriter.close();
+
+        // Save metadata (JSON format)
+        metadataManager.save(Paths.get(outputFilename + ".meta.json"), true);
     }
 
     public VariantParquetConverter addRegionFilter(Region region) {
