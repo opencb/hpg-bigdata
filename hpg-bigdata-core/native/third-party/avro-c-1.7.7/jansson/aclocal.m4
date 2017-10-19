@@ -948,9 +948,9 @@ m4_defun_once([_LT_REQUIRED_DARWIN_CHECKS],[
     _LT_DECL([], [LIPO], [1],
       [Tool to manipulate fat objects and archives on Mac OS X])
     _LT_DECL([], [OTOOL], [1],
-      [ldd/readelf like tool for Mach-O binaries on Mac OS X])
+      [ldd/readelf like tool for Mach-O analysis on Mac OS X])
     _LT_DECL([], [OTOOL64], [1],
-      [ldd/readelf like tool for 64 bit Mach-O binaries on Mac OS X 10.4])
+      [ldd/readelf like tool for 64 bit Mach-O analysis on Mac OS X 10.4])
 
     AC_CACHE_CHECK([for -single_module linker flag],[lt_cv_apple_cc_single_mod],
       [lt_cv_apple_cc_single_mod=no
@@ -1286,7 +1286,7 @@ s390*-*linux*|s390*-*tpf*|sparc*-*linux*)
   ;;
 
 *-*-sco3.2v5*)
-  # On SCO OpenServer 5, we need -belf to get full-featured binaries.
+  # On SCO OpenServer 5, we need -belf to get full-featured analysis.
   SAVE_CFLAGS="$CFLAGS"
   CFLAGS="$CFLAGS -belf"
   AC_CACHE_CHECK([whether the C compiler needs -belf], lt_cv_cc_needs_belf,
@@ -8766,15 +8766,15 @@ AC_MSG_RESULT(yes)])
 # AM_PROG_INSTALL_STRIP
 # ---------------------
 # One issue with vendor `install' (even GNU) is that you can't
-# specify the program used to strip binaries.  This is especially
+# specify the program used to strip analysis.  This is especially
 # annoying in cross-compiling environments, where the build's strip
-# is unlikely to handle the host's binaries.
+# is unlikely to handle the host's analysis.
 # Fortunately install-sh will honor a STRIPPROG variable, so we
 # always use install-sh in `make install-strip', and initialize
 # STRIPPROG with the value of the STRIP variable (set by the user).
 AC_DEFUN([AM_PROG_INSTALL_STRIP],
 [AC_REQUIRE([AM_PROG_INSTALL_SH])dnl
-# Installed binaries are usually stripped using `strip' when the user
+# Installed analysis are usually stripped using `strip' when the user
 # run `make install-strip'.  However `strip' might not be the right
 # tool to use in cross-compilation environments, therefore Automake
 # will honor the `STRIP' environment variable to overrule this program.

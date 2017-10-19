@@ -1725,7 +1725,7 @@ The following components of LINK-COMMAND are treated specially:
 
   -all-static       do not do any dynamic linking at all
   -avoid-version    do not add a version suffix if possible
-  -bindir BINDIR    specify path to binaries directory (for systems where
+  -bindir BINDIR    specify path to analysis directory (for systems where
                     libraries must be found in the PATH setting at runtime)
   -dlopen FILE      \`-dlpreopen' FILE if it cannot be dlopened at runtime
   -dlpreopen FILE   link in FILE and add its symbols to lt_preloaded_symbols
@@ -2774,7 +2774,7 @@ static const void *lt_preloaded_setup() {
 # Need a lot of goo to handle *both* DLLs and import libs
 # Has to be a shell function in order to 'eat' the argument
 # that is supplied when $file_magic_command is called.
-# Despite the name, also deal with 64 bit binaries.
+# Despite the name, also deal with 64 bit analysis.
 func_win32_libid ()
 {
   $opt_debug
