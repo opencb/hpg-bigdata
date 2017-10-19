@@ -3,7 +3,7 @@ package org.opencb.hpg.bigdata.app.cli.local;
 import org.junit.Test;
 
 public class VariantPlinkCLITest {
-    //@Test
+    @Test
     public void assoc() {
         try {
             VariantRvTestsCLITest cli = new VariantRvTestsCLITest();

@@ -4,6 +4,7 @@ import org.apache.spark.ml.feature.PCA;
 import org.apache.spark.ml.feature.PCAModel;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.opencb.hpg.bigdata.core.config.OskarConfiguration;
 
 /**
  * Created by jtarraga on 30/05/17.
@@ -29,12 +30,12 @@ public class PCAAnalysis extends VariantAnalysisExecutor {
         result.show(false);
     }
 
-    public PCAAnalysis(String studyId, String studyName, String featureName) {
-        this(studyId, studyName, featureName, 3);
+    public PCAAnalysis(String studyId, String studyName, String featureName, OskarConfiguration configuration) {
+        this(studyId, studyName, featureName, 3, configuration);
     }
 
-    public PCAAnalysis(String studyId, String studyName, String featureName, int kValue) {
-        super(studyId);
+    public PCAAnalysis(String studyId, String studyName, String featureName, int kValue, OskarConfiguration configuration) {
+        super(studyId, configuration);
         this.featureName = featureName;
         this.kValue = kValue;
     }

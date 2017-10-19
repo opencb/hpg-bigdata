@@ -33,7 +33,7 @@ public class VariantAnalysisUtils {
         try {
             manager.load(Paths.get(metaFilename));
 
-            SparkConf sparkConf = SparkConfCreator.getConf("VCF exporter", "local", 1, true);
+            SparkConf sparkConf = SparkConfCreator.getConf("VCF exporter", "local", 1, false);
             SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
 
             VariantDataset vd = new VariantDataset(sparkSession);

@@ -24,7 +24,7 @@ public class VariantCommandOptions {
     public PlinkVariantCommandOptions plinkVariantCommandOptions;
 
     public LocalCliOptionsParser.CommonCommandOptions commonCommandOptions;
-    public VariantFilterOptions commonFilterOptions;
+    public VariantFilterOptions variantFilterOptions;
     public JCommander jCommander;
 
     public VariantCommandOptions(LocalCliOptionsParser.CommonCommandOptions commonCommandOptions,
@@ -43,10 +43,10 @@ public class VariantCommandOptions {
     }
 
     public VariantCommandOptions(LocalCliOptionsParser.CommonCommandOptions commonCommandOptions,
-                                 VariantFilterOptions commonFilterOptions,
+                                 VariantFilterOptions variantFilterOptions,
                                  JCommander jCommander) {
         this.commonCommandOptions = commonCommandOptions;
-        this.commonFilterOptions = commonFilterOptions;
+        this.variantFilterOptions = variantFilterOptions;
         this.jCommander = jCommander;
 
         this.convertVariantCommandOptions = new ConvertVariantCommandOptions();
@@ -366,7 +366,7 @@ public class VariantCommandOptions {
         public LocalCliOptionsParser.CommonCommandOptions commonOptions = commonCommandOptions;
 
         @ParametersDelegate
-        public VariantFilterOptions variantFilterOptions = commonFilterOptions;
+        public VariantFilterOptions variantFilterOptions = VariantCommandOptions.this.variantFilterOptions;
 
         @Parameter(names = {"--dataset"}, description = "Target dataset.", arity = 1)
         public String datasetId = null;
@@ -380,6 +380,9 @@ public class VariantCommandOptions {
 
         @Parameter(names = {"--rvtests-path"}, description = "Path to the RvTests executable.", arity = 1)
         public String binPath = null;
+
+        @Parameter(names = {"--rvtests-version"}, description = "RvTests version.", arity = 1)
+        public String version = null;
     }
 
     @Parameters(commandNames = {"plink"}, commandDescription = "Execute the 'plink' program.")
@@ -389,7 +392,7 @@ public class VariantCommandOptions {
         public LocalCliOptionsParser.CommonCommandOptions commonOptions = commonCommandOptions;
 
         @ParametersDelegate
-        public VariantFilterOptions variantFilterOptions = commonFilterOptions;
+        public VariantFilterOptions variantFilterOptions = VariantCommandOptions.this.variantFilterOptions;
 
         @Parameter(names = {"--dataset"}, description = "Target dataset.", arity = 1)
         public String datasetId = null;
@@ -403,5 +406,8 @@ public class VariantCommandOptions {
 
         @Parameter(names = {"--plink-path"}, description = "Path to the PLINK executable.", arity = 1)
         public String binPath = null;
+
+        @Parameter(names = {"--plink-version"}, description = "PLINK version.", arity = 1)
+        public String version = null;
     }
 }

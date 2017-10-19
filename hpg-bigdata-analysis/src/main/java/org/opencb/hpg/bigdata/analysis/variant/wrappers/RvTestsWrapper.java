@@ -5,6 +5,7 @@ import org.opencb.hpg.bigdata.analysis.exceptions.AnalysisExecutorException;
 import org.opencb.hpg.bigdata.analysis.exceptions.AnalysisToolException;
 import org.opencb.hpg.bigdata.analysis.tools.Executor;
 import org.opencb.hpg.bigdata.analysis.variant.VariantAnalysisUtils;
+import org.opencb.hpg.bigdata.core.config.OskarConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,6 +18,8 @@ import java.util.Map;
  * Created by joaquin on 1/19/17.
  */
 public class RvTestsWrapper extends VariantAnalysisWrapper {
+    public static final String ANALYSIS_NAME = "rvtests";
+
     private String inFilename;
     private String metaFilename;
     private Query query;
@@ -25,8 +28,8 @@ public class RvTestsWrapper extends VariantAnalysisWrapper {
     private Logger logger;
 
     public RvTestsWrapper(String studyId, String inFilename, String metaFilename,
-                          Query query, Map<String, String> rvtestsParams) {
-        super(studyId, Paths.get("rvtest"));
+                          Query query, Map<String, String> rvtestsParams, OskarConfiguration configuration) {
+        super(studyId, configuration);
         this.inFilename = inFilename;
         this.metaFilename = metaFilename;
         this.query = query;
@@ -38,10 +41,17 @@ public class RvTestsWrapper extends VariantAnalysisWrapper {
     @Override
     public void execute() throws AnalysisExecutorException {
         // Sanity check
-        if (binPath == null || !binPath.toFile().exists()) {
-            String msg = "RvTests binary path is missing or does not exist:  '" + binPath + "'.";
-            logger.error(msg);
-            throw new AnalysisExecutorException(msg);
+        Path binPath;
+        try {
+            binPath = Paths.get(configuration.getAnalysis().get(ANALYSIS_NAME).getPath());
+            if (binPath == null || !binPath.toFile().exists()) {
+                String msg = "RvTests binary path is missing or does not exist:  '" + binPath + "'.";
+                logger.error(msg);
+                throw new AnalysisExecutorException(msg);
+            }
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+            throw new AnalysisExecutorException(e.getMessage());
         }
 
         // Get output dir
@@ -78,7 +88,7 @@ public class RvTestsWrapper extends VariantAnalysisWrapper {
         // ...and finally, run rvtests
         sb.setLength(0);
         sb.append(binPath);
-        sb.append(" --inVcf ").append(vcfFilename).append(".gz");
+        sb.append(" --inVcf ").append(vcfFilename); //.append(".gz");
         sb.append(" --pheno ").append(pedFilename);
         for (String key: rvtestsParams.keySet()) {
             sb.append(" --").append(key).append(" ").append(rvtestsParams.get(key));

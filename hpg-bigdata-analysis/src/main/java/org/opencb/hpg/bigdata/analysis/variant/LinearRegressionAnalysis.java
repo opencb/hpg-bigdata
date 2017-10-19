@@ -10,6 +10,7 @@ import org.apache.spark.ml.regression.LinearRegressionTrainingSummary;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SQLContext;
+import org.opencb.hpg.bigdata.core.config.OskarConfiguration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,13 +64,14 @@ public class LinearRegressionAnalysis extends VariantAnalysisExecutor {
         System.out.println("r2: " + trainingSummary.r2());
     }
 
-    public LinearRegressionAnalysis(String studyId, String depVarName, String indepVarName) {
-        this(studyId, depVarName, indepVarName, 10, 0.3, 0.8);
+    public LinearRegressionAnalysis(String studyId, String depVarName, String indepVarName, OskarConfiguration configuration) {
+        this(studyId, depVarName, indepVarName, 10, 0.3, 0.8, configuration);
     }
 
     public LinearRegressionAnalysis(String studyId, String depVarName, String indepVarName,
-                                    int numIterations, double regularization, double elasticNet) {
-        super(studyId);
+                                    int numIterations, double regularization, double elasticNet,
+                                    OskarConfiguration configuration) {
+        super(studyId, configuration);
         this.depVarName = depVarName;
         this.indepVarName = indepVarName;
         this.numIterations = numIterations;

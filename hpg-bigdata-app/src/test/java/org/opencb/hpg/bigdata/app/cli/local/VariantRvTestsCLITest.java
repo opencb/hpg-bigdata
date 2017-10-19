@@ -11,9 +11,9 @@ import java.nio.file.Paths;
 public class VariantRvTestsCLITest {
     public String datasetName = "test";
 
-    //public String vcfFilename = "../hpg-bigdata-app/src/test/resources/example.vcf"
+    public String vcfFilename = "../hpg-bigdata-app/src/test/resources/example.vcf";
     //public String vcfFilename = "/home/jtarraga/data150/vcf/chr22.head1k.vcf";
-    public String vcfFilename = "/home/jtarraga/data150/vcf/chr22.head100k.vcf";
+    //public String vcfFilename = "/home/jtarraga/data150/vcf/chr22.head100k.vcf";
     public String phenoFilename = "../hpg-bigdata-app/src/test/resources/pheno";
     public String outDir = "/tmp/";
 
@@ -33,7 +33,7 @@ public class VariantRvTestsCLITest {
 
         // convert vcf to avro
         StringBuilder commandLine = new StringBuilder();
-        commandLine.append(" variant convert");
+        commandLine.append("variant convert");
         commandLine.append(" --log-level ERROR");
         commandLine.append(" -i ").append(vcfPath);
         commandLine.append(" -o ").append(avroPath);
@@ -43,7 +43,7 @@ public class VariantRvTestsCLITest {
         if (!vcfFilename.startsWith("/")) {
             // load pedigree file
             commandLine.setLength(0);
-            commandLine.append(" variant metadata");
+            commandLine.append("variant metadata");
             commandLine.append(" --log-level ERROR");
             commandLine.append(" -i ").append(avroPath);
             commandLine.append(" --load-pedigree ").append(phenoPath);
@@ -52,13 +52,13 @@ public class VariantRvTestsCLITest {
         }
     }
 
-    //@Test
+    @Test
     public void skat() {
         try {
             init();
 
             StringBuilder commandLine = new StringBuilder();
-            commandLine.append(" variant rvtests");
+            commandLine.append("variant rvtests");
             commandLine.append(" --log-level ERROR");
             commandLine.append(" --dataset ").append(datasetName);
             commandLine.append(" -i ").append(avroPath);

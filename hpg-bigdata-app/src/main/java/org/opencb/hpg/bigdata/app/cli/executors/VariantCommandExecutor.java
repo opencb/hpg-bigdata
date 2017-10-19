@@ -47,6 +47,7 @@ import org.opencb.hpg.bigdata.app.cli.options.LocalCliOptionsParser;
 import org.opencb.hpg.bigdata.app.cli.options.VariantCommandOptions;
 import org.opencb.hpg.bigdata.core.avro.VariantAvroAnnotator;
 import org.opencb.hpg.bigdata.core.avro.VariantAvroSerializer;
+import org.opencb.hpg.bigdata.core.config.AnalysisConfiguration;
 import org.opencb.hpg.bigdata.core.config.OskarConfiguration;
 import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
 import org.opencb.hpg.bigdata.core.lib.VariantDataset;
@@ -482,16 +483,31 @@ public class VariantCommandExecutor extends CommandExecutor {
                     variantCommandOptions.rvtestsVariantCommandOptions.variantFilterOptions);
         }
 
+        // Binary path management
+        String rvtestsPath = variantCommandOptions.rvtestsVariantCommandOptions.binPath;
+        String rvtestsVersion = variantCommandOptions.rvtestsVariantCommandOptions.version;
+
+        if (configuration.getAnalysis() != null) {
+            configuration.setAnalysis(new AnalysisConfiguration());
+        }
+        if (StringUtils.isNotEmpty(rvtestsPath)) {
+            // Update config with CLI parameters
+            AnalysisConfiguration.Analysis rvtests = new AnalysisConfiguration.Analysis(rvtestsPath, rvtestsVersion);
+            configuration.getAnalysis().put(RvTestsWrapper.ANALYSIS_NAME, rvtests);
+        } else if (configuration.getAnalysis().get(RvTestsWrapper.ANALYSIS_NAME) == null
+                || StringUtils.isNotEmpty(configuration.getAnalysis().get(RvTestsWrapper.ANALYSIS_NAME).getPath())) {
+            // Rvtests should be installed in the system
+            AnalysisConfiguration.Analysis rvtests = new AnalysisConfiguration.Analysis("rvtests", "");
+            configuration.getAnalysis().put(RvTestsWrapper.ANALYSIS_NAME, rvtests);
+        }
+
+        // Create RvTest wrapper
         RvTestsWrapper rvtests = new RvTestsWrapper(variantCommandOptions.rvtestsVariantCommandOptions.datasetId,
                 variantCommandOptions.rvtestsVariantCommandOptions.inFilename,
                 variantCommandOptions.rvtestsVariantCommandOptions.inFilename + ".meta.json",
-                query, variantCommandOptions.rvtestsVariantCommandOptions.rvtestsParams);
+                query, variantCommandOptions.rvtestsVariantCommandOptions.rvtestsParams, configuration);
 
-        // Get the binary path from input parameter
-        String binPath = variantCommandOptions.rvtestsVariantCommandOptions.binPath;
-        if (!StringUtils.isEmpty(binPath)) {
-            rvtests.setBinPath(Paths.get(binPath));
-        }
+        // Execute RvTests
         rvtests.execute();
     }
 
@@ -502,16 +518,31 @@ public class VariantCommandExecutor extends CommandExecutor {
                     variantCommandOptions.rvtestsVariantCommandOptions.variantFilterOptions);
         }
 
+        // Binary path management
+        String plinkPath = variantCommandOptions.plinkVariantCommandOptions.binPath;
+        String plinkVersion = variantCommandOptions.plinkVariantCommandOptions.version;
+
+        if (configuration.getAnalysis() != null) {
+            configuration.setAnalysis(new AnalysisConfiguration());
+        }
+        if (StringUtils.isNotEmpty(plinkPath)) {
+            // Update config with CLI parameters
+            AnalysisConfiguration.Analysis plink = new AnalysisConfiguration.Analysis(plinkPath, plinkVersion);
+            configuration.getAnalysis().put(PlinkWrapper.ANALYSIS_NAME, plink);
+        } else if (configuration.getAnalysis().get(PlinkWrapper.ANALYSIS_NAME) == null
+                || StringUtils.isNotEmpty(configuration.getAnalysis().get(PlinkWrapper.ANALYSIS_NAME).getPath())) {
+            // Rvtests should be installed in the system
+            AnalysisConfiguration.Analysis rvtests = new AnalysisConfiguration.Analysis("plink", "");
+            configuration.getAnalysis().put(PlinkWrapper.ANALYSIS_NAME, rvtests);
+        }
+
+        // Create PLINK wrapper
         PlinkWrapper plink = new PlinkWrapper(variantCommandOptions.plinkVariantCommandOptions.datasetId,
                 variantCommandOptions.plinkVariantCommandOptions.inFilename,
                 variantCommandOptions.plinkVariantCommandOptions.inFilename + ".meta.json",
-                query, variantCommandOptions.plinkVariantCommandOptions.plinkParams);
+                query, variantCommandOptions.plinkVariantCommandOptions.plinkParams, configuration);
 
-        // Get the binary path from input parameter
-        String binPath = variantCommandOptions.plinkVariantCommandOptions.binPath;
-        if (!StringUtils.isEmpty(binPath)) {
-            plink.setBinPath(Paths.get(binPath));
-        }
+        // Execute PLINK
         plink.execute();
     }
 

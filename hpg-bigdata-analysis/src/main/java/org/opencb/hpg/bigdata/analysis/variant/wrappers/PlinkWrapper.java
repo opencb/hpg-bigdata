@@ -14,6 +14,7 @@ import org.opencb.commons.datastore.core.Query;
 import org.opencb.hpg.bigdata.analysis.exceptions.AnalysisExecutorException;
 import org.opencb.hpg.bigdata.analysis.exceptions.AnalysisToolException;
 import org.opencb.hpg.bigdata.analysis.tools.Executor;
+import org.opencb.hpg.bigdata.core.config.OskarConfiguration;
 import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
 import org.opencb.hpg.bigdata.core.lib.VariantDataset;
 import org.slf4j.Logger;
@@ -28,6 +29,8 @@ import java.util.List;
 import java.util.Map;
 
 public class PlinkWrapper extends VariantAnalysisWrapper {
+    public static final String ANALYSIS_NAME = "plink";
+
     private String inFilename;
     private String metaFilename;
     private Query query;
@@ -36,8 +39,8 @@ public class PlinkWrapper extends VariantAnalysisWrapper {
     private Logger logger;
 
     public PlinkWrapper(String studyId, String inFilename, String metaFilename,
-                        Query query, Map<String, String> plinkParams) {
-        super(studyId, Paths.get("plink"));
+                        Query query, Map<String, String> plinkParams, OskarConfiguration configuration) {
+        super(studyId, configuration);
         this.inFilename = inFilename;
         this.metaFilename = metaFilename;
         this.query = query;
@@ -49,10 +52,17 @@ public class PlinkWrapper extends VariantAnalysisWrapper {
 
     public void execute() throws AnalysisExecutorException {
         // Sanity check
-        if (binPath == null || !binPath.toFile().exists()) {
-            String msg = "PLINK binary path is missing or does not exist:  '" + binPath + "'.";
-            logger.error(msg);
-            throw new AnalysisExecutorException(msg);
+        Path binPath;
+        try {
+            binPath = Paths.get(configuration.getAnalysis().get(ANALYSIS_NAME).getPath());
+            if (binPath == null || !binPath.toFile().exists()) {
+                String msg = "PLINK binary path is missing or does not exist:  '" + binPath + "'.";
+                logger.error(msg);
+                throw new AnalysisExecutorException(msg);
+            }
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+            throw new AnalysisExecutorException(e.getMessage());
         }
 
         // Get output dir

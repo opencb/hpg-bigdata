@@ -26,8 +26,8 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-	<artifactId>hpg-bigdata-analysis</artifactId>
-	<version>${hpg.version}</version>
+    <artifactId>hpg-bigdata-analysis</artifactId>
+    <version>${hpg.version}</version>
 
     <dependencies>
         <dependency>
