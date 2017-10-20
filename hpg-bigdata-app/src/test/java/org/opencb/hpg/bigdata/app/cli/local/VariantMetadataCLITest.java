@@ -33,7 +33,7 @@ public class VariantMetadataCLITest {
             init();
 
             StringBuilder commandLine = new StringBuilder();
-            commandLine.append(" variant convert");
+            commandLine.append("variant convert");
             commandLine.append(" --log-level ERROR");
             commandLine.append(" -i ").append(vcfPath);
             commandLine.append(" -o ").append(avroPath);
@@ -42,7 +42,7 @@ public class VariantMetadataCLITest {
             VariantQueryCLITest.execute(commandLine.toString());
 
             commandLine.setLength(0);
-            commandLine.append(" variant metadata");
+            commandLine.append("variant metadata");
             commandLine.append(" --log-level ERROR");
             commandLine.append(" -i ").append(avroPath);
             commandLine.append(" --load-pedigree ").append(pedPath);
@@ -51,7 +51,7 @@ public class VariantMetadataCLITest {
             VariantQueryCLITest.execute(commandLine.toString());
 
             commandLine.setLength(0);
-            commandLine.append(" variant metadata");
+            commandLine.append("variant metadata");
             commandLine.append(" --log-level ERROR");
             commandLine.append(" -i ").append(avroPath);
             commandLine.append(" --save-pedigree ").append(Paths.get("/tmp/test.vcf.ped"));
