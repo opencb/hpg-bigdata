@@ -143,7 +143,7 @@ public class VariantParquetConverter extends ParquetConverter<VariantAvro> {
         metadataManager.addCohort(cohort, variantDatasetMetadata.getId());
 
         // Add variant file metadata from VCF header
-        metadataManager.addFile(filename, vcfHeader, variantDatasetMetadata.getId());
+        metadataManager.addFile(inputFilename, vcfHeader, variantDatasetMetadata.getId());
         metadataManager.getVariantMetadata().getStudies().get(0).setAggregatedHeader(
                 metadataManager.getVariantMetadata().getStudies().get(0).getFiles().get(0).getHeader());
 
@@ -152,7 +152,7 @@ public class VariantParquetConverter extends ParquetConverter<VariantAvro> {
         try {
             // Converter
             VariantContextToVariantConverter converter = new VariantContextToVariantConverter(datasetName,
-                    new File(inputFilename).getName(), vcfFileReader.getVcfHeader().getSampleNamesInOrder());
+                    filename, vcfFileReader.getVcfHeader().getSampleNamesInOrder());
             ConvertTask convertTask = new ConvertTask(converter, filters, annotator);
             ptr = new ParallelTaskRunner<>(vcfFileReader, convertTask, dataWriter, config);
         } catch (Exception e) {
