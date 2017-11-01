@@ -22,8 +22,6 @@ import org.apache.avro.file.DataFileStream;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
-import org.apache.spark.SparkConf;
-import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFunction;
@@ -49,7 +47,6 @@ import org.opencb.hpg.bigdata.core.avro.VariantAvroAnnotator;
 import org.opencb.hpg.bigdata.core.avro.VariantAvroSerializer;
 import org.opencb.hpg.bigdata.core.config.AnalysisConfiguration;
 import org.opencb.hpg.bigdata.core.config.OskarConfiguration;
-import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
 import org.opencb.hpg.bigdata.core.lib.VariantDataset;
 import org.opencb.hpg.bigdata.core.parquet.VariantParquetConverter;
 import scala.Tuple2;
@@ -277,9 +274,11 @@ public class VariantCommandExecutor extends CommandExecutor {
         //Path inputPath = Paths.get(variantCommandOptions.queryVariantCommandOptions.input);
         //FileUtils.checkFile(inputPath);
 
-        SparkConf sparkConf = SparkConfCreator.getConf("variant query", "local", 1, true);
-        logger.debug("sparkConf = {}", sparkConf.toDebugString());
-        SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
+        //SparkConf sparkConf = SparkConfCreator.getConf("variant query", "local", 1, true);
+        //logger.debug("sparkConf = {}", sparkConf.toDebugString());
+        //SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
+
+        SparkSession sparkSession = SparkSession.builder().appName("variant-query").getOrCreate();
 
         VariantDataset vd = new VariantDataset(sparkSession);
         vd.load(variantCommandOptions.queryVariantCommandOptions.input);
@@ -552,10 +551,13 @@ public class VariantCommandExecutor extends CommandExecutor {
             VariantSetStatsCalculator statsTask = new VariantSetStatsCalculator(studyMetadata);
             statsTask.pre();
 */
-            SparkConf sparkConf = SparkConfCreator.getConf("PLINK", "local", 1, true);
-
-            JavaSparkContext sc = new JavaSparkContext(sparkConf);
-            SparkSession sparkSession = new SparkSession(sc.sc());
+            SparkSession sparkSession = SparkSession.builder().appName("variant-stats").getOrCreate();
+            JavaSparkContext sc = new JavaSparkContext(sparkSession.sparkContext().conf());
+//
+//            SparkConf sparkConf = SparkConfCreator.getConf("PLINK", "local", 1, true);
+//
+//            JavaSparkContext sc = new JavaSparkContext(sparkConf);
+//            SparkSession sparkSession = new SparkSession(sc.sc());
             //SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
 
             VariantDataset vd = new VariantDataset(sparkSession);
@@ -565,7 +567,6 @@ public class VariantCommandExecutor extends CommandExecutor {
                 e.printStackTrace();
             }
             vd.createOrReplaceTempView("vcf");
-
 
             ObjectMapper objMapper = new ObjectMapper();
             ObjectReader objectReader = objMapper.readerFor(Variant.class);

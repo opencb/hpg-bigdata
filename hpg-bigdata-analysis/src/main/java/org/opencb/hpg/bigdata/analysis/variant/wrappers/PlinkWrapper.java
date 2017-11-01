@@ -1,8 +1,6 @@
 package org.opencb.hpg.bigdata.analysis.variant.wrappers;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.spark.SparkConf;
-import org.apache.spark.SparkContext;
 import org.apache.spark.sql.SparkSession;
 import org.opencb.biodata.models.metadata.Individual;
 import org.opencb.biodata.models.metadata.Sample;
@@ -15,7 +13,6 @@ import org.opencb.hpg.bigdata.analysis.exceptions.AnalysisExecutorException;
 import org.opencb.hpg.bigdata.analysis.exceptions.AnalysisToolException;
 import org.opencb.hpg.bigdata.analysis.tools.Executor;
 import org.opencb.hpg.bigdata.core.config.OskarConfiguration;
-import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
 import org.opencb.hpg.bigdata.core.lib.VariantDataset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,8 +73,9 @@ public class PlinkWrapper extends VariantAnalysisWrapper {
         try {
             manager.load(Paths.get(metaFilename));
 
-            SparkConf sparkConf = SparkConfCreator.getConf("PLINK", "local", 1, true);
-            SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
+//            SparkConf sparkConf = SparkConfCreator.getConf("PLINK", "local", 1, true);
+//            SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
+            SparkSession sparkSession = SparkSession.builder().appName("variant-plink").getOrCreate();
 
             VariantDataset vd = new VariantDataset(sparkSession);
             vd.load(inFilename);

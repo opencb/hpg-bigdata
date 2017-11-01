@@ -1,7 +1,5 @@
 package org.opencb.hpg.bigdata.analysis.variant;
 
-import org.apache.spark.SparkConf;
-import org.apache.spark.SparkContext;
 import org.apache.spark.sql.SparkSession;
 import org.opencb.biodata.formats.pedigree.PedigreeManager;
 import org.opencb.biodata.models.core.pedigree.Pedigree;
@@ -9,7 +7,6 @@ import org.opencb.biodata.models.variant.metadata.VariantStudyMetadata;
 import org.opencb.biodata.tools.variant.converters.VCFExporter;
 import org.opencb.biodata.tools.variant.metadata.VariantMetadataManager;
 import org.opencb.commons.datastore.core.Query;
-import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
 import org.opencb.hpg.bigdata.core.lib.VariantDataset;
 
 import java.io.IOException;
@@ -33,8 +30,9 @@ public class VariantAnalysisUtils {
         try {
             manager.load(Paths.get(metaFilename));
 
-            SparkConf sparkConf = SparkConfCreator.getConf("VCF exporter", "local", 1, false);
-            SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
+            //SparkConf sparkConf = SparkConfCreator.getConf("VCF exporter", "local", 1, false);
+            //SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
+            SparkSession sparkSession = SparkSession.builder().appName("vcf-exporter").getOrCreate();
 
             VariantDataset vd = new VariantDataset(sparkSession);
             vd.load(inputAvroFilename);
