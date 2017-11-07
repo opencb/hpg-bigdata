@@ -2,7 +2,7 @@
 logLevel: "INFO"
 logFile: ""
 
-numThreads: 2
+numThreads: "2"
 toolFolder: ""
 
 ## Cellbase client configuration
