@@ -50,7 +50,7 @@ public class RegionCoverageWritable implements Writable {
 //        out.writeInt(regionCoverage.chunk);
 //        out.writeInt(regionCoverage.size);
         for (int i = 0; i < regionCoverage.getValues().length; i++) {
-            out.writeShort(regionCoverage.getValues()[i]);
+            out.writeFloat(regionCoverage.getValues()[i]);
         }
     }
 

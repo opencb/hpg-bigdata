@@ -358,7 +358,7 @@ public class AlignmentCommandExecutor extends CommandExecutor {
         AlignmentOptions options = new AlignmentOptions();
         options.setContained(false);
 
-        short[] values;
+        float[] values;
 
         BamManager alignmentManager = new BamManager(filePath);
         Iterator<SAMSequenceRecord> iterator = fileHeader.getSequenceDictionary().getSequences().iterator();
