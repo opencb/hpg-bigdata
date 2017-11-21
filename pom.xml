@@ -38,7 +38,7 @@
         <hpg.version>1.0.0-beta4-SNAPSHOT</hpg.version>
         <ga4gh.version>0.6.0a5</ga4gh.version>
         <biodata.version>1.3.0-SNAPSHOT</biodata.version>
-        <cellbase.version>4.6.0-SNAPSHOT</cellbase.version>
+        <cellbase.version>4.5.3</cellbase.version>
         <commons-lib.version>3.6.0-SNAPSHOT</commons-lib.version>
         <spark.version>2.2.0</spark.version>
         <hadoop.version>2.7.3</hadoop.version>
