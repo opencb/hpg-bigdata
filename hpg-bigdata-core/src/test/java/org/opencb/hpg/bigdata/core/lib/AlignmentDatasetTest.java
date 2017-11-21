@@ -33,11 +33,11 @@ public class AlignmentDatasetTest {
     }
 
     public void initDataset() {
-        ad = new AlignmentDataset();
+        ad = new AlignmentDataset(sparkSession);
         try {
             Path inputPath = Paths.get(getClass().getResource("/test.bam.avro").toURI());
             System.out.println(">>>> opening file " + inputPath);
-            ad.load(inputPath.toString(), sparkSession);
+            ad.load(inputPath.toString()); //, sparkSession);
             ad.printSchema();
             ad.createOrReplaceTempView("bam");
         } catch (Exception e) {

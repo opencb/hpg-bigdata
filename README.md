@@ -18,7 +18,11 @@ HPG BigData is versioned following the rules from [Semantic versioning](http://s
 ### Maintainers
 We recommend to contact HPG BigData developers by writing to OpenCB mailing list opencb@googlegroups.com. The main maintainers and developers are:
 * Ignacio Medina (im411@cam.ac.uk) (_Founder and Project Leader_)
-* Joaquín Tárraga (jtarraga@cipf.es)
+<<<<<<< HEAD
+* Joaquín Tárraga (jt645@cam.ac.uk)
+=======
+* Joaquin Tarraga (jt645@cam.ac.uk)
+>>>>>>> develop
 * Jacobo Coll (jacobo.coll-moragon@genomicsengland.co.uk)
 * Matthias Haimel (mh719@cam.ac.uk)
 * Jose M. Mut (jmmut@ebi.ac.uk)

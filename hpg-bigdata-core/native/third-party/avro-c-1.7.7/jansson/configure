@@ -2522,7 +2522,7 @@ MAKEINFO=${MAKEINFO-"${am_missing_run}makeinfo"}
 
 install_sh=${install_sh-"\$(SHELL) $am_aux_dir/install-sh"}
 
-# Installed binaries are usually stripped using `strip' when the user
+# Installed analysis are usually stripped using `strip' when the user
 # run `make install-strip'.  However `strip' might not be the right
 # tool to use in cross-compilation environments, therefore Automake
 # will honor the `STRIP' environment variable to overrule this program.
@@ -5685,7 +5685,7 @@ s390*-*linux*|s390*-*tpf*|sparc*-*linux*)
   ;;
 
 *-*-sco3.2v5*)
-  # On SCO OpenServer 5, we need -belf to get full-featured binaries.
+  # On SCO OpenServer 5, we need -belf to get full-featured analysis.
   SAVE_CFLAGS="$CFLAGS"
   CFLAGS="$CFLAGS -belf"
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the C compiler needs -belf" >&5
@@ -12515,10 +12515,10 @@ NMEDIT=$lt_NMEDIT
 # Tool to manipulate fat objects and archives on Mac OS X.
 LIPO=$lt_LIPO
 
-# ldd/readelf like tool for Mach-O binaries on Mac OS X.
+# ldd/readelf like tool for Mach-O analysis on Mac OS X.
 OTOOL=$lt_OTOOL
 
-# ldd/readelf like tool for 64 bit Mach-O binaries on Mac OS X 10.4.
+# ldd/readelf like tool for 64 bit Mach-O analysis on Mac OS X 10.4.
 OTOOL64=$lt_OTOOL64
 
 # Old archive suffix (normally "a").

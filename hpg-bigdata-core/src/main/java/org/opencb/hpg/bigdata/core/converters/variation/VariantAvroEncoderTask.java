@@ -22,7 +22,7 @@ import htsjdk.variant.vcf.VCFHeaderVersion;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.opencb.biodata.formats.variant.vcf4.FullVcfCodec;
-import org.opencb.biodata.tools.variant.converters.Converter;
+import org.opencb.biodata.tools.Converter;
 import org.opencb.commons.run.ParallelTaskRunner;
 import org.opencb.hpg.bigdata.core.io.VariantContextBlockIterator;
 import org.opencb.hpg.bigdata.core.io.avro.AvroEncoder;
@@ -41,6 +41,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Created by hpccoll1 on 10/04/15.
  */
+@Deprecated
 public class VariantAvroEncoderTask<T extends GenericRecord> implements ParallelTaskRunner.Task<CharBuffer, ByteBuffer> {
 
     public static final int BATCH_SIZE = 1000;

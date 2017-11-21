@@ -33,9 +33,9 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.ga4gh.models.ReadAlignment;
-import org.opencb.hpg.bigdata.core.converters.SAMRecord2ReadAlignmentConverter;
+import org.opencb.biodata.tools.alignment.converters.SAMRecordToAvroReadAlignmentBiConverter;
 import org.opencb.hpg.bigdata.analysis.utils.ChunkKey;
-import org.opencb.hpg.bigdata.analysis.utils.CompressionUtils;
+import org.opencb.hpg.bigdata.core.utils.CompressionUtils;
 import org.seqdoop.hadoop_bam.AnySAMInputFormat;
 import org.seqdoop.hadoop_bam.SAMRecordWritable;
 import org.seqdoop.hadoop_bam.util.WrapSeekable;
@@ -44,6 +44,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 
+@Deprecated
 public class Bam2AvroMR {
 
     public static final String ADJUST_QUALITY = "adjustQuality";
@@ -51,13 +52,13 @@ public class Bam2AvroMR {
     public static class Bam2GaMapper extends
             Mapper<LongWritable, SAMRecordWritable, AvroKey<ReadAlignment>, NullWritable> {
 
-        private SAMRecord2ReadAlignmentConverter samRecord2ReadAlignmentConverter;
+        private SAMRecordToAvroReadAlignmentBiConverter samRecord2ReadAlignmentConverter;
 
         @Override
         protected void setup(Context context) throws IOException, InterruptedException {
             super.setup(context);
             boolean adjustQuality = context.getConfiguration().getBoolean(ADJUST_QUALITY, false);
-            samRecord2ReadAlignmentConverter = new SAMRecord2ReadAlignmentConverter(adjustQuality);
+            samRecord2ReadAlignmentConverter = new SAMRecordToAvroReadAlignmentBiConverter(adjustQuality);
         }
 
         @Override
@@ -75,8 +76,8 @@ public class Bam2AvroMR {
 //              long end_chunk = sam.getAlignmentEnd() / RegionDepth.CHUNK_SIZE;
 //              newKey = new ChunkKey(sam.getReferenceName(), start_chunk);
 
-                SAMRecord2ReadAlignmentConverter converter = samRecord2ReadAlignmentConverter;
-                ReadAlignment readAlignment = converter.forward(sam);
+                SAMRecordToAvroReadAlignmentBiConverter converter = samRecord2ReadAlignmentConverter;
+                ReadAlignment readAlignment = converter.to(sam);
                 AvroKey<ReadAlignment> newKey = new AvroKey<>(readAlignment);
 
                 //context.write(newKey, value);

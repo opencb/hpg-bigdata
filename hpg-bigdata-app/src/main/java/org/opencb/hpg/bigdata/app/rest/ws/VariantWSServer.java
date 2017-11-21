@@ -19,8 +19,14 @@ package org.opencb.hpg.bigdata.app.rest.ws;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import org.opencb.commons.datastore.core.Query;
-import org.opencb.hpg.bigdata.core.lib.VariantParseQuery;
+import org.apache.spark.SparkConf;
+import org.apache.spark.SparkContext;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.SparkSession;
+import org.opencb.hpg.bigdata.app.cli.executors.CliUtils;
+import org.opencb.hpg.bigdata.app.cli.options.VariantCommandOptions;
+import org.opencb.hpg.bigdata.core.lib.SparkConfCreator;
+import org.opencb.hpg.bigdata.core.lib.VariantDataset;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
@@ -53,39 +59,90 @@ public class VariantWSServer {
                                 @ApiParam(value = "id") @QueryParam("id") String id,
                                 @ApiParam(value = "ancestralAllele") @QueryParam("ancestralAllele") String ancestralAllele,
                                 @ApiParam(value = "displayConsequenceType")
-                                    @QueryParam("displayConsequenceType") String displayConsequenceType,
+                                @QueryParam("displayConsequenceType") String displayConsequenceType,
                                 @ApiParam(value = "xrefs") @QueryParam("xrefs") String xrefs,
                                 @ApiParam(value = "hgvs") @QueryParam("hgvs") String hgvs,
                                 @ApiParam(value = "consequenceTypes") @QueryParam("consequenceTypes") String consequenceTypes,
                                 @ApiParam(value = "consequenceTypes.sequenceOntologyTerms.accession")
-                                    @QueryParam("consequenceTypes.sequenceOntologyTerms.accession") String consequenceSoAccession,
+                                @QueryParam("consequenceTypes.sequenceOntologyTerms.accession") String consequenceSoAccession,
                                 @ApiParam(value = "consequenceTypes.sequenceOntologyTerms.name")
-                                    @QueryParam("consequenceTypes.sequenceOntologyTerms.name") String consequenceSoName,
+                                @QueryParam("consequenceTypes.sequenceOntologyTerms.name") String consequenceSoName,
                                 @ApiParam(value = "populationFrequencies")
-                                    @QueryParam("populationFrequencies") String populationFrequencies,
+                                @QueryParam("populationFrequencies") String populationFrequencies,
                                 @ApiParam(value = "conservation") @QueryParam("conservation") String conservation,
                                 @ApiParam(value = "variantTraitAssociation")
-                                    @QueryParam("variantTraitAssociation") String variantTraitAssociation) {
+                                @QueryParam("variantTraitAssociation") String variantTraitAssociation) {
         try {
-            Query query = new Query();
-            query.putIfNotEmpty("id", id);
-            query.putIfNotEmpty("ancestralAllele", ancestralAllele);
-            query.putIfNotEmpty("displayConsequenceType", displayConsequenceType);
-            query.putIfNotEmpty("xrefs", xrefs);
-            query.putIfNotEmpty("hgvs", hgvs);
-            query.putIfNotEmpty("annotation.consequenceTypes", consequenceTypes);
-            query.putIfNotEmpty("annotation.populationFrequencies", populationFrequencies);
-            query.putIfNotEmpty("annotation.consequenceTypes.sequenceOntologyTerms.accession", consequenceSoAccession);
-            query.putIfNotEmpty("annotation.consequenceTypes.sequenceOntologyTerms.name", consequenceSoName);
-            query.putIfNotEmpty("annotation.conservation", conservation);
-            query.putIfNotEmpty("annotation.variantTraitAssociation", variantTraitAssociation);
+            SparkConf sparkConf = SparkConfCreator.getConf("variant query", "local", 1, true);
+            SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
 
-            VariantParseQuery variantParseQuery = new VariantParseQuery();
-            String sql = variantParseQuery.parse(query, null, table);
+            VariantDataset vd = new VariantDataset(sparkSession);
+            vd.load("");
+            vd.createOrReplaceTempView(table);
+
+            // create cli options
+            VariantCommandOptions variantCommandOptions;
+            variantCommandOptions = CliUtils.createVariantCommandOptions(id, ancestralAllele, displayConsequenceType,
+                    xrefs, hgvs, consequenceTypes, consequenceSoAccession, consequenceSoName, populationFrequencies,
+                    conservation, variantTraitAssociation);
+
+            // add filters
+            CliUtils.addVariantFilters(variantCommandOptions, vd);
+            vd.update();
+
+            // get the sql and return
+            String sql = vd.getSql();
             return Response.ok(sql).build();
         } catch (Exception e) {
             return Response.ok(e.toString()).build();
         }
     }
 
+    @GET
+    @Path("/query")
+    public Response query(@ApiParam(value = "table", required = true) @QueryParam("table") String table,
+                          @ApiParam(value = "id") @QueryParam("id") String id,
+                          @ApiParam(value = "ancestralAllele") @QueryParam("ancestralAllele") String ancestralAllele,
+                          @ApiParam(value = "displayConsequenceType")
+                          @QueryParam("displayConsequenceType") String displayConsequenceType,
+                          @ApiParam(value = "xrefs") @QueryParam("xrefs") String xrefs,
+                          @ApiParam(value = "hgvs") @QueryParam("hgvs") String hgvs,
+                          @ApiParam(value = "consequenceTypes") @QueryParam("consequenceTypes") String consequenceTypes,
+                          @ApiParam(value = "consequenceTypes.sequenceOntologyTerms.accession")
+                          @QueryParam("consequenceTypes.sequenceOntologyTerms.accession") String consequenceSoAccession,
+                          @ApiParam(value = "consequenceTypes.sequenceOntologyTerms.name")
+                          @QueryParam("consequenceTypes.sequenceOntologyTerms.name") String consequenceSoName,
+                          @ApiParam(value = "populationFrequencies")
+                          @QueryParam("populationFrequencies") String populationFrequencies,
+                          @ApiParam(value = "conservation") @QueryParam("conservation") String conservation,
+                          @ApiParam(value = "variantTraitAssociation")
+                          @QueryParam("variantTraitAssociation") String variantTraitAssociation) {
+
+        try {
+            SparkConf sparkConf = SparkConfCreator.getConf("variant query", "local", 1, true);
+            SparkSession sparkSession = new SparkSession(new SparkContext(sparkConf));
+
+            VariantDataset vd = new VariantDataset(sparkSession);
+            vd.createOrReplaceTempView(table);
+            vd.load("");
+
+            // create cli options
+            VariantCommandOptions variantCommandOptions;
+            variantCommandOptions = CliUtils.createVariantCommandOptions(id, ancestralAllele, displayConsequenceType,
+                    xrefs, hgvs, consequenceTypes, consequenceSoAccession, consequenceSoName, populationFrequencies,
+                    conservation, variantTraitAssociation);
+
+            // add filters
+            CliUtils.addVariantFilters(variantCommandOptions, vd);
+            vd.update();
+
+            // convert to JSON and return
+            Dataset<String> stringDataset = vd.toJSON();
+            return Response.ok(stringDataset.toString()).build();
+        } catch (Exception e) {
+            return Response.ok(e.toString()).build();
+        }
+
+
+    }
 }

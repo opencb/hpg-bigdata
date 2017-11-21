@@ -45,8 +45,7 @@ import java.util.regex.Pattern;
  * Hadoop-BAM FastqInputFormat modification
  * To avoid calling context.setStatus(...), since TaskAttemptContext became an interface (not a class) from r2.4.1
  */
-public class FastqInputFormatMODIF extends FileInputFormat<Text, SequencedFragment>
-{
+public class FastqInputFormatMODIF extends FileInputFormat<Text, SequencedFragment> {
     public static final String CONF_BASE_QUALITY_ENCODING = "hbam.fastq-input.base-quality-encoding";
     public static final String CONF_FILTER_FAILED_QC      = "hbam.fastq-input.filter-failed-qc";
     public static final String CONF_BASE_QUALITY_ENCODING_DEFAULT = "sanger";

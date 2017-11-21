@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.opencb.hpg-bigdata</groupId>
         <artifactId>hpg-bigdata</artifactId>
-        <version>1.0.0-beta3</version>
+        <version>1.0.0-beta4</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -41,11 +41,6 @@
         </dependency>
 
         <dependency>
-            <groupId>com.beust</groupId>
-            <artifactId>jcommander</artifactId>
-            <version>1.48</version>
-        </dependency>
-        <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-server</artifactId>
             <version>9.3.6.v20151106</version>
@@ -58,7 +53,7 @@
         <dependency>
             <groupId>io.swagger</groupId>
             <artifactId>swagger-jersey2-jaxrs</artifactId>
-            <version>1.5.9</version>
+            <version>1.5.16</version>
             <exclusions>
                 <exclusion>
                     <groupId>com.fasterxml.jackson.core</groupId>
@@ -72,7 +67,19 @@
                     <groupId>com.fasterxml.jackson.core</groupId>
                     <artifactId>jackson-core</artifactId>
                 </exclusion>
+                <exclusion>
+                    <artifactId>jersey-container-servlet-core</artifactId>
+                    <groupId>org.glassfish.jersey.containers</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>jersey-server</artifactId>
+                    <groupId>org.glassfish.jersey.core</groupId>
+                </exclusion>
             </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
         </dependency>
     </dependencies>
 
@@ -115,8 +122,15 @@
                     <extraJvmArguments>-Xms256m -Xmx2048m</extraJvmArguments>
                     <programs>
                         <program>
-                            <name>hpg-bigdata-local2.sh</name>
-                            <mainClass>org.opencb.hpg.bigdata.app.BigDataLocalMain</mainClass>
+                            <name>hpg-bigdata.sh</name>
+                            <mainClass>org.opencb.hpg.bigdata.app.cli.OskarMain</mainClass>
+                            <platforms>
+                                <platform>unix</platform>
+                            </platforms>
+                        </program>
+                        <program>
+                            <id>hpg-bigdata-clicompletion.sh</id>
+                            <mainClass>org.opencb.hpg.bigdata.app.cli.utils.CliCompletionMain</mainClass>
                             <platforms>
                                 <platform>unix</platform>
                             </platforms>
@@ -154,8 +168,10 @@
                                     <arg value="-rf"/>
                                     <arg value="${build.dir}"/>
                                 </exec>
+
                                 <exec executable="mkdir">
-                                    <arg value="${build.dir}"/>
+                                    <arg value="-p"/>
+                                    <arg value="${build.dir}/completion"/>
                                 </exec>
 
                                 <echo>Copying app files</echo>
@@ -166,21 +182,15 @@
                                     <arg value="${project.basedir}/app/data"/>
                                     <arg value="${project.basedir}/app/examples"/>
                                     <arg value="${project.basedir}/app/libs"/>
+                                    <arg value="${project.basedir}/../hpg-bigdata-core/target/classes/configuration.yml"/>
                                     <arg value="${project.basedir}/../README.md"/>
                                     <arg value="${project.basedir}/../LICENSE"/>
                                     <arg value="${build.dir}"/>
                                 </exec>
 
-                                <echo>Setting execution permissions to shell scripts</echo>
-                                <exec executable="chmod">
-                                    <arg value="+x"/>
-                                    <arg value="${build.dir}/bin/hpg-bigdata.sh"/>
-                                    <arg value="${build.dir}/bin/hpg-bigdata-local.sh"/>
-                                </exec>
-
-                                <echo>Building native code</echo>
-                                <exec executable="../hpg-bigdata-core/native/build.sh">
-                                </exec>
+                                <!--<echo>Building native code</echo>-->
+                                <!--<exec executable="../hpg-bigdata-core/native/build.sh">-->
+                                <!--</exec>-->
 
                                 <echo>Copying to ${build.dir}</echo>
                                 <exec executable="cp">
@@ -192,29 +202,33 @@
                                     <arg value="${build.dir}"/>
                                 </exec>
 
-                                <echo>Copying to ${build.dir}</echo>
-                                <exec executable="cp">
-                                    <arg value="-r"/>
-                                    <arg value="${project.basedir}/../hpg-bigdata-core/native/libhpgbigdata.so"/>
-                                    <arg value="${project.basedir}/../hpg-bigdata-core/native/libhpgbigdata.dylib"/>
-                                    <arg value="${project.basedir}/../hpg-bigdata-core/native/third-party/htslib/libhts.so"/>
-                                    <arg value="${project.basedir}/../hpg-bigdata-core/native/third-party/htslib/libhts.so.1"/>
-                                    <arg value="${project.basedir}/../hpg-bigdata-core/native/third-party/htslib/libhts.dylib"/>
-                                    <arg value="${project.basedir}/../hpg-bigdata-core/native/third-party/htslib/libhts.1.dylib"/>
-                                    <arg value="${project.basedir}/../hpg-bigdata-core/native/third-party/avro-c-1.7.7/build/src/libavro.so"/>
-                                    <arg value="${project.basedir}/../hpg-bigdata-core/native/third-party/avro-c-1.7.7/build/src/libavro.so.22.0.0"/>
-                                    <arg value="${project.basedir}/../hpg-bigdata-core/native/third-party/avro-c-1.7.7/build/src/libavro.dylib"/>
-                                    <arg value="${project.basedir}/../hpg-bigdata-core/native/third-party/avro-c-1.7.7/build/src/libavro.22.0.0.dylib"/>
-                                    <arg value="${build.dir}/libs"/>
+                                <exec executable="${project.basedir}/target/appassembler/bin/hpg-bigdata-clicompletion.sh">
+                                    <arg value="${build.dir}/completion"/>
                                 </exec>
 
-                                <echo>Uncompressing avro lib</echo>
-                                <exec executable="tar">
-                                    <arg value="zxvf"/>
-                                    <arg value="${build.dir}/libs/avro-1.7.7.tgz"/>
-                                    <arg value="-C"/>
-                                    <arg value="${build.dir}/libs"/>
-                                </exec>
+                                <!--<echo>Copying to ${build.dir}</echo>-->
+                                <!--<exec executable="cp">-->
+                                    <!--<arg value="-r"/>-->
+                                    <!--<arg value="${project.basedir}/../hpg-bigdata-core/native/libhpgbigdata.so"/>-->
+                                    <!--<arg value="${project.basedir}/../hpg-bigdata-core/native/libhpgbigdata.dylib"/>-->
+                                    <!--<arg value="${project.basedir}/../hpg-bigdata-core/native/third-party/htslib/libhts.so"/>-->
+                                    <!--<arg value="${project.basedir}/../hpg-bigdata-core/native/third-party/htslib/libhts.so.1"/>-->
+                                    <!--<arg value="${project.basedir}/../hpg-bigdata-core/native/third-party/htslib/libhts.dylib"/>-->
+                                    <!--<arg value="${project.basedir}/../hpg-bigdata-core/native/third-party/htslib/libhts.1.dylib"/>-->
+                                    <!--<arg value="${project.basedir}/../hpg-bigdata-core/native/third-party/avro-c-1.7.7/build/src/libavro.so"/>-->
+                                    <!--<arg value="${project.basedir}/../hpg-bigdata-core/native/third-party/avro-c-1.7.7/build/src/libavro.so.22.0.0"/>-->
+                                    <!--<arg value="${project.basedir}/../hpg-bigdata-core/native/third-party/avro-c-1.7.7/build/src/libavro.dylib"/>-->
+                                    <!--<arg value="${project.basedir}/../hpg-bigdata-core/native/third-party/avro-c-1.7.7/build/src/libavro.22.0.0.dylib"/>-->
+                                    <!--<arg value="${build.dir}/libs"/>-->
+                                <!--</exec>-->
+
+                                <!--<echo>Uncompressing avro lib</echo>-->
+                                <!--<exec executable="tar">-->
+                                    <!--<arg value="zxvf"/>-->
+                                    <!--<arg value="${build.dir}/libs/avro-1.7.7.tgz"/>-->
+                                    <!--<arg value="-C"/>-->
+                                    <!--<arg value="${build.dir}/libs"/>-->
+                                <!--</exec>-->
                             </target>
                         </configuration>
                         <goals>

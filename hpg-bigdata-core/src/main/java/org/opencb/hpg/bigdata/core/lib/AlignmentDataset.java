@@ -16,6 +16,7 @@
 
 package org.opencb.hpg.bigdata.core.lib;
 
+import org.apache.spark.sql.SparkSession;
 import org.opencb.commons.datastore.core.Query;
 
 /**
@@ -26,7 +27,8 @@ public class AlignmentDataset extends ParentDataset<AlignmentDataset> {
     private AlignmentParseQuery alignmentParseQuery;
     private String sql;
 
-    public AlignmentDataset() {
+    public AlignmentDataset(SparkSession sparkSession) {
+        super(sparkSession);
         alignmentParseQuery = new AlignmentParseQuery();
     }
 
@@ -36,6 +38,11 @@ public class AlignmentDataset extends ParentDataset<AlignmentDataset> {
             this.sql = alignmentParseQuery.parse(query, null, viewName);
             this.ds = this.sqlContext.sql(this.sql);
         }
+    }
+
+    @Override
+    public String getSql() {
+        return alignmentParseQuery.parse(query, null, viewName);
     }
 
     // mapping quality filter

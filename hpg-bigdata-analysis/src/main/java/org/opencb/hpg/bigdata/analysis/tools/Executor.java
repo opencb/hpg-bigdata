@@ -23,7 +23,7 @@ public class Executor {
     private static int threadInitNumber;
     private static volatile String status;
 
-    protected static void execute(String commandLine, Path outdir) throws AnalysisToolException {
+    public static void execute(String commandLine, Path outdir, boolean redirectLogs) throws AnalysisToolException {
         if (!outdir.toFile().isDirectory()) {
             throw new AnalysisToolException("Output directory " + outdir + " is not an actual directory");
         }
@@ -35,11 +35,13 @@ public class Executor {
             status = Status.RUNNING;
             Command com = new Command(commandLine);
 
-            DataOutputStream dataOutputStream = new DataOutputStream(new FileOutputStream(outdir.resolve("stdout.txt").toFile()));
-            com.setOutputOutputStream(dataOutputStream);
+            if (redirectLogs) {
+                DataOutputStream dataOutputStream = new DataOutputStream(new FileOutputStream(outdir.resolve("stdout.txt").toFile()));
+                com.setOutputOutputStream(dataOutputStream);
 
-            dataOutputStream = new DataOutputStream(new FileOutputStream(outdir.resolve("stderr.txt").toFile()));
-            com.setErrorOutputStream(dataOutputStream);
+                dataOutputStream = new DataOutputStream(new FileOutputStream(outdir.resolve("stderr.txt").toFile()));
+                com.setErrorOutputStream(dataOutputStream);
+            }
 
             ExecutorMonitor monitor = new ExecutorMonitor();
 //            Thread thread = new Thread(statusProcess, "StatusThread-" + nextThreadNum());
@@ -54,8 +56,7 @@ public class Executor {
             });
 
             logger.info("==========================================");
-            logger.info("Executing tool");
-            logger.debug("Executing commandLine {}", commandLine);
+            logger.info("Executing tool. CommandLine : {}", commandLine);
             logger.info("==========================================");
             System.err.println();
 

@@ -1,0 +1,27 @@
+---
+logLevel: "INFO"
+logFile: ""
+
+numThreads: "2"
+toolFolder: ""
+
+## Cellbase client configuration
+cellbase:
+  hosts:
+  - "${OSKAR.CELLBASE.REST.HOST}"
+  version: "v3"
+  database:
+    hosts:
+    - "localhost"
+    user: "user"
+    password: "password"
+    options: {}
+  preferred: "local"
+
+analysis:
+    plink:
+      path: "~/soft/plink-1.9/plink"
+      version: "1.9"
+    rvtests:
+      path : "~/soft/rvtests/executable/rvtest"
+      version : "20170106"

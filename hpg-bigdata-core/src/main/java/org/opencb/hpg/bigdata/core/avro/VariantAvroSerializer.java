@@ -1,44 +1,70 @@
 package org.opencb.hpg.bigdata.core.avro;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
+import htsjdk.variant.variantcontext.VariantContext;
+import htsjdk.variant.vcf.VCFHeader;
 import org.apache.commons.lang3.StringUtils;
 import org.opencb.biodata.models.core.Region;
-import org.opencb.biodata.models.variant.Variant;
-import org.opencb.biodata.models.variant.VariantSource;
+import org.opencb.biodata.models.metadata.Cohort;
+import org.opencb.biodata.models.metadata.SampleSetType;
 import org.opencb.biodata.models.variant.avro.VariantAvro;
-import org.opencb.biodata.tools.variant.VariantVcfHtsjdkReader;
-import org.opencb.biodata.tools.variant.stats.VariantGlobalStatsCalculator;
+import org.opencb.biodata.models.variant.metadata.VariantStudyMetadata;
+import org.opencb.biodata.tools.variant.VcfFileReader;
+import org.opencb.biodata.tools.variant.converters.avro.VariantContextToVariantConverter;
+import org.opencb.biodata.tools.variant.metadata.VariantMetadataManager;
+import org.opencb.commons.run.ParallelTaskRunner;
+import org.opencb.hpg.bigdata.core.io.ConvertEncodeTask;
 import org.opencb.hpg.bigdata.core.io.avro.AvroFileWriter;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Predicate;
 
 /**
  * Created by jtarraga on 03/08/16.
  */
 public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
 
-    public VariantAvroSerializer() {
-        super("deflate");
-    }
+    private final int batchSize = 100;
 
-    public VariantAvroSerializer(String compression) {
+    private String species = null;
+    private String assembly = null;
+    private String datasetName = null;
+
+    public VariantAvroSerializer(String species, String assembly, String datasetName,
+                                 String compression) {
         super(compression);
+        this.species = species;
+        this.assembly = assembly;
+        this.datasetName = datasetName;
     }
 
-    public void toAvro(InputStream inputStream, String outputFilename) throws IOException {
+    /**
+     * Convert to Avro sequentially.
+     *
+     * @param inputFilename     VCF file name (input)
+     * @param outputFilename    Avro file name (output)
+     * @param annotator         Variant annotator
+     * @throws IOException      Exception
+     */
+    public void toAvro(String inputFilename, String outputFilename, Object annotator) throws IOException {
+        VariantAvroAnnotator variantAvroAnnotator = (VariantAvroAnnotator) annotator;
 
-        // reader
-        String metaFilename = outputFilename + ".meta";
-        VariantSource variantSource = new VariantSource(metaFilename, "0", "0", "s");
-        VariantVcfHtsjdkReader vcfReader = new VariantVcfHtsjdkReader(inputStream, variantSource, null);
-        vcfReader.open();
-        vcfReader.pre();
+        File inputFile = new File(inputFilename);
+        String filename = inputFile.getName();
 
-        // writer
+        // VCF reader
+        VcfFileReader vcfFileReader = new VcfFileReader(inputFilename, true);
+        vcfFileReader.open();
+        VCFHeader vcfHeader = vcfFileReader.getVcfHeader();
+
+        // Avro writer
         OutputStream outputStream;
         if (StringUtils.isEmpty(outputFilename) || outputFilename.equals("STDOUT")) {
             outputStream = System.out;
@@ -47,46 +73,165 @@ public class VariantAvroSerializer extends AvroSerializer<VariantAvro> {
         }
         AvroFileWriter<VariantAvro> avroFileWriter = new AvroFileWriter<>(VariantAvro.SCHEMA$, compression, outputStream);
         avroFileWriter.open();
-        VariantGlobalStatsCalculator statsCalculator = new VariantGlobalStatsCalculator(vcfReader.getSource());
-        statsCalculator.pre();
+//        VariantGlobalStatsCalculator statsCalculator = new VariantGlobalStatsCalculator(vcfReader.getSource());
+//        statsCalculator.pre();
 
-        // main loop
-        List<Variant> variants;
-        while (true) {
-            variants = vcfReader.read(1000);
-            if (variants.size() == 0) {
-                break;
+        // Metadata management
+        VariantMetadataManager metadataManager = new VariantMetadataManager();
+        VariantStudyMetadata variantDatasetMetadata = new VariantStudyMetadata();
+        variantDatasetMetadata.setId(datasetName);
+        metadataManager.addVariantDatasetMetadata(variantDatasetMetadata);
+
+        Cohort cohort = new Cohort("ALL", vcfHeader.getSampleNamesInOrder(), SampleSetType.MISCELLANEOUS);
+        metadataManager.addCohort(cohort, variantDatasetMetadata.getId());
+
+        // Add variant file metadata from VCF header
+        metadataManager.addFile(filename, vcfHeader, variantDatasetMetadata.getId());
+        metadataManager.getVariantMetadata().getStudies().get(0).setAggregatedHeader(
+                metadataManager.getVariantMetadata().getStudies().get(0).getFiles().get(0).getHeader());
+
+        // VariantContext-to-Variant converter
+        VariantContextToVariantConverter converter = new VariantContextToVariantConverter(datasetName, filename,
+                vcfHeader.getSampleNamesInOrder());
+
+        // Main loop
+        long i = 0, counter = 0;
+        ConvertEncodeTask convertEncodeTask = new ConvertEncodeTask(converter, filters, variantAvroAnnotator);
+        List<VariantContext> variantContexts = vcfFileReader.read(batchSize);
+        while (variantContexts.size() > 0) {
+            List<ByteBuffer> buffers = convertEncodeTask.apply(variantContexts);
+            avroFileWriter.write(buffers);
+            counter += buffers.size();
+            if ((++i % 100) == 0) {
+                System.out.println("\t... " + counter + " variants");
             }
-            // write variants and update stats
-            for (Variant variant: variants) {
-                if (filter(variant.getImpl())) {
-                    avroFileWriter.writeDatum(variant.getImpl());
-                    statsCalculator.updateGlobalStats(variant);
-                }
-            }
+            variantContexts = vcfFileReader.read(batchSize);
         }
+        System.out.println("Number of processed records: " + counter);
 
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        mapper.configure(MapperFeature.REQUIRE_SETTERS_FOR_GETTERS, true);
-
-        ObjectWriter writer = mapper.writer();
-        PrintWriter pwriter = new PrintWriter(new FileWriter(metaFilename + ".json"));
-        pwriter.write(writer.withDefaultPrettyPrinter().writeValueAsString(variantSource.getImpl()));
-        pwriter.close();
-
-
-        // close
-        vcfReader.post();
-        vcfReader.close();
+        // Close
+        vcfFileReader.close();
         avroFileWriter.close();
         outputStream.close();
+
+        // Save metadata (JSON format)
+        metadataManager.save(Paths.get(outputFilename + ".meta.json"), true);
     }
 
+    /**
+     * Convert to Avro using a given number of threads (run the parallel task runner engine).
+     *
+     * @param inputFilename     VCF file name (input)
+     * @param outputFilename    Avro file name (output)
+     * @param annotator         Variant annotator
+     * @param numThreads        Number of threads
+     * @throws IOException      Exception
+     */
+    public void toAvro(String inputFilename, String outputFilename, Object annotator, int numThreads)
+            throws IOException {
+        VariantAvroAnnotator variantAvroAnnotator = (VariantAvroAnnotator) annotator;
+
+        File inputFile = new File(inputFilename);
+        String filename = inputFile.getName();
+
+        // Config parallel task runner
+        ParallelTaskRunner.Config config = ParallelTaskRunner.Config.builder()
+                .setNumTasks(numThreads)
+                .setBatchSize(batchSize)
+                .setSorted(true)
+                .build();
+
+        // VCF reader
+        VcfFileReader vcfFileReader = new VcfFileReader(inputFilename, false);
+        vcfFileReader.open();
+        VCFHeader vcfHeader = vcfFileReader.getVcfHeader();
+
+        // Avro writer
+        OutputStream outputStream;
+        if (StringUtils.isEmpty(outputFilename) || outputFilename.equals("STDOUT")) {
+            outputStream = System.out;
+        } else {
+            outputStream = new FileOutputStream(outputFilename);
+        }
+        AvroFileWriter<VariantAvro> avroFileWriter = new AvroFileWriter<>(VariantAvro.SCHEMA$, compression, outputStream);
+
+        // Metadata management
+        VariantMetadataManager metadataManager = new VariantMetadataManager();
+        VariantStudyMetadata variantDatasetMetadata = new VariantStudyMetadata();
+        variantDatasetMetadata.setId(datasetName);
+        metadataManager.addVariantDatasetMetadata(variantDatasetMetadata);
+
+        Cohort cohort = new Cohort("ALL", vcfHeader.getSampleNamesInOrder(), SampleSetType.MISCELLANEOUS);
+        metadataManager.addCohort(cohort, variantDatasetMetadata.getId());
+
+        // Add variant file metadata from VCF header
+        metadataManager.addFile(filename, vcfHeader, variantDatasetMetadata.getId());
+        metadataManager.getVariantMetadata().getStudies().get(0).setAggregatedHeader(
+                metadataManager.getVariantMetadata().getStudies().get(0).getFiles().get(0).getHeader());
+
+        // VariantContext-to-Variant converter
+        VariantContextToVariantConverter converter = new VariantContextToVariantConverter(datasetName,
+                new File(inputFilename).getName(), vcfFileReader.getVcfHeader().getSampleNamesInOrder());
+
+        // Create the parallel task runner
+        ParallelTaskRunner<VariantContext, ByteBuffer> ptr;
+        try {
+            ConvertEncodeTask convertTask = new ConvertEncodeTask(converter, filters, variantAvroAnnotator);
+            ptr = new ParallelTaskRunner(vcfFileReader, convertTask, avroFileWriter, config);
+        } catch (Exception e) {
+            throw new IOException("Error while creating ParallelTaskRunner", e);
+        }
+        try {
+            ptr.run();
+        } catch (ExecutionException e) {
+            throw new IOException("Error while converting VCF to Avro in ParallelTaskRunner", e);
+        }
+
+        // Close
+        vcfFileReader.close();
+        avroFileWriter.close();
+        outputStream.close();
+
+        // Save metadata (JSON format)
+        metadataManager.save(Paths.get(outputFilename + ".meta.json"), true);
+    }
+
+    /**
+     * Add a region filter.
+     *
+     * @param region    Region to filter
+     * @return          this (VariantAvroSerializer)
+     */
     public VariantAvroSerializer addRegionFilter(Region region) {
-        getFilters().add(v -> v.getChromosome().equals(region.getChromosome())
+        addFilter(v -> v.getChromosome().equals(region.getChromosome())
                 && v.getEnd() >= region.getStart()
                 && v.getStart() <= region.getEnd());
+        return this;
+    }
+
+    /**
+     * Add a list of region filters.
+     *
+     * @param regions   List of regions
+     * @param and       AND boolean flag
+     * @return          this (VariantAvroSerializer)
+     */
+    public VariantAvroSerializer addRegionFilter(List<Region> regions, boolean and) {
+        List<Predicate<VariantAvro>> predicates = new ArrayList<>();
+        regions.forEach(r -> predicates.add(v -> v.getChromosome().equals(r.getChromosome())
+                && v.getEnd() >= r.getStart()
+                && v.getStart() <= r.getEnd()));
+        addFilter(predicates, and);
+        return this;
+    }
+
+    /**
+     * Add the valid ID filter.
+     *
+     * @return  this (VariantAvroSerializer)
+     */
+    public VariantAvroSerializer addValidIdFilter() {
+        addFilter(v -> v.getId() != null && !v.getId().isEmpty() && !v.getId().equals("."));
         return this;
     }
 }

@@ -19,16 +19,19 @@ package org.opencb.hpg.bigdata.analysis.tools;
 import org.apache.commons.lang3.StringUtils;
 import org.opencb.hpg.bigdata.analysis.exceptions.AnalysisToolException;
 import org.opencb.hpg.bigdata.analysis.tools.manifest.Execution;
-import org.opencb.hpg.bigdata.analysis.tools.manifest.Param;
 import org.opencb.hpg.bigdata.analysis.tools.manifest.Manifest;
+import org.opencb.hpg.bigdata.analysis.tools.manifest.Param;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by imedina on 19/05/17.
@@ -49,7 +52,7 @@ public class ToolManager {
         checkToolDirectory();
     }
 
-    public String createCommandLine(String tool, String executionName, Map<String, Object> paramsMap) throws AnalysisToolException {
+    public String createCommandLine(String tool, String executionName, Map<String, String> paramsMap) throws AnalysisToolException {
         Manifest manifest = getManifest(tool);
 
         // Look for the execution
@@ -89,8 +92,13 @@ public class ToolManager {
         SortedMap<String, Object> sortedMap = new TreeMap<>(comparator);
         sortedMap.putAll(paramsMap);
 
-        StringBuilder commandLine = new StringBuilder(toolDirectory.resolve(tool).toString()).append("/")
-                .append(execution.getBin()).append(" ");
+        // Manage spaces in the binary path
+        String[] fields = execution.getBin().split(" ");
+        StringBuilder commandLine = new StringBuilder("'").append(toolDirectory.resolve(tool).toString()).append("/")
+                .append(fields[0]).append("' ");
+        for (int i = 1; i < fields.length; i++) {
+            commandLine.append(fields[i]).append(" ");
+        }
         for (Map.Entry<String, Object> objectEntry : sortedMap.entrySet()) {
             Param inputParam = manifestParams.get(objectEntry.getKey());
             if (inputParam != null) {
@@ -107,7 +115,10 @@ public class ToolManager {
                 // Value
                 if (inputParam.getDataType() != Param.Type.BOOLEAN) {
                     if (inputParam.isRedirection()) {
-                        commandLine.append("> ").append(objectEntry.getValue().toString());
+                        commandLine.append("> '").append(objectEntry.getValue().toString()).append("'");
+                    } else if (inputParam.getDataType() == Param.Type.FILE
+                            || inputParam.getDataType() == Param.Type.FOLDER) {
+                        commandLine.append("'").append(objectEntry.getValue().toString()).append("' ");
                     } else {
                         commandLine.append(objectEntry.getValue().toString()).append(" ");
                     }
@@ -158,8 +169,54 @@ public class ToolManager {
         return manifest;
     }
 
+    public List<Param> getInputParams(String tool, String executionName) throws AnalysisToolException {
+        Manifest manifest = getManifest(tool);
+
+        // Look for the execution
+        Execution execution = null;
+        for (Execution executionTmp : manifest.getExecutions()) {
+            if (executionTmp.getId().equalsIgnoreCase(executionName)) {
+                execution = executionTmp;
+                break;
+            }
+        }
+        if (execution == null) {
+            throw new AnalysisToolException("Execution " + executionName + " not found in manifest");
+        }
+
+        return execution.getParams()
+                .stream()
+                .filter(param -> !param.isOutput() && param.getDataType().equals(Param.Type.FILE))
+                .collect(Collectors.toList());
+    }
+
+    public List<Param> getOutputParams(String tool, String executionName) throws AnalysisToolException {
+        Manifest manifest = getManifest(tool);
+
+        // Look for the execution
+        Execution execution = null;
+        for (Execution executionTmp : manifest.getExecutions()) {
+            if (executionTmp.getId().equalsIgnoreCase(executionName)) {
+                execution = executionTmp;
+                break;
+            }
+        }
+        if (execution == null) {
+            throw new AnalysisToolException("Execution " + executionName + " not found in manifest");
+        }
+
+        return execution.getParams()
+                .stream()
+                .filter(Param::isOutput)
+                .collect(Collectors.toList());
+    }
+
     public void runCommandLine(String commandLine, Path outdir) throws AnalysisToolException {
-        new Executor().execute(commandLine, outdir);
+        new Executor().execute(commandLine, outdir, false);
+    }
+
+    public void runCommandLine(String commandLine, Path outdir, boolean redirectLogs) throws AnalysisToolException {
+        new Executor().execute(commandLine, outdir, redirectLogs);
     }
 
     private void checkToolDirectory() throws AnalysisToolException {
@@ -186,7 +243,7 @@ public class ToolManager {
         }
     }
 
-    private void validateParams(Execution execution, Map<String, Object> paramsMap) throws AnalysisToolException {
+    private void validateParams(Execution execution, Map<String, String> paramsMap) throws AnalysisToolException {
         Map<String, Param> manifestParams = execution.getParamsAsMap();
 
         // We fetch which are the required parameters and we will be taking them out as we check the user paramsMap.
@@ -197,7 +254,7 @@ public class ToolManager {
             }
         }
 
-        for (Map.Entry<String, Object> entry : paramsMap.entrySet()) {
+        for (Map.Entry<String, String> entry : paramsMap.entrySet()) {
             Param inputParam = manifestParams.get(entry.getKey());
             if (inputParam != null) {
                 if (inputParam.isRequired()) {
@@ -214,13 +271,13 @@ public class ToolManager {
         }
     }
 
-    private void validateDataType(Map.Entry<String, Object> entry, Param inputParam) throws AnalysisToolException {
+    private void validateDataType(Map.Entry<String, String> entry, Param inputParam) throws AnalysisToolException {
         switch (inputParam.getDataType()) {
             case STRING:
             case BOOLEAN:
                 break;
             case NUMERIC:
-                if (!StringUtils.isNumeric((CharSequence) entry.getValue())) {
+                if (!StringUtils.isNumeric(entry.getValue())) {
                     throw new AnalysisToolException("Unexpected value for parameter " + entry.getKey() + ". Expecting a NUMERIC value");
                 }
                 break;
