@@ -22,6 +22,7 @@ public class VariantCommandOptions {
     public MetadataVariantCommandOptions metadataVariantCommandOptions;
     public RvTestsVariantCommandOptions rvtestsVariantCommandOptions;
     public PlinkVariantCommandOptions plinkVariantCommandOptions;
+    public NormalisationVariantCommandOptions normalisationVariantCommandOptions;
 
     public LocalCliOptionsParser.CommonCommandOptions commonCommandOptions;
     public VariantFilterOptions variantFilterOptions;
@@ -40,6 +41,7 @@ public class VariantCommandOptions {
         this.metadataVariantCommandOptions = new MetadataVariantCommandOptions();
         this.rvtestsVariantCommandOptions = new RvTestsVariantCommandOptions();
         this.plinkVariantCommandOptions = new PlinkVariantCommandOptions();
+        this.normalisationVariantCommandOptions = new NormalisationVariantCommandOptions();
     }
 
     public VariantCommandOptions(LocalCliOptionsParser.CommonCommandOptions commonCommandOptions,
@@ -57,6 +59,7 @@ public class VariantCommandOptions {
         this.metadataVariantCommandOptions = new MetadataVariantCommandOptions();
         this.rvtestsVariantCommandOptions = new RvTestsVariantCommandOptions();
         this.plinkVariantCommandOptions = new PlinkVariantCommandOptions();
+        this.normalisationVariantCommandOptions = new NormalisationVariantCommandOptions();
     }
 
     @Parameters(commandNames = {"convert"}, commandDescription = "Convert gVCF/VCF files to different big data"
@@ -410,4 +413,25 @@ public class VariantCommandOptions {
         @Parameter(names = {"--plink-version"}, description = "PLINK version.", arity = 1)
         public String version = null;
     }
+
+    @Parameters(commandNames = {"normalise"}, commandDescription = "Execute the OpenCB VCF normalisation")
+    public class NormalisationVariantCommandOptions {
+
+        @ParametersDelegate
+        public LocalCliOptionsParser.CommonCommandOptions commonOptions = commonCommandOptions;
+
+        @Parameter(names = {"-i", "--input"}, description = "Input VCF file", required = true, arity = 1)
+        public String input;
+
+        @Parameter(names = {"-o", "--output"}, description = "Output VCF file", required = true, arity = 1)
+        public String output;
+
+        @Parameter(names = {"--reference"},
+                description = "FASTA file with the genome reference sequence, this is required for the left-alignment", arity = 1)
+        public String reference;
+
+        @Parameter(names = {"--decompose"}, description = "MVN and block substitution decomposition", arity = 1)
+        public String descompose;
+    }
+
 }

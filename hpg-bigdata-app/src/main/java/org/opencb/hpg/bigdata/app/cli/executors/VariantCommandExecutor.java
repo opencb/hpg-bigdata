@@ -110,6 +110,9 @@ public class VariantCommandExecutor extends CommandExecutor {
             case "plink":
                 plink();
                 break;
+            case "normalise":
+                normalise();
+                break;
             default:
                 logger.error("Variant subcommand '" + subCommandString + "' not valid");
                 break;
@@ -543,6 +546,19 @@ public class VariantCommandExecutor extends CommandExecutor {
 
         // Execute PLINK
         plink.execute();
+    }
+
+    public void normalise() throws Exception {
+        VariantCommandOptions.NormalisationVariantCommandOptions normalisationVariantCommandOptions = variantCommandOptions
+                .normalisationVariantCommandOptions;
+
+        Path input = Paths.get(normalisationVariantCommandOptions.input);
+        Path output = Paths.get(normalisationVariantCommandOptions.output);
+
+        FileUtils.checkFile(input);
+        FileUtils.checkFile(output);
+
+
     }
 
     private VariantMetadata computeStats(VariantMetadata metadata, Path inputPath) {
